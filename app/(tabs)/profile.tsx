@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { ChevronRight, History, UserPlus, Gift, HelpCircle } from "lucide-react-native";
+import { ChevronRight, UserPlus } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
@@ -69,12 +69,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Promotional Banner */}
-        <LinearGradient
-          colors={['#00D1FF', '#0099CC']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.promoBanner}
-        >
+        <View style={styles.promoBanner}>
           <Text style={styles.promoText}>
             Szeretnél kevesebbet fizetni a következő vendéglátóhelynél? Hívd meg egy barátodat, és az első látogatásánál bezsebelheted a Come Get It krediteket!
           </Text>
@@ -86,7 +81,7 @@ export default function ProfileScreen() {
               <Text style={styles.promoButtonPrimaryText}>Barátok meghívása</Text>
             </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Favorites Section */}
         <View style={styles.section}>
@@ -99,14 +94,56 @@ export default function ProfileScreen() {
           
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.favoritesScroll}>
             <View style={styles.favoriteCard}>
-              <View style={styles.favoriteImageContainer}>
-                <Text style={styles.favoriteLabel}>Zárva</Text>
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" }}
+                style={styles.favoriteImage}
+              />
+              <View style={styles.favoriteLabel}>
+                <Text style={styles.favoriteLabelText}>Zárva</Text>
               </View>
-              <Text style={styles.favoriteName}>Café Memories</Text>
-              <Text style={styles.favoriteDescription}>Café - Tasty and cool / Ízeletes és va...</Text>
-              <View style={styles.favoriteInfo}>
-                <Text style={styles.favoritePrice}>879 Ft</Text>
-                <Text style={styles.favoriteRating}>★ 9,2</Text>
+              <View style={styles.favoriteContent}>
+                <Text style={styles.favoriteName}>Café Memories</Text>
+                <Text style={styles.favoriteDescription}>Café - Tasty and cool / Ízeletes és va...</Text>
+                <View style={styles.favoriteInfo}>
+                  <Text style={styles.favoritePrice}>879 Ft</Text>
+                  <Text style={styles.favoriteRating}>★ 9,2</Text>
+                </View>
+              </View>
+            </View>
+            
+            <View style={styles.favoriteCard}>
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" }}
+                style={styles.favoriteImage}
+              />
+              <View style={styles.favoriteLabel}>
+                <Text style={styles.favoriteLabelText}>Nyitva</Text>
+              </View>
+              <View style={styles.favoriteContent}>
+                <Text style={styles.favoriteName}>Essence Delicates</Text>
+                <Text style={styles.favoriteDescription}>Bistro - Fine Dining / Ízeletes és va...</Text>
+                <View style={styles.favoriteInfo}>
+                  <Text style={styles.favoritePrice}>1200 Ft</Text>
+                  <Text style={styles.favoriteRating}>★ 9,5</Text>
+                </View>
+              </View>
+            </View>
+            
+            <View style={styles.favoriteCard}>
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }}
+                style={styles.favoriteImage}
+              />
+              <View style={styles.favoriteLabel}>
+                <Text style={styles.favoriteLabelText}>Nyitva</Text>
+              </View>
+              <View style={styles.favoriteContent}>
+                <Text style={styles.favoriteName}>Urban Spirits</Text>
+                <Text style={styles.favoriteDescription}>Rooftop - Cocktail Bar / Elegáns és...</Text>
+                <View style={styles.favoriteInfo}>
+                  <Text style={styles.favoritePrice}>1500 Ft</Text>
+                  <Text style={styles.favoriteRating}>★ 9,8</Text>
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -120,24 +157,6 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.menuItem}>
               <UserPlus size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Barátok meghívása</Text>
-              <ChevronRight size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <Gift size={22} color={Colors.text} />
-              <Text style={styles.menuTitle}>Kuponkód beváltása</Text>
-              <ChevronRight size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <HelpCircle size={22} color={Colors.text} />
-              <Text style={styles.menuTitle}>Segítség</Text>
-              <ChevronRight size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <History size={22} color={Colors.text} />
-              <Text style={styles.menuTitle}>Beváltási előzmények</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -284,11 +303,13 @@ const styles = StyleSheet.create({
     fontSize: 64,
   },
   quickActions: {
-    backgroundColor: "#02384D",
+    backgroundColor: Colors.cardBackground,
     marginHorizontal: 20,
     marginBottom: 16,
     borderRadius: 24,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#02384D",
   },
   quickActionItem: {
     flexDirection: "row",
@@ -311,6 +332,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   promoBanner: {
+    backgroundColor: "#02384D",
     marginHorizontal: 20,
     marginBottom: 16,
     borderRadius: 24,
@@ -337,29 +359,29 @@ const styles = StyleSheet.create({
   },
   promoButtonSecondary: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: "center",
     backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.8)",
+    borderWidth: 2,
+    borderColor: Colors.text,
   },
   promoButtonSecondaryText: {
-    color: "rgba(255, 255, 255, 0.9)",
+    color: Colors.text,
     fontWeight: "600",
-    fontSize: 15,
+    fontSize: 16,
   },
   promoButtonPrimary: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: Colors.text,
   },
   promoButtonPrimaryText: {
-    color: "#00D1FF",
+    color: "#02384D",
     fontWeight: "700",
-    fontSize: 15,
+    fontSize: 16,
   },
   section: {
     marginBottom: 24,
@@ -390,21 +412,30 @@ const styles = StyleSheet.create({
     width: 200,
     backgroundColor: "#02384D",
     borderRadius: 16,
-    padding: 12,
+    overflow: "hidden",
     marginRight: 12,
+    position: "relative",
   },
-  favoriteImageContainer: {
+  favoriteImage: {
+    width: "100%",
     height: 120,
-    backgroundColor: "#8B4513",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
   },
   favoriteLabel: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  favoriteLabelText: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
+  },
+  favoriteContent: {
+    padding: 12,
   },
   favoriteName: {
     fontSize: 16,
