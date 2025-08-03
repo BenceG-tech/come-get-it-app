@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 4,
     backgroundColor: "#00D1FF",
     justifyContent: "center",
     alignItems: "center",
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   rewardsCard: {
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 24,
+    borderRadius: 4,
     padding: 24,
     position: "relative",
     overflow: "hidden",
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 4,
   },
   betaText: {
     fontSize: 11,
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   coinIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 4,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardBackground,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 24,
+    borderRadius: 4,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#02384D",
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#02384D",
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 24,
+    borderRadius: 4,
     padding: 24,
     shadowColor: "#00D1FF",
     shadowOffset: {
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   promoButtonSecondary: {
     flex: 1,
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 4,
     alignItems: "center",
     backgroundColor: "transparent",
     borderWidth: 2,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   promoButtonPrimary: {
     flex: 1,
     paddingVertical: 16,
-    borderRadius: 16,
+    borderRadius: 4,
     alignItems: "center",
     backgroundColor: Colors.text,
   },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   favoriteCard: {
     width: 200,
     backgroundColor: "#02384D",
-    borderRadius: 16,
+    borderRadius: 4,
     overflow: "hidden",
     marginRight: 12,
     position: "relative",
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     backgroundColor: "#02384D",
-    borderRadius: 24,
+    borderRadius: 4,
     overflow: "hidden",
   },
   menuItem: {
@@ -486,13 +486,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#02384D",
-    borderRadius: 20,
+    borderRadius: 4,
     padding: 18,
   },
   recentOrderImage: {
     width: 56,
     height: 56,
-    borderRadius: 12,
+    borderRadius: 4,
     marginRight: 16,
   },
   recentOrderInfo: {
