@@ -49,7 +49,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    backgroundColor: "#000000",
     borderTopWidth: 1,
     borderTopColor: "#242424",
     elevation: 0,
