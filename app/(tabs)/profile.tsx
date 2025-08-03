@@ -24,7 +24,9 @@ export default function ProfileScreen() {
         <View style={styles.rewardsCard}>
           <View style={styles.rewardsHeader}>
             <Text style={styles.rewardsTitle}>Come Get It Rewards</Text>
-            <Text style={styles.betaLabel}>BETA</Text>
+            <View style={styles.betaLabel}>
+              <Text style={styles.betaText}>BETA</Text>
+            </View>
           </View>
           <View style={styles.rewardsContent}>
             <View style={styles.pointsSection}>
@@ -43,14 +45,18 @@ export default function ProfileScreen() {
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.quickActionItem}>
-            <Text style={styles.quickActionTitle}>Látogatási előzmények</Text>
-            <Text style={styles.quickActionSubtitle}>200 + látogatás</Text>
-            <ChevronRight size={18} color={Colors.textSecondary} />
+            <View style={styles.quickActionContent}>
+              <Text style={styles.quickActionTitle}>Látogatási előzmények</Text>
+              <Text style={styles.quickActionSubtitle}>200+ látogatás</Text>
+            </View>
+            <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.quickActionItem}>
-            <Text style={styles.quickActionTitle}>Kreditek és tokenek</Text>
-            <ChevronRight size={18} color={Colors.textSecondary} />
+            <View style={styles.quickActionContent}>
+              <Text style={styles.quickActionTitle}>Kreditek és tokenek</Text>
+            </View>
+            <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -97,29 +103,31 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Gyors elérés</Text>
           
-          <TouchableOpacity style={styles.menuItem}>
-            <UserPlus size={20} color={Colors.text} />
-            <Text style={styles.menuTitle}>Barátok meghívása</Text>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <Gift size={20} color={Colors.text} />
-            <Text style={styles.menuTitle}>Kuponkód beváltása</Text>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <HelpCircle size={20} color={Colors.text} />
-            <Text style={styles.menuTitle}>Segítség</Text>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <History size={20} color={Colors.text} />
-            <Text style={styles.menuTitle}>Beváltási előzmények</Text>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem}>
+              <UserPlus size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Barátok meghívása</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <Gift size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Kuponkód beváltása</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <HelpCircle size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Segítség</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <History size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Beváltási előzmények</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Recent Orders Section */}
@@ -135,6 +143,7 @@ export default function ProfileScreen() {
               <Text style={styles.recentOrderName}>Café Memories</Text>
               <Text style={styles.recentOrderDescription}>Kézműves hamburgerek várják rendelésed!</Text>
             </View>
+            <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -153,58 +162,60 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   greeting: {
-    fontSize: 32,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
     color: Colors.text,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: Colors.primary,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#00CFFF",
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "700",
     color: Colors.background,
   },
   rewardsCard: {
-    backgroundColor: "#00BCD4",
+    backgroundColor: "#00CFFF",
     marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
+    marginBottom: 16,
+    borderRadius: 20,
     padding: 24,
     position: "relative",
     overflow: "hidden",
-    minHeight: 140,
+    minHeight: 160,
   },
   rewardsHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   rewardsTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontWeight: "700",
     color: Colors.background,
     fontStyle: "italic",
   },
   betaLabel: {
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
-    paddingHorizontal: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    fontSize: 12,
-    fontWeight: "bold",
+  },
+  betaText: {
+    fontSize: 11,
+    fontWeight: "700",
     color: Colors.background,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   rewardsContent: {
     flexDirection: "column",
@@ -215,46 +226,47 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   coinIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   coinText: {
-    fontSize: 18,
+    fontSize: 16,
     color: Colors.background,
   },
   pointsValue: {
-    fontSize: 48,
-    fontWeight: "bold",
+    fontSize: 42,
+    fontWeight: "800",
     color: Colors.background,
-    lineHeight: 52,
+    lineHeight: 48,
   },
   rewardsSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.background,
-    opacity: 0.9,
+    opacity: 0.85,
+    fontWeight: "500",
   },
   mascotContainer: {
     position: "absolute",
-    right: 24,
-    top: 24,
-    bottom: 24,
+    right: 20,
+    top: 20,
+    bottom: 20,
     justifyContent: "center",
     alignItems: "center",
-    width: 80,
+    width: 70,
   },
   mascot: {
-    fontSize: 72,
+    fontSize: 64,
   },
   quickActions: {
     backgroundColor: "#1A1A1A",
     marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
+    marginBottom: 16,
+    borderRadius: 20,
     overflow: "hidden",
   },
   quickActionItem: {
@@ -262,31 +274,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "rgba(255, 255, 255, 0.06)",
+  },
+  quickActionContent: {
+    flex: 1,
   },
   quickActionTitle: {
-    flex: 1,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "600",
     color: Colors.text,
+    marginBottom: 2,
   },
   quickActionSubtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
-    marginRight: 12,
   },
   promoBanner: {
     backgroundColor: "#1A3A3D",
     marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
-    padding: 24,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 20,
   },
   promoText: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.text,
-    lineHeight: 24,
-    marginBottom: 24,
+    lineHeight: 22,
+    marginBottom: 20,
+    fontWeight: "400",
   },
   promoButtons: {
     flexDirection: "row",
@@ -294,32 +309,32 @@ const styles = StyleSheet.create({
   },
   promoButtonSecondary: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#00BCD4",
+    borderColor: "#00CFFF",
   },
   promoButtonSecondaryText: {
-    color: "#00BCD4",
+    color: "#00CFFF",
     fontWeight: "600",
-    fontSize: 16,
+    fontSize: 15,
   },
   promoButtonPrimary: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
-    backgroundColor: "#00BCD4",
+    backgroundColor: "#00CFFF",
   },
   promoButtonPrimaryText: {
     color: Colors.background,
     fontWeight: "600",
-    fontSize: 16,
+    fontSize: 15,
   },
   section: {
-    marginBottom: 30,
+    marginBottom: 24,
     paddingHorizontal: 20,
   },
   sectionHeader: {
@@ -329,9 +344,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "700",
     color: Colors.text,
+    marginBottom: 16,
   },
   viewAllButton: {
     fontSize: 16,
@@ -387,16 +403,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
   },
+  menuContainer: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 20,
+    overflow: "hidden",
+  },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 18,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "rgba(255, 255, 255, 0.06)",
   },
   menuTitle: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "500",
     color: Colors.text,
     marginLeft: 16,
@@ -404,27 +426,28 @@ const styles = StyleSheet.create({
   recentOrderItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
   },
   recentOrderImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    marginRight: 16,
   },
   recentOrderInfo: {
     flex: 1,
   },
   recentOrderName: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
     color: Colors.text,
     marginBottom: 4,
   },
   recentOrderDescription: {
     fontSize: 14,
     color: Colors.textSecondary,
+    lineHeight: 18,
   },
 });
