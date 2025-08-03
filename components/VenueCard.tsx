@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   dollarActive: {
-    color: "#FFD600",
+    color: Colors.text,
   },
   dollarInactive: {
     color: Colors.inactive,

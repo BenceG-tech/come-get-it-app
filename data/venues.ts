@@ -71,7 +71,7 @@ export const venues: Venue[] = [
     id: "3",
     name: "Urban Spirits",
     description: "Elegant rooftop bar offering panoramic views of Budapest, sophisticated cocktails, and a refined atmosphere.",
-    image: "https://images.unsplash.com/photo-1517940310602-26535839fe84?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
+    image: "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1829&q=80",
     address: "Hercegprímás utca 5, Budapest 1051",
     latitude: 47.501,
     longitude: 19.048,
