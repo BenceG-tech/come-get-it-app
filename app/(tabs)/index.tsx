@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { Search, MapPin, Filter } from "lucide-react-native";
+import { Search, MapPin } from "lucide-react-native";
 import * as Location from "expo-location";
 import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
@@ -29,9 +29,7 @@ export default function BarsScreen() {
     setLocationEnabled(true);
   };
 
-  const openFilters = () => {
-    router.push("/filter");
-  };
+
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -40,44 +38,36 @@ export default function BarsScreen() {
         style={styles.logo}
         resizeMode="contain"
       />
-      <View style={styles.headerIcons}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
-          <Search color={Colors.text} size={20} />
+      
+      <View style={styles.actionButtonsRow}>
+        <TouchableOpacity 
+          style={[styles.actionButton, locationEnabled ? styles.activeActionButton : {}]} 
+          onPress={enableLocation}
+        >
+          <MapPin size={16} color={locationEnabled ? Colors.background : Colors.text} />
+          <Text style={[styles.actionButtonText, locationEnabled ? styles.activeActionButtonText : {}]}>Near Me</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => console.log('Map view coming soon')}>
-          <MapPin color={Colors.text} size={20} />
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Open Now</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Free Drink</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Special Offer</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton} onPress={() => {}}>
+          <Search size={16} color={Colors.text} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.actionButton} onPress={() => console.log('Map view coming soon')}>
+          <MapPin size={16} color={Colors.text} />
         </TouchableOpacity>
       </View>
-    </View>
-  );
-
-
-
-  const renderFilterBar = () => (
-    <View style={styles.filterBar}>
-      <TouchableOpacity 
-        style={[styles.filterButton, locationEnabled ? styles.activeFilterButton : {}]} 
-        onPress={enableLocation}
-      >
-        <MapPin size={10} color={locationEnabled ? Colors.background : Colors.text} />
-        <Text style={[styles.filterButtonText, locationEnabled ? styles.activeFilterButtonText : {}]}>Near Me</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.filterButton}>
-        <Text style={styles.filterButtonText}>Open Now</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.filterButton}>
-        <Text style={styles.filterButtonText}>Free Drink</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.filterButton}>
-        <Text style={styles.filterButtonText}>Special Offer</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.filterButton} onPress={openFilters}>
-        <Filter size={10} color={Colors.text} />
-      </TouchableOpacity>
     </View>
   );
 
@@ -100,7 +90,6 @@ export default function BarsScreen() {
       {renderHeader()}
       
       <View style={styles.content}>
-        {renderFilterBar()}
         {renderLocationPrompt()}
         
         <FlatList
@@ -121,57 +110,60 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingTop: Platform.OS === "ios" ? 60 : 40,
     paddingHorizontal: 20,
-    paddingBottom: 24,
-    backgroundColor: Colors.background,
+    paddingBottom: 16,
+    backgroundColor: "#111111",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    minHeight: 140,
   },
   logo: {
-    width: 160,
+    width: 180,
     height: 60,
     resizeMode: 'contain',
+    marginBottom: 16,
   },
-  headerIcons: {
+  actionButtonsRow: {
     flexDirection: "row",
-    gap: 15,
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 10,
   },
-  iconButton: {
-    padding: 5,
-  },
-  content: {
-    flex: 1,
-  },
-
-  filterBar: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
-  },
-  filterButton: {
+  actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.border,
-    gap: 3,
+    backgroundColor: "transparent",
+    gap: 6,
   },
-  activeFilterButton: {
+  activeActionButton: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
-  filterButtonText: {
+  actionButtonText: {
     color: Colors.text,
     fontWeight: "500",
-    fontSize: 11,
+    fontSize: 16,
   },
-  activeFilterButtonText: {
+  activeActionButtonText: {
     color: Colors.background,
+  },
+  content: {
+    flex: 1,
   },
   locationPrompt: {
     marginHorizontal: 20,
@@ -200,5 +192,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: 20,
   },
-
 });
