@@ -13,7 +13,7 @@ type AppContextType = {
 
 export const [AppProvider, useAppContext] = createContextHook<AppContextType>(() => {
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const [points, setPoints] = useState<number>(0);
+  const [points, setPoints] = useState<number>(934);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
   // Load saved state from AsyncStorage
