@@ -35,7 +35,7 @@ export default function BarsScreen() {
     <View style={styles.header}>
       {/* Logo row */}
       <View style={styles.logoRow}>
-        <Text style={styles.logoText}>Come</Text>
+        <Text style={styles.logoText}>Come Get It</Text>
       </View>
       
       {/* Filter buttons row - all in one line */}
@@ -44,7 +44,7 @@ export default function BarsScreen() {
           style={[styles.filterButton, locationEnabled ? styles.activeFilterButton : {}]} 
           onPress={enableLocation}
         >
-          <MapPin size={14} color={locationEnabled ? Colors.background : Colors.text} />
+          <MapPin size={12} color={locationEnabled ? Colors.background : Colors.text} />
           <Text style={[styles.filterButtonText, locationEnabled ? styles.activeFilterButtonText : {}]}>Near Me</Text>
         </TouchableOpacity>
         
@@ -60,16 +60,16 @@ export default function BarsScreen() {
           style={styles.filterButton}
           onPress={() => router.push('/filter')}
         >
-          <Filter size={14} color={Colors.text} />
+          <Filter size={12} color={Colors.text} />
           <Text style={styles.filterButtonText}>Filter</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.iconButton}>
-          <Search size={20} color={Colors.text} />
+          <Search size={16} color={Colors.text} />
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.iconButton}>
-          <MapPin size={20} color={Colors.text} />
+          <MapPin size={16} color={Colors.text} />
         </TouchableOpacity>
       </View>
     </View>
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: Platform.OS === "ios" ? 50 : 30,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
     backgroundColor: "#000000",
     shadowColor: "#000",
     shadowOffset: {
@@ -130,32 +130,31 @@ const styles = StyleSheet.create({
   logoRow: {
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   logoText: {
-    fontSize: 32,
-    fontWeight: "300",
+    fontSize: 28,
+    fontWeight: "600",
     color: Colors.text,
-    fontStyle: "italic",
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
   locationBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 18,
-    height: 36,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 14,
+    height: 28,
     justifyContent: "center",
   },
   locationBadgeText: {
     color: Colors.text,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
@@ -163,21 +162,22 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     flexWrap: "nowrap",
     paddingHorizontal: 0,
+    justifyContent: "space-between",
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 18,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: "transparent",
-    gap: 4,
-    height: 36,
+    gap: 3,
+    height: 28,
   },
   activeFilterButton: {
     backgroundColor: Colors.primary,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   filterButtonText: {
     color: Colors.text,
     fontWeight: "500",
-    fontSize: 12,
+    fontSize: 10,
   },
   activeFilterButtonText: {
     color: Colors.background,
