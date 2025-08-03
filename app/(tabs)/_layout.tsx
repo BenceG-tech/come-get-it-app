@@ -18,21 +18,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Bars",
+          title: "Vendéglátóhelyek",
           tabBarIcon: ({ color }) => <Wine size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="guides"
         options={{
-          title: "Vendéglátóhelyek",
+          title: "Felfedezés",
           tabBarIcon: ({ color }) => <Filter size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="rewards"
         options={{
-          title: "Rewards",
+          title: "Jutalmak",
           tabBarIcon: ({ color }) => <Star size={24} color={color} />,
         }}
       />
