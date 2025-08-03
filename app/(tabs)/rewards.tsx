@@ -1,0 +1,331 @@
+import { useState } from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { Lock } from "lucide-react-native";
+import Colors from "@/constants/colors";
+import { rewards } from "@/data/rewards";
+import RewardCard from "@/components/RewardCard";
+
+export default function RewardsScreen() {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  // We'll use the selected category to filter rewards when needed
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <View style={styles.header}>
+        <Text style={styles.title}>Rewards</Text>
+        <View style={styles.pointsContainer}>
+          <Text style={styles.pointsValue}>8 700 POINTS</Text>
+        </View>
+      </View>
+      
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.cardSection}>
+          <View style={styles.addCardContainer}>
+            <Image 
+              source={{ uri: "https://cdn-icons-png.flaticon.com/512/6772/6772415.png" }} 
+              style={styles.cardIcon} 
+            />
+            <View style={styles.addCardTextContainer}>
+              <Text style={styles.addCardTitle}>ADD A CARD TO EARN REWARD POINTS EVERY TIME YOU SPEND AT OUR BARS</Text>
+              <Text style={styles.addCardSubtitle}>It&apos;s secure & <Text style={styles.bold}>no charges</Text> will ever be made.</Text>
+            </View>
+            <TouchableOpacity style={styles.addCardButton}>
+              <Lock size={16} color={Colors.text} />
+              <Text style={styles.addCardButtonText}>Add a Card</Text>
+            </TouchableOpacity>
+            <View style={styles.cardBrands}>
+              <Image 
+                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/1200px-American_Express_logo_%282018%29.svg.png" }} 
+                style={styles.cardBrand} 
+              />
+              <Image 
+                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" }} 
+                style={styles.cardBrand} 
+              />
+              <Image 
+                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" }} 
+                style={styles.cardBrand} 
+              />
+            </View>
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>♥ Editors&apos; Picks</Text>
+          </View>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          >
+            {(selectedCategory 
+              ? rewards.filter(reward => reward.category === selectedCategory)
+              : rewards.slice(0, 3)
+            ).map(reward => (
+              <RewardCard key={reward.id} reward={reward} />
+            ))}
+          </ScrollView>
+        </View>
+        
+        <TouchableOpacity style={styles.referButton}>
+          <Image 
+            source={{ uri: "https://cdn-icons-png.flaticon.com/512/3682/3682321.png" }} 
+            style={styles.referIcon} 
+          />
+          <View style={styles.referTextContainer}>
+            <Text style={styles.referTitle}>Invite a friend</Text>
+            <Text style={styles.referSubtitle}>Earn 500 points when you refer a friend to Come Get It.</Text>
+          </View>
+        </TouchableOpacity>
+        
+
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>📋 Categories</Text>
+          </View>
+          
+          <View style={styles.categoriesGrid}>
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => setSelectedCategory('drinks')}
+            >
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" }} 
+                style={styles.categoryImage} 
+              />
+              <View style={styles.categoryOverlay}>
+                <Text style={styles.categoryTitle}>Drinks</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => setSelectedCategory('food')}
+            >
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" }} 
+                style={styles.categoryImage} 
+              />
+              <View style={styles.categoryOverlay}>
+                <Text style={styles.categoryTitle}>Food</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => setSelectedCategory('lifestyle')}
+            >
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }} 
+                style={styles.categoryImage} 
+              />
+              <View style={styles.categoryOverlay}>
+                <Text style={styles.categoryTitle}>Lifestyle</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.categoryCard}
+              onPress={() => setSelectedCategory(null)}
+            >
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }} 
+                style={styles.categoryImage} 
+              />
+              <View style={styles.categoryOverlay}>
+                <Text style={styles.categoryTitle}>View all</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: Colors.text,
+  },
+  pointsContainer: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  pointsValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text,
+  },
+  pointsLabel: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    letterSpacing: 1,
+  },
+  cardSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  addCardContainer: {
+    backgroundColor: Colors.text,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+  },
+  cardIcon: {
+    width: 50,
+    height: 30,
+    resizeMode: "contain",
+    marginBottom: 15,
+  },
+  addCardTextContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  addCardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.background,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  addCardSubtitle: {
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
+  },
+  bold: {
+    fontWeight: "bold",
+  },
+  addCardButton: {
+    backgroundColor: Colors.background,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: "100%",
+    marginBottom: 20,
+    gap: 10,
+  },
+  addCardButtonText: {
+    color: Colors.text,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  cardBrands: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 15,
+  },
+  cardBrand: {
+    width: 50,
+    height: 30,
+    resizeMode: "contain",
+  },
+  section: {
+    marginBottom: 25,
+  },
+  sectionHeader: {
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text,
+    marginBottom: 5,
+    letterSpacing: 1,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  horizontalList: {
+    paddingLeft: 20,
+    paddingRight: 10,
+  },
+  referButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.cardBackground,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    padding: 20,
+    borderRadius: 12,
+  },
+  referIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 15,
+  },
+  referTextContainer: {
+    flex: 1,
+  },
+  referTitle: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  referSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+  },
+  rewardsGrid: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    gap: 15,
+  },
+  categoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 20,
+    gap: 15,
+  },
+  categoryCard: {
+    width: "47%",
+    height: 150,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 15,
+  },
+  categoryImage: {
+    width: "100%",
+    height: "100%",
+  },
+  categoryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryTitle: {
+    color: Colors.text,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+});

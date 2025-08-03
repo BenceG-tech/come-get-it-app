@@ -1,0 +1,22 @@
+export default {
+  background: "#000000",
+  text: "#FFFFFF",
+  textSecondary: "#AAAAAA",
+  primary: "#00BCD4",
+  secondary: "#26C6DA",
+  inactive: "#555555",
+  border: "#333333",
+  cardBackground: "#1A1A1A",
+  accent: "#00E5FF",
+  success: "#4CAF50",
+  warning: "#FF9800",
+  error: "#F44336",
+  dark: {
+    background: "#000000",
+    text: "#FFFFFF",
+    subtext: "#AAAAAA",
+    primary: "#00BCD4",
+    card: "#1A1A1A",
+    border: "#333333",
+  },
+};
