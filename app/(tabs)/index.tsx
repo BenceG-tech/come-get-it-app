@@ -33,39 +33,48 @@ export default function BarsScreen() {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <Image 
-        source={{ uri: 'https://r2-pub.rork.com/attachments/2gulws5wgm2v1gfw2nn8w' }}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      {/* Top row with location badge, logo, and icons */}
+      <View style={styles.topRow}>
+        <View style={styles.locationBadge}>
+          <Text style={styles.locationBadgeText}>Budapest</Text>
+        </View>
+        
+        <Image 
+          source={{ uri: 'https://r2-pub.rork.com/attachments/2gulws5wgm2v1gfw2nn8w' }}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        
+        <View style={styles.topIcons}>
+          <TouchableOpacity style={styles.iconButton}>
+            <Search size={20} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <MapPin size={20} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
+      </View>
       
-      <View style={styles.actionButtonsRow}>
+      {/* Filter buttons row */}
+      <View style={styles.filterRow}>
         <TouchableOpacity 
-          style={[styles.actionButton, locationEnabled ? styles.activeActionButton : {}]} 
+          style={[styles.filterButton, locationEnabled ? styles.activeFilterButton : {}]} 
           onPress={enableLocation}
         >
-          <MapPin size={16} color={locationEnabled ? Colors.background : Colors.text} />
-          <Text style={[styles.actionButtonText, locationEnabled ? styles.activeActionButtonText : {}]}>Near Me</Text>
+          <MapPin size={14} color={locationEnabled ? Colors.background : Colors.text} />
+          <Text style={[styles.filterButtonText, locationEnabled ? styles.activeFilterButtonText : {}]}>Near Me</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Open Now</Text>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Open Now</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Free Drink</Text>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Free Drink</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Special Offer</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton} onPress={() => {}}>
-          <Search size={16} color={Colors.text} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton} onPress={() => console.log('Map view coming soon')}>
-          <MapPin size={16} color={Colors.text} />
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Special Offer</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -110,56 +119,71 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 64 : 44,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: "#111111",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-    minHeight: 140,
+    paddingTop: Platform.OS === "ios" ? 50 : 30,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: "#000000",
   },
-  logo: {
-    width: 180,
-    height: 70,
-    resizeMode: 'contain',
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
-  actionButtonsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 12,
-    marginTop: 10,
+  locationBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
   },
-  actionButton: {
+  locationBadgeText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  logo: {
+    width: 80,
+    height: 40,
+    resizeMode: 'contain',
+  },
+  topIcons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    height: 36,
-    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: "transparent",
-    gap: 6,
+    gap: 4,
   },
-  activeActionButton: {
+  activeFilterButton: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
-  actionButtonText: {
+  filterButtonText: {
     color: Colors.text,
     fontWeight: "500",
-    fontSize: 16,
+    fontSize: 12,
   },
-  activeActionButtonText: {
+  activeFilterButtonText: {
     color: Colors.background,
   },
   content: {
