@@ -1,123 +1,140 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { ChevronRight, CreditCard, Eye, Share, UserPlus, Gift, Heart, HelpCircle, Settings, LogOut } from "lucide-react-native";
+import { ChevronRight, History, UserPlus, Gift, HelpCircle } from "lucide-react-native";
 import Colors from "@/constants/colors";
+import { useAppContext } from "@/context/AppContext";
 
 export default function ProfileScreen() {
+  const { points } = useAppContext();
+  
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.profileSection}>
-          <Text style={styles.profileName}>BARÁT BARÁT</Text>
-          <Text style={styles.profileEmail}>c6c8rjn8vf@privaterelay.appleid.com</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Szia Bence!</Text>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>BG</Text>
+          </View>
         </View>
-        
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <UserPlus size={18} color={Colors.primary} />
+
+        {/* Come Get It Rewards Card */}
+        <View style={styles.rewardsCard}>
+          <View style={styles.rewardsHeader}>
+            <Text style={styles.rewardsTitle}>Come Get It Rewards</Text>
+            <Text style={styles.betaLabel}>BETA</Text>
+          </View>
+          <View style={styles.rewardsContent}>
+            <View style={styles.pointsSection}>
+              <View style={styles.coinIcon}>
+                <Text style={styles.coinText}>★</Text>
+              </View>
+              <Text style={styles.pointsValue}>{points}</Text>
             </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Barát meghívása</Text>
-              <Text style={styles.menuSubtitle}>Szerezz 500 pontot, amikor meghívasz egy barátot a Come Get It-ba.</Text>
-            </View>
+            <Text style={styles.rewardsSubtitle}>Koppints és nézd meg a jutalmakat →</Text>
+          </View>
+          <View style={styles.mascotContainer}>
+            <Text style={styles.mascot}>🍺</Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.quickActionItem}>
+            <Text style={styles.quickActionTitle}>Látogatási előzmények</Text>
+            <Text style={styles.quickActionSubtitle}>200 + látogatás</Text>
             <ChevronRight size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <Gift size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Promóciós kód megadása</Text>
-              <Text style={styles.menuSubtitle}>Van egy titkos kódod vagy ajánlásod? Add meg itt az ajánlatod eléréséhez.</Text>
-            </View>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <Heart size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Alkalmazás értékelése</Text>
-              <Text style={styles.menuSubtitle}>Segíts nekünk és írj egy értékelést.</Text>
-            </View>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <Share size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Kövess minket</Text>
-              <Text style={styles.menuSubtitle}>Szerezz 500 pontot, amikor követni kezdesz.</Text>
-            </View>
+          <TouchableOpacity style={styles.quickActionItem}>
+            <Text style={styles.quickActionTitle}>Kreditek és tokenek</Text>
             <ChevronRight size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
         </View>
-        
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <HelpCircle size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Kapcsolat</Text>
-              <Text style={styles.menuSubtitle}>Olvasd el a GYIK-ot, küldj nekünk kérdéseket, vagy csak köszönj.</Text>
-            </View>
-            <ChevronRight size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
+
+        {/* Promotional Banner */}
+        <View style={styles.promoBanner}>
+          <Text style={styles.promoText}>
+            Szeretnél kevesebbet fizetni a következő vendéglátóhelynél? Hívd meg egy barátodat, és az első látogatásánál bezsebelheted a Come Get It krediteket!
+          </Text>
+          <View style={styles.promoButtons}>
+            <TouchableOpacity style={styles.promoButtonSecondary}>
+              <Text style={styles.promoButtonSecondaryText}>Elrejtés</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.promoButtonPrimary}>
+              <Text style={styles.promoButtonPrimaryText}>Barátok meghívása</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        
+
+        {/* Favorites Section */}
         <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Kedvenceid</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAllButton}>Összes megtekintése</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.favoritesScroll}>
+            <View style={styles.favoriteCard}>
+              <View style={styles.favoriteImageContainer}>
+                <Text style={styles.favoriteLabel}>Zárva</Text>
+              </View>
+              <Text style={styles.favoriteName}>Café Memories</Text>
+              <Text style={styles.favoriteDescription}>Café - Tasty and cool / Ízeletes és va...</Text>
+              <View style={styles.favoriteInfo}>
+                <Text style={styles.favoritePrice}>879 Ft</Text>
+                <Text style={styles.favoriteRating}>★ 9,2</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Quick Access Menu */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Gyors elérés</Text>
+          
           <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <CreditCard size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Kapcsolt kártyák</Text>
-              <Text style={styles.menuSubtitle}>Kapcsolj egy kártyát a jutalmak megszerzéséhez. Itt tekintheted meg a kártyáidat.</Text>
-            </View>
+            <UserPlus size={20} color={Colors.text} />
+            <Text style={styles.menuTitle}>Barátok meghívása</Text>
             <ChevronRight size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <Eye size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Személyes adatok</Text>
-              <Text style={styles.menuSubtitle}>Tekintsd meg a tárolt személyes adataidat vagy töröld a fiókodat.</Text>
-            </View>
+            <Gift size={20} color={Colors.text} />
+            <Text style={styles.menuTitle}>Kuponkód beváltása</Text>
             <ChevronRight size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <Settings size={18} color={Colors.primary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>Tartalom beállítások</Text>
-              <Text style={styles.menuSubtitle}>Maradj kapcsolatban. Állítsd be az értesítéseidet.</Text>
-            </View>
+            <HelpCircle size={20} color={Colors.text} />
+            <Text style={styles.menuTitle}>Segítség</Text>
+            <ChevronRight size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem}>
+            <History size={20} color={Colors.text} />
+            <Text style={styles.menuTitle}>Beváltási előzmények</Text>
             <ChevronRight size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
         </View>
-        
+
+        {/* Recent Orders Section */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconContainer}>
-              <LogOut size={18} color={"#FF6B6B"} />
+          <Text style={styles.sectionTitle}>Újralátogatás</Text>
+          
+          <TouchableOpacity style={styles.recentOrderItem}>
+            <Image 
+              source={{ uri: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" }}
+              style={styles.recentOrderImage}
+            />
+            <View style={styles.recentOrderInfo}>
+              <Text style={styles.recentOrderName}>Café Memories</Text>
+              <Text style={styles.recentOrderDescription}>Kézműves hamburgerek várják rendelésed!</Text>
             </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: "#FF6B6B" }]}>Kijelentkezés</Text>
-              <Text style={styles.menuSubtitle}>Jelentkezz ki a fiókodból</Text>
-            </View>
-            <ChevronRight size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -130,74 +147,277 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  profileSection: {
-    paddingHorizontal: 20,
-    paddingTop: 70,
-    paddingBottom: 30,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "rgba(0, 188, 212, 0.05)",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  greeting: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: Colors.text,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.background,
+  },
+  rewardsCard: {
+    backgroundColor: Colors.primary,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 20,
+    position: "relative",
+    overflow: "hidden",
+  },
+  rewardsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  rewardsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: Colors.background,
+    fontStyle: "italic",
+  },
+  betaLabel: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: "bold",
+    color: Colors.background,
+    marginLeft: 10,
+  },
+  rewardsContent: {
+    flexDirection: "column",
+  },
+  pointsSection: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
-  profileName: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: Colors.text,
-    marginBottom: 6,
-    letterSpacing: 0.5,
+  coinIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
   },
-  profileEmail: {
+  coinText: {
+    fontSize: 16,
+    color: Colors.background,
+  },
+  pointsValue: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: Colors.background,
+  },
+  rewardsSubtitle: {
+    fontSize: 16,
+    color: Colors.background,
+    opacity: 0.9,
+  },
+  mascotContainer: {
+    position: "absolute",
+    right: 20,
+    top: 20,
+    bottom: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mascot: {
+    fontSize: 60,
+  },
+  quickActions: {
+    backgroundColor: Colors.cardBackground,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 4,
+  },
+  quickActionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+  quickActionTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text,
+  },
+  quickActionSubtitle: {
     fontSize: 14,
     color: Colors.textSecondary,
+    marginRight: 10,
+  },
+  promoBanner: {
+    backgroundColor: "#1a4a5c",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 20,
+  },
+  promoText: {
+    fontSize: 16,
+    color: Colors.text,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  promoButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  promoButtonSecondary: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  promoButtonSecondaryText: {
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+  promoButtonPrimary: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: Colors.primary,
+  },
+  promoButtonPrimaryText: {
+    color: Colors.background,
+    fontWeight: "600",
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 30,
     paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 24,
+    fontWeight: "bold",
     color: Colors.text,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+  },
+  viewAllButton: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+  favoritesScroll: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  favoriteCard: {
+    width: 200,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+  },
+  favoriteImageContainer: {
+    height: 120,
+    backgroundColor: "#8B4513",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  favoriteLabel: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  favoriteName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  favoriteDescription: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 8,
+  },
+  favoriteInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  favoritePrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.primary,
+  },
+  favoriteRating: {
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(26, 26, 26, 0.8)",
-    padding: 18,
-    borderRadius: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
-  },
-  menuIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0, 188, 212, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  menuContent: {
-    flex: 1,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
   },
   menuTitle: {
+    flex: 1,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
     color: Colors.text,
-    marginBottom: 3,
+    marginLeft: 16,
   },
-  menuSubtitle: {
-    fontSize: 13,
+  recentOrderItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 12,
+    padding: 12,
+  },
+  recentOrderImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  recentOrderInfo: {
+    flex: 1,
+  },
+  recentOrderName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  recentOrderDescription: {
+    fontSize: 14,
     color: Colors.textSecondary,
-    lineHeight: 17,
-    opacity: 0.8,
   },
 });
