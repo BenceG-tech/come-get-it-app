@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { ChevronRight, UserPlus } from "lucide-react-native";
+import { ChevronRight, UserPlus, History, CreditCard } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
@@ -48,11 +48,14 @@ export default function ProfileScreen() {
           </View>
           {/* Texture overlay */}
           <View style={styles.textureOverlay} />
+          {/* Gradient texture overlay */}
+          <View style={styles.gradientTexture} />
         </LinearGradient>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.quickActionItem}>
+            <History size={22} color={Colors.text} />
             <View style={styles.quickActionContent}>
               <Text style={styles.quickActionTitle}>Látogatási előzmények</Text>
               <Text style={styles.quickActionSubtitle}>200+ látogatás</Text>
@@ -61,6 +64,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.quickActionItem}>
+            <CreditCard size={22} color={Colors.text} />
             <View style={styles.quickActionContent}>
               <Text style={styles.quickActionTitle}>Kreditek és tokenek</Text>
             </View>
@@ -131,18 +135,18 @@ export default function ProfileScreen() {
             
             <View style={styles.favoriteCard}>
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }}
+                source={{ uri: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" }}
                 style={styles.favoriteImage}
               />
               <View style={styles.favoriteLabel}>
                 <Text style={styles.favoriteLabelText}>Nyitva</Text>
               </View>
               <View style={styles.favoriteContent}>
-                <Text style={styles.favoriteName}>Urban Spirits</Text>
-                <Text style={styles.favoriteDescription}>Rooftop - Cocktail Bar / Elegáns és...</Text>
+                <Text style={styles.favoriteName}>Warmup Bar</Text>
+                <Text style={styles.favoriteDescription}>Pub - Student-friendly / Fiatalos és...</Text>
                 <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoritePrice}>1500 Ft</Text>
-                  <Text style={styles.favoriteRating}>★ 9,8</Text>
+                  <Text style={styles.favoritePrice}>800 Ft</Text>
+                  <Text style={styles.favoriteRating}>★ 8,9</Text>
                 </View>
               </View>
             </View>
@@ -173,7 +177,7 @@ export default function ProfileScreen() {
             />
             <View style={styles.recentOrderInfo}>
               <Text style={styles.recentOrderName}>Café Memories</Text>
-              <Text style={styles.recentOrderDescription}>Kézműves hamburgerek várják rendelésed!</Text>
+              <Text style={styles.recentOrderDescription}>Kézműves italok várják rendelésed!</Text>
             </View>
             <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
@@ -308,8 +312,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 4,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#02384D",
   },
   quickActionItem: {
     flexDirection: "row",
@@ -320,6 +322,7 @@ const styles = StyleSheet.create({
   },
   quickActionContent: {
     flex: 1,
+    marginLeft: 16,
   },
   quickActionTitle: {
     fontSize: 17,
@@ -410,7 +413,7 @@ const styles = StyleSheet.create({
   },
   favoriteCard: {
     width: 200,
-    backgroundColor: "#02384D",
+    backgroundColor: Colors.cardBackground,
     borderRadius: 4,
     overflow: "hidden",
     marginRight: 12,
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   menuContainer: {
-    backgroundColor: "#02384D",
+    backgroundColor: Colors.cardBackground,
     borderRadius: 4,
     overflow: "hidden",
   },
@@ -485,7 +488,7 @@ const styles = StyleSheet.create({
   recentOrderItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#02384D",
+    backgroundColor: Colors.cardBackground,
     borderRadius: 4,
     padding: 18,
   },
@@ -517,5 +520,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "rgba(255, 255, 255, 0.05)",
     opacity: 0.3,
+  },
+  gradientTexture: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 209, 255, 0.1)",
+    opacity: 0.4,
   },
 });
