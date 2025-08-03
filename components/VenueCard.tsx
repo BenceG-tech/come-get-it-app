@@ -102,14 +102,11 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     position: 'relative',
     backgroundColor: Colors.cardBackground,
-    borderRadius: 16,
     overflow: 'hidden',
   },
   venueImage: {
     width: '100%',
     height: '100%',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
   },
   locationBadge: {
     position: 'absolute',
@@ -133,8 +130,6 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
   },
   venueInfo: {
     flex: 1,

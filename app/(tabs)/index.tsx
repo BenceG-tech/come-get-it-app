@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { Search, MapPin } from "lucide-react-native";
+import { Search, MapPin, Filter } from "lucide-react-native";
 import * as Location from "expo-location";
 import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
@@ -33,26 +33,13 @@ export default function BarsScreen() {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      {/* Top row with location badge, logo, and icons */}
-      <View style={styles.topRow}>
-        <View style={styles.locationBadge}>
-          <Text style={styles.locationBadgeText}>Budapest</Text>
-        </View>
-        
+      {/* Logo row */}
+      <View style={styles.logoRow}>
         <Image 
           source={{ uri: 'https://r2-pub.rork.com/attachments/2gulws5wgm2v1gfw2nn8w' }}
           style={styles.logo}
           resizeMode="contain"
         />
-        
-        <View style={styles.topIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Search size={20} color={Colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <MapPin size={20} color={Colors.text} />
-          </TouchableOpacity>
-        </View>
       </View>
       
       {/* Filter buttons row */}
@@ -65,16 +52,28 @@ export default function BarsScreen() {
           <Text style={[styles.filterButtonText, locationEnabled ? styles.activeFilterButtonText : {}]}>Near Me</Text>
         </TouchableOpacity>
         
+        <View style={styles.locationBadge}>
+          <Text style={styles.locationBadgeText}>Budapest</Text>
+        </View>
+        
         <TouchableOpacity style={styles.filterButton}>
           <Text style={styles.filterButtonText}>Open Now</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Free Drink</Text>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => router.push('/filter')}
+        >
+          <Filter size={14} color={Colors.text} />
+          <Text style={styles.filterButtonText}>Filter</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Special Offer</Text>
+        <TouchableOpacity style={styles.iconButton}>
+          <Search size={20} color={Colors.text} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.iconButton}>
+          <MapPin size={20} color={Colors.text} />
         </TouchableOpacity>
       </View>
     </View>
@@ -124,11 +123,15 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: "#000000",
   },
-  topRow: {
-    flexDirection: "row",
+  logoRow: {
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     marginBottom: 16,
+  },
+  logo: {
+    width: 180,
+    height: 60,
+    resizeMode: 'contain',
   },
   locationBadge: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
@@ -141,15 +144,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  logo: {
-    width: 80,
-    height: 40,
-    resizeMode: 'contain',
-  },
-  topIcons: {
-    flexDirection: "row",
-    gap: 12,
-  },
   iconButton: {
     width: 32,
     height: 32,
@@ -160,6 +154,7 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     flexWrap: "wrap",
   },
