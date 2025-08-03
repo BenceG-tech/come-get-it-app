@@ -111,9 +111,9 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+    paddingTop: Platform.OS === "ios" ? 64 : 44,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 20,
     backgroundColor: "#111111",
     shadowColor: "#000",
     shadowOffset: {
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 180,
-    height: 60,
+    height: 70,
     resizeMode: 'contain',
     marginBottom: 16,
   },
