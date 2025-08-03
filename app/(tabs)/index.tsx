@@ -42,7 +42,7 @@ export default function BarsScreen() {
         />
       </View>
       
-      {/* Filter buttons row */}
+      {/* Filter buttons row - all in one line */}
       <View style={styles.filterRow}>
         <TouchableOpacity 
           style={[styles.filterButton, locationEnabled ? styles.activeFilterButton : {}]} 
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    flexWrap: "wrap",
+    flexWrap: "nowrap",
   },
   filterButton: {
     flexDirection: "row",
