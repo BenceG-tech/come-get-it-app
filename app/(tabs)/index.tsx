@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, Image } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Search, MapPin, Filter } from "lucide-react-native";
@@ -35,11 +35,7 @@ export default function BarsScreen() {
     <View style={styles.header}>
       {/* Logo row */}
       <View style={styles.logoRow}>
-        <Image 
-          source={{ uri: 'https://r2-pub.rork.com/attachments/2gulws5wgm2v1gfw2nn8w' }}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Text style={styles.logoText}>Come</Text>
       </View>
       
       {/* Filter buttons row - all in one line */}
@@ -122,22 +118,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     backgroundColor: "#000000",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   logoRow: {
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  logo: {
-    width: 180,
-    height: 60,
-    resizeMode: 'contain',
+  logoText: {
+    fontSize: 32,
+    fontWeight: "300",
+    color: Colors.text,
+    fontStyle: "italic",
+    letterSpacing: 2,
   },
   locationBadge: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+    paddingVertical: 8,
+    borderRadius: 18,
+    height: 36,
+    justifyContent: "center",
   },
   locationBadgeText: {
     color: Colors.text,
@@ -145,9 +153,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   iconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
@@ -157,17 +165,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     flexWrap: "nowrap",
+    paddingHorizontal: 0,
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+    paddingVertical: 8,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: "transparent",
     gap: 4,
+    height: 36,
   },
   activeFilterButton: {
     backgroundColor: Colors.primary,
