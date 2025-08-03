@@ -1,6 +1,7 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { ChevronRight, History, UserPlus, Gift, HelpCircle } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 
@@ -21,7 +22,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* Come Get It Rewards Card */}
-        <View style={styles.rewardsCard}>
+        <LinearGradient
+          colors={['#00D1FF', '#007EA7']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.rewardsCard}
+        >
           <View style={styles.rewardsHeader}>
             <Text style={styles.rewardsTitle}>Come Get It Rewards</Text>
             <View style={styles.betaLabel}>
@@ -40,7 +46,9 @@ export default function ProfileScreen() {
           <View style={styles.mascotContainer}>
             <Text style={styles.mascot}>🍺</Text>
           </View>
-        </View>
+          {/* Texture overlay */}
+          <View style={styles.textureOverlay} />
+        </LinearGradient>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
@@ -61,7 +69,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* Promotional Banner */}
-        <View style={styles.promoBanner}>
+        <LinearGradient
+          colors={['#00D1FF', '#0099CC']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.promoBanner}
+        >
           <Text style={styles.promoText}>
             Szeretnél kevesebbet fizetni a következő vendéglátóhelynél? Hívd meg egy barátodat, és az első látogatásánál bezsebelheted a Come Get It krediteket!
           </Text>
@@ -73,7 +86,7 @@ export default function ProfileScreen() {
               <Text style={styles.promoButtonPrimaryText}>Barátok meghívása</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Favorites Section */}
         <View style={styles.section}>
@@ -173,7 +186,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#00CFFF",
+    backgroundColor: "#00D1FF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -183,14 +196,21 @@ const styles = StyleSheet.create({
     color: Colors.background,
   },
   rewardsCard: {
-    backgroundColor: "#00CFFF",
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     position: "relative",
     overflow: "hidden",
-    minHeight: 160,
+    minHeight: 170,
+    shadowColor: "#00D1FF",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
   },
   rewardsHeader: {
     flexDirection: "row",
@@ -239,10 +259,11 @@ const styles = StyleSheet.create({
     color: Colors.background,
   },
   pointsValue: {
-    fontSize: 42,
-    fontWeight: "800",
+    fontSize: 48,
+    fontWeight: "900",
     color: Colors.background,
-    lineHeight: 48,
+    lineHeight: 52,
+    letterSpacing: -1,
   },
   rewardsSubtitle: {
     fontSize: 15,
@@ -263,10 +284,10 @@ const styles = StyleSheet.create({
     fontSize: 64,
   },
   quickActions: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#02384D",
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: "hidden",
   },
   quickActionItem: {
@@ -274,13 +295,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.06)",
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   quickActionContent: {
     flex: 1,
   },
   quickActionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
     color: Colors.text,
     marginBottom: 2,
@@ -290,11 +311,18 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   promoBanner: {
-    backgroundColor: "#1A3A3D",
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#00D1FF",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   promoText: {
     fontSize: 15,
@@ -309,28 +337,28 @@ const styles = StyleSheet.create({
   },
   promoButtonSecondary: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: "center",
     backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#00CFFF",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.8)",
   },
   promoButtonSecondaryText: {
-    color: "#00CFFF",
+    color: "rgba(255, 255, 255, 0.9)",
     fontWeight: "600",
     fontSize: 15,
   },
   promoButtonPrimary: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: "center",
-    backgroundColor: "#00CFFF",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
   },
   promoButtonPrimaryText: {
-    color: Colors.background,
-    fontWeight: "600",
+    color: "#00D1FF",
+    fontWeight: "700",
     fontSize: 15,
   },
   section: {
@@ -360,8 +388,8 @@ const styles = StyleSheet.create({
   },
   favoriteCard: {
     width: 200,
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 12,
+    backgroundColor: "#02384D",
+    borderRadius: 16,
     padding: 12,
     marginRight: 12,
   },
@@ -404,31 +432,31 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   menuContainer: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 20,
+    backgroundColor: "#02384D",
+    borderRadius: 24,
     overflow: "hidden",
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 18,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.06)",
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   menuTitle: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 17,
+    fontWeight: "600",
     color: Colors.text,
     marginLeft: 16,
   },
   recentOrderItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "#02384D",
+    borderRadius: 20,
+    padding: 18,
   },
   recentOrderImage: {
     width: 56,
@@ -449,5 +477,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     lineHeight: 18,
+  },
+  textureOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    opacity: 0.3,
   },
 });
