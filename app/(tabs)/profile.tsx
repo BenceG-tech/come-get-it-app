@@ -135,7 +135,7 @@ export default function ProfileScreen() {
             
             <View style={styles.favoriteCard}>
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" }}
+                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }}
                 style={styles.favoriteImage}
               />
               <View style={styles.favoriteLabel}>
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
             
             <View style={styles.favoriteCard}>
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }}
+                source={{ uri: "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" }}
                 style={styles.favoriteImage}
               />
               <View style={styles.favoriteLabel}>
@@ -202,28 +202,28 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Recent Orders Section */}
+        {/* Recent Visits Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Újrarendelés</Text>
+          <Text style={styles.sectionTitle}>Látogasd meg újra</Text>
           
           <TouchableOpacity style={styles.recentOrderItem}>
             <Image 
-              source={{ uri: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1781&q=80" }}
+              source={{ uri: "https://images.unsplash.com/photo-1560624052-449f5ddf0c31?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" }}
               style={styles.recentOrderImage}
             />
             <View style={styles.recentOrderLabel}>
               <Text style={styles.recentOrderLabelText}>Zárva</Text>
             </View>
             <View style={styles.recentOrderInfo}>
-              <Text style={styles.recentOrderName}>Zugló-Gyöngye Burger</Text>
-              <Text style={styles.recentOrderDescription}>Kézműves hamburgerek várják rendelésed!</Text>
+              <Text style={styles.recentOrderName}>Doblo Wine Bar</Text>
+              <Text style={styles.recentOrderDescription}>Cozy wine bar in the Jewish Quarter offering an extensive selection of Hungarian wines and charcuterie plates.</Text>
               <View style={styles.recentOrderDetails}>
                 <View style={styles.woltBadge}>
-                  <Text style={styles.woltBadgeText}>W+</Text>
+                  <Text style={styles.woltBadgeText}>CG</Text>
                 </View>
-                <Text style={styles.recentOrderPrice}>599 Ft</Text>
-                <Text style={styles.recentOrderDistance}>• 1,7 km</Text>
-                <Text style={styles.recentOrderRating}>• ☺ 8,6</Text>
+                <Text style={styles.recentOrderPrice}>1200 Ft</Text>
+                <Text style={styles.recentOrderDistance}>• 0,4 km</Text>
+                <Text style={styles.recentOrderRating}>• ★ 9,1</Text>
               </View>
             </View>
             <ChevronRight size={20} color={Colors.textSecondary} />
@@ -231,22 +231,22 @@ export default function ProfileScreen() {
           
           <TouchableOpacity style={styles.recentOrderItem}>
             <Image 
-              source={{ uri: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1774&q=80" }}
+              source={{ uri: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1769&q=80" }}
               style={styles.recentOrderImage}
             />
             <View style={styles.recentOrderLabel}>
-              <Text style={styles.recentOrderLabelText}>Zárva</Text>
+              <Text style={styles.recentOrderLabelText}>Nyitva</Text>
             </View>
             <View style={styles.recentOrderInfo}>
-              <Text style={styles.recentOrderName}>Palotagyöngye Kertvendéglő és Pizzéria</Text>
-              <Text style={styles.recentOrderDescription}>Megszokott házias ízek,melyeket séfeink kreativi...</Text>
+              <Text style={styles.recentOrderName}>Boutiq Bar</Text>
+              <Text style={styles.recentOrderDescription}>Award-winning cocktail bar known for innovative mixology and a sophisticated atmosphere.</Text>
               <View style={styles.recentOrderDetails}>
                 <View style={styles.woltBadge}>
-                  <Text style={styles.woltBadgeText}>W+</Text>
+                  <Text style={styles.woltBadgeText}>CG</Text>
                 </View>
-                <Text style={styles.recentOrderPrice}>1119 Ft</Text>
-                <Text style={styles.recentOrderDistance}>• 4,9 km</Text>
-                <Text style={styles.recentOrderRating}>• ☺ 9,2</Text>
+                <Text style={styles.recentOrderPrice}>2500 Ft</Text>
+                <Text style={styles.recentOrderDistance}>• 0,6 km</Text>
+                <Text style={styles.recentOrderRating}>• ★ 9,4</Text>
               </View>
             </View>
             <ChevronRight size={20} color={Colors.textSecondary} />
@@ -254,22 +254,22 @@ export default function ProfileScreen() {
           
           <TouchableOpacity style={styles.recentOrderItem}>
             <Image 
-              source={{ uri: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" }}
+              source={{ uri: "https://images.unsplash.com/photo-1555658636-6e4a36218be7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" }}
               style={styles.recentOrderImage}
             />
             <View style={styles.recentOrderLabel}>
-              <Text style={styles.recentOrderLabelText}>Zárva</Text>
+              <Text style={styles.recentOrderLabelText}>Nyitva</Text>
             </View>
             <View style={styles.recentOrderInfo}>
-              <Text style={styles.recentOrderName}>Wolt Market Zugló</Text>
-              <Text style={styles.recentOrderDescription}>💙 Bevásárlás néhány perc alatt</Text>
+              <Text style={styles.recentOrderName}>Élesztő Craft Beer Garden</Text>
+              <Text style={styles.recentOrderDescription}>Spacious beer garden housed in a former glassworks factory, featuring over 20 Hungarian craft beers on tap.</Text>
               <View style={styles.recentOrderDetails}>
                 <View style={styles.woltBadge}>
-                  <Text style={styles.woltBadgeText}>W+</Text>
+                  <Text style={styles.woltBadgeText}>CG</Text>
                 </View>
-                <Text style={styles.recentOrderPrice}>759 Ft</Text>
-                <Text style={styles.recentOrderDistance}>• 2,6 km</Text>
-                <Text style={styles.recentOrderRating}>• ☺ 9,4</Text>
+                <Text style={styles.recentOrderPrice}>800 Ft</Text>
+                <Text style={styles.recentOrderDistance}>• 1,2 km</Text>
+                <Text style={styles.recentOrderRating}>• ★ 8,8</Text>
               </View>
             </View>
             <ChevronRight size={20} color={Colors.textSecondary} />
