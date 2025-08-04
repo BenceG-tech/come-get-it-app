@@ -82,11 +82,11 @@ export default function ProfileScreen() {
             Szeretnél kevesebbet fizetni a következő vendéglátóhelynél? Hívd meg egy barátodat, és az első látogatásánál bezsebelheted a Come Get It krediteket!
           </Text>
           <View style={styles.promoButtons}>
-            <TouchableOpacity style={styles.promoButtonSecondary}>
-              <Text style={styles.promoButtonSecondaryText}>Elrejtés</Text>
+            <TouchableOpacity>
+              <Text style={styles.promoButtonText}>Elrejtés</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.promoButtonPrimary}>
-              <Text style={styles.promoButtonPrimaryText}>Barátok meghívása</Text>
+            <TouchableOpacity>
+              <Text style={styles.promoButtonText}>Barátok meghívása</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -459,43 +459,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+    position: "relative",
   },
   promoText: {
     fontSize: 14,
     color: Colors.text,
     lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: 40,
     fontWeight: "400",
+    paddingRight: 20,
   },
   promoButtons: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
     flexDirection: "row",
-    gap: 8,
+    gap: 16,
   },
-  promoButtonSecondary: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 4,
-    alignItems: "center",
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: Colors.text,
-  },
-  promoButtonSecondaryText: {
-    color: Colors.text,
+  promoButtonText: {
+    color: "#00D1FF",
     fontWeight: "500",
-    fontSize: 14,
-  },
-  promoButtonPrimary: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 4,
-    alignItems: "center",
-    backgroundColor: Colors.text,
-  },
-  promoButtonPrimaryText: {
-    color: "#02384D",
-    fontWeight: "600",
-    fontSize: 14,
+    fontSize: 12,
   },
   section: {
     marginBottom: 24,
