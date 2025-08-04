@@ -17,6 +17,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="venue/[id]" options={{ presentation: 'card' }} />
       <Stack.Screen name="filter" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="rewards-missions" options={{ presentation: 'card' }} />
     </Stack>
   );
 }

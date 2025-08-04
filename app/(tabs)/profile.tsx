@@ -1,11 +1,13 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
 import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { points } = useAppContext();
   
   return (
@@ -22,12 +24,13 @@ export default function ProfileScreen() {
         </View>
 
         {/* Come Get It Rewards Card */}
-        <LinearGradient
-          colors={['#00D1FF', '#0099CC', '#007EA7', '#005577']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.rewardsCard}
-        >
+        <TouchableOpacity onPress={() => router.push('/rewards-missions')} activeOpacity={0.9}>
+          <LinearGradient
+            colors={['#00D1FF', '#0099CC', '#007EA7', '#005577']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.rewardsCard}
+          >
           <View style={styles.rewardsHeader}>
             <Text style={styles.rewardsTitle}>Come Get It Rewards</Text>
           </View>
@@ -50,7 +53,8 @@ export default function ProfileScreen() {
           <View style={styles.textureOverlay2} />
           <View style={styles.gradientTexture1} />
           <View style={styles.gradientTexture2} />
-        </LinearGradient>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
