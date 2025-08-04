@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { ChevronRight, UserPlus, History, CreditCard } from "lucide-react-native";
+import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
@@ -23,21 +23,20 @@ export default function ProfileScreen() {
 
         {/* Come Get It Rewards Card */}
         <LinearGradient
-          colors={['#00D1FF', '#007EA7']}
+          colors={['#00D1FF', '#0099CC', '#007EA7', '#005577']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.rewardsCard}
         >
           <View style={styles.rewardsHeader}>
             <Text style={styles.rewardsTitle}>Come Get It Rewards</Text>
-            <View style={styles.betaLabel}>
-              <Text style={styles.betaText}>BETA</Text>
-            </View>
           </View>
           <View style={styles.rewardsContent}>
             <View style={styles.pointsSection}>
-              <View style={styles.coinIcon}>
-                <Text style={styles.coinText}>★</Text>
+              <View style={styles.starsContainer}>
+                <Text style={styles.starText}>★</Text>
+                <Text style={styles.starText}>★</Text>
+                <Text style={styles.starText}>★</Text>
               </View>
               <Text style={styles.pointsValue}>{points}</Text>
             </View>
@@ -46,10 +45,11 @@ export default function ProfileScreen() {
           <View style={styles.mascotContainer}>
             <Text style={styles.mascot}>🍺</Text>
           </View>
-          {/* Texture overlay */}
-          <View style={styles.textureOverlay} />
-          {/* Gradient texture overlay */}
-          <View style={styles.gradientTexture} />
+          {/* Multiple texture overlays for more gradient effect */}
+          <View style={styles.textureOverlay1} />
+          <View style={styles.textureOverlay2} />
+          <View style={styles.gradientTexture1} />
+          <View style={styles.gradientTexture2} />
         </LinearGradient>
 
         {/* Quick Actions */}
@@ -91,7 +91,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Kedvenceid</Text>
-            <TouchableOpacity>
+            <TouchableOpacity style={styles.viewAllButtonContainer}>
               <Text style={styles.viewAllButton}>Összes megtekintése</Text>
             </TouchableOpacity>
           </View>
@@ -150,6 +150,24 @@ export default function ProfileScreen() {
                 </View>
               </View>
             </View>
+            
+            <View style={styles.favoriteCard}>
+              <Image 
+                source={{ uri: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }}
+                style={styles.favoriteImage}
+              />
+              <View style={styles.favoriteLabel}>
+                <Text style={styles.favoriteLabelText}>Nyitva</Text>
+              </View>
+              <View style={styles.favoriteContent}>
+                <Text style={styles.favoriteName}>Urban Spirits</Text>
+                <Text style={styles.favoriteDescription}>Rooftop - Cocktail Bar / Elegáns és...</Text>
+                <View style={styles.favoriteInfo}>
+                  <Text style={styles.favoritePrice}>1200 Ft</Text>
+                  <Text style={styles.favoriteRating}>★ 9,1</Text>
+                </View>
+              </View>
+            </View>
           </ScrollView>
         </View>
 
@@ -163,24 +181,130 @@ export default function ProfileScreen() {
               <Text style={styles.menuTitle}>Barátok meghívása</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <Text style={[styles.menuIcon, { fontSize: 22 }]}>🎫</Text>
+              <Text style={styles.menuTitle}>Kuponkód beváltása</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <HelpCircle size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Segítség</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <History size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Rendelési előzmények</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Recent Orders Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Újralátogatás</Text>
+          <Text style={styles.sectionTitle}>Újrarendelés</Text>
           
           <TouchableOpacity style={styles.recentOrderItem}>
             <Image 
-              source={{ uri: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" }}
+              source={{ uri: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1781&q=80" }}
               style={styles.recentOrderImage}
             />
+            <View style={styles.recentOrderLabel}>
+              <Text style={styles.recentOrderLabelText}>Zárva</Text>
+            </View>
             <View style={styles.recentOrderInfo}>
-              <Text style={styles.recentOrderName}>Café Memories</Text>
-              <Text style={styles.recentOrderDescription}>Kézműves italok várják rendelésed!</Text>
+              <Text style={styles.recentOrderName}>Zugló-Gyöngye Burger</Text>
+              <Text style={styles.recentOrderDescription}>Kézműves hamburgerek várják rendelésed!</Text>
+              <View style={styles.recentOrderDetails}>
+                <View style={styles.woltBadge}>
+                  <Text style={styles.woltBadgeText}>W+</Text>
+                </View>
+                <Text style={styles.recentOrderPrice}>599 Ft</Text>
+                <Text style={styles.recentOrderDistance}>• 1,7 km</Text>
+                <Text style={styles.recentOrderRating}>• ☺ 8,6</Text>
+              </View>
             </View>
             <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.recentOrderItem}>
+            <Image 
+              source={{ uri: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1774&q=80" }}
+              style={styles.recentOrderImage}
+            />
+            <View style={styles.recentOrderLabel}>
+              <Text style={styles.recentOrderLabelText}>Zárva</Text>
+            </View>
+            <View style={styles.recentOrderInfo}>
+              <Text style={styles.recentOrderName}>Palotagyöngye Kertvendéglő és Pizzéria</Text>
+              <Text style={styles.recentOrderDescription}>Megszokott házias ízek,melyeket séfeink kreativi...</Text>
+              <View style={styles.recentOrderDetails}>
+                <View style={styles.woltBadge}>
+                  <Text style={styles.woltBadgeText}>W+</Text>
+                </View>
+                <Text style={styles.recentOrderPrice}>1119 Ft</Text>
+                <Text style={styles.recentOrderDistance}>• 4,9 km</Text>
+                <Text style={styles.recentOrderRating}>• ☺ 9,2</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.recentOrderItem}>
+            <Image 
+              source={{ uri: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" }}
+              style={styles.recentOrderImage}
+            />
+            <View style={styles.recentOrderLabel}>
+              <Text style={styles.recentOrderLabelText}>Zárva</Text>
+            </View>
+            <View style={styles.recentOrderInfo}>
+              <Text style={styles.recentOrderName}>Wolt Market Zugló</Text>
+              <Text style={styles.recentOrderDescription}>💙 Bevásárlás néhány perc alatt</Text>
+              <View style={styles.recentOrderDetails}>
+                <View style={styles.woltBadge}>
+                  <Text style={styles.woltBadgeText}>W+</Text>
+                </View>
+                <Text style={styles.recentOrderPrice}>759 Ft</Text>
+                <Text style={styles.recentOrderDistance}>• 2,6 km</Text>
+                <Text style={styles.recentOrderRating}>• ☺ 9,4</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+        
+        {/* Settings Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Beállítások</Text>
+          
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem}>
+              <User size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Fiók</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <CreditCard size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Kreditek és Tokenek</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <Text style={[styles.menuIcon, { fontSize: 22 }]}>💳</Text>
+              <Text style={styles.menuTitle}>Fizetési módok</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem}>
+              <MapPin size={22} color={Colors.text} />
+              <Text style={styles.menuTitle}>Címeim</Text>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -196,7 +320,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     paddingTop: 60,
     paddingBottom: 24,
   },
@@ -219,7 +343,7 @@ const styles = StyleSheet.create({
     color: Colors.background,
   },
   rewardsCard: {
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginBottom: 16,
     borderRadius: 4,
     padding: 24,
@@ -247,19 +371,7 @@ const styles = StyleSheet.create({
     color: Colors.background,
     fontStyle: "italic",
   },
-  betaLabel: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  betaText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.background,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
+
   rewardsContent: {
     flexDirection: "column",
   },
@@ -268,24 +380,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  coinIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
+  starsContainer: {
+    flexDirection: "row",
     alignItems: "center",
     marginRight: 12,
+    gap: 4,
   },
-  coinText: {
+  starText: {
     fontSize: 16,
     color: Colors.background,
   },
   pointsValue: {
-    fontSize: 48,
+    fontSize: 38,
     fontWeight: "900",
     color: Colors.background,
-    lineHeight: 52,
+    lineHeight: 42,
     letterSpacing: -1,
   },
   rewardsSubtitle: {
@@ -307,18 +416,16 @@ const styles = StyleSheet.create({
     fontSize: 64,
   },
   quickActions: {
-    backgroundColor: Colors.cardBackground,
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginBottom: 16,
-    borderRadius: 4,
-    overflow: "hidden",
   },
   quickActionItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "#00D1FF",
+    backgroundColor: "transparent",
   },
   quickActionContent: {
     flex: 1,
@@ -336,7 +443,7 @@ const styles = StyleSheet.create({
   },
   promoBanner: {
     backgroundColor: "#02384D",
-    marginHorizontal: 20,
+    marginHorizontal: 12,
     marginBottom: 16,
     borderRadius: 4,
     padding: 24,
@@ -388,7 +495,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -402,14 +509,20 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 16,
   },
+  viewAllButtonContainer: {
+    backgroundColor: "#02384D",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
   viewAllButton: {
     fontSize: 16,
-    color: Colors.primary,
+    color: "#00D1FF",
     fontWeight: "600",
   },
   favoritesScroll: {
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
+    marginHorizontal: -12,
+    paddingHorizontal: 12,
   },
   favoriteCard: {
     width: 200,
@@ -466,7 +579,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   menuContainer: {
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: "transparent",
     borderRadius: 4,
     overflow: "hidden",
   },
@@ -474,9 +587,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "#00D1FF",
+    backgroundColor: "transparent",
+  },
+  menuIcon: {
+    width: 22,
+    textAlign: "center",
   },
   menuTitle: {
     flex: 1,
@@ -487,47 +605,117 @@ const styles = StyleSheet.create({
   },
   recentOrderItem: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.cardBackground,
+    alignItems: "flex-start",
+    backgroundColor: "transparent",
     borderRadius: 4,
-    padding: 18,
+    padding: 0,
+    paddingBottom: 16,
+    marginBottom: 16,
+    position: "relative",
   },
   recentOrderImage: {
-    width: 56,
-    height: 56,
+    width: 80,
+    height: 80,
     borderRadius: 4,
     marginRight: 16,
   },
+  recentOrderLabel: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 1,
+  },
+  recentOrderLabelText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: "600",
+  },
   recentOrderInfo: {
     flex: 1,
+    paddingTop: 4,
   },
   recentOrderName: {
     fontSize: 16,
     fontWeight: "600",
     color: Colors.text,
     marginBottom: 4,
+    lineHeight: 20,
   },
   recentOrderDescription: {
     fontSize: 14,
     color: Colors.textSecondary,
     lineHeight: 18,
+    marginBottom: 8,
   },
-  textureOverlay: {
+  recentOrderDetails: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  woltBadge: {
+    backgroundColor: "#00D1FF",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  woltBadgeText: {
+    color: Colors.background,
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  recentOrderPrice: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: "600",
+  },
+  recentOrderDistance: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  recentOrderRating: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  textureOverlay1: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    opacity: 0.3,
-  },
-  gradientTexture: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 209, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     opacity: 0.4,
+  },
+  textureOverlay2: {
+    position: "absolute",
+    top: "20%",
+    left: "10%",
+    right: "10%",
+    bottom: "20%",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    opacity: 0.6,
+    borderRadius: 8,
+  },
+  gradientTexture1: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 209, 255, 0.15)",
+    opacity: 0.5,
+  },
+  gradientTexture2: {
+    position: "absolute",
+    top: "30%",
+    left: "20%",
+    right: "20%",
+    bottom: "30%",
+    backgroundColor: "rgba(0, 153, 204, 0.2)",
+    opacity: 0.3,
+    borderRadius: 12,
   },
 });
