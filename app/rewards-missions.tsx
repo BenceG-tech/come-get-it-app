@@ -22,6 +22,7 @@ type Mission = {
 };
 
 const missions: Mission[] = [
+  // Visiting Missions
   {
     id: "1",
     title: "7 napos sorozat",
@@ -44,17 +45,120 @@ const missions: Mission[] = [
   },
   {
     id: "3",
+    title: "Craft Beer Rajongó",
+    description: "Látogass meg 10 craft beer helyet!",
+    points: 700,
+    progress: 4,
+    total: 10,
+    icon: "🍻",
+    isCompleted: false,
+    expiryDate: "2025. 11. 30."
+  },
+  {
+    id: "4",
+    title: "Rooftop Vadász",
+    description: "Látogass meg 3 különböző rooftop bart!",
+    points: 500,
+    progress: 1,
+    total: 3,
+    icon: "🏙️",
+    isCompleted: false
+  },
+  {
+    id: "5",
+    title: "Wine Bar Szakértő",
+    description: "Látogass meg 5 wine bart!",
+    points: 550,
+    progress: 0,
+    total: 5,
+    icon: "🍷",
+    isCompleted: false
+  },
+  {
+    id: "6",
+    title: "Cocktail Bar Mester",
+    description: "Látogass meg 8 cocktail bart!",
+    points: 650,
+    progress: 3,
+    total: 8,
+    icon: "🍸",
+    isCompleted: false
+  },
+  {
+    id: "7",
+    title: "Pub Crawler",
+    description: "Látogass meg 12 különböző pubot!",
+    points: 800,
+    progress: 5,
+    total: 12,
+    icon: "🍺",
+    isCompleted: false
+  },
+  {
+    id: "8",
+    title: "Visszatérő Vendég",
+    description: "Látogass meg ugyanazt a helyet 3 egymást követő héten!",
+    points: 600,
+    progress: 1,
+    total: 3,
+    icon: "🔄",
+    isCompleted: false
+  },
+  {
+    id: "9",
+    title: "Éjszakai Bagoly",
+    description: "Látogass meg egy helyet éjfél után!",
+    points: 300,
+    progress: 0,
+    total: 1,
+    icon: "🦉",
+    isCompleted: false
+  },
+  {
+    id: "10",
+    title: "Early Bird",
+    description: "Látogass meg egy helyet délelőtt 11-ig!",
+    points: 300,
+    progress: 0,
+    total: 1,
+    icon: "🌅",
+    isCompleted: false
+  },
+  {
+    id: "11",
+    title: "Hétvégi Harcos",
+    description: "Látogass meg 5 helyet hétvégén!",
+    points: 450,
+    progress: 2,
+    total: 5,
+    icon: "🎉",
+    isCompleted: false
+  },
+  {
+    id: "12",
+    title: "Hétköznapi Felfedező",
+    description: "Látogass meg 10 helyet hétköznapokon!",
+    points: 600,
+    progress: 6,
+    total: 10,
+    icon: "📅",
+    isCompleted: false
+  },
+  
+  // Drink Redeeming Missions
+  {
+    id: "13",
     title: "Sör Mester",
     description: "Válts be 10 ingyen sört!",
     points: 500,
-    progress: 0,
+    progress: 3,
     total: 10,
     icon: "🍺",
     isCompleted: false,
     expiryDate: "2025. 10. 31."
   },
   {
-    id: "4",
+    id: "14",
     title: "Koktél Guru",
     description: "Válts be 5 ingyen koktélt!",
     points: 400,
@@ -65,37 +169,75 @@ const missions: Mission[] = [
     expiryDate: "2025. 10. 31."
   },
   {
-    id: "5",
-    title: "Éjszakai Bagoly",
-    description: "Látogass meg egy helyet éjfél után!",
-    points: 300,
-    progress: 0,
-    total: 1,
-    icon: "🦉",
-    isCompleted: false
-  },
-  {
-    id: "6",
-    title: "Early Bird",
-    description: "Látogass meg egy helyet délelőtt 11-ig!",
-    points: 300,
-    progress: 0,
-    total: 1,
-    icon: "🌅",
-    isCompleted: false
-  },
-  {
-    id: "7",
-    title: "Visszatérő Vendég",
-    description: "Látogass meg ugyanazt a helyet 3 egymást követő héten!",
+    id: "15",
+    title: "Wine Connoisseur",
+    description: "Válts be 8 ingyen bort!",
     points: 600,
-    progress: 0,
-    total: 3,
-    icon: "🔄",
-    isCompleted: false
+    progress: 2,
+    total: 8,
+    icon: "🍷",
+    isCompleted: false,
+    expiryDate: "2025. 12. 31."
   },
   {
-    id: "8",
+    id: "16",
+    title: "Shot Master",
+    description: "Válts be 15 ingyen shotot!",
+    points: 450,
+    progress: 7,
+    total: 15,
+    icon: "🥃",
+    isCompleted: false,
+    expiryDate: "2025. 11. 15."
+  },
+  {
+    id: "17",
+    title: "Whiskey Lover",
+    description: "Válts be 6 ingyen whiskyt!",
+    points: 550,
+    progress: 0,
+    total: 6,
+    icon: "🥃",
+    isCompleted: false,
+    expiryDate: "2025. 12. 31."
+  },
+  {
+    id: "18",
+    title: "Gin & Tonic Fan",
+    description: "Válts be 7 ingyen gin tonicot!",
+    points: 420,
+    progress: 3,
+    total: 7,
+    icon: "🍸",
+    isCompleted: false,
+    expiryDate: "2025. 10. 31."
+  },
+  {
+    id: "19",
+    title: "Prosecco Party",
+    description: "Válts be 4 ingyen proseccot!",
+    points: 480,
+    progress: 1,
+    total: 4,
+    icon: "🥂",
+    isCompleted: false,
+    expiryDate: "2025. 11. 30."
+  },
+  {
+    id: "20",
+    title: "Craft Beer Explorer",
+    description: "Válts be 12 különböző craft sört!",
+    points: 700,
+    progress: 4,
+    total: 12,
+    icon: "🍻",
+    isCompleted: false,
+    expiryDate: "2025. 12. 31."
+  },
+  
+  // Friend & Social Missions
+  {
+    id: "21",
     title: "Barát Meghívó",
     description: "Hívd meg egy barátodat, aki először használja a Come Get It appot!",
     points: 400,
@@ -105,25 +247,136 @@ const missions: Mission[] = [
     isCompleted: false
   },
   {
-    id: "9",
-    title: "App Használó",
+    id: "22",
+    title: "Társaság Szervező",
+    description: "Látogass meg 5 helyet barátokkal együtt!",
+    points: 600,
+    progress: 2,
+    total: 5,
+    icon: "👫",
+    isCompleted: false
+  },
+  {
+    id: "23",
+    title: "Dupla Dátum",
+    description: "Látogass meg 3 helyet párban!",
+    points: 450,
+    progress: 1,
+    total: 3,
+    icon: "💑",
+    isCompleted: false
+  },
+  {
+    id: "24",
+    title: "Csapat Kapitány",
+    description: "Hívj meg 3 barátot, akik mind használják az appot!",
+    points: 900,
+    progress: 1,
+    total: 3,
+    icon: "👨‍👩‍👧‍👦",
+    isCompleted: false
+  },
+  {
+    id: "25",
+    title: "Születésnapi Buli",
+    description: "Ünnepelj egy születésnapot 5+ fővel egy helyen!",
+    points: 500,
+    progress: 0,
+    total: 1,
+    icon: "🎂",
+    isCompleted: false
+  },
+  {
+    id: "26",
+    title: "Lánybúcsú/Legénybúcsú",
+    description: "Szervezz vagy vegyél részt egy búcsúbulin!",
+    points: 800,
+    progress: 0,
+    total: 1,
+    icon: "🎊",
+    isCompleted: false
+  },
+  {
+    id: "27",
+    title: "Munkahelyi Csapat",
+    description: "Látogass meg 3 helyet munkatársakkal!",
+    points: 550,
+    progress: 0,
+    total: 3,
+    icon: "💼",
+    isCompleted: false
+  },
+  
+  // App Usage Missions
+  {
+    id: "28",
+    title: "App Használó - Kezdő",
+    description: "Használd az appot 5 napon keresztül!",
+    points: 200,
+    progress: 5,
+    total: 5,
+    icon: "📱",
+    isCompleted: true
+  },
+  {
+    id: "29",
+    title: "App Használó - Haladó",
+    description: "Használd az appot 10 napon keresztül!",
+    points: 400,
+    progress: 8,
+    total: 10,
+    icon: "📱",
+    isCompleted: false
+  },
+  {
+    id: "30",
+    title: "App Használó - Mester",
     description: "Használd az appot 20 napon keresztül!",
-    points: 1000,
+    points: 800,
     progress: 8,
     total: 20,
     icon: "📱",
     isCompleted: false
   },
   {
-    id: "10",
-    title: "Craft Beer Rajongó",
-    description: "Látogass meg 10 craft beer helyet!",
-    points: 700,
-    progress: 0,
+    id: "31",
+    title: "App Használó - Legenda",
+    description: "Használd az appot 30 napon keresztül!",
+    points: 1200,
+    progress: 8,
+    total: 30,
+    icon: "📱",
+    isCompleted: false
+  },
+  {
+    id: "32",
+    title: "Értékelő",
+    description: "Értékelj 10 helyet az appban!",
+    points: 300,
+    progress: 3,
     total: 10,
-    icon: "🍻",
-    isCompleted: false,
-    expiryDate: "2025. 11. 30."
+    icon: "⭐",
+    isCompleted: false
+  },
+  {
+    id: "33",
+    title: "Fotós",
+    description: "Tölts fel 15 fotót helyekről!",
+    points: 450,
+    progress: 6,
+    total: 15,
+    icon: "📸",
+    isCompleted: false
+  },
+  {
+    id: "34",
+    title: "Check-in Bajnok",
+    description: "Végezz 25 check-int különböző helyeken!",
+    points: 750,
+    progress: 12,
+    total: 25,
+    icon: "📍",
+    isCompleted: false
   }
 ];
 
