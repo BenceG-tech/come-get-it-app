@@ -109,7 +109,7 @@ export default function ProfileScreen() {
                 <Text style={styles.favoriteName}>Café Memories</Text>
                 <Text style={styles.favoriteDescription}>Café - Tasty and cool / Ízeletes és va...</Text>
                 <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoritePrice}>879 Ft</Text>
+  
                   <Text style={styles.favoriteRating}>★ 9,2</Text>
                 </View>
               </View>
@@ -127,7 +127,7 @@ export default function ProfileScreen() {
                 <Text style={styles.favoriteName}>Essence Delicates</Text>
                 <Text style={styles.favoriteDescription}>Bistro - Fine Dining / Ízeletes és va...</Text>
                 <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoritePrice}>1200 Ft</Text>
+  
                   <Text style={styles.favoriteRating}>★ 9,5</Text>
                 </View>
               </View>
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
                 <Text style={styles.favoriteName}>Warmup Bar</Text>
                 <Text style={styles.favoriteDescription}>Pub - Student-friendly / Fiatalos és...</Text>
                 <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoritePrice}>800 Ft</Text>
+  
                   <Text style={styles.favoriteRating}>★ 8,9</Text>
                 </View>
               </View>
@@ -163,7 +163,7 @@ export default function ProfileScreen() {
                 <Text style={styles.favoriteName}>Urban Spirits</Text>
                 <Text style={styles.favoriteDescription}>Rooftop - Cocktail Bar / Elegáns és...</Text>
                 <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoritePrice}>1200 Ft</Text>
+  
                   <Text style={styles.favoriteRating}>★ 9,1</Text>
                 </View>
               </View>
@@ -221,8 +221,8 @@ export default function ProfileScreen() {
                 <View style={styles.woltBadge}>
                   <Text style={styles.woltBadgeText}>CG</Text>
                 </View>
-                <Text style={styles.recentOrderPrice}>1200 Ft</Text>
-                <Text style={styles.recentOrderDistance}>• 0,4 km</Text>
+
+                <Text style={styles.recentOrderDistance}>0,4 km</Text>
                 <Text style={styles.recentOrderRating}>• ★ 9,1</Text>
               </View>
             </View>
@@ -244,8 +244,8 @@ export default function ProfileScreen() {
                 <View style={styles.woltBadge}>
                   <Text style={styles.woltBadgeText}>CG</Text>
                 </View>
-                <Text style={styles.recentOrderPrice}>2500 Ft</Text>
-                <Text style={styles.recentOrderDistance}>• 0,6 km</Text>
+
+                <Text style={styles.recentOrderDistance}>0,6 km</Text>
                 <Text style={styles.recentOrderRating}>• ★ 9,4</Text>
               </View>
             </View>
@@ -267,8 +267,8 @@ export default function ProfileScreen() {
                 <View style={styles.woltBadge}>
                   <Text style={styles.woltBadgeText}>CG</Text>
                 </View>
-                <Text style={styles.recentOrderPrice}>800 Ft</Text>
-                <Text style={styles.recentOrderDistance}>• 1,2 km</Text>
+
+                <Text style={styles.recentOrderDistance}>1,2 km</Text>
                 <Text style={styles.recentOrderRating}>• ★ 8,8</Text>
               </View>
             </View>
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 20,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
     borderBottomColor: "#00D1FF",
     backgroundColor: "transparent",
   },
@@ -569,11 +569,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  favoritePrice: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: Colors.primary,
-  },
+
   favoriteRating: {
     fontSize: 12,
     color: Colors.textSecondary,
@@ -588,7 +584,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 20,
     paddingHorizontal: 0,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
     borderBottomColor: "#00D1FF",
     backgroundColor: "transparent",
   },
@@ -667,11 +663,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
-  recentOrderPrice: {
-    fontSize: 14,
-    color: Colors.text,
-    fontWeight: "600",
-  },
+
   recentOrderDistance: {
     fontSize: 14,
     color: Colors.textSecondary,
