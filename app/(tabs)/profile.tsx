@@ -1,10 +1,109 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, TextInput } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
+
+type SupabaseVenue = { name: string; address?: string | null };
+
+function SupabaseTestList() {
+  const [url, setUrl] = React.useState<string>("");
+  const [key, setKey] = React.useState<string>("");
+  const [venues, setVenues] = React.useState<SupabaseVenue[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    console.log("[SupabaseTestList] Start fetch", { urlLen: url.length });
+    setLoading(true);
+    setError(null);
+    setVenues([]);
+    try {
+      if (!url || !key) {
+        throw new Error("Please provide Supabase URL and anon key");
+      }
+      const endpoint = `${url.replace(/\/$/, "")}/rest/v1/venues?select=name,address&limit=5`;
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("[SupabaseTestList] HTTP error", res.status, text);
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as SupabaseVenue[];
+      console.log("[SupabaseTestList] Received", data?.length);
+      setVenues(Array.isArray(data) ? data : []);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error("[SupabaseTestList] Fetch failed", e);
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [url, key]);
+
+  return (
+    <View style={styles.supabaseSection} testID="supabase-test">
+      <Text style={styles.sectionTitle}>Supabase Venues (test)</Text>
+
+      <View style={styles.inputRow}>
+        <TextInput
+          testID="supabase-url"
+          placeholder="Supabase URL (https://xxxx.supabase.co)"
+          placeholderTextColor={Colors.textSecondary}
+          value={url}
+          onChangeText={setUrl}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={styles.input}
+        />
+      </View>
+      <View style={styles.inputRow}>
+        <TextInput
+          testID="supabase-key"
+          placeholder="Anon key"
+          placeholderTextColor={Colors.textSecondary}
+          value={key}
+          onChangeText={setKey}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          style={styles.input}
+        />
+      </View>
+
+      <TouchableOpacity onPress={load} style={styles.loadBtn} testID="load-venues">
+        <Text style={styles.loadBtnText}>{loading ? "Betöltés..." : "Load Venues"}</Text>
+      </TouchableOpacity>
+
+      {error ? (
+        <Text style={styles.errorText} testID="error-text">{error}</Text>
+      ) : null}
+
+      <View style={styles.venueList}>
+        {venues.map((v, idx) => (
+          <View key={`${v.name}-${idx}`} style={styles.venueItem} testID={`venue-${idx}`}>
+            <Text style={styles.venueName}>{v.name ?? "-"}</Text>
+            <Text style={styles.venueAddress}>{v.address ?? ""}</Text>
+          </View>
+        ))}
+        {!loading && venues.length === 0 && !error ? (
+          <Text style={styles.hintText} testID="hint-text">Enter URL and key, then Load Venues</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+import * as React from "react";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -274,6 +373,8 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        <SupabaseTestList />
       </ScrollView>
     </View>
   );
@@ -653,5 +754,66 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 153, 204, 0.2)",
     opacity: 0.3,
     borderRadius: 12,
+  },
+
+  supabaseSection: {
+    marginTop: 8,
+    marginBottom: 40,
+    paddingHorizontal: 12,
+  },
+  inputRow: {
+    marginBottom: 10,
+  },
+  input: {
+    borderWidth: 0.5,
+    borderColor: Colors.primary,
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: Colors.text,
+    backgroundColor: "transparent",
+  },
+  loadBtn: {
+    alignSelf: "flex-start",
+    backgroundColor: "#02384D",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 4,
+    marginTop: 6,
+    marginBottom: 12,
+  },
+  loadBtnText: {
+    color: Colors.primary,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  errorText: {
+    color: Colors.error,
+    marginBottom: 8,
+  },
+  hintText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    marginTop: 6,
+  },
+  venueList: {
+    marginTop: 4,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.primary,
+  },
+  venueItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.primary,
+  },
+  venueName: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  venueAddress: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
   },
 });
