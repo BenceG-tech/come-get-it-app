@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, RefreshControl } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Search, MapPin, Filter } from "lucide-react-native";
@@ -7,7 +7,9 @@ import * as Location from "expo-location";
 import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
-import { venues } from "@/data/venues";
+import { rest } from "@/lib/supabaseRest";
+
+type SupaVenue = { id: string; name: string; address?: string | null; plan?: string | null; website_url?: string | null; is_paused?: boolean | null };
 
 export default function BarsScreen() {
   const router = useRouter();
@@ -88,6 +90,42 @@ export default function BarsScreen() {
     )
   );
 
+  const [list, setList] = useState<SupaVenue[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const load = useCallback(async () => {
+    console.info('[SupabaseMobile] Load venues list');
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await rest('/venues?select=id,name,address,plan,website_url,is_paused&order=created_at.desc&limit=20');
+      const venues = (await res.json()) as SupaVenue[];
+      setList(Array.isArray(venues) ? venues : []);
+      console.info('[SupabaseMobile] Loaded venues', Array.isArray(venues) ? venues.length : 0);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      console.error('[SupabaseMobile] Load error', e);
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -95,11 +133,43 @@ export default function BarsScreen() {
       
       <View style={styles.content}>
         {renderLocationPrompt()}
-        
+        {error ? (
+          <Text style={styles.locationPromptText}>{error}</Text>
+        ) : null}
+        {!loading && list.length === 0 && !error ? (
+          <Text style={styles.locationPromptText}>No venues yet</Text>
+        ) : null}
         <FlatList
-          data={venues}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <VenueCard venue={item} />}
+          data={list}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => (
+            <VenueCard
+              venue={{
+                id: String(item.id),
+                name: item.name ?? '-',
+                description: '',
+                image: 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=1200&auto=format&fit=crop',
+                address: item.address ?? '-',
+                latitude: 47.4979,
+                longitude: 19.0402,
+                tags: ['bar'],
+                category: 'Bar',
+                isOpen: true,
+                phone: undefined,
+                website: item.website_url ?? undefined,
+                offers: [],
+                priceLevel: '$' as const,
+                location: { city: 'Budapest', distance: '0.5' },
+                freeDrink: {
+                  name: 'Welcome Beer',
+                  description: 'Redeem a free welcome beer.',
+                  image: 'https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?q=80&w=1200&auto=format&fit=crop',
+                  ingredients: 'Barley, hops, water, yeast',
+                },
+              }}
+            />
+          )}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.venueList}
         />

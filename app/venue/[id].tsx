@@ -3,29 +3,91 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal
 import { useLocalSearchParams, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { X, Star, Clock } from 'lucide-react-native';
-import { useVenueStore } from '@/hooks/useVenueStore';
+import { rest } from '@/lib/supabaseRest';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 
 export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getVenueById } = useVenueStore();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
-  
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (id) {
-      const venueData = getVenueById(id.toString());
-      if (venueData) {
-        setVenue(venueData);
+    const load = async () => {
+      if (!id) return;
+      try {
+        console.info('[SupabaseMobile] Load venue detail', id);
+        const venueRes = await rest(`/venues?id=eq.${id}&select=*`);
+        const venueArr = (await venueRes.json()) as any[];
+        const v = venueArr?.[0];
+
+        const windowsRes = await rest(`/free_drink_windows?venue_id=eq.${id}&select=*`);
+        const windows = await windowsRes.json();
+
+        const rewardsRes = await rest(`/rewards?venue_id=eq.${id}&select=*`);
+        const rewards = await rewardsRes.json();
+
+        if (!v) {
+          setError('Not found');
+          setLoading(false);
+          return;
+        }
+
+        const mapped: Venue = {
+          id: String(v.id),
+          name: v.name ?? '-',
+          description: v.description ?? '',
+          image: v.image_url ?? 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=1200&auto=format&fit=crop',
+          address: v.address ?? '-',
+          latitude: v.latitude ?? 47.4979,
+          longitude: v.longitude ?? 19.0402,
+          tags: Array.isArray(v.tags) ? v.tags : ['bar'],
+          category: v.category ?? 'Bar',
+          isOpen: true,
+          phone: v.phone ?? undefined,
+          website: v.website_url ?? undefined,
+          offers: [],
+          priceLevel: '$' as const,
+          location: { city: v.city ?? 'Budapest', distance: '0.5' },
+          freeDrink: {
+            name: v.free_drink_name ?? 'Welcome Beer',
+            description: v.free_drink_description ?? 'Redeem a free welcome beer.',
+            image: v.free_drink_image_url ?? 'https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?q=80&w=1200&auto=format&fit=crop',
+            ingredients: 'Barley, hops, water, yeast',
+          },
+        };
+
+        console.info('[SupabaseMobile] Windows', Array.isArray(windows) ? windows.length : 0);
+        console.info('[SupabaseMobile] Rewards', Array.isArray(rewards) ? rewards.length : 0);
+
+        setVenue(mapped);
+        setLoading(false);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        console.error('[SupabaseMobile] Detail error', e);
+        setError(msg);
+        setLoading(false);
       }
-    }
-  }, [id, getVenueById]);
+    };
+    load();
+  }, [id]);
   
-  if (!venue) {
+  if (loading) {
     return (
       <View style={styles.container}>
         <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+  if (error || !venue) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>{error ?? 'No venue found'}</Text>
+        <TouchableOpacity style={styles.directionsButton} onPress={() => router.back()}>
+          <Text style={styles.directionsText}>Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }

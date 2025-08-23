@@ -6,97 +6,54 @@ import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 
-type SupabaseVenue = { name: string; address?: string | null };
+type SupabaseVenue = { id: string | number; name: string; address?: string | null };
 
+import { rest } from "@/lib/supabaseRest";
 function SupabaseTestList() {
-  const [url, setUrl] = React.useState<string>("");
-  const [key, setKey] = React.useState<string>("");
   const [venues, setVenues] = React.useState<SupabaseVenue[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
-    console.log("[SupabaseTestList] Start fetch", { urlLen: url.length });
+    console.info("[SupabaseMobile] Loading test venues...");
     setLoading(true);
     setError(null);
     setVenues([]);
     try {
-      if (!url || !key) {
-        throw new Error("Please provide Supabase URL and anon key");
-      }
-      const endpoint = `${url.replace(/\/$/, "")}/rest/v1/venues?select=name,address&limit=5`;
-      const res = await fetch(endpoint, {
-        method: "GET",
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          Accept: "application/json",
-        },
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("[SupabaseTestList] HTTP error", res.status, text);
-        throw new Error(`HTTP ${res.status}`);
-      }
+      const res = await rest('/venues?select=id,name,address&order=created_at.desc&limit=5');
       const data = (await res.json()) as SupabaseVenue[];
-      console.log("[SupabaseTestList] Received", data?.length);
+      console.info("[SupabaseMobile] Received", Array.isArray(data) ? data.length : 0);
       setVenues(Array.isArray(data) ? data : []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
-      console.error("[SupabaseTestList] Fetch failed", e);
+      console.error("[SupabaseMobile] Fetch failed", e);
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, [url, key]);
+  }, []);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <View style={styles.supabaseSection} testID="supabase-test">
       <Text style={styles.sectionTitle}>Supabase Venues (test)</Text>
-
-      <View style={styles.inputRow}>
-        <TextInput
-          testID="supabase-url"
-          placeholder="Supabase URL (https://xxxx.supabase.co)"
-          placeholderTextColor={Colors.textSecondary}
-          value={url}
-          onChangeText={setUrl}
-          autoCapitalize="none"
-          autoCorrect={false}
-          style={styles.input}
-        />
-      </View>
-      <View style={styles.inputRow}>
-        <TextInput
-          testID="supabase-key"
-          placeholder="Anon key"
-          placeholderTextColor={Colors.textSecondary}
-          value={key}
-          onChangeText={setKey}
-          autoCapitalize="none"
-          autoCorrect={false}
-          secureTextEntry
-          style={styles.input}
-        />
-      </View>
-
-      <TouchableOpacity onPress={load} style={styles.loadBtn} testID="load-venues">
-        <Text style={styles.loadBtnText}>{loading ? "Betöltés..." : "Load Venues"}</Text>
-      </TouchableOpacity>
-
+      {loading ? <Text style={styles.hintText}>Loading...</Text> : null}
       {error ? (
         <Text style={styles.errorText} testID="error-text">{error}</Text>
       ) : null}
 
       <View style={styles.venueList}>
-        {venues.map((v, idx) => (
-          <View key={`${v.name}-${idx}`} style={styles.venueItem} testID={`venue-${idx}`}>
+        {venues.map((v) => (
+          <View key={String(v.id)} style={styles.venueItem} testID={`venue-${String(v.id)}`}>
             <Text style={styles.venueName}>{v.name ?? "-"}</Text>
             <Text style={styles.venueAddress}>{v.address ?? ""}</Text>
           </View>
         ))}
         {!loading && venues.length === 0 && !error ? (
-          <Text style={styles.hintText} testID="hint-text">Enter URL and key, then Load Venues</Text>
+          <Text style={styles.hintText} testID="hint-text">No venues yet</Text>
         ) : null}
       </View>
     </View>
@@ -762,30 +719,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   inputRow: {
-    marginBottom: 10,
+    marginBottom: 0,
   },
   input: {
-    borderWidth: 0.5,
-    borderColor: Colors.primary,
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: Colors.text,
-    backgroundColor: "transparent",
+    display: 'none',
   },
   loadBtn: {
-    alignSelf: "flex-start",
-    backgroundColor: "#02384D",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 4,
-    marginTop: 6,
-    marginBottom: 12,
+    display: 'none',
   },
   loadBtnText: {
-    color: Colors.primary,
-    fontWeight: "700",
-    fontSize: 14,
+    display: 'none',
   },
   errorText: {
     color: Colors.error,
