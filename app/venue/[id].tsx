@@ -7,9 +7,16 @@ import { rest } from '@/lib/supabaseRest';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 
+type Window = { days: string | null; start_time: string | null; end_time: string | null; timezone: string | null };
+ type Reward = { id: string; name: string | null; points_required: number | null; valid_until: string | null; active: boolean | null; image_url: string | null };
+
+const placeholder = require('../../assets/images/splash-icon.png');
+
 export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [venue, setVenue] = useState<Venue | null>(null);
+  const [windows, setWindows] = useState<Window[]>([]);
+  const [rewards, setRewards] = useState<Reward[]>([]);
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,15 +26,15 @@ export default function VenueModalScreen() {
       if (!id) return;
       try {
         console.info('[SupabaseMobile] Load venue detail', id);
-        const venueRes = await rest(`/venues?id=eq.${id}&select=*`);
-        const venueArr = (await venueRes.json()) as any[];
-        const v = venueArr?.[0];
+        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url`);
+        const venueArr = (await venueRes.json()) as Venue[];
+        const v = venueArr?.[0] ?? null;
 
-        const windowsRes = await rest(`/free_drink_windows?venue_id=eq.${id}&select=*`);
-        const windows = await windowsRes.json();
+        const windowsRes = await rest(`/free_drink_windows?venue_id=eq.${id}&select=days,start_time,end_time,timezone`);
+        const win = (await windowsRes.json()) as Window[];
 
-        const rewardsRes = await rest(`/rewards?venue_id=eq.${id}&select=*`);
-        const rewards = await rewardsRes.json();
+        const rewardsRes = await rest(`/rewards?venue_id=eq.${id}&select=id,name,points_required,valid_until,active,image_url`);
+        const rws = (await rewardsRes.json()) as Reward[];
 
         if (!v) {
           setError('Not found');
@@ -35,34 +42,11 @@ export default function VenueModalScreen() {
           return;
         }
 
-        const mapped: Venue = {
-          id: String(v.id),
-          name: v.name ?? '-',
-          description: v.description ?? '',
-          image: v.image_url ?? 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=1200&auto=format&fit=crop',
-          address: v.address ?? '-',
-          latitude: v.latitude ?? 47.4979,
-          longitude: v.longitude ?? 19.0402,
-          tags: Array.isArray(v.tags) ? v.tags : ['bar'],
-          category: v.category ?? 'Bar',
-          isOpen: true,
-          phone: v.phone ?? undefined,
-          website: v.website_url ?? undefined,
-          offers: [],
-          priceLevel: '$' as const,
-          location: { city: v.city ?? 'Budapest', distance: '0.5' },
-          freeDrink: {
-            name: v.free_drink_name ?? 'Welcome Beer',
-            description: v.free_drink_description ?? 'Redeem a free welcome beer.',
-            image: v.free_drink_image_url ?? 'https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?q=80&w=1200&auto=format&fit=crop',
-            ingredients: 'Barley, hops, water, yeast',
-          },
-        };
-
-        console.info('[SupabaseMobile] Windows', Array.isArray(windows) ? windows.length : 0);
-        console.info('[SupabaseMobile] Rewards', Array.isArray(rewards) ? rewards.length : 0);
-
-        setVenue(mapped);
+        setVenue(v);
+        setWindows(Array.isArray(win) ? win : []);
+        setRewards(Array.isArray(rws) ? rws : []);
+        console.info('[SupabaseMobile] Windows', win?.length ?? 0);
+        console.info('[SupabaseMobile] Rewards', rws?.length ?? 0);
         setLoading(false);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Unknown error';
@@ -84,7 +68,7 @@ export default function VenueModalScreen() {
   if (error || !venue) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>{error ?? 'No venue found'}</Text>
+        <Text style={[styles.loadingText, { color: 'red' }]}>{error ?? 'No venue found'}</Text>
         <TouchableOpacity style={styles.directionsButton} onPress={() => router.back()}>
           <Text style={styles.directionsText}>Back</Text>
         </TouchableOpacity>
@@ -92,6 +76,9 @@ export default function VenueModalScreen() {
     );
   }
   
+  const headerImage = venue.hero_image_url ?? venue.image_url ?? null;
+  const firstReward = rewards[0];
+
   return (
     <Modal
       animationType="slide"
@@ -103,7 +90,7 @@ export default function VenueModalScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: venue.image }}
+              source={headerImage ? { uri: headerImage } : placeholder}
               style={styles.image}
               contentFit="cover"
             />
@@ -116,11 +103,7 @@ export default function VenueModalScreen() {
             </TouchableOpacity>
             
             <View style={styles.locationBadge}>
-              <Text style={styles.locationText}>{venue.location.city}</Text>
-            </View>
-            
-            <View style={styles.distanceBadge}>
-              <Text style={styles.distanceText}>{venue.location.distance || '0.3'} km</Text>
+              <Text style={styles.locationText}>{venue.address}</Text>
             </View>
           </View>
           
@@ -133,10 +116,10 @@ export default function VenueModalScreen() {
             </View>
             
             <Text style={styles.venueCategory}>
-              {venue.category} • {venue.tags[0]} • {venue.location.city}
+              {venue.address}
             </Text>
             
-            <Text style={styles.description}>{venue.description}</Text>
+            <Text style={styles.description}>{venue.description ?? ''}</Text>
             
             <View style={styles.hoursSection}>
               <View style={styles.hoursHeader}>
@@ -148,10 +131,10 @@ export default function VenueModalScreen() {
             
             <View style={styles.drinkSection}>
               <Text style={styles.drinkTitle}>Ingyen ital</Text>
-              <Text style={styles.drinkName}>{venue.freeDrink.name}</Text>
+              <Text style={styles.drinkName}>{firstReward?.name ?? 'Welcome Drink'}</Text>
               
               <Image
-                source={{ uri: venue.freeDrink.image }}
+                source={firstReward?.image_url ? { uri: firstReward.image_url } : placeholder}
                 style={styles.drinkImage}
                 contentFit="cover"
               />
@@ -159,22 +142,31 @@ export default function VenueModalScreen() {
               <Text style={styles.drinkAvailability}>Az ital az alábbi idő pontokban elérhető</Text>
               
               <View style={styles.timeSlots}>
-                {['Hét', 'Ked', 'Sze', 'Csü', 'Pén', 'Szo'].map((day, index) => (
-                  <View key={day} style={styles.timeSlot}>
-                    <Text style={styles.dayText}>{day}</Text>
-                    <Text style={styles.timeText}>11:00-23:00</Text>
-                  </View>
-                ))}
+                {windows.length > 0 ? (
+                  windows.map((w, idx) => (
+                    <View key={`${idx}`} style={styles.timeSlot}>
+                      <Text style={styles.dayText}>{w.days ?? ''}</Text>
+                      <Text style={styles.timeText}>{`${w.start_time ?? ''}-${w.end_time ?? ''}`}</Text>
+                    </View>
+                  ))
+                ) : (
+                  ['Hét', 'Ked', 'Sze', 'Csü', 'Pén', 'Szo'].map((day) => (
+                    <View key={day} style={styles.timeSlot}>
+                      <Text style={styles.dayText}>{day}</Text>
+                      <Text style={styles.timeText}>11:00-23:00</Text>
+                    </View>
+                  ))
+                )}
               </View>
             </View>
             
             <View style={styles.aboutSection}>
               <Text style={styles.aboutTitle}>Az italról</Text>
-              <Text style={styles.aboutText}>{venue.freeDrink.description}</Text>
+              <Text style={styles.aboutText}>{firstReward?.name ?? 'Ingyen ital a helyszínen.'}</Text>
               
               <Text style={styles.ingredientsTitle}>Ingredients</Text>
               <Text style={styles.ingredientsText}>
-                {venue.freeDrink.ingredients}
+                -
               </Text>
             </View>
             
@@ -201,7 +193,7 @@ export default function VenueModalScreen() {
       <RedeemModal 
         visible={showRedeemModal} 
         onClose={() => setShowRedeemModal(false)}
-        venue={venue}
+        rewardImage={firstReward?.image_url ?? null}
       />
     </Modal>
   );
@@ -210,10 +202,10 @@ export default function VenueModalScreen() {
 interface RedeemModalProps {
   visible: boolean;
   onClose: () => void;
-  venue: Venue;
+  rewardImage: string | null;
 }
 
-function RedeemModal({ visible, onClose, venue }: RedeemModalProps) {
+function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
   return (
     <Modal
       animationType="slide"
@@ -224,7 +216,7 @@ function RedeemModal({ visible, onClose, venue }: RedeemModalProps) {
       <View style={redeemStyles.overlay}>
         <View style={redeemStyles.container}>
           <Image
-            source={{ uri: venue.freeDrink.image }}
+            source={rewardImage ? { uri: rewardImage } : placeholder}
             style={redeemStyles.drinkImage}
             contentFit="cover"
           />

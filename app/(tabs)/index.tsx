@@ -8,8 +8,9 @@ import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
 import { rest } from "@/lib/supabaseRest";
+import { Venue } from '@/types/venue';
 
-type SupaVenue = { id: string; name: string; address?: string | null; plan?: string | null; website_url?: string | null; is_paused?: boolean | null };
+type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at'> & { website_url?: string | null; is_paused?: boolean | null };
 
 export default function BarsScreen() {
   const router = useRouter();
@@ -100,7 +101,7 @@ export default function BarsScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await rest('/venues?select=id,name,address,plan,website_url,is_paused&order=created_at.desc&limit=20');
+      const res = await rest('/venues?select=id,name,address,image_url,plan,created_at&order=created_at.desc&limit=50');
       const venues = (await res.json()) as SupaVenue[];
       setList(Array.isArray(venues) ? venues : []);
       console.info('[SupabaseMobile] Loaded venues', Array.isArray(venues) ? venues.length : 0);
@@ -137,7 +138,7 @@ export default function BarsScreen() {
           <Text style={styles.locationPromptText}>{error}</Text>
         ) : null}
         {!loading && list.length === 0 && !error ? (
-          <Text style={styles.locationPromptText}>No venues yet</Text>
+          <Text style={styles.locationPromptText}>Nincs még helyszín</Text>
         ) : null}
         <FlatList
           data={list}
@@ -147,26 +148,11 @@ export default function BarsScreen() {
               venue={{
                 id: String(item.id),
                 name: item.name ?? '-',
-                description: '',
-                image: 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=1200&auto=format&fit=crop',
                 address: item.address ?? '-',
-                latitude: 47.4979,
-                longitude: 19.0402,
-                tags: ['bar'],
-                category: 'Bar',
-                isOpen: true,
-                phone: undefined,
-                website: item.website_url ?? undefined,
-                offers: [],
-                priceLevel: '$' as const,
-                location: { city: 'Budapest', distance: '0.5' },
-                freeDrink: {
-                  name: 'Welcome Beer',
-                  description: 'Redeem a free welcome beer.',
-                  image: 'https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?q=80&w=1200&auto=format&fit=crop',
-                  ingredients: 'Barley, hops, water, yeast',
-                },
-              }}
+                image_url: item.image_url ?? null,
+                plan: (item.plan as 'basic' | 'standard' | 'premium' | undefined) ?? undefined,
+                created_at: item.created_at ?? undefined,
+              } as Venue as any}
             />
           )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

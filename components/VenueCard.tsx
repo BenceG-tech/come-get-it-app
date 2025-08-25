@@ -19,14 +19,9 @@ export default function VenueCard({ venue }: VenueCardProps) {
     router.push(`/venue/${venue.id}`);
   };
 
-  // Calculate price level as number for dollar signs
-  const getPriceLevel = (priceLevel?: string): number => {
-    if (!priceLevel) return 2;
-    return priceLevel.length; // $ = 1, $ = 2, $$ = 3, $$ = 4
-  };
-
-  const priceNum = getPriceLevel(venue.priceLevel);
-  const rating = 4; // Default rating since it's not in the venue type
+  const placeholder = require('../assets/images/splash-icon.png');
+  const imageSource = venue.image_url ? { uri: venue.image_url } : placeholder;
+  const rating = 4;
 
   return (
     <TouchableOpacity 
@@ -35,35 +30,28 @@ export default function VenueCard({ venue }: VenueCardProps) {
       activeOpacity={0.9}
       testID={`venue-card-${venue.id}`}
     >
-      {/* Venue Image */}
       <Image
-        source={{ uri: venue.image }}
+        source={imageSource}
         style={styles.venueImage}
         contentFit="cover"
       />
 
-      {/* Overlay: Location Badge */}
       <View style={styles.locationBadge}>
         <Text style={styles.locationBadgeText}>Budapest</Text>
       </View>
 
-      {/* Overlay: Venue Info Bar */}
       <View style={styles.venueOverlay}>
         <View style={styles.venueInfo}>
-          {/* Venue Name */}
           <Text style={styles.venueName}>{venue.name}</Text>
-          {/* Points */}
           <View style={styles.earnPointsContainer}>
             <Star size={16} color={Colors.primary} fill={Colors.primary} />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
           </View>
-          {/* Category/Tags */}
           <Text style={styles.venueCategory}>
-            {venue.category} • {venue.tags[0]} • {venue.location.city}
+            {venue.address}
           </Text>
         </View>
 
-        {/* Right Side: Drink, Rating, Price */}
         <View style={styles.venueRightInfo}>
           <Text style={styles.drinkAvailable}>Ingyen Ital Elérhető</Text>
           <View style={styles.ratingContainer}>
@@ -82,7 +70,7 @@ export default function VenueCard({ venue }: VenueCardProps) {
                 key={dollar} 
                 style={[
                   styles.dollarSign,
-                  dollar <= priceNum ? styles.dollarActive : styles.dollarInactive
+                  dollar <= 2 ? styles.dollarActive : styles.dollarInactive
                 ]}
               >
                 $
