@@ -102,7 +102,10 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         
         {/* Blue action row */}
         <TouchableOpacity style={styles.earnPointsButton} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-          <Text style={styles.earnPointsText}>⭐ Szerezz pontokat</Text>
+          <View style={styles.earnPointsContent}>
+            <Star size={14} color="#2BB7FF" fill="#2BB7FF" />
+            <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
+          </View>
         </TouchableOpacity>
         
         {/* Meta row */}
@@ -116,14 +119,14 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const cardWidth = screenWidth - 32; // 16px padding on each side
+const cardWidth = screenWidth; // Full width, edge-to-edge
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#0E0E10',
-    marginHorizontal: 16,
+    marginHorizontal: 0, // Edge-to-edge
     marginBottom: 16,
-    borderRadius: 18,
+    borderRadius: 0, // No border radius for edge-to-edge
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -139,8 +142,8 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderTopLeftRadius: 0, // No radius for edge-to-edge
+    borderTopRightRadius: 0,
   },
   imageGradient: {
     position: 'absolute' as const,
@@ -199,13 +202,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   contentContainer: {
-    padding: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10, // More compact
   },
   titleRow: {
     flexDirection: 'row' as const,
     justifyContent: 'space-between',
     alignItems: 'center' as const,
-    marginBottom: 6,
+    marginBottom: 4, // More compact
   },
   venueName: {
     fontSize: 22,
@@ -216,7 +220,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   earnPointsButton: {
-    marginBottom: 6,
+    marginBottom: 4, // More compact
+  },
+  earnPointsContent: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
   },
   earnPointsText: {
     fontSize: 15,
