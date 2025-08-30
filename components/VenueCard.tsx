@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Dimensions } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
@@ -12,9 +12,26 @@ type VenueCardProps = {
 
 export default function VenueCard({ venue, showRating = true }: VenueCardProps) {
   const router = useRouter();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const openVenueDetails = () => {
     router.push(`/venue/${venue.id}`);
+  };
+
+  const handlePressIn = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0.98,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
   };
 
   const placeholderUri = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600';
@@ -24,23 +41,25 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const renderStars = () => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
-      stars.push(<Star key={i} size={14} color="#FFD84D" fill="#FFD84D" />);
+      stars.push(<Star key={i} size={16} color="#FFD646" fill="#FFD646" />);
     }
     return stars;
   };
 
-  // Generate price tier display
-  const getPriceTier = () => {
-    return '$··';
-  };
+
 
   return (
-    <TouchableOpacity 
-      style={styles.container} 
-      onPress={openVenueDetails}
-      activeOpacity={0.95}
-      testID={`venue-card-${venue.id}`}
-    >
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
+      <TouchableOpacity 
+        style={styles.container} 
+        onPress={openVenueDetails}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        accessibilityRole="button"
+        accessibilityLabel={`${venue.name} kártya`}
+        testID={`venue-card-${venue.id}`}
+      >
       {/* Image section with overlays */}
       <View style={styles.imageContainer}>
         <Image
@@ -51,7 +70,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         
         {/* Gradient overlay at bottom of image */}
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.35)']}
+          colors={['transparent', 'rgba(0,0,0,0.4)']}
           style={styles.imageGradient}
         />
         
@@ -71,56 +90,57 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
       
       {/* Content section below image */}
       <View style={styles.contentContainer}>
-        {/* Title */}
-        <Text style={styles.venueName} numberOfLines={1}>
-          {venue.name}
-        </Text>
-        
-        {/* Meta row 1: Earn points link + Rating */}
-        <View style={styles.metaRow}>
-          <TouchableOpacity style={styles.earnPointsButton}>
-            <Text style={styles.earnPointsText}>⭐ Szerezz pontokat</Text>
-          </TouchableOpacity>
+        {/* Title row with rating */}
+        <View style={styles.titleRow}>
+          <Text style={styles.venueName} numberOfLines={1}>
+            {venue.name}
+          </Text>
           <View style={styles.stars}>
             {renderStars()}
           </View>
         </View>
         
-        {/* Meta row 2: Category/Address + Price */}
-        <View style={styles.metaRow}>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            Pub • Ingyen ital • Pontszerzés
-          </Text>
-          <Text style={styles.priceTier}>
-            {getPriceTier()}
-          </Text>
-        </View>
+        {/* Blue action row */}
+        <TouchableOpacity style={styles.earnPointsButton} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+          <Text style={styles.earnPointsText}>⭐ Szerezz pontokat</Text>
+        </TouchableOpacity>
+        
+        {/* Meta row */}
+        <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
+          Pub • {venue.address || 'Budapest'} • Pontszerzés
+        </Text>
       </View>
     </TouchableOpacity>
+    </Animated.View>
   );
 }
 
+const { width: screenWidth } = Dimensions.get('window');
+const cardWidth = screenWidth - 32; // 16px padding on each side
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0B0B0B',
+    backgroundColor: '#0E0E10',
     marginHorizontal: 16,
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 8,
   },
   imageContainer: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    height: Math.round(cardWidth * 9 / 16),
     position: 'relative' as const,
   },
   image: {
     width: '100%',
     height: '100%',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
   },
   imageGradient: {
     position: 'absolute' as const,
@@ -136,11 +156,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 18,
+    borderRadius: 20,
   },
   cityPillText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
+    fontSize: 12.5,
+    fontWeight: '500' as const,
     color: '#111',
   },
   freeDrinkBadge: {
@@ -149,60 +169,59 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    height: 36,
+    backgroundColor: 'rgba(17, 17, 17, 0.65)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 24,
+    paddingVertical: 8,
+    borderRadius: 22,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   badgeIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#1a1a1a',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFD646',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     marginRight: 8,
   },
   badgeIconText: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: 'bold' as const,
-    color: 'white',
+    color: '#111',
   },
   freeDrinkText: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600' as const,
-    color: '#1a1a1a',
+    color: '#FFFFFF',
   },
   contentContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 12,
+    padding: 14,
+  },
+  titleRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between',
+    alignItems: 'center' as const,
+    marginBottom: 6,
   },
   venueName: {
     fontSize: 22,
     fontWeight: '800' as const,
     color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  metaRow: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between',
-    alignItems: 'center' as const,
-    marginTop: 4,
+    letterSpacing: -0.3,
+    flex: 1,
+    marginRight: 8,
   },
   earnPointsButton: {
-    paddingVertical: 2,
+    marginBottom: 6,
   },
   earnPointsText: {
     fontSize: 15,
-    fontWeight: '600' as const,
-    color: '#00B5FF',
+    fontWeight: '500' as const,
+    color: '#2BB7FF',
   },
   stars: {
     flexDirection: 'row' as const,
@@ -210,11 +229,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: '#A7A7A7',
-  },
-  priceTier: {
-    fontSize: 14,
-    color: '#A7A7A7',
-    fontWeight: '500' as const,
+    color: '#A6A6AD',
+    lineHeight: 18,
   },
 });

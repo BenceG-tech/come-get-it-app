@@ -286,7 +286,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   venueList: {
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   errorContainer: {
     padding: 20,
