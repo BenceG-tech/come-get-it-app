@@ -183,12 +183,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
     position: "relative",
+    height: 60,
   },
   logoImage: {
-    width: 150,
-    height: 40,
+    width: 200,
+    height: 60,
+    resizeMode: 'contain' as const,
   },
   logoText: {
     fontSize: 32,
