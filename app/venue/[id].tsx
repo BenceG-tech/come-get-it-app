@@ -1,16 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Linking } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Image } from 'expo-image';
-import { X, Star, Clock } from 'lucide-react-native';
+import { X, Star, Clock, MapPin } from 'lucide-react-native';
 import { rest } from '@/lib/supabaseRest';
 import Colors from '@/constants/colors';
-import { Venue } from '@/types/venue';
+import { Venue, OpeningHours } from '@/types/venue';
 
 type Window = { days: string | null; start_time: string | null; end_time: string | null; timezone: string | null };
  type Reward = { id: string; name: string | null; points_required: number | null; valid_until: string | null; active: boolean | null; image_url: string | null };
 
 const placeholder = require('../../assets/images/splash-icon.png');
+
+function renderOpeningHours(hours: OpeningHours | null | undefined) {
+  if (!hours) return null;
+  
+  const days = [
+    { key: 'monday', label: 'Hétfő' },
+    { key: 'tuesday', label: 'Kedd' },
+    { key: 'wednesday', label: 'Szerda' },
+    { key: 'thursday', label: 'Csütörtök' },
+    { key: 'friday', label: 'Péntek' },
+    { key: 'saturday', label: 'Szombat' },
+    { key: 'sunday', label: 'Vasárnap' },
+  ];
+  
+  return (
+    <View style={styles.hoursDetails}>
+      {days.map(({ key, label }) => {
+        const dayHours = hours[key as keyof OpeningHours];
+        return (
+          <View key={key} style={styles.hoursRow}>
+            <Text style={styles.hoursDay}>{label}</Text>
+            <Text style={styles.hoursTime}>
+              {dayHours?.closed ? 'Zárva' : dayHours ? `${dayHours.open} - ${dayHours.close}` : '09:00 - 23:00'}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,7 +56,7 @@ export default function VenueModalScreen() {
       if (!id) return;
       try {
         console.info('[SupabaseMobile] Load venue detail', id);
-        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url`);
+        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url,participates_in_points,points_per_visit,opening_hours,google_maps_url,distance`);
         const venueArr = (await venueRes.json()) as Venue[];
         const v = venueArr?.[0] ?? null;
 
@@ -109,14 +139,25 @@ export default function VenueModalScreen() {
           
           <View style={styles.content}>
             <Text style={styles.venueName}>{venue.name}</Text>
+            <Text style={styles.distanceText}>{venue.distance ? `${venue.distance}m` : '300m'}</Text>
             
-            <View style={styles.earnPointsContainer}>
-              <Star size={16} color={Colors.dark.primary} fill={Colors.dark.primary} />
-              <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
-            </View>
+            {venue.participates_in_points !== false && (
+              <View style={styles.pointsBanner}>
+                <View style={styles.pointsBannerContent}>
+                  <View style={styles.pointsRow}>
+                    <Star size={20} color={Colors.text} fill={Colors.text} />
+                    <Text style={styles.pointsTitle}>SZEREZZ PONTOKAT</Text>
+                  </View>
+                  <Text style={styles.pointsDescription}>
+                    Ha itt fogyasztasz, gyűjthetsz a pontjaid,
+                    melyeket értékes jutalmakra válthatsz.
+                  </Text>
+                </View>
+              </View>
+            )}
             
             <Text style={styles.venueCategory}>
-              {venue.address}
+              Pub • {venue.address}
             </Text>
             
             <Text style={styles.description}>{venue.description ?? ''}</Text>
@@ -126,6 +167,9 @@ export default function VenueModalScreen() {
                 <Clock size={16} color={Colors.dark.text} />
                 <Text style={styles.hoursTitle}>Nyitva</Text>
                 <Text style={styles.hoursTime}>Zárás 23:00</Text>
+              </View>
+              <View style={styles.hoursDetails}>
+                {renderOpeningHours(venue.opening_hours)}
               </View>
             </View>
             
@@ -164,9 +208,9 @@ export default function VenueModalScreen() {
               <Text style={styles.aboutTitle}>Az italról</Text>
               <Text style={styles.aboutText}>{firstReward?.name ?? 'Ingyen ital a helyszínen.'}</Text>
               
-              <Text style={styles.ingredientsTitle}>Ingredients</Text>
+              <Text style={styles.ingredientsTitle}>Összetevők</Text>
               <Text style={styles.ingredientsText}>
-                -
+                Vodka, Lime juice, Ginger beer, Menta
               </Text>
             </View>
             
@@ -463,6 +507,47 @@ const styles = StyleSheet.create({
     color: Colors.dark.background,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  pointsBanner: {
+    backgroundColor: Colors.dark.primary,
+    marginHorizontal: -20,
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 16,
+  },
+  pointsBannerContent: {
+    alignItems: 'center',
+  },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  pointsTitle: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  pointsDescription: {
+    color: Colors.text,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+    opacity: 0.9,
+  },
+  hoursDetails: {
+    marginTop: 12,
+  },
+  hoursRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  hoursDay: {
+    color: Colors.dark.text,
+    fontSize: 14,
   },
 });
 

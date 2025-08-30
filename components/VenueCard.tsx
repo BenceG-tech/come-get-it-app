@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from "expo-router";
-import { Star } from 'lucide-react-native';
+import { Star, Filter } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from "@/types/venue";
 
@@ -21,7 +21,7 @@ export default function VenueCard({ venue }: VenueCardProps) {
 
   const placeholder = require('../assets/images/splash-icon.png');
   const imageSource = venue.image_url ? { uri: venue.image_url } : placeholder;
-  const rating = 4;
+
 
   return (
     <TouchableOpacity 
@@ -40,43 +40,21 @@ export default function VenueCard({ venue }: VenueCardProps) {
         <Text style={styles.locationBadgeText}>Budapest</Text>
       </View>
 
+      <View style={styles.drinkBadge}>
+        <Filter size={14} color={Colors.text} />
+        <Text style={styles.drinkBadgeText}>Ingyen Ital Elérhető</Text>
+      </View>
+
       <View style={styles.venueOverlay}>
         <View style={styles.venueInfo}>
           <Text style={styles.venueName}>{venue.name}</Text>
           <View style={styles.earnPointsContainer}>
-            <Star size={16} color={Colors.primary} fill={Colors.primary} />
+            <Star size={14} color={Colors.primary} fill={Colors.primary} />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
           </View>
           <Text style={styles.venueCategory}>
-            {venue.address}
+            Pub • {venue.address}
           </Text>
-        </View>
-
-        <View style={styles.venueRightInfo}>
-          <Text style={styles.drinkAvailable}>Ingyen Ital Elérhető</Text>
-          <View style={styles.ratingContainer}>
-            {[1,2,3,4,5].map((star) => (
-              <Star 
-                key={star} 
-                size={14} 
-                color={star <= Math.floor(rating) ? "#FFD600" : "#666"}
-                fill={star <= Math.floor(rating) ? "#FFD600" : 'transparent'}
-              />
-            ))}
-          </View>
-          <View style={styles.priceContainer}>
-            {[1,2,3,4].map((dollar) => (
-              <Text 
-                key={dollar} 
-                style={[
-                  styles.dollarSign,
-                  dollar <= 2 ? styles.dollarActive : styles.dollarInactive
-                ]}
-              >
-                $
-              </Text>
-            ))}
-          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -86,7 +64,7 @@ export default function VenueCard({ venue }: VenueCardProps) {
 const styles = StyleSheet.create({
   venueCard: {
     width: width,
-    height: 280,
+    height: 320,
     marginBottom: 2,
     position: 'relative',
     backgroundColor: Colors.cardBackground,
@@ -114,58 +92,48 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 16,
+    paddingBottom: 20,
+  },
+  drinkBadge: {
+    position: 'absolute',
+    bottom: 100,
+    left: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  drinkBadgeText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: '500',
   },
   venueInfo: {
     flex: 1,
   },
   venueName: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   earnPointsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   earnPointsText: {
     color: Colors.primary,
-    fontSize: 14,
+    fontSize: 13,
     marginLeft: 4,
   },
   venueCategory: {
     color: Colors.textSecondary,
-    fontSize: 12,
-  },
-  venueRightInfo: {
-    alignItems: 'flex-end',
-    marginLeft: 16,
-  },
-  drinkAvailable: {
-    color: Colors.text,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-  },
-  dollarSign: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  dollarActive: {
-    color: Colors.text,
-  },
-  dollarInactive: {
-    color: Colors.inactive,
+    fontSize: 13,
   },
 });
