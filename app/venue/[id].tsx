@@ -56,7 +56,7 @@ export default function VenueModalScreen() {
       if (!id) return;
       try {
         console.info('[SupabaseMobile] Load venue detail', id);
-        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url,participates_in_points,points_per_visit,opening_hours,google_maps_url,distance`);
+        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url,opening_hours,google_maps_url,distance`);
         const venueArr = (await venueRes.json()) as Venue[];
         const v = venueArr?.[0] ?? null;
 
@@ -141,20 +141,18 @@ export default function VenueModalScreen() {
             <Text style={styles.venueName}>{venue.name}</Text>
             <Text style={styles.distanceText}>{venue.distance ? `${venue.distance}m` : '300m'}</Text>
             
-            {venue.participates_in_points !== false && (
-              <View style={styles.pointsBanner}>
-                <View style={styles.pointsBannerContent}>
-                  <View style={styles.pointsRow}>
-                    <Star size={20} color={Colors.text} fill={Colors.text} />
-                    <Text style={styles.pointsTitle}>SZEREZZ PONTOKAT</Text>
-                  </View>
-                  <Text style={styles.pointsDescription}>
-                    Ha itt fogyasztasz, gyűjthetsz a pontjaid,
-                    melyeket értékes jutalmakra válthatsz.
-                  </Text>
+            <View style={styles.pointsBanner}>
+              <View style={styles.pointsBannerContent}>
+                <View style={styles.pointsRow}>
+                  <Star size={20} color={Colors.text} fill={Colors.text} />
+                  <Text style={styles.pointsTitle}>SZEREZZ PONTOKAT</Text>
                 </View>
+                <Text style={styles.pointsDescription}>
+                  Ha itt fogyasztasz, gyűjthetsz a pontjaid,
+                  melyeket értékes jutalmakra válthatsz.
+                </Text>
               </View>
-            )}
+            </View>
             
             <Text style={styles.venueCategory}>
               Pub • {venue.address}

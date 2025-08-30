@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Search, MapPin, Filter } from "lucide-react-native";
 import * as Location from "expo-location";
+import { Image } from "expo-image";
 import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
@@ -38,8 +39,11 @@ export default function BarsScreen() {
     <View style={styles.header}>
       {/* Logo row */}
       <View style={styles.logoRow}>
-        <Text style={styles.logoText}>Come</Text>
-        <Text style={styles.logoSubText}>GET IT</Text>
+        <Image 
+          source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/h0zjszxjz77aaoy53fi9j' }}
+          style={styles.logoImage}
+          contentFit="contain"
+        />
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconButton}>
             <Search size={20} color={Colors.text} />
@@ -181,6 +185,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 16,
     position: "relative",
+  },
+  logoImage: {
+    width: 150,
+    height: 40,
   },
   logoText: {
     fontSize: 32,
