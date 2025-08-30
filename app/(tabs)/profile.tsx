@@ -75,7 +75,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <Text style={styles.greeting}>Szia Bence!</Text>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>BG</Text>
+            <Text style={styles.avatarText}></Text>
           </View>
         </View>
 
@@ -505,8 +505,8 @@ const styles = StyleSheet.create({
   },
   promoButtonTextLarge: {
     color: "#00D1FF",
-    fontWeight: "500",
-    fontSize: 13,
+    fontWeight: "600",
+    fontSize: 14,
   },
   section: {
     marginBottom: 24,
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginBottom: 15,
   },
   sectionTitle: {
