@@ -16,6 +16,9 @@ export type Venue = {
   opening_hours?: OpeningHours | null;
   google_maps_url?: string | null;
   distance?: number | null; // in meters
+  category?: string | null;
+  price_tier?: string | null;
+  rating?: number | null;
 };
 
 export type OpeningHours = {
