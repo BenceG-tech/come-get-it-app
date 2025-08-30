@@ -15,7 +15,7 @@ export default function RewardsScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.title}>Rewards</Text>
+        <Text style={styles.title}>Jutalmak</Text>
         <View style={styles.pointsContainer}>
           <Text style={styles.pointsValue}>8 700 POINTS</Text>
         </View>
@@ -29,12 +29,12 @@ export default function RewardsScreen() {
               style={styles.cardIcon} 
             />
             <View style={styles.addCardTextContainer}>
-              <Text style={styles.addCardTitle}>ADD A CARD TO EARN REWARD POINTS EVERY TIME YOU SPEND AT OUR BARS</Text>
-              <Text style={styles.addCardSubtitle}>It&apos;s secure & <Text style={styles.bold}>no charges</Text> will ever be made.</Text>
+              <Text style={styles.addCardTitle}>ADJ HOZZÁ EGY KÁRTYÁT, HOGY JUTALOM PONTOKAT SZEREZZ MINDEN ALKALOMMAL, AMIKOR A BÁRJAINKBAN KÖLTESZ</Text>
+              <Text style={styles.addCardSubtitle}>Biztonságos és <Text style={styles.bold}>soha nem terhelünk meg</Text>.</Text>
             </View>
             <TouchableOpacity style={styles.addCardButton}>
               <Lock size={16} color={Colors.text} />
-              <Text style={styles.addCardButtonText}>Add a Card</Text>
+              <Text style={styles.addCardButtonText}>Kártya hozzáadása</Text>
             </TouchableOpacity>
             <View style={styles.cardBrands}>
               <Image 
@@ -55,7 +55,7 @@ export default function RewardsScreen() {
         
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>♥ Editors&apos; Picks</Text>
+            <Text style={styles.sectionTitle}>♥ Szerkesztők választása</Text>
           </View>
           
           <ScrollView 
@@ -78,8 +78,8 @@ export default function RewardsScreen() {
             style={styles.referIcon} 
           />
           <View style={styles.referTextContainer}>
-            <Text style={styles.referTitle}>Invite a friend</Text>
-            <Text style={styles.referSubtitle}>Earn 500 points when you refer a friend to Come Get It.</Text>
+            <Text style={styles.referTitle}>Hívj meg egy barátot</Text>
+            <Text style={styles.referSubtitle}>Szerezz 500 pontot, amikor meghívsz egy barátot a Come Get It-re.</Text>
           </View>
         </TouchableOpacity>
         
@@ -87,7 +87,7 @@ export default function RewardsScreen() {
         
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📋 Categories</Text>
+            <Text style={styles.sectionTitle}>📋 Kategóriák</Text>
           </View>
           
           <View style={styles.categoriesGrid}>
@@ -100,7 +100,7 @@ export default function RewardsScreen() {
                 style={styles.categoryImage} 
               />
               <View style={styles.categoryOverlay}>
-                <Text style={styles.categoryTitle}>Drinks</Text>
+                <Text style={styles.categoryTitle}>Italok</Text>
               </View>
             </TouchableOpacity>
             
@@ -113,7 +113,7 @@ export default function RewardsScreen() {
                 style={styles.categoryImage} 
               />
               <View style={styles.categoryOverlay}>
-                <Text style={styles.categoryTitle}>Food</Text>
+                <Text style={styles.categoryTitle}>Étel</Text>
               </View>
             </TouchableOpacity>
             
@@ -126,7 +126,7 @@ export default function RewardsScreen() {
                 style={styles.categoryImage} 
               />
               <View style={styles.categoryOverlay}>
-                <Text style={styles.categoryTitle}>Lifestyle</Text>
+                <Text style={styles.categoryTitle}>Életmód</Text>
               </View>
             </TouchableOpacity>
             
@@ -139,7 +139,7 @@ export default function RewardsScreen() {
                 style={styles.categoryImage} 
               />
               <View style={styles.categoryOverlay}>
-                <Text style={styles.categoryTitle}>View all</Text>
+                <Text style={styles.categoryTitle}>Összes megtekintése</Text>
               </View>
             </TouchableOpacity>
           </View>

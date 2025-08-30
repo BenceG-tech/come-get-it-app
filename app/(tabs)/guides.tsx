@@ -8,11 +8,11 @@ export default function GuidesScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.title}>Guides</Text>
+        <Text style={styles.title}>Útmutatók</Text>
       </View>
       
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={styles.subtitle}>Curated collections for every occasion</Text>
+        <Text style={styles.subtitle}>Válogatott gyűjtemények minden alkalomra</Text>
         
         {guides.map((guide) => (
           <TouchableOpacity key={guide.id} style={styles.guideCard}>
@@ -21,14 +21,14 @@ export default function GuidesScreen() {
               <Text style={styles.guideTitle}>{guide.title}</Text>
               <Text style={styles.guideDescription}>{guide.description}</Text>
               <View style={styles.guideInfo}>
-                <Text style={styles.guideVenues}>{guide.venueCount} venues</Text>
+                <Text style={styles.guideVenues}>{guide.venueCount} helyszín</Text>
               </View>
             </View>
           </TouchableOpacity>
         ))}
         
         <View style={styles.comingSoon}>
-          <Text style={styles.comingSoonText}>More guides coming soon</Text>
+          <Text style={styles.comingSoonText}>További útmutatók hamarosan</Text>
         </View>
       </ScrollView>
     </View>

@@ -7,12 +7,21 @@ type RewardCardProps = {
 };
 
 export default function RewardCard({ reward }: RewardCardProps) {
+  const getCategoryName = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      'drinks': 'ITALOK',
+      'food': 'ÉTEL',
+      'lifestyle': 'ÉLETMÓD'
+    };
+    return categoryMap[category] || category.toUpperCase();
+  };
+
   return (
     <TouchableOpacity style={styles.container} testID={`reward-card-${reward.id}`}>
       <Image source={{ uri: reward.image }} style={styles.image} />
       
       <View style={styles.pointsBadge}>
-        <Text style={styles.pointsText}>{reward.points} Points</Text>
+        <Text style={styles.pointsText}>{reward.points} Pont</Text>
       </View>
       
       {reward.brandLogo && (
@@ -22,7 +31,7 @@ export default function RewardCard({ reward }: RewardCardProps) {
       )}
       
       <View style={styles.content}>
-        <Text style={styles.category}>{reward.category.toUpperCase()}</Text>
+        <Text style={styles.category}>{getCategoryName(reward.category)}</Text>
         <Text style={styles.title} numberOfLines={2}>{reward.title}</Text>
       </View>
     </TouchableOpacity>
