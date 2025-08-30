@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
@@ -24,12 +24,12 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const renderStars = () => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
-      stars.push(<Star key={i} size={16} color="#FFD700" fill="#FFD700" />);
+      stars.push(<Star key={i} size={14} color="#FFD84D" fill="#FFD84D" />);
     }
     return stars;
   };
 
-  // Generate price tier display - default to $
+  // Generate price tier display
   const getPriceTier = () => {
     return '$··';
   };
@@ -41,152 +41,180 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
       activeOpacity={0.95}
       testID={`venue-card-${venue.id}`}
     >
-      <ImageBackground
-        source={imageSource}
-        style={styles.imageBackground}
-        resizeMode="cover"
-      >
+      {/* Image section with overlays */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={imageSource}
+          style={styles.image}
+          resizeMode="cover"
+        />
+        
+        {/* Gradient overlay at bottom of image */}
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.8)']}
-          style={styles.gradient}
-        >
-          {/* Top badges */}
-          <View style={styles.topBadges}>
-            <View style={styles.cityPill}>
-              <Text style={styles.cityPillText}>Budapest</Text>
-            </View>
+          colors={['transparent', 'rgba(0,0,0,0.35)']}
+          style={styles.imageGradient}
+        />
+        
+        {/* City chip - top left */}
+        <View style={styles.cityPill}>
+          <Text style={styles.cityPillText}>Budapest</Text>
+        </View>
+        
+        {/* Free drink badge - bottom right */}
+        <View style={styles.freeDrinkBadge}>
+          <View style={styles.badgeIcon}>
+            <Text style={styles.badgeIconText}>FIRST</Text>
           </View>
-
-          {/* Bottom content */}
-          <View style={styles.bottomContent}>
-            {/* Free drink badge */}
-            <View style={styles.freeDrinkBadge}>
-              <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
-            </View>
-
-            {/* Venue info */}
-            <View style={styles.venueInfo}>
-              <Text style={styles.venueName} numberOfLines={1}>
-                {venue.name}
-              </Text>
-              
-              {/* Rating and earn points row */}
-              <View style={styles.ratingRow}>
-                <View style={styles.stars}>
-                  {renderStars()}
-                </View>
-                <TouchableOpacity style={styles.earnPointsButton}>
-                  <Text style={styles.earnPointsText}>★ Szerezz pontokat</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Category and address */}
-              <Text style={styles.subtitle} numberOfLines={1}>
-                Pub • {venue.address || 'Budapest teszt utca'}
-              </Text>
-
-              {/* Price tier */}
-              <Text style={styles.priceTier}>
-                {getPriceTier()}
-              </Text>
-            </View>
+          <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
+        </View>
+      </View>
+      
+      {/* Content section below image */}
+      <View style={styles.contentContainer}>
+        {/* Title */}
+        <Text style={styles.venueName} numberOfLines={1}>
+          {venue.name}
+        </Text>
+        
+        {/* Meta row 1: Earn points link + Rating */}
+        <View style={styles.metaRow}>
+          <TouchableOpacity style={styles.earnPointsButton}>
+            <Text style={styles.earnPointsText}>⭐ Szerezz pontokat</Text>
+          </TouchableOpacity>
+          <View style={styles.stars}>
+            {renderStars()}
           </View>
-        </LinearGradient>
-      </ImageBackground>
+        </View>
+        
+        {/* Meta row 2: Category/Address + Price */}
+        <View style={styles.metaRow}>
+          <Text style={styles.subtitle} numberOfLines={1}>
+            Pub • Ingyen ital • Pontszerzés
+          </Text>
+          <Text style={styles.priceTier}>
+            {getPriceTier()}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: 280,
+    backgroundColor: '#0B0B0B',
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginBottom: 16,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  imageBackground: {
-    flex: 1,
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    position: 'relative' as const,
+  },
+  image: {
     width: '100%',
     height: '100%',
   },
-  gradient: {
-    flex: 1,
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  topBadges: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start' as const,
+  imageGradient: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
   },
   cityPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    position: 'absolute' as const,
+    top: 12,
+    left: 12,
+    backgroundColor: 'white',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 18,
   },
   cityPillText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: '#1a1a1a',
-  },
-  bottomContent: {
-    gap: 12,
+    color: '#111',
   },
   freeDrinkBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    position: 'absolute' as const,
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    height: 36,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start' as const,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  badgeIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#1a1a1a',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginRight: 8,
+  },
+  badgeIconText: {
+    fontSize: 8,
+    fontWeight: 'bold' as const,
+    color: 'white',
   },
   freeDrinkText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: '#1a1a1a',
   },
-  venueInfo: {
-    gap: 6,
+  contentContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   venueName: {
-    fontSize: 24,
-    fontWeight: 'bold' as const,
+    fontSize: 22,
+    fontWeight: '800' as const,
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    marginBottom: 8,
   },
-  ratingRow: {
+  metaRow: {
     flexDirection: 'row' as const,
-    alignItems: 'center' as const,
     justifyContent: 'space-between',
+    alignItems: 'center' as const,
+    marginTop: 4,
+  },
+  earnPointsButton: {
+    paddingVertical: 2,
+  },
+  earnPointsText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#00B5FF',
   },
   stars: {
     flexDirection: 'row' as const,
     gap: 2,
   },
-  earnPointsButton: {
-    paddingVertical: 4,
-  },
-  earnPointsText: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#00D4FF',
-  },
   subtitle: {
-    fontSize: 14,
-    color: '#AABBCC',
-    marginTop: 2,
+    fontSize: 13,
+    color: '#A7A7A7',
   },
   priceTier: {
     fontSize: 14,
-    color: '#AABBCC',
-    marginTop: 2,
+    color: '#A7A7A7',
+    fontWeight: '500' as const,
   },
 });
