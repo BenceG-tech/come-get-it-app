@@ -20,37 +20,18 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const placeholderUri = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600';
   const imageSource = venue.image_url ? { uri: venue.image_url } : { uri: placeholderUri };
 
-  // Generate rating display
-  const rating = venue.rating || 4.5;
+  // Generate rating display - always show 5 stars for now
   const renderStars = () => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
     for (let i = 0; i < 5; i++) {
-      if (i < fullStars) {
-        stars.push(<Star key={i} size={16} color="#FFD700" fill="#FFD700" />);
-      } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Star key={i} size={16} color="#FFD700" fill="#FFD70080" />);
-      } else {
-        stars.push(<Star key={i} size={16} color="#FFD70040" fill="transparent" />);
-      }
+      stars.push(<Star key={i} size={16} color="#FFD700" fill="#FFD700" />);
     }
     return stars;
   };
 
-  // Generate price tier display
+  // Generate price tier display - default to $
   const getPriceTier = () => {
-    const tier = typeof venue.price_tier === 'number' ? venue.price_tier : 2;
-    let display = '';
-    for (let i = 0; i < 4; i++) {
-      if (i < tier) {
-        display += '$';
-      } else {
-        display += '·';
-      }
-    }
-    return display;
+    return '$··';
   };
 
   return (
@@ -66,7 +47,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.7)']}
+          colors={['transparent', 'rgba(0,0,0,0.8)']}
           style={styles.gradient}
         >
           {/* Top badges */}
@@ -101,7 +82,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
 
               {/* Category and address */}
               <Text style={styles.subtitle} numberOfLines={1}>
-                {venue.category || 'Pub'} • {venue.address || 'Budapest'}
+                Pub • {venue.address || 'Budapest teszt utca'}
               </Text>
 
               {/* Price tier */}
