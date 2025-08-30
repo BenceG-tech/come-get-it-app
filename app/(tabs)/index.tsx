@@ -11,7 +11,7 @@ import VenueCard from "@/components/VenueCard";
 import { rest } from "@/lib/supabaseRest";
 import { Venue } from '@/types/venue';
 
-type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at'> & { website_url?: string | null; is_paused?: boolean | null; };
+type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at' | 'category' | 'price_tier' | 'rating'> & { website_url?: string | null; is_paused?: boolean | null; };
 
 export default function BarsScreen() {
   const router = useRouter();
@@ -97,7 +97,7 @@ export default function BarsScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await rest('/venues?select=id,name,address,image_url,plan,created_at,website_url,is_paused&order=created_at.desc&limit=50');
+      const res = await rest('/venues?select=id,name,address,image_url,plan,created_at,website_url,is_paused,category,price_tier,rating&order=created_at.desc&limit=50');
       const venues = (await res.json()) as SupaVenue[];
       setList(Array.isArray(venues) ? venues : []);
       console.info('[SupabaseMobile] Loaded venues', Array.isArray(venues) ? venues.length : 0);
@@ -148,6 +148,9 @@ export default function BarsScreen() {
                 image_url: item.image_url ?? null,
                 plan: (item.plan as 'basic' | 'standard' | 'premium' | undefined) ?? undefined,
                 created_at: item.created_at ?? undefined,
+                category: item.category ?? null,
+                price_tier: item.price_tier ?? null,
+                rating: item.rating ?? null,
               } as Venue}
             />
           )}

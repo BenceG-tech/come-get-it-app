@@ -17,7 +17,7 @@ export type Venue = {
   google_maps_url?: string | null;
   distance?: number | null; // in meters
   category?: string | null;
-  price_tier?: string | null;
+  price_tier?: number | null;
   rating?: number | null;
 };
 

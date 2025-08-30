@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { MapPin, Star } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { Star } from 'lucide-react-native';
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
+import { LinearGradient } from 'expo-linear-gradient';
 
 type VenueCardProps = {
   venue: Venue;
@@ -16,89 +17,195 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
     router.push(`/venue/${venue.id}`);
   };
 
-  const placeholderUri = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400';
+  const placeholderUri = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600';
   const imageSource = venue.image_url ? { uri: venue.image_url } : { uri: placeholderUri };
+
+  // Generate rating display
+  const rating = venue.rating || 4.5;
+  const renderStars = () => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<Star key={i} size={16} color="#FFD700" fill="#FFD700" />);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<Star key={i} size={16} color="#FFD700" fill="#FFD70080" />);
+      } else {
+        stars.push(<Star key={i} size={16} color="#FFD70040" fill="transparent" />);
+      }
+    }
+    return stars;
+  };
+
+  // Generate price tier display
+  const getPriceTier = () => {
+    const tier = typeof venue.price_tier === 'number' ? venue.price_tier : 2;
+    let display = '';
+    for (let i = 0; i < 4; i++) {
+      if (i < tier) {
+        display += '$';
+      } else {
+        display += '·';
+      }
+    }
+    return display;
+  };
 
   return (
     <TouchableOpacity 
       style={styles.container} 
       onPress={openVenueDetails}
-      activeOpacity={0.9}
+      activeOpacity={0.95}
       testID={`venue-card-${venue.id}`}
     >
-      <Image
+      <ImageBackground
         source={imageSource}
-        style={styles.image}
+        style={styles.imageBackground}
         resizeMode="cover"
-      />
-      <View style={styles.content}>
-        <Text style={styles.name} numberOfLines={1}>
-          {venue.name}
-        </Text>
-        <View style={styles.infoRow}>
-          {showRating && (
-            <View style={styles.rating}>
-              <Star size={14} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.ratingText}>4.5</Text>
+      >
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.7)']}
+          style={styles.gradient}
+        >
+          {/* Top badges */}
+          <View style={styles.topBadges}>
+            <View style={styles.cityPill}>
+              <Text style={styles.cityPillText}>Budapest</Text>
             </View>
-          )}
-          <View style={styles.location}>
-            <MapPin size={14} color="#999" />
-            <Text style={styles.distance}>1.2 km</Text>
           </View>
-        </View>
-      </View>
+
+          {/* Bottom content */}
+          <View style={styles.bottomContent}>
+            {/* Free drink badge */}
+            <View style={styles.freeDrinkBadge}>
+              <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
+            </View>
+
+            {/* Venue info */}
+            <View style={styles.venueInfo}>
+              <Text style={styles.venueName} numberOfLines={1}>
+                {venue.name}
+              </Text>
+              
+              {/* Rating and earn points row */}
+              <View style={styles.ratingRow}>
+                <View style={styles.stars}>
+                  {renderStars()}
+                </View>
+                <TouchableOpacity style={styles.earnPointsButton}>
+                  <Text style={styles.earnPointsText}>★ Szerezz pontokat</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Category and address */}
+              <Text style={styles.subtitle} numberOfLines={1}>
+                {venue.category || 'Pub'} • {venue.address || 'Budapest'}
+              </Text>
+
+              {/* Price tier */}
+              <Text style={styles.priceTier}>
+                {getPriceTier()}
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    height: 280,
     marginHorizontal: 16,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  image: {
+  imageBackground: {
+    flex: 1,
     width: '100%',
-    height: 150,
+    height: '100%',
   },
-  content: {
-    padding: 12,
+  gradient: {
+    flex: 1,
+    justifyContent: 'space-between',
+    padding: 16,
   },
-  name: {
-    fontSize: 16,
+  topBadges: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start' as const,
+  },
+  cityPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  cityPillText: {
+    fontSize: 12,
     fontWeight: '600' as const,
     color: '#1a1a1a',
-    marginBottom: 8,
   },
-  infoRow: {
+  bottomContent: {
+    gap: 12,
+  },
+  freeDrinkBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start' as const,
+  },
+  freeDrinkText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#1a1a1a',
+  },
+  venueInfo: {
+    gap: 6,
+  },
+  venueName: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  ratingRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 16,
+    justifyContent: 'space-between',
   },
-  rating: {
+  stars: {
     flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
+    gap: 2,
   },
-  ratingText: {
+  earnPointsButton: {
+    paddingVertical: 4,
+  },
+  earnPointsText: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600' as const,
+    color: '#00D4FF',
   },
-  location: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-  },
-  distance: {
+  subtitle: {
     fontSize: 14,
-    color: '#999',
+    color: '#AABBCC',
+    marginTop: 2,
+  },
+  priceTier: {
+    fontSize: 14,
+    color: '#AABBCC',
+    marginTop: 2,
   },
 });
