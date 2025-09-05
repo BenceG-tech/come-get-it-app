@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -12,13 +12,37 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
-import { venues } from "@/data/venues";
+import { Venue } from "@/types/venue";
+import { rest } from "@/lib/supabaseRest";
 import { useAppContext } from "@/context/AppContext";
 
 export default function BarsScreen() {
   const router = useRouter();
   const { selectedFilters, setSelectedFilters } = useAppContext();
   const insets = useSafeAreaInsets();
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch venues from Supabase
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        console.log('Fetching venues from Supabase...');
+        const response = await rest('/venues');
+        const data = await response.json();
+        console.log('Venues fetched:', data);
+        setVenues(data || []);
+      } catch (error) {
+        console.error('Error fetching venues:', error);
+        // Fallback to empty array if Supabase fails
+        setVenues([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
 
   // Apply filtering based on selected filters
   const filteredVenues = venues.filter(venue => {
@@ -58,7 +82,7 @@ export default function BarsScreen() {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Vendéglátóhelyek</Text>
+        <Text style={styles.headerTitle}>Come</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={openSearch} style={styles.headerButton}>
             <Search size={24} color={Colors.text} />
@@ -123,15 +147,23 @@ export default function BarsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.venuesContent}
       >
-        {filteredVenues.map((venue) => (
-          <VenueCard key={venue.id} venue={venue} />
-        ))}
-        
-        {filteredVenues.length === 0 && (
+        {loading ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>Nincs találat</Text>
-            <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
+            <Text style={styles.emptyStateText}>Betöltés...</Text>
           </View>
+        ) : (
+          <>
+            {filteredVenues.map((venue) => (
+              <VenueCard key={venue.id} venue={venue} />
+            ))}
+            
+            {filteredVenues.length === 0 && !loading && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>Nincs találat</Text>
+                <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </View>
