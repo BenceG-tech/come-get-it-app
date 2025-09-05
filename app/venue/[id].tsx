@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Linking, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Image } from 'expo-image';
 import { X, Star, Clock, MapPin } from 'lucide-react-native';
 import { rest } from '@/lib/supabaseRest';
 import Colors from '@/constants/colors';
@@ -122,7 +121,7 @@ export default function VenueModalScreen() {
             <Image
               source={headerImage ? { uri: headerImage } : placeholder}
               style={styles.image}
-              contentFit="cover"
+              resizeMode="cover"
             />
             
             <TouchableOpacity 
@@ -176,7 +175,7 @@ export default function VenueModalScreen() {
               <Image
                 source={firstReward?.image_url ? { uri: firstReward.image_url } : placeholder}
                 style={styles.drinkImage}
-                contentFit="cover"
+                resizeMode="cover"
               />
               
               <Text style={styles.drinkAvailability}>Az ital az alábbi idő pontokban elérhető</Text>
@@ -258,7 +257,7 @@ function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
           <Image
             source={rewardImage ? { uri: rewardImage } : placeholder}
             style={redeemStyles.drinkImage}
-            contentFit="cover"
+            resizeMode="cover"
           />
           
           <View style={redeemStyles.content}>

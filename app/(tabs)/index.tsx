@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, RefreshControl } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, RefreshControl, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Search, MapPin, Filter } from "lucide-react-native";
 import * as Location from "expo-location";
-import { Image } from "expo-image";
 import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
@@ -42,7 +41,7 @@ export default function BarsScreen() {
         <Image 
           source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/h0zjszxjz77aaoy53fi9j' }}
           style={styles.logoImage}
-          contentFit="contain"
+          resizeMode="contain"
         />
         <View style={styles.headerRight}>
           <TouchableOpacity 
@@ -198,7 +197,6 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 200,
     height: 60,
-    resizeMode: 'contain' as const,
   },
   logoText: {
     fontSize: 32,
