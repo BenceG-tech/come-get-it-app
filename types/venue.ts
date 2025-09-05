@@ -14,11 +14,7 @@ export type Venue = {
   participates_in_points?: boolean | null;
   points_per_visit?: number | null;
   opening_hours?: OpeningHours | null;
-  google_maps_url?: string | null;
   distance?: number | null; // in meters
-  category?: string | null;
-  price_tier?: number | null;
-  rating?: number | null;
 };
 
 export type OpeningHours = {
