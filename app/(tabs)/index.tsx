@@ -45,10 +45,16 @@ export default function BarsScreen() {
           contentFit="contain"
         />
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => router.push('/search')}
+          >
             <Search size={20} color={Colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => router.push('/map')}
+          >
             <MapPin size={20} color={Colors.text} />
           </TouchableOpacity>
         </View>
