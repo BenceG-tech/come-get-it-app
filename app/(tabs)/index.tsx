@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { StyleSheet, View, Text, TouchableOpacity, FlatList, Platform, RefreshControl, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { Search, MapPin, Filter } from "lucide-react-native";
+import { Search, MapPin, Filter, Clock } from "lucide-react-native";
 import * as Location from "expo-location";
 import { useAppContext } from "@/context/AppContext";
 import Colors from "@/constants/colors";
@@ -14,7 +14,7 @@ type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 
 
 export default function BarsScreen() {
   const router = useRouter();
-  const { locationEnabled, setLocationEnabled } = useAppContext();
+  const { locationEnabled, setLocationEnabled, selectedFilters, setSelectedFilters } = useAppContext();
 
   useEffect(() => {
     if (locationEnabled && Platform.OS !== 'web') {
@@ -66,14 +66,24 @@ export default function BarsScreen() {
           <Text style={styles.locationBadgeText}>Budapest</Text>
         </View>
         
-        <TouchableOpacity style={styles.filterPill}>
-          <Text style={styles.filterPillText}>NYITVA</Text>
-          <Text style={styles.filterPillSubText}>+22:00</Text>
+        <TouchableOpacity 
+          style={[
+            styles.filterPill,
+            selectedFilters.includes('open') && styles.filterPillActive
+          ]}
+          onPress={() => toggleFilter('open')}
+        >
+          <Clock size={14} color={selectedFilters.includes('open') ? '#000' : Colors.text} />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.filterPill}>
-          <Filter size={14} color={Colors.text} />
-          <Text style={styles.filterPillText}>Ingyen Ital Elérhető</Text>
+        <TouchableOpacity 
+          style={[
+            styles.filterPill,
+            selectedFilters.includes('freeDrink') && styles.filterPillActive
+          ]}
+          onPress={() => toggleFilter('freeDrink')}
+        >
+          <Filter size={14} color={selectedFilters.includes('freeDrink') ? '#000' : Colors.text} />
         </TouchableOpacity>
       </View>
     </View>
@@ -96,6 +106,43 @@ export default function BarsScreen() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // Helper functions for filtering
+  const isVenueOpen = (venue: SupaVenue): boolean => {
+    // For now, assume venues are open if not paused
+    // In a real app, you'd check opening hours against current time
+    return !venue.is_paused;
+  };
+
+  const hasFreeDrink = (venue: SupaVenue): boolean => {
+    // For now, assume all venues have free drinks available
+    // In a real app, you'd check venue-specific free drink availability
+    return true;
+  };
+
+  const toggleFilter = (filterName: string) => {
+    const newFilters = selectedFilters.includes(filterName)
+      ? selectedFilters.filter(f => f !== filterName)
+      : [...selectedFilters, filterName];
+    setSelectedFilters(newFilters);
+  };
+
+  // Filter venues based on selected filters
+  const filteredVenues = useMemo(() => {
+    if (selectedFilters.length === 0) {
+      return list;
+    }
+
+    return list.filter(venue => {
+      if (selectedFilters.includes('open') && !isVenueOpen(venue)) {
+        return false;
+      }
+      if (selectedFilters.includes('freeDrink') && !hasFreeDrink(venue)) {
+        return false;
+      }
+      return true;
+    });
+  }, [list, selectedFilters]);
 
   const load = useCallback(async () => {
     console.info('[SupabaseMobile] Load venues list');
@@ -144,7 +191,7 @@ export default function BarsScreen() {
           <Text style={styles.locationPromptText}>Nincs még helyszín</Text>
         ) : null}
         <FlatList
-          data={list}
+          data={filteredVenues}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <VenueCard
@@ -247,6 +294,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     gap: 6,
+  },
+  filterPillActive: {
+    backgroundColor: "#FFFFFF",
   },
   filterPillText: {
     color: Colors.text,
