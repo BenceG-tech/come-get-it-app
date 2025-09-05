@@ -1,105 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Image, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
-import { rest } from '@/lib/supabaseRest';
 import Colors from '@/constants/colors';
-import { Venue, OpeningHours } from '@/types/venue';
+import { venues } from '@/data/venues';
 
-type Window = { days: string | null; start_time: string | null; end_time: string | null; timezone: string | null };
- type Reward = { id: string; name: string | null; points_required: number | null; valid_until: string | null; active: boolean | null; image_url: string | null };
+type MockVenue = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  tags: string[];
+  category: string;
+  isOpen: boolean;
+  phone: string;
+  website: string;
+  priceLevel: string;
+  location: {
+    city: string;
+    distance: string;
+  };
+  freeDrink: {
+    name: string;
+    description: string;
+    image: string;
+    ingredients: string;
+  };
+  offers: {
+    title: string;
+    description: string;
+  }[];
+};
 
 const placeholder = require('../../assets/images/splash-icon.png');
 
-function renderOpeningHours(hours: OpeningHours | null | undefined) {
-  if (!hours) return null;
-  
-  const days = [
-    { key: 'monday', label: 'Hétfő' },
-    { key: 'tuesday', label: 'Kedd' },
-    { key: 'wednesday', label: 'Szerda' },
-    { key: 'thursday', label: 'Csütörtök' },
-    { key: 'friday', label: 'Péntek' },
-    { key: 'saturday', label: 'Szombat' },
-    { key: 'sunday', label: 'Vasárnap' },
-  ];
-  
-  return (
-    <View style={styles.hoursDetails}>
-      {days.map(({ key, label }) => {
-        const dayHours = hours[key as keyof OpeningHours];
-        return (
-          <View key={key} style={styles.hoursRow}>
-            <Text style={styles.hoursDay}>{label}</Text>
-            <Text style={styles.hoursTime}>
-              {dayHours?.closed ? 'Zárva' : dayHours ? `${dayHours.open} - ${dayHours.close}` : '09:00 - 23:00'}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
+
 
 export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [venue, setVenue] = useState<Venue | null>(null);
-  const [windows, setWindows] = useState<Window[]>([]);
-  const [rewards, setRewards] = useState<Reward[]>([]);
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [, setCurrentRewardIndex] = useState<number>(0);
 
-  useEffect(() => {
-    const load = async () => {
-      if (!id) return;
-      try {
-        console.info('[SupabaseMobile] Load venue detail', id);
-        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url,opening_hours,participates_in_points,points_per_visit`);
-        const venueArr = (await venueRes.json()) as Venue[];
-        const v = venueArr?.[0] ?? null;
-
-        const windowsRes = await rest(`/free_drink_windows?venue_id=eq.${id}&select=days,start_time,end_time,timezone`);
-        const win = (await windowsRes.json()) as Window[];
-
-        const rewardsRes = await rest(`/rewards?venue_id=eq.${id}&select=id,name,points_required,valid_until,active,image_url`);
-        const rws = (await rewardsRes.json()) as Reward[];
-
-        if (!v) {
-          setError('Not found');
-          setLoading(false);
-          return;
-        }
-
-        setVenue(v);
-        setWindows(Array.isArray(win) ? win : []);
-        setRewards(Array.isArray(rws) ? rws : []);
-        console.info('[SupabaseMobile] Windows', win?.length ?? 0);
-        console.info('[SupabaseMobile] Rewards', rws?.length ?? 0);
-        setLoading(false);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Unknown error';
-        console.error('[SupabaseMobile] Detail error', e);
-        setError(msg);
-        setLoading(false);
-      }
-    };
-    load();
-  }, [id]);
+  const venue = venues.find(v => v.id === id) as MockVenue | undefined;
   
-  if (loading) {
+  if (!venue) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-  if (error || !venue) {
-    return (
-      <View style={styles.container}>
-        <Text style={[styles.loadingText, { color: 'red' }]}>{error ?? 'No venue found'}</Text>
+        <Text style={[styles.loadingText, { color: 'red' }]}>Venue not found</Text>
         <TouchableOpacity style={styles.directionsButton} onPress={() => router.back()}>
           <Text style={styles.directionsText}>Back</Text>
         </TouchableOpacity>
@@ -107,15 +58,11 @@ export default function VenueModalScreen() {
     );
   }
   
-  const headerImage = venue.hero_image_url ?? venue.image_url ?? null;
-  const firstReward = rewards[0];
+  const headerImage = venue.image;
+  const freeDrink = venue.freeDrink;
 
   const getCurrentHours = () => {
-    const now = new Date();
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const currentDay = days[now.getDay()];
-    const hours = venue?.opening_hours?.[currentDay as keyof OpeningHours];
-    return hours?.closed ? 'Zárva' : hours ? hours.close : '23:00';
+    return '23:00';
   };
 
   return (
@@ -129,7 +76,7 @@ export default function VenueModalScreen() {
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={styles.imageContainer}>
             <Image
-              source={headerImage ? { uri: headerImage } : placeholder}
+              source={{ uri: headerImage }}
               style={styles.image}
               resizeMode="cover"
             />
@@ -145,12 +92,12 @@ export default function VenueModalScreen() {
             {/* Location Badge */}
             <View style={styles.locationBadge}>
               <MapPin size={14} color={Colors.dark.text} />
-              <Text style={styles.locationText}>Budapest</Text>
+              <Text style={styles.locationText}>{venue.location.city}</Text>
             </View>
             
             {/* Distance Badge */}
             <View style={styles.distanceBadge}>
-              <Text style={styles.distanceTextBadge}>{venue.distance ? `${venue.distance} m` : '500 m'}</Text>
+              <Text style={styles.distanceTextBadge}>{venue.location.distance}km</Text>
             </View>
             
             {/* Close Button */}
@@ -164,7 +111,7 @@ export default function VenueModalScreen() {
           
           <View style={styles.content}>
             <Text style={styles.venueName}>{venue.name}</Text>
-            <Text style={styles.distanceText}>{venue.distance ? `${venue.distance}m` : '500m'}</Text>
+            <Text style={styles.distanceText}>{venue.location.distance}km away</Text>
             
             {/* Earn Points Section */}
             <View style={styles.earnPointsCard}>
@@ -187,7 +134,8 @@ export default function VenueModalScreen() {
             </View>
             
             <Text style={styles.description}>
-              {venue.description || `A ${venue.name} konyhája egyedi ízekkel, innovatív koktélokkal és széles csapolt sör választékkal várja vendégeit. Akár egy pohár sörre vágyik beszélgetéshez, akár baráti összejövetelre, nálunk mindenki megtalálja a tökéletes ízélményt. Hangulatos környezetben kínálunk mindenkit finomságokkal.`}</Text>
+              {venue.description}
+            </Text>
             
             {/* Opening Hours Section */}
             <TouchableOpacity 
@@ -205,16 +153,25 @@ export default function VenueModalScreen() {
                   style={[styles.chevron, showHours && styles.chevronUp]}
                 />
               </View>
-              {showHours && renderOpeningHours(venue.opening_hours)}
+              {showHours && (
+                <View style={styles.hoursDetails}>
+                  {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map((day) => (
+                    <View key={day} style={styles.hoursRow}>
+                      <Text style={styles.hoursDay}>{day}</Text>
+                      <Text style={styles.hoursTime}>09:00 - 23:00</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </TouchableOpacity>
             
             {/* Free Drink Section */}
             <View style={styles.drinkSection}>
               <Text style={styles.drinkTitle}>Ingyen ital</Text>
-              <Text style={styles.drinkName}>{firstReward?.name ?? 'FIRST Craft Beer ipa'}</Text>
+              <Text style={styles.drinkName}>{freeDrink?.name}</Text>
               
               <Image
-                source={firstReward?.image_url ? { uri: firstReward.image_url } : placeholder}
+                source={{ uri: freeDrink?.image }}
                 style={styles.drinkImage}
                 resizeMode="cover"
               />
@@ -222,21 +179,12 @@ export default function VenueModalScreen() {
               <Text style={styles.drinkAvailability}>Az ital az alábbi idő pontokban elérhető</Text>
               
               <View style={styles.timeSlots}>
-                {windows.length > 0 ? (
-                  windows.map((w, idx) => (
-                    <View key={`${idx}`} style={styles.timeSlot}>
-                      <Text style={styles.dayText}>{w.days ?? ''}</Text>
-                      <Text style={styles.timeText}>{`${w.start_time ?? ''}-${w.end_time ?? ''}`}</Text>
-                    </View>
-                  ))
-                ) : (
-                  ['Hét', 'Ked', 'Sze', 'Csü', 'Pén', 'Szo'].map((day) => (
-                    <View key={day} style={styles.timeSlot}>
-                      <Text style={styles.dayText}>{day}</Text>
-                      <Text style={styles.timeText}>11:00-23:00</Text>
-                    </View>
-                  ))
-                )}
+                {['Hét', 'Ked', 'Sze', 'Csü', 'Pén', 'Szo'].map((day) => (
+                  <View key={day} style={styles.timeSlot}>
+                    <Text style={styles.dayText}>{day}</Text>
+                    <Text style={styles.timeText}>11:00-23:00</Text>
+                  </View>
+                ))}
               </View>
             </View>
             
@@ -244,33 +192,22 @@ export default function VenueModalScreen() {
             <View style={styles.aboutSection}>
               <Text style={styles.aboutTitle}>Az italról</Text>
               <Text style={styles.aboutText}>
-                Öttéle komlóval fűszerezett, virágos illatbombájú, sűrű, gyümölcsös ízérzetű átlátszatlan New England IPA.
+                {freeDrink?.description}
               </Text>
               
               <Text style={styles.ingredientsTitle}>Összetevők:</Text>
               <Text style={styles.ingredientsText}>
-                Pale Ale, Búzapehely, Pilsner, Búzamaláta, Zabmaláta, CaraHell, CaraPils
+                {freeDrink?.ingredients}
               </Text>
             </View>
             
             {/* Map Section */}
             <View style={styles.mapSection}>
-              {Platform.OS !== 'web' ? (
-                <View style={styles.mapContainer}>
-                  {/* Map would be here on mobile */}
-                  <View style={styles.mapPlaceholder}>
-                    <MapPin size={24} color={Colors.dark.text} />
-                    <Text style={styles.mapText}>Map View</Text>
-                    <Text style={styles.mapSubtext}>Tap to view on map</Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.mapPlaceholder}>
-                  <MapPin size={24} color={Colors.dark.text} />
-                  <Text style={styles.mapText}>Map View</Text>
-                  <Text style={styles.mapSubtext}>Available on mobile</Text>
-                </View>
-              )}
+              <View style={styles.mapPlaceholder}>
+                <MapPin size={24} color={Colors.dark.text} />
+                <Text style={styles.mapText}>Map View</Text>
+                <Text style={styles.mapSubtext}>Tap to view on map</Text>
+              </View>
               
               <TouchableOpacity style={styles.directionsButton}>
                 <Text style={styles.directionsText}>Mutasd a térképen</Text>
@@ -291,26 +228,23 @@ export default function VenueModalScreen() {
               setCurrentRewardIndex(index);
             }}
           >
-            {(rewards.length > 0 ? rewards : [firstReward]).map((reward, index) => (
-              <TouchableOpacity 
-                key={index}
-                style={styles.carouselCard}
-                onPress={() => setShowRedeemModal(true)}
-                activeOpacity={0.9}
-              >
-                <View style={styles.carouselContent}>
-                  <View style={styles.carouselIcon}>
-                    <Text style={styles.carouselIconText}>🍺</Text>
-                  </View>
-                  <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
-                  <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+            <TouchableOpacity 
+              style={styles.carouselCard}
+              onPress={() => setShowRedeemModal(true)}
+              activeOpacity={0.9}
+            >
+              <View style={styles.carouselContent}>
+                <View style={styles.carouselIcon}>
+                  <Text style={styles.carouselIconText}>🍺</Text>
                 </View>
-                <View style={styles.carouselBrand}>
-                  <Text style={styles.carouselBrandText}>FIRST</Text>
-                </View>
-                <ChevronDown size={20} color={Colors.dark.text} style={styles.carouselArrow} />
-              </TouchableOpacity>
-            ))}
+                <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
+                <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+              </View>
+              <View style={styles.carouselBrand}>
+                <Text style={styles.carouselBrandText}>FIRST</Text>
+              </View>
+              <ChevronDown size={20} color={Colors.dark.text} style={styles.carouselArrow} />
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </View>
@@ -318,7 +252,7 @@ export default function VenueModalScreen() {
       <RedeemModal 
         visible={showRedeemModal} 
         onClose={() => setShowRedeemModal(false)}
-        rewardImage={firstReward?.image_url ?? null}
+        rewardImage={freeDrink?.image ?? null}
       />
     </Modal>
   );
