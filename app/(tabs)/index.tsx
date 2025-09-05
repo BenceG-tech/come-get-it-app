@@ -17,16 +17,27 @@ import { useAppContext } from "@/context/AppContext";
 
 export default function BarsScreen() {
   const router = useRouter();
-  const { selectedFilters } = useAppContext();
+  const { selectedFilters, setSelectedFilters } = useAppContext();
   const insets = useSafeAreaInsets();
 
-  // Apply basic filtering based on selected filters
+  // Apply filtering based on selected filters
   const filteredVenues = venues.filter(venue => {
     if (selectedFilters.length === 0) return true;
     
-    // For now, just show all venues regardless of filters
-    // In a real app, you'd filter based on venue properties
-    return true;
+    let passesFilters = true;
+    
+    // Check each filter
+    if (selectedFilters.includes('nyitva')) {
+      // For demo, assume all venues are open
+      passesFilters = passesFilters && true;
+    }
+    
+    if (selectedFilters.includes('ingyen-ital')) {
+      // For demo, assume all venues have free drinks available
+      passesFilters = passesFilters && true;
+    }
+    
+    return passesFilters;
   });
 
   const openFilter = () => {
@@ -71,8 +82,7 @@ export default function BarsScreen() {
               const newFilters = selectedFilters.includes('nyitva') 
                 ? selectedFilters.filter(f => f !== 'nyitva')
                 : [...selectedFilters, 'nyitva'];
-              // For now, just log the action since we don't have actual filtering logic
-              console.log('Toggle nyitva filter:', newFilters);
+              setSelectedFilters(newFilters);
             }}
           >
             <Text style={[
@@ -91,8 +101,7 @@ export default function BarsScreen() {
               const newFilters = selectedFilters.includes('ingyen-ital') 
                 ? selectedFilters.filter(f => f !== 'ingyen-ital')
                 : [...selectedFilters, 'ingyen-ital'];
-              // For now, just log the action since we don't have actual filtering logic
-              console.log('Toggle ingyen-ital filter:', newFilters);
+              setSelectedFilters(newFilters);
             }}
           >
             <Text style={[
