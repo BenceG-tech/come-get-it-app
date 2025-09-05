@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { rest } from '@/lib/supabaseRest';
-import { venues as mockVenues } from '@/data/venues';
+import { Venue } from '@/types/venue';
 
 type MockVenue = {
   id: string;
@@ -36,6 +36,65 @@ type MockVenue = {
   }[];
 };
 
+const mockVenues: MockVenue[] = [
+  {
+    id: "1",
+    name: "Café Memories",
+    description: "A vibrant cocktail bar with live music and a late-night atmosphere. Perfect for those looking to enjoy craft cocktails and energetic vibes.",
+    image: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80",
+    address: "Király utca 15, Budapest 1075",
+    latitude: 47.498,
+    longitude: 19.056,
+    tags: ["Café", "Coffee", "Budapest"],
+    category: "Café",
+    isOpen: true,
+    phone: "+36 1 555 1234",
+    website: "https://example.com/cafememories",
+    priceLevel: "$",
+    location: {
+      city: "Budapest",
+      distance: "0.3"
+    },
+    freeDrink: {
+      name: "Johnnie Walker & Lemonade",
+      description: "A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish. Perfect for those who enjoy a smooth, balanced drink with a citrus twist.",
+      image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
+      ingredients: "Johnnie Walker Black Label whisky (40% alkoholtartalom), Lemonade, Lemon Garnish, Served Over Ice"
+    },
+    offers: [
+      {
+        title: "Free Drink",
+        description: "Show this offer to receive a free welcome shot with any cocktail purchase"
+      }
+    ]
+  }
+];
+
+type DisplayVenue = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  address: string;
+  phone: string;
+  website: string;
+  isOpen: boolean;
+  location: {
+    city: string;
+    distance: string;
+  };
+  freeDrink: {
+    name: string;
+    description: string;
+    image: string;
+    ingredients: string;
+  };
+  offers: {
+    title: string;
+    description: string;
+  }[];
+};
+
 const placeholder = require('../../assets/images/splash-icon.png');
 
 
@@ -45,7 +104,7 @@ export default function VenueModalScreen() {
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
   const [, setCurrentRewardIndex] = useState<number>(0);
-  const [venue, setVenue] = useState<MockVenue | undefined>(undefined);
+  const [venue, setVenue] = useState<DisplayVenue | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,25 +125,20 @@ export default function VenueModalScreen() {
         const data = await res.json();
         
         if (Array.isArray(data) && data.length > 0) {
-          const supaVenue = data[0];
-          // Map Supabase venue to MockVenue format
-          const mappedVenue: MockVenue = {
+          const supaVenue: Venue = data[0];
+          // Map Supabase venue to DisplayVenue format
+          const mappedVenue: DisplayVenue = {
             id: String(supaVenue.id),
             name: supaVenue.name || 'Unknown Venue',
             description: supaVenue.description || 'A great place to visit in Budapest.',
-            image: supaVenue.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
+            image: supaVenue.image_url || supaVenue.hero_image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
             address: supaVenue.address || 'Budapest',
-            latitude: supaVenue.latitude || 47.498,
-            longitude: supaVenue.longitude || 19.056,
-            tags: supaVenue.tags || [],
-            category: supaVenue.category || 'Bar',
-            isOpen: !supaVenue.is_paused,
-            phone: supaVenue.phone || '+36 1 555 0000',
+            phone: supaVenue.phone_number || '+36 1 555 0000',
             website: supaVenue.website_url || '',
-            priceLevel: supaVenue.price_level || '$',
+            isOpen: !supaVenue.is_paused,
             location: {
               city: 'Budapest',
-              distance: '0.5'
+              distance: supaVenue.distance ? (supaVenue.distance / 1000).toFixed(1) : '0.5'
             },
             freeDrink: {
               name: 'Johnnie Walker & Lemonade',
@@ -104,7 +158,7 @@ export default function VenueModalScreen() {
           // Fallback to mock data if not found in Supabase
           const mockVenue = mockVenues.find(v => v.id === id);
           if (mockVenue) {
-            setVenue(mockVenue as MockVenue);
+            setVenue(mockVenue);
           } else {
             setError('Venue not found');
           }
@@ -114,7 +168,7 @@ export default function VenueModalScreen() {
         // Fallback to mock data on error
         const mockVenue = mockVenues.find(v => v.id === id);
         if (mockVenue) {
-          setVenue(mockVenue as MockVenue);
+          setVenue(mockVenue);
         } else {
           setError('Failed to load venue');
         }
