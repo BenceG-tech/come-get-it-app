@@ -20,8 +20,14 @@ export default function BarsScreen() {
   const { selectedFilters } = useAppContext();
   const insets = useSafeAreaInsets();
 
-  // For now, show all venues since we don't have the old filtering properties
-  const filteredVenues = venues;
+  // Apply basic filtering based on selected filters
+  const filteredVenues = venues.filter(venue => {
+    if (selectedFilters.length === 0) return true;
+    
+    // For now, just show all venues regardless of filters
+    // In a real app, you'd filter based on venue properties
+    return true;
+  });
 
   const openFilter = () => {
     router.push('/filter');
@@ -61,7 +67,12 @@ export default function BarsScreen() {
               selectedFilters.includes('nyitva') && styles.filterPillActive
             ]}
             onPress={() => {
-              // This will be handled by the filter modal
+              // Toggle the filter
+              const newFilters = selectedFilters.includes('nyitva') 
+                ? selectedFilters.filter(f => f !== 'nyitva')
+                : [...selectedFilters, 'nyitva'];
+              // For now, just log the action since we don't have actual filtering logic
+              console.log('Toggle nyitva filter:', newFilters);
             }}
           >
             <Text style={[
@@ -76,7 +87,12 @@ export default function BarsScreen() {
               selectedFilters.includes('ingyen-ital') && styles.filterPillActive
             ]}
             onPress={() => {
-              // This will be handled by the filter modal
+              // Toggle the filter
+              const newFilters = selectedFilters.includes('ingyen-ital') 
+                ? selectedFilters.filter(f => f !== 'ingyen-ital')
+                : [...selectedFilters, 'ingyen-ital'];
+              // For now, just log the action since we don't have actual filtering logic
+              console.log('Toggle ingyen-ital filter:', newFilters);
             }}
           >
             <Text style={[
