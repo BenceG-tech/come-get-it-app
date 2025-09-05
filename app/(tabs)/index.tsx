@@ -74,6 +74,10 @@ export default function BarsScreen() {
           onPress={() => toggleFilter('open')}
         >
           <Clock size={14} color={selectedFilters.includes('open') ? '#000' : Colors.text} />
+          <Text style={[
+            styles.filterPillText,
+            selectedFilters.includes('open') && styles.filterPillTextActive
+          ]}>NYITVA</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -84,6 +88,10 @@ export default function BarsScreen() {
           onPress={() => toggleFilter('freeDrink')}
         >
           <Filter size={14} color={selectedFilters.includes('freeDrink') ? '#000' : Colors.text} />
+          <Text style={[
+            styles.filterPillText,
+            selectedFilters.includes('freeDrink') && styles.filterPillTextActive
+          ]}>Ingyen Ital Elérhető</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -302,6 +310,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 12,
     fontWeight: "500",
+  },
+  filterPillTextActive: {
+    color: '#000',
   },
   filterPillSubText: {
     color: Colors.textSecondary,
