@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Image, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
 import { rest } from '@/lib/supabaseRest';
 import Colors from '@/constants/colors';
 import { Venue, OpeningHours } from '@/types/venue';
@@ -47,8 +47,10 @@ export default function VenueModalScreen() {
   const [windows, setWindows] = useState<Window[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
+  const [showHours, setShowHours] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [, setCurrentRewardIndex] = useState<number>(0);
 
   useEffect(() => {
     const load = async () => {
@@ -108,15 +110,23 @@ export default function VenueModalScreen() {
   const headerImage = venue.hero_image_url ?? venue.image_url ?? null;
   const firstReward = rewards[0];
 
+  const getCurrentHours = () => {
+    const now = new Date();
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDay = days[now.getDay()];
+    const hours = venue?.opening_hours?.[currentDay as keyof OpeningHours];
+    return hours?.closed ? 'Zárva' : hours ? hours.close : '23:00';
+  };
+
   return (
     <Modal
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
       visible={true}
       onRequestClose={() => router.back()}
     >
       <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={styles.imageContainer}>
             <Image
               source={headerImage ? { uri: headerImage } : placeholder}
@@ -124,53 +134,84 @@ export default function VenueModalScreen() {
               resizeMode="cover"
             />
             
+            {/* COME GET IT Overlay */}
+            <View style={styles.brandOverlay}>
+              <Text style={styles.comeGetItText}>COME{"\n"}GET IT</Text>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoText}>FIRST{"\n"}CRAFT{"\n"}BEER</Text>
+              </View>
+            </View>
+            
+            {/* Location Badge */}
+            <View style={styles.locationBadge}>
+              <MapPin size={14} color={Colors.dark.text} />
+              <Text style={styles.locationText}>Budapest</Text>
+            </View>
+            
+            {/* Distance Badge */}
+            <View style={styles.distanceBadge}>
+              <Text style={styles.distanceTextBadge}>{venue.distance ? `${venue.distance} m` : '500 m'}</Text>
+            </View>
+            
+            {/* Close Button */}
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={() => router.back()}
             >
               <X size={24} color={Colors.dark.text} />
             </TouchableOpacity>
-            
-            <View style={styles.locationBadge}>
-              <Text style={styles.locationText}>{venue.address}</Text>
-            </View>
           </View>
           
           <View style={styles.content}>
             <Text style={styles.venueName}>{venue.name}</Text>
-            <Text style={styles.distanceText}>{venue.distance ? `${venue.distance}m` : '300m'}</Text>
+            <Text style={styles.distanceText}>{venue.distance ? `${venue.distance}m` : '500m'}</Text>
             
-            <View style={styles.pointsBanner}>
-              <View style={styles.pointsBannerContent}>
-                <View style={styles.pointsRow}>
-                  <Star size={20} color={Colors.text} fill={Colors.text} />
-                  <Text style={styles.pointsTitle}>SZEREZZ PONTOKAT</Text>
+            {/* Earn Points Section */}
+            <View style={styles.earnPointsCard}>
+              <View style={styles.earnPointsHeader}>
+                <Star size={20} color={Colors.dark.primary} fill={Colors.dark.primary} />
+                <Text style={styles.earnPointsLabel}>Earn Points</Text>
+                <Text style={styles.earnPointsType}>Restaurant - Reward</Text>
+              </View>
+              <View style={styles.earnPointsContent}>
+                <View style={styles.earnPointsIcon}>
+                  <Star size={24} color="#fff" fill="#fff" />
                 </View>
-                <Text style={styles.pointsDescription}>
-                  Ha itt fogyasztasz, gyűjthetsz a pontjaid,
-                  melyeket értékes jutalmakra válthatsz.
-                </Text>
+                <View style={styles.earnPointsTextContainer}>
+                  <Text style={styles.earnPointsTitle}>EARN POINTS</Text>
+                  <Text style={styles.earnPointsDescription}>
+                    When you spend money at this bar, you earn{"\n"}points to redeem on rewards
+                  </Text>
+                </View>
               </View>
             </View>
             
-            <Text style={styles.venueCategory}>
-              Pub • {venue.address}
-            </Text>
+            <Text style={styles.description}>
+              {venue.description || `A ${venue.name} konyhája egyedi ízekkel, innovatív koktélokkal és széles csapolt sör választékkal várja vendégeit. Akár egy pohár sörre vágyik beszélgetéshez, akár baráti összejövetelre, nálunk mindenki megtalálja a tökéletes ízélményt. Hangulatos környezetben kínálunk mindenkit finomságokkal.`}</Text>
             
-            <Text style={styles.description}>{venue.description ?? ''}</Text>
-            
-            <View style={styles.hoursSection}>
+            {/* Opening Hours Section */}
+            <TouchableOpacity 
+              style={styles.hoursSection}
+              onPress={() => setShowHours(!showHours)}
+              activeOpacity={0.7}
+            >
               <View style={styles.hoursHeader}>
                 <Clock size={16} color={Colors.dark.text} />
                 <Text style={styles.hoursTitle}>Nyitva</Text>
-                <Text style={styles.hoursTime}>Zárás 23:00</Text>
+                <Text style={styles.hoursTime}>Zárás {getCurrentHours()}</Text>
+                <ChevronDown 
+                  size={20} 
+                  color={Colors.dark.text} 
+                  style={[styles.chevron, showHours && styles.chevronUp]}
+                />
               </View>
-              {renderOpeningHours(venue.opening_hours)}
-            </View>
+              {showHours && renderOpeningHours(venue.opening_hours)}
+            </TouchableOpacity>
             
+            {/* Free Drink Section */}
             <View style={styles.drinkSection}>
               <Text style={styles.drinkTitle}>Ingyen ital</Text>
-              <Text style={styles.drinkName}>{firstReward?.name ?? 'Welcome Drink'}</Text>
+              <Text style={styles.drinkName}>{firstReward?.name ?? 'FIRST Craft Beer ipa'}</Text>
               
               <Image
                 source={firstReward?.image_url ? { uri: firstReward.image_url } : placeholder}
@@ -199,34 +240,79 @@ export default function VenueModalScreen() {
               </View>
             </View>
             
+            {/* About Drink Section */}
             <View style={styles.aboutSection}>
               <Text style={styles.aboutTitle}>Az italról</Text>
-              <Text style={styles.aboutText}>{firstReward?.name ?? 'Ingyen ital a helyszínen.'}</Text>
+              <Text style={styles.aboutText}>
+                Öttéle komlóval fűszerezett, virágos illatbombájú, sűrű, gyümölcsös ízérzetű átlátszatlan New England IPA.
+              </Text>
               
-              <Text style={styles.ingredientsTitle}>Összetevők</Text>
+              <Text style={styles.ingredientsTitle}>Összetevők:</Text>
               <Text style={styles.ingredientsText}>
-                Vodka, Lime juice, Ginger beer, Menta
+                Pale Ale, Búzapehely, Pilsner, Búzamaláta, Zabmaláta, CaraHell, CaraPils
               </Text>
             </View>
             
+            {/* Map Section */}
             <View style={styles.mapSection}>
-              <View style={styles.mapPlaceholder}>
-                <Text style={styles.mapText}>Map View</Text>
-              </View>
+              {Platform.OS !== 'web' ? (
+                <View style={styles.mapContainer}>
+                  {/* Map would be here on mobile */}
+                  <View style={styles.mapPlaceholder}>
+                    <MapPin size={24} color={Colors.dark.text} />
+                    <Text style={styles.mapText}>Map View</Text>
+                    <Text style={styles.mapSubtext}>Tap to view on map</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.mapPlaceholder}>
+                  <MapPin size={24} color={Colors.dark.text} />
+                  <Text style={styles.mapText}>Map View</Text>
+                  <Text style={styles.mapSubtext}>Available on mobile</Text>
+                </View>
+              )}
               
               <TouchableOpacity style={styles.directionsButton}>
                 <Text style={styles.directionsText}>Mutasd a térképen</Text>
               </TouchableOpacity>
             </View>
             
-            <TouchableOpacity 
-              style={styles.claimButton}
-              onPress={() => setShowRedeemModal(true)}
-            >
-              <Text style={styles.claimButtonText}>Kérd INGYEN Italod</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
+        
+        {/* Bottom Carousel */}
+        <View style={styles.bottomCarousel}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            pagingEnabled
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
+              setCurrentRewardIndex(index);
+            }}
+          >
+            {(rewards.length > 0 ? rewards : [firstReward]).map((reward, index) => (
+              <TouchableOpacity 
+                key={index}
+                style={styles.carouselCard}
+                onPress={() => setShowRedeemModal(true)}
+                activeOpacity={0.9}
+              >
+                <View style={styles.carouselContent}>
+                  <View style={styles.carouselIcon}>
+                    <Text style={styles.carouselIconText}>🍺</Text>
+                  </View>
+                  <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
+                  <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+                </View>
+                <View style={styles.carouselBrand}>
+                  <Text style={styles.carouselBrandText}>FIRST</Text>
+                </View>
+                <ChevronDown size={20} color={Colors.dark.text} style={styles.carouselArrow} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       </View>
       
       <RedeemModal 
@@ -291,6 +377,8 @@ function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
 
 const { width, height } = Dimensions.get('window');
 
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -303,8 +391,44 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   imageContainer: {
-    height: 300,
+    height: height * 0.45,
     position: 'relative',
+  },
+  brandOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  comeGetItText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: Colors.dark.primary,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 10,
+    marginBottom: 20,
+  },
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: Colors.dark.primary,
+    borderWidth: 3,
+    borderColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   image: {
     width: '100%',
@@ -312,40 +436,52 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
+    top: 50,
     right: 16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   locationBadge: {
     position: 'absolute',
-    top: 16,
+    top: 50,
     left: 16,
-    backgroundColor: Colors.dark.card,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   locationText: {
     color: Colors.dark.text,
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '500',
   },
   distanceBadge: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    top: 50,
+    right: 70,
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  distanceTextBadge: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   distanceText: {
     color: Colors.dark.text,
-    fontSize: 12,
+    fontSize: 14,
+    marginBottom: 16,
   },
   content: {
     padding: 20,
@@ -383,6 +519,13 @@ const styles = StyleSheet.create({
   hoursHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  chevron: {
+    marginLeft: 'auto',
+    transform: [{ rotate: '0deg' }],
+  },
+  chevronUp: {
+    transform: [{ rotate: '180deg' }],
   },
   hoursTitle: {
     color: Colors.dark.text,
@@ -466,7 +609,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   mapSection: {
-    marginBottom: 20,
+    marginBottom: 80,
+  },
+  mapContainer: {
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
   mapPlaceholder: {
     height: 200,
@@ -479,6 +628,25 @@ const styles = StyleSheet.create({
   mapText: {
     color: Colors.dark.text,
     fontSize: 16,
+    marginTop: 8,
+  },
+  mapSubtext: {
+    color: Colors.dark.subtext,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  markerContainer: {
+    alignItems: 'center',
+  },
+  marker: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
   },
   directionsButton: {
     backgroundColor: Colors.dark.primary,
@@ -503,34 +671,57 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  pointsBanner: {
-    backgroundColor: Colors.dark.primary,
-    marginHorizontal: -20,
-    marginTop: 16,
-    marginBottom: 16,
-    padding: 16,
+  earnPointsCard: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
   },
-  pointsBannerContent: {
-    alignItems: 'center',
-  },
-  pointsRow: {
+  earnPointsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  pointsTitle: {
-    color: Colors.text,
+  earnPointsLabel: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  earnPointsType: {
+    color: Colors.dark.subtext,
+    fontSize: 12,
+    marginLeft: 'auto',
+  },
+  earnPointsContent: {
+    backgroundColor: Colors.dark.primary,
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  earnPointsIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  earnPointsTextContainer: {
+    flex: 1,
+  },
+  earnPointsTitle: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    letterSpacing: 1,
+    marginBottom: 4,
   },
-  pointsDescription: {
-    color: Colors.text,
+  earnPointsDescription: {
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 13,
-    textAlign: 'center',
     lineHeight: 18,
-    opacity: 0.9,
   },
   hoursDetails: {
     marginTop: 12,
@@ -543,6 +734,68 @@ const styles = StyleSheet.create({
   hoursDay: {
     color: Colors.dark.text,
     fontSize: 14,
+  },
+  bottomCarousel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: Colors.dark.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.dark.border,
+  },
+  carouselCard: {
+    width: width - 40,
+    marginHorizontal: 20,
+    height: 80,
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 10,
+  },
+  carouselContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  carouselIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.dark.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  carouselIconText: {
+    fontSize: 20,
+  },
+  carouselTitle: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  carouselSubtitle: {
+    color: Colors.dark.subtext,
+    fontSize: 12,
+  },
+  carouselBrand: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  carouselBrandText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  carouselArrow: {
+    transform: [{ rotate: '270deg' }],
   },
 });
 
