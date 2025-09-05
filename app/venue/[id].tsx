@@ -56,7 +56,7 @@ export default function VenueModalScreen() {
       if (!id) return;
       try {
         console.info('[SupabaseMobile] Load venue detail', id);
-        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url,distance`);
+        const venueRes = await rest(`/venues?id=eq.${id}&select=id,name,address,description,phone_number,website_url,hero_image_url,image_url,category,price_tier,rating,opening_hours,participates_in_points,points_per_visit`);
         const venueArr = (await venueRes.json()) as Venue[];
         const v = venueArr?.[0] ?? null;
 
