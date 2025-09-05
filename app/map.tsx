@@ -1,14 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Search } from 'lucide-react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { rest } from '@/lib/supabaseRest';
 import { Venue } from '@/types/venue';
+
+// Avoid importing react-native-maps on web to prevent bundling errors
+const isWeb = Platform.OS === 'web';
+let MapView: any;
+let Marker: any;
+let PROVIDER_GOOGLE: any;
+if (!isWeb) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const RNMaps = require('react-native-maps');
+  MapView = RNMaps.default;
+  Marker = RNMaps.Marker;
+  PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
+}
 
 type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at'> & { 
   website_url?: string | null; 
@@ -336,12 +348,12 @@ export default function MapScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       
-      {/* Header */}
       <SafeAreaView edges={['top']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity 
             style={styles.backButton} 
             onPress={() => router.back()}
+            testID="map-back"
           >
             <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
@@ -352,6 +364,7 @@ export default function MapScreen() {
             <TouchableOpacity 
               style={styles.iconButton}
               onPress={() => router.push('/search')}
+              testID="map-search"
             >
               <Search size={20} color={Colors.text} />
             </TouchableOpacity>
@@ -359,52 +372,64 @@ export default function MapScreen() {
         </View>
       </SafeAreaView>
 
-      {/* Map */}
-      <MapView
-        style={styles.map}
-        region={region}
-        onRegionChangeComplete={setRegion}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-        customMapStyle={mapStyle}
-        showsUserLocation={userLocation !== null}
-        showsMyLocationButton={false}
-        showsCompass={false}
-        showsScale={false}
-        showsBuildings={false}
-        showsTraffic={false}
-        showsIndoors={false}
-        rotateEnabled={false}
-        pitchEnabled={false}
-      >
-        {venues.map((venue) => (
-          <Marker
-            key={venue.id}
-            coordinate={{
-              latitude: venue.latitude!,
-              longitude: venue.longitude!,
-            }}
-            title={venue.name}
-            description={venue.address}
-            onPress={() => handleMarkerPress(venue)}
-          >
-            <View style={styles.markerContainer}>
-              <View style={styles.marker}>
-                <Text style={styles.markerText}>🍺</Text>
-              </View>
-            </View>
-          </Marker>
-        ))}
-      </MapView>
-
-      {/* Floating controls */}
-      <View style={styles.floatingControls}>
-        <TouchableOpacity 
-          style={styles.myLocationButton}
-          onPress={getUserLocation}
+      {isWeb ? (
+        <View style={styles.webFallback} testID="web-map-fallback">
+          <Text style={styles.webFallbackTitle}>Térkép nem érhető el a web előnézetben</Text>
+          <Text style={styles.webFallbackText}>Nyisd meg az appot az Expo Go-val iOS-en vagy Androidon a térképes nézethez.</Text>
+          <TouchableOpacity onPress={() => router.push('/search')} style={styles.webFallbackButton} testID="web-map-fallback-search">
+            <Text style={styles.webFallbackButtonText}>Keresés megnyitása</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <MapView
+          style={styles.map}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          customMapStyle={mapStyle}
+          showsUserLocation={userLocation !== null}
+          showsMyLocationButton={false}
+          showsCompass={false}
+          showsScale={false}
+          showsBuildings={false}
+          showsTraffic={false}
+          showsIndoors={false}
+          rotateEnabled={false}
+          pitchEnabled={false}
+          testID="native-map"
         >
-          <Text style={styles.myLocationText}>📍</Text>
-        </TouchableOpacity>
-      </View>
+          {venues.map((venue) => (
+            <Marker
+              key={venue.id}
+              coordinate={{
+                latitude: venue.latitude ?? 0,
+                longitude: venue.longitude ?? 0,
+              }}
+              title={venue.name}
+              description={venue.address ?? ''}
+              onPress={() => handleMarkerPress(venue)}
+            >
+              <View style={styles.markerContainer}>
+                <View style={styles.marker}>
+                  <Text style={styles.markerText}>🍺</Text>
+                </View>
+              </View>
+            </Marker>
+          ))}
+        </MapView>
+      )}
+
+      {!isWeb && (
+        <View style={styles.floatingControls}>
+          <TouchableOpacity 
+            style={styles.myLocationButton}
+            onPress={getUserLocation}
+            testID="map-my-location"
+          >
+            <Text style={styles.myLocationText}>📍</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {loading && (
         <View style={styles.loadingOverlay}>
@@ -467,6 +492,36 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  webFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  webFallbackTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  webFallbackText: {
+    color: '#A6A6AD',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  webFallbackButton: {
+    marginTop: 8,
+    backgroundColor: '#2BB7FF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  webFallbackButtonText: {
+    color: '#0B0B0B',
+    fontSize: 14,
+    fontWeight: '600',
   },
   markerContainer: {
     alignItems: 'center',
