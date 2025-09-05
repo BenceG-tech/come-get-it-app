@@ -155,21 +155,79 @@ export default function VenueModalScreen() {
           };
           setVenue(mappedVenue);
         } else {
-          // Fallback to mock data if not found in Supabase
-          const mockVenue = mockVenues.find(v => v.id === id);
-          if (mockVenue) {
-            setVenue(mockVenue);
+          // Fallback: try to find in the main venues data
+          const { venues } = await import('@/data/venues');
+          const fallbackVenue = venues.find(v => v.id === id);
+          if (fallbackVenue) {
+            const mappedVenue: DisplayVenue = {
+              id: fallbackVenue.id,
+              name: fallbackVenue.name,
+              description: fallbackVenue.description || 'A great place to visit in Budapest.',
+              image: fallbackVenue.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
+              address: fallbackVenue.address,
+              phone: fallbackVenue.phone_number || '+36 1 555 0000',
+              website: fallbackVenue.website_url || '',
+              isOpen: true, // Default to open
+              location: {
+                city: 'Budapest',
+                distance: fallbackVenue.distance ? (fallbackVenue.distance / 1000).toFixed(1) : '0.5'
+              },
+              freeDrink: {
+                name: 'Johnnie Walker & Lemonade',
+                description: 'A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish.',
+                image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600',
+                ingredients: 'Johnnie Walker Black Label whisky, Lemonade, Lemon Garnish, Ice'
+              },
+              offers: [
+                {
+                  title: 'Free Drink',
+                  description: 'Show this offer to receive a free welcome drink'
+                }
+              ]
+            };
+            setVenue(mappedVenue);
           } else {
             setError('Venue not found');
           }
         }
       } catch (err) {
         console.error('Error fetching venue:', err);
-        // Fallback to mock data on error
-        const mockVenue = mockVenues.find(v => v.id === id);
-        if (mockVenue) {
-          setVenue(mockVenue);
-        } else {
+        // Fallback: try to find in the main venues data
+        try {
+          const { venues } = await import('@/data/venues');
+          const fallbackVenue = venues.find(v => v.id === id);
+          if (fallbackVenue) {
+            const mappedVenue: DisplayVenue = {
+              id: fallbackVenue.id,
+              name: fallbackVenue.name,
+              description: fallbackVenue.description || 'A great place to visit in Budapest.',
+              image: fallbackVenue.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
+              address: fallbackVenue.address,
+              phone: fallbackVenue.phone_number || '+36 1 555 0000',
+              website: fallbackVenue.website_url || '',
+              isOpen: true, // Default to open
+              location: {
+                city: 'Budapest',
+                distance: fallbackVenue.distance ? (fallbackVenue.distance / 1000).toFixed(1) : '0.5'
+              },
+              freeDrink: {
+                name: 'Johnnie Walker & Lemonade',
+                description: 'A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish.',
+                image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600',
+                ingredients: 'Johnnie Walker Black Label whisky, Lemonade, Lemon Garnish, Ice'
+              },
+              offers: [
+                {
+                  title: 'Free Drink',
+                  description: 'Show this offer to receive a free welcome drink'
+                }
+              ]
+            };
+            setVenue(mappedVenue);
+          } else {
+            setError('Failed to load venue');
+          }
+        } catch {
           setError('Failed to load venue');
         }
       } finally {

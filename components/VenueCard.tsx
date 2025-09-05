@@ -107,7 +107,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         
         {/* Meta row */}
         <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
-          Pub • {venue.address || 'Budapest'} • Pontszerzés
+          Vendéglátóhely • {venue.address || 'Budapest'} • Pontszerzés
         </Text>
       </View>
     </TouchableOpacity>

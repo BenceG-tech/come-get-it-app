@@ -1,18 +1,114 @@
 import React from "react";
-import { StyleSheet, View, Text } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { Search, MapPin, Filter } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
+import VenueCard from "@/components/VenueCard";
+import { venues } from "@/data/venues";
+import { useAppContext } from "@/context/AppContext";
 
 export default function BarsScreen() {
-  console.log('BarsScreen rendering...');
-  
+  const router = useRouter();
+  const { selectedFilters } = useAppContext();
+  const insets = useSafeAreaInsets();
+
+  // For now, show all venues since we don't have the old filtering properties
+  const filteredVenues = venues;
+
+  const openFilter = () => {
+    router.push('/filter');
+  };
+
+  const openMap = () => {
+    router.push('/map');
+  };
+
+  const openSearch = () => {
+    router.push('/search');
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar style="light" />
-      <View style={styles.content}>
-        <Text style={styles.text}>App is working!</Text>
-        <Text style={styles.subText}>This is a test to see if the basic app structure is functioning.</Text>
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Vendéglátóhelyek</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={openSearch} style={styles.headerButton}>
+            <Search size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openMap} style={styles.headerButton}>
+            <MapPin size={24} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Filter Pills */}
+      <View style={styles.filtersContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+          <TouchableOpacity 
+            style={[
+              styles.filterPill,
+              selectedFilters.includes('nyitva') && styles.filterPillActive
+            ]}
+            onPress={() => {
+              // This will be handled by the filter modal
+            }}
+          >
+            <Text style={[
+              styles.filterPillText,
+              selectedFilters.includes('nyitva') && styles.filterPillTextActive
+            ]}>NYITVA</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.filterPill,
+              selectedFilters.includes('ingyen-ital') && styles.filterPillActive
+            ]}
+            onPress={() => {
+              // This will be handled by the filter modal
+            }}
+          >
+            <Text style={[
+              styles.filterPillText,
+              selectedFilters.includes('ingyen-ital') && styles.filterPillTextActive
+            ]}>Ingyen ital elérhető</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.filterButton} onPress={openFilter}>
+            <Filter size={18} color={Colors.text} />
+            <Text style={styles.filterButtonText}>Szűrők</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      {/* Venues List */}
+      <ScrollView 
+        style={styles.venuesList}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.venuesContent}
+      >
+        {filteredVenues.map((venue) => (
+          <VenueCard key={venue.id} venue={venue} />
+        ))}
+        
+        {filteredVenues.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Nincs találat</Text>
+            <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -22,22 +118,95 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  content: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  headerButton: {
+    padding: 8,
+  },
+  filtersContainer: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  filtersContent: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  filterPillActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  filterPillText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.textSecondary,
+  },
+  filterPillTextActive: {
+    color: Colors.background,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 6,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text,
+  },
+  venuesList: {
+    flex: 1,
+  },
+  venuesContent: {
+    paddingTop: 16,
+    paddingBottom: 100,
+  },
+  emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 40,
+    paddingVertical: 60,
   },
-  text: {
-    color: Colors.text,
-    fontSize: 24,
+  emptyStateText: {
+    fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
+    color: Colors.text,
+    marginBottom: 8,
   },
-  subText: {
-    color: Colors.textSecondary,
+  emptyStateSubtext: {
     fontSize: 16,
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
