@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { venues } from '@/data/venues';
+import { rest } from '@/lib/supabaseRest';
+import { venues as mockVenues } from '@/data/venues';
 
 type MockVenue = {
   id: string;
@@ -44,13 +45,102 @@ export default function VenueModalScreen() {
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
   const [, setCurrentRewardIndex] = useState<number>(0);
+  const [venue, setVenue] = useState<MockVenue | undefined>(undefined);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const venue = venues.find(v => v.id === id) as MockVenue | undefined;
+  useEffect(() => {
+    const fetchVenue = async () => {
+      if (!id) {
+        setError('No venue ID provided');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Try to fetch from Supabase first
+        const res = await rest(`/venues?id=eq.${id}&select=*`);
+        const data = await res.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+          const supaVenue = data[0];
+          // Map Supabase venue to MockVenue format
+          const mappedVenue: MockVenue = {
+            id: String(supaVenue.id),
+            name: supaVenue.name || 'Unknown Venue',
+            description: supaVenue.description || 'A great place to visit in Budapest.',
+            image: supaVenue.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
+            address: supaVenue.address || 'Budapest',
+            latitude: supaVenue.latitude || 47.498,
+            longitude: supaVenue.longitude || 19.056,
+            tags: supaVenue.tags || [],
+            category: supaVenue.category || 'Bar',
+            isOpen: !supaVenue.is_paused,
+            phone: supaVenue.phone || '+36 1 555 0000',
+            website: supaVenue.website_url || '',
+            priceLevel: supaVenue.price_level || '$',
+            location: {
+              city: 'Budapest',
+              distance: '0.5'
+            },
+            freeDrink: {
+              name: 'Johnnie Walker & Lemonade',
+              description: 'A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish.',
+              image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600',
+              ingredients: 'Johnnie Walker Black Label whisky, Lemonade, Lemon Garnish, Ice'
+            },
+            offers: [
+              {
+                title: 'Free Drink',
+                description: 'Show this offer to receive a free welcome drink'
+              }
+            ]
+          };
+          setVenue(mappedVenue);
+        } else {
+          // Fallback to mock data if not found in Supabase
+          const mockVenue = mockVenues.find(v => v.id === id);
+          if (mockVenue) {
+            setVenue(mockVenue as MockVenue);
+          } else {
+            setError('Venue not found');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching venue:', err);
+        // Fallback to mock data on error
+        const mockVenue = mockVenues.find(v => v.id === id);
+        if (mockVenue) {
+          setVenue(mockVenue as MockVenue);
+        } else {
+          setError('Failed to load venue');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVenue();
+  }, [id]);
   
-  if (!venue) {
+  if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={[styles.loadingText, { color: 'red' }]}>Venue not found</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.dark.primary} />
+          <Text style={styles.loadingText}>Loading venue...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error || !venue) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.loadingText, { color: 'red' }]}>{error || 'Venue not found'}</Text>
         <TouchableOpacity style={styles.directionsButton} onPress={() => router.back()}>
           <Text style={styles.directionsText}>Back</Text>
         </TouchableOpacity>
@@ -318,11 +408,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loadingText: {
     color: Colors.dark.text,
     fontSize: 16,
     textAlign: "center",
-    marginTop: 100,
+    marginTop: 20,
   },
   imageContainer: {
     height: height * 0.45,
