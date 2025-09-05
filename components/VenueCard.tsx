@@ -81,9 +81,6 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         
         {/* Free drink badge - bottom right */}
         <View style={styles.freeDrinkBadge}>
-          <View style={styles.badgeIcon}>
-            <Text style={styles.badgeIconText}>FIRST</Text>
-          </View>
           <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
         </View>
       </View>
@@ -170,35 +167,21 @@ const styles = StyleSheet.create({
     position: 'absolute' as const,
     bottom: 12,
     right: 12,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    backgroundColor: 'rgba(17, 17, 17, 0.65)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  badgeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFD646',
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginRight: 8,
-  },
-  badgeIconText: {
-    fontSize: 10,
-    fontWeight: 'bold' as const,
-    color: '#111',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
   freeDrinkText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
+    fontSize: 12,
+    fontWeight: '500' as const,
     color: '#FFFFFF',
   },
   contentContainer: {
