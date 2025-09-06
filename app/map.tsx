@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { rest } from '@/lib/supabaseRest';
 import { Venue } from '@/types/venue';
+import { venues as fallbackVenues } from '@/data/venues';
 
 // Avoid importing react-native-maps on web to prevent bundling errors
 const isWeb = Platform.OS === 'web';
@@ -62,7 +63,7 @@ export default function MapScreen() {
         { latitude: 47.4939, longitude: 19.0442 },
       ];
       
-      const venuesWithCoords = venueData.map((venue, index) => ({
+      const venuesWithCoords = (venueData && venueData.length > 0 ? venueData : fallbackVenues).map((venue, index) => ({
         ...venue,
         latitude: mockCoordinates[index % mockCoordinates.length].latitude,
         longitude: mockCoordinates[index % mockCoordinates.length].longitude,
@@ -72,6 +73,26 @@ export default function MapScreen() {
       console.info('[MapScreen] Loaded venues with mock coordinates:', venuesWithCoords.length);
     } catch (e) {
       console.error('[MapScreen] Load error', e);
+      // Fallback to local data if Supabase fails
+      console.log('[MapScreen] Using fallback venues data');
+      const mockCoordinates = [
+        { latitude: 47.4979, longitude: 19.0402 },
+        { latitude: 47.4969, longitude: 19.0412 },
+        { latitude: 47.4989, longitude: 19.0392 },
+        { latitude: 47.4959, longitude: 19.0422 },
+        { latitude: 47.4999, longitude: 19.0382 },
+        { latitude: 47.4949, longitude: 19.0432 },
+        { latitude: 47.5009, longitude: 19.0372 },
+        { latitude: 47.4939, longitude: 19.0442 },
+      ];
+      
+      const venuesWithCoords = fallbackVenues.map((venue, index) => ({
+        ...venue,
+        latitude: mockCoordinates[index % mockCoordinates.length].latitude,
+        longitude: mockCoordinates[index % mockCoordinates.length].longitude,
+      }));
+      
+      setVenues(venuesWithCoords);
     } finally {
       setLoading(false);
     }

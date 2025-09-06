@@ -15,6 +15,7 @@ import VenueCard from "@/components/VenueCard";
 import { Venue } from "@/types/venue";
 import { rest } from "@/lib/supabaseRest";
 import { useAppContext } from "@/context/AppContext";
+import { venues as fallbackVenues } from "@/data/venues";
 
 export default function BarsScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function BarsScreen() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch venues from Supabase
+  // Fetch venues from Supabase with fallback
   useEffect(() => {
     const fetchVenues = async () => {
       try {
@@ -31,11 +32,12 @@ export default function BarsScreen() {
         const response = await rest('/venues');
         const data = await response.json();
         console.log('Venues fetched:', data);
-        setVenues(data || []);
+        setVenues(data && data.length > 0 ? data : fallbackVenues);
       } catch (error) {
         console.error('Error fetching venues:', error);
-        // Fallback to empty array if Supabase fails
-        setVenues([]);
+        // Fallback to local data if Supabase fails
+        console.log('Using fallback venues data');
+        setVenues(fallbackVenues);
       } finally {
         setLoading(false);
       }
