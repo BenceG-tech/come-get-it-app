@@ -1,26 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Search } from 'lucide-react-native';
 import * as Location from 'expo-location';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { rest } from '@/lib/supabaseRest';
 import { Venue } from '@/types/venue';
 import { venues as fallbackVenues } from '@/data/venues';
 
-// Avoid importing react-native-maps on web to prevent bundling errors
-const isWeb = Platform.OS === 'web';
-let MapView: any;
-let Marker: any;
-let PROVIDER_GOOGLE: any;
-if (!isWeb) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const RNMaps = require('react-native-maps');
-  MapView = RNMaps.default;
-  Marker = RNMaps.Marker;
-  PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
+// Only import and use MapView on native platforms
+let MapView: any = null;
+let Marker: any = null;
+let PROVIDER_GOOGLE: any = null;
+
+if (Platform.OS !== 'web') {
+  try {
+    const RNMaps = require('react-native-maps');
+    MapView = RNMaps.default;
+    Marker = RNMaps.Marker;
+    PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
+  } catch (error) {
+    console.warn('react-native-maps not available:', error);
+  }
 }
 
 type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at'> & { 
@@ -29,8 +32,6 @@ type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 
   latitude?: number | null;
   longitude?: number | null;
 };
-
-
 
 export default function MapScreen() {
   const router = useRouter();
@@ -368,21 +369,21 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      
+
       <SafeAreaView edges={['top']} style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity 
-            style={styles.backButton} 
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => router.back()}
             testID="map-back"
           >
             <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
-          
+
           <Text style={styles.headerTitle}>Térkép</Text>
-          
+
           <View style={styles.headerRight}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.iconButton}
               onPress={() => router.push('/search')}
               testID="map-search"
@@ -393,7 +394,7 @@ export default function MapScreen() {
         </View>
       </SafeAreaView>
 
-      {isWeb ? (
+      {Platform.OS === 'web' ? (
         <View style={styles.webFallback} testID="web-map-fallback">
           <Text style={styles.webFallbackTitle}>Térkép nem érhető el a web előnézetben</Text>
           <Text style={styles.webFallbackText}>Nyisd meg az appot az Expo Go-val iOS-en vagy Androidon a térképes nézethez.</Text>
@@ -440,7 +441,7 @@ export default function MapScreen() {
         </MapView>
       )}
 
-      {!isWeb && (
+      {Platform.OS !== 'web' && (
         <View style={styles.floatingControls}>
           <TouchableOpacity 
             style={styles.myLocationButton}
@@ -454,7 +455,7 @@ export default function MapScreen() {
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <Text style={styles.loadingText}>Helyszínek betöltése...</Text>
+          <Text style={styles.loadingText}>Betöltés...</Text>
         </View>
       )}
     </View>
@@ -469,10 +470,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#000000',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -511,9 +509,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  map: {
-    flex: 1,
-  },
   webFallback: {
     flex: 1,
     alignItems: 'center',
@@ -543,6 +538,9 @@ const styles = StyleSheet.create({
     color: '#0B0B0B',
     fontSize: 14,
     fontWeight: '600',
+  },
+  map: {
+    flex: 1,
   },
   markerContainer: {
     alignItems: 'center',
