@@ -283,13 +283,7 @@ export default function VenueModalScreen() {
               resizeMode="cover"
             />
             
-            {/* COME GET IT Overlay */}
-            <View style={styles.brandOverlay}>
-              <Text style={styles.comeGetItText}>COME{"\n"}GET IT</Text>
-              <View style={styles.logoCircle}>
-                <Text style={styles.logoText}>FIRST{"\n"}CRAFT{"\n"}BEER</Text>
-              </View>
-            </View>
+
             
             {/* Location Badge */}
             <View style={styles.locationBadge}>
@@ -535,42 +529,7 @@ const styles = StyleSheet.create({
     height: height * 0.45,
     position: 'relative',
   },
-  brandOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  comeGetItText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: Colors.dark.primary,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
-    marginBottom: 20,
-  },
-  logoCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: Colors.dark.primary,
-    borderWidth: 3,
-    borderColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+
   image: {
     width: '100%',
     height: '100%',
