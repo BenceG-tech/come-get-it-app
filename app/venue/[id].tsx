@@ -794,7 +794,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   earnPointsContent: {
-    backgroundColor: Colors.dark.primary,
+    backgroundColor: '#0A5A6B',
     borderRadius: 8,
     padding: 16,
     flexDirection: 'row',
