@@ -426,13 +426,15 @@ export default function VenueModalScreen() {
                 <View style={styles.carouselIcon}>
                   <Text style={styles.carouselIconText}>🍺</Text>
                 </View>
-                <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
-                <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+                <View>
+                  <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
+                  <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+                </View>
               </View>
               <View style={styles.carouselBrand}>
                 <Text style={styles.carouselBrandText}>FIRST</Text>
               </View>
-              <ChevronDown size={20} color={Colors.dark.text} style={styles.carouselArrow} />
+              <ChevronDown size={16} color="#000000" style={styles.carouselArrow} />
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -702,7 +704,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   mapSection: {
-    marginBottom: 80,
+    marginBottom: 100,
   },
   mapContainer: {
     height: 200,
@@ -809,65 +811,70 @@ const styles = StyleSheet.create({
   },
   bottomCarousel: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: Colors.dark.background,
-    borderTopWidth: 1,
-    borderTopColor: Colors.dark.border,
+    bottom: 20,
+    left: 20,
+    right: 20,
+    height: 70,
+    backgroundColor: 'transparent',
   },
   carouselCard: {
     width: width - 40,
-    marginHorizontal: 20,
-    height: 80,
-    backgroundColor: Colors.dark.card,
-    borderRadius: 12,
+    height: 70,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginTop: 10,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   carouselContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   carouselIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Colors.dark.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   carouselIconText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   carouselTitle: {
-    color: Colors.dark.text,
-    fontSize: 16,
+    color: '#000000',
+    fontSize: 14,
     fontWeight: 'bold',
   },
   carouselSubtitle: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
+    color: '#666666',
+    fontSize: 11,
   },
   carouselBrand: {
     backgroundColor: Colors.dark.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginRight: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 6,
   },
   carouselBrandText: {
     color: '#000',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
   },
   carouselArrow: {
     transform: [{ rotate: '270deg' }],
+    marginRight: 4,
   },
 });
 
