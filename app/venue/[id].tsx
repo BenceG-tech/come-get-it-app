@@ -310,22 +310,15 @@ export default function VenueModalScreen() {
             <Text style={styles.distanceText}>{venue.location.distance}km away</Text>
             
             {/* Earn Points Section */}
-            <View style={styles.earnPointsCard}>
-              <View style={styles.earnPointsHeader}>
-                <Star size={20} color={Colors.dark.primary} fill={Colors.dark.primary} />
-                <Text style={styles.earnPointsLabel}>Earn Points</Text>
-                <Text style={styles.earnPointsType}>Restaurant - Reward</Text>
+            <View style={styles.earnPointsContent}>
+              <View style={styles.earnPointsIcon}>
+                <Star size={24} color="#fff" fill="#fff" />
               </View>
-              <View style={styles.earnPointsContent}>
-                <View style={styles.earnPointsIcon}>
-                  <Star size={24} color="#fff" fill="#fff" />
-                </View>
-                <View style={styles.earnPointsTextContainer}>
-                  <Text style={styles.earnPointsTitle}>EARN POINTS</Text>
-                  <Text style={styles.earnPointsDescription}>
-                    When you spend money at this bar, you earn{"\n"}points to redeem on rewards
-                  </Text>
-                </View>
+              <View style={styles.earnPointsTextContainer}>
+                <Text style={styles.earnPointsTitle}>EARN POINTS</Text>
+                <Text style={styles.earnPointsDescription}>
+                  When you spend money at this bar, you earn{"\n"}points to redeem on rewards
+                </Text>
               </View>
             </View>
             
@@ -771,28 +764,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  earnPointsCard: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 20,
-  },
-  earnPointsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  earnPointsLabel: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  earnPointsType: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
-    marginLeft: 'auto',
-  },
   earnPointsContent: {
     backgroundColor: '#0A5A6B',
     borderRadius: 8,
@@ -800,6 +771,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+    marginBottom: 20,
   },
   earnPointsIcon: {
     width: 40,
