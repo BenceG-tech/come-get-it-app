@@ -81,16 +81,6 @@ export default function VenueModalScreen() {
     );
   }
 
-  const images = useMemo(() => {
-    const arr: string[] = [];
-    if (venue.hero_image_url) arr.push(venue.hero_image_url);
-    if (venue.image_url) arr.push(venue.image_url);
-    (venue.images ?? []).forEach((u) => { if (u && !arr.includes(u)) arr.push(u); });
-    return arr.length > 0 ? arr : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
-  }, [venue]);
-
-  const freeDrinks: VenueDrink[] = useMemo(() => (venue.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
-  const windows = venue.freeDrinkWindows ?? [];
 
   const getCurrentHours = () => '23:00';
 
@@ -281,7 +271,6 @@ function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
   );
 }
 
-const { width, height } = Dimensions.get('window');
 
 
 
