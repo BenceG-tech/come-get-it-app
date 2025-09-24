@@ -48,7 +48,7 @@ export default function VenueModalScreen() {
     fetchVenue();
   }, [id]);
 
-  const images = useMemo(() => {
+  const galleryImages = useMemo(() => {
     const arr: string[] = [];
     if (venue?.hero_image_url) arr.push(venue.hero_image_url);
     if (venue?.image_url) arr.push(venue.image_url);
@@ -95,8 +95,8 @@ export default function VenueModalScreen() {
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-              {images.map((uri) => (
-                <Image key={uri} source={{ uri }} style={[styles.image, { width }]} resizeMode="cover" />
+              {galleryImages.map((uri, idx) => (
+                <Image testID={`venue-image-${idx}`} key={`${uri || 'img'}-${idx}`} source={{ uri }} style={[styles.image, { width }]} resizeMode="cover" />
               ))}
             </ScrollView>
             <View style={styles.locationBadge}>
