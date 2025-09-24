@@ -1,99 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { rest } from '@/lib/supabaseRest';
-import { Venue } from '@/types/venue';
-
-type MockVenue = {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  tags: string[];
-  category: string;
-  isOpen: boolean;
-  phone: string;
-  website: string;
-  priceLevel: string;
-  location: {
-    city: string;
-    distance: string;
-  };
-  freeDrink: {
-    name: string;
-    description: string;
-    image: string;
-    ingredients: string;
-  };
-  offers: {
-    title: string;
-    description: string;
-  }[];
-};
-
-const mockVenues: MockVenue[] = [
-  {
-    id: "1",
-    name: "Café Memories",
-    description: "A vibrant cocktail bar with live music and a late-night atmosphere. Perfect for those looking to enjoy craft cocktails and energetic vibes.",
-    image: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80",
-    address: "Király utca 15, Budapest 1075",
-    latitude: 47.498,
-    longitude: 19.056,
-    tags: ["Café", "Coffee", "Budapest"],
-    category: "Café",
-    isOpen: true,
-    phone: "+36 1 555 1234",
-    website: "https://example.com/cafememories",
-    priceLevel: "$",
-    location: {
-      city: "Budapest",
-      distance: "0.3"
-    },
-    freeDrink: {
-      name: "Johnnie Walker & Lemonade",
-      description: "A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish. Perfect for those who enjoy a smooth, balanced drink with a citrus twist.",
-      image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
-      ingredients: "Johnnie Walker Black Label whisky (40% alkoholtartalom), Lemonade, Lemon Garnish, Served Over Ice"
-    },
-    offers: [
-      {
-        title: "Free Drink",
-        description: "Show this offer to receive a free welcome shot with any cocktail purchase"
-      }
-    ]
-  }
-];
-
-type DisplayVenue = {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  address: string;
-  phone: string;
-  website: string;
-  isOpen: boolean;
-  location: {
-    city: string;
-    distance: string;
-  };
-  freeDrink: {
-    name: string;
-    description: string;
-    image: string;
-    ingredients: string;
-  };
-  offers: {
-    title: string;
-    description: string;
-  }[];
-};
+import { getVenueWithDetails } from '@/lib/supabaseProvider';
+import { VenueWithDetails, VenueDrink, FreeDrinkWindow } from '@/types/venue';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const placeholder = require('../../assets/images/splash-icon.png');
 
@@ -104,9 +16,12 @@ export default function VenueModalScreen() {
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
   const [, setCurrentRewardIndex] = useState<number>(0);
-  const [venue, setVenue] = useState<DisplayVenue | undefined>(undefined);
+  const [venue, setVenue] = useState<VenueWithDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
 
   useEffect(() => {
     const fetchVenue = async () => {
@@ -115,132 +30,38 @@ export default function VenueModalScreen() {
         setLoading(false);
         return;
       }
-
-      setLoading(true);
-      setError(null);
-      
       try {
-        // Try to fetch from Supabase first
-        const res = await rest(`/venues?id=eq.${id}&select=*`);
-        const data = await res.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          const supaVenue: Venue = data[0];
-          // Map Supabase venue to DisplayVenue format
-          const mappedVenue: DisplayVenue = {
-            id: String(supaVenue.id),
-            name: supaVenue.name || 'Unknown Venue',
-            description: supaVenue.description || 'A great place to visit in Budapest.',
-            image: supaVenue.image_url || supaVenue.hero_image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
-            address: supaVenue.address || 'Budapest',
-            phone: supaVenue.phone_number || '+36 1 555 0000',
-            website: supaVenue.website_url || '',
-            isOpen: !supaVenue.is_paused,
-            location: {
-              city: 'Budapest',
-              distance: supaVenue.distance ? (supaVenue.distance / 1000).toFixed(1) : '0.5'
-            },
-            freeDrink: {
-              name: 'Johnnie Walker & Lemonade',
-              description: 'A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish.',
-              image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600',
-              ingredients: 'Johnnie Walker Black Label whisky, Lemonade, Lemon Garnish, Ice'
-            },
-            offers: [
-              {
-                title: 'Free Drink',
-                description: 'Show this offer to receive a free welcome drink'
-              }
-            ]
-          };
-          setVenue(mappedVenue);
-        } else {
-          // Fallback: try to find in the main venues data
-          const { venues } = await import('@/data/venues');
-          const fallbackVenue = venues.find(v => v.id === id);
-          if (fallbackVenue) {
-            const mappedVenue: DisplayVenue = {
-              id: fallbackVenue.id,
-              name: fallbackVenue.name,
-              description: fallbackVenue.description || 'A great place to visit in Budapest.',
-              image: fallbackVenue.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
-              address: fallbackVenue.address,
-              phone: fallbackVenue.phone_number || '+36 1 555 0000',
-              website: fallbackVenue.website_url || '',
-              isOpen: true, // Default to open
-              location: {
-                city: 'Budapest',
-                distance: fallbackVenue.distance ? (fallbackVenue.distance / 1000).toFixed(1) : '0.5'
-              },
-              freeDrink: {
-                name: 'Johnnie Walker & Lemonade',
-                description: 'A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish.',
-                image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600',
-                ingredients: 'Johnnie Walker Black Label whisky, Lemonade, Lemon Garnish, Ice'
-              },
-              offers: [
-                {
-                  title: 'Free Drink',
-                  description: 'Show this offer to receive a free welcome drink'
-                }
-              ]
-            };
-            setVenue(mappedVenue);
-          } else {
-            setError('Venue not found');
-          }
+        setLoading(true);
+        console.info('[VenueDetail] Loading venue', id);
+        const v = await getVenueWithDetails(String(id));
+        if (!v) {
+          setError('Venue not found');
         }
-      } catch (err) {
-        console.error('Error fetching venue:', err);
-        // Fallback: try to find in the main venues data
-        try {
-          const { venues } = await import('@/data/venues');
-          const fallbackVenue = venues.find(v => v.id === id);
-          if (fallbackVenue) {
-            const mappedVenue: DisplayVenue = {
-              id: fallbackVenue.id,
-              name: fallbackVenue.name,
-              description: fallbackVenue.description || 'A great place to visit in Budapest.',
-              image: fallbackVenue.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600',
-              address: fallbackVenue.address,
-              phone: fallbackVenue.phone_number || '+36 1 555 0000',
-              website: fallbackVenue.website_url || '',
-              isOpen: true, // Default to open
-              location: {
-                city: 'Budapest',
-                distance: fallbackVenue.distance ? (fallbackVenue.distance / 1000).toFixed(1) : '0.5'
-              },
-              freeDrink: {
-                name: 'Johnnie Walker & Lemonade',
-                description: 'A refreshing blend of premium Johnnie Walker Black Label whisky with fresh lemonade, served over ice with a lemon garnish.',
-                image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600',
-                ingredients: 'Johnnie Walker Black Label whisky, Lemonade, Lemon Garnish, Ice'
-              },
-              offers: [
-                {
-                  title: 'Free Drink',
-                  description: 'Show this offer to receive a free welcome drink'
-                }
-              ]
-            };
-            setVenue(mappedVenue);
-          } else {
-            setError('Failed to load venue');
-          }
-        } catch {
-          setError('Failed to load venue');
-        }
+        setVenue(v);
+      } catch (e) {
+        console.error('[VenueDetail] Failed to load', e);
+        setError('Failed to load venue');
       } finally {
         setLoading(false);
       }
     };
-
     fetchVenue();
   }, [id]);
-  
+
+  const images = useMemo(() => {
+    const arr: string[] = [];
+    if (venue?.hero_image_url) arr.push(venue.hero_image_url);
+    if (venue?.image_url) arr.push(venue.image_url);
+    (venue?.images ?? []).forEach((u) => { if (u && !arr.includes(u)) arr.push(u); });
+    return arr.length > 0 ? arr : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
+  }, [venue]);
+
+  const freeDrinks: VenueDrink[] = useMemo(() => (venue?.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
+  const windows = venue?.freeDrinkWindows ?? [];
+
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.dark.primary} />
           <Text style={styles.loadingText}>Loading venue...</Text>
@@ -251,7 +72,7 @@ export default function VenueModalScreen() {
 
   if (error || !venue) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <Text style={[styles.loadingText, { color: 'red' }]}>{error || 'Venue not found'}</Text>
         <TouchableOpacity style={styles.directionsButton} onPress={() => router.back()}>
           <Text style={styles.directionsText}>Back</Text>
@@ -259,13 +80,19 @@ export default function VenueModalScreen() {
       </View>
     );
   }
-  
-  const headerImage = venue.image;
-  const freeDrink = venue.freeDrink;
 
-  const getCurrentHours = () => {
-    return '23:00';
-  };
+  const images = useMemo(() => {
+    const arr: string[] = [];
+    if (venue.hero_image_url) arr.push(venue.hero_image_url);
+    if (venue.image_url) arr.push(venue.image_url);
+    (venue.images ?? []).forEach((u) => { if (u && !arr.includes(u)) arr.push(u); });
+    return arr.length > 0 ? arr : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
+  }, [venue]);
+
+  const freeDrinks: VenueDrink[] = useMemo(() => (venue.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
+  const windows = venue.freeDrinkWindows ?? [];
+
+  const getCurrentHours = () => '23:00';
 
   return (
     <Modal
@@ -273,74 +100,49 @@ export default function VenueModalScreen() {
       presentationStyle="fullScreen"
       visible={true}
       onRequestClose={() => router.back()}
-    >
-      <View style={styles.container}>
+>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: headerImage }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-            
-
-            
-            {/* Location Badge */}
+          <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+              {images.map((uri) => (
+                <Image key={uri} source={{ uri }} style={[styles.image, { width }]} resizeMode="cover" />
+              ))}
+            </ScrollView>
             <View style={styles.locationBadge}>
               <MapPin size={14} color={Colors.dark.text} />
-              <Text style={styles.locationText}>{venue.location.city}</Text>
+              <Text style={styles.locationText}>Budapest</Text>
             </View>
-            
-            {/* Distance Badge */}
             <View style={styles.distanceBadge}>
-              <Text style={styles.distanceTextBadge}>{venue.location.distance}km</Text>
+              <Text style={styles.distanceTextBadge}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km</Text>
             </View>
-            
-            {/* Close Button */}
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => router.back()}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
               <X size={24} color={Colors.dark.text} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.content}>
             <Text style={styles.venueName}>{venue.name}</Text>
-            <Text style={styles.distanceText}>{venue.location.distance}km away</Text>
-            
-            {/* Earn Points Section */}
+            <Text style={styles.distanceText}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km away</Text>
+
             <View style={styles.earnPointsContent}>
               <View style={styles.earnPointsIcon}>
                 <Star size={24} color="#fff" fill="#fff" />
               </View>
               <View style={styles.earnPointsTextContainer}>
                 <Text style={styles.earnPointsTitle}>EARN POINTS</Text>
-                <Text style={styles.earnPointsDescription}>
-                  When you spend money at this bar, you earn{"\n"}points to redeem on rewards
-                </Text>
+                <Text style={styles.earnPointsDescription}>When you spend money at this bar, you earn{"\n"}points to redeem on rewards</Text>
               </View>
             </View>
-            
-            <Text style={styles.description}>
-              {venue.description}
-            </Text>
-            
-            {/* Opening Hours Section */}
-            <TouchableOpacity 
-              style={styles.hoursSection}
-              onPress={() => setShowHours(!showHours)}
-              activeOpacity={0.7}
-            >
+
+            <Text style={styles.description}>{venue.description ?? ''}</Text>
+
+            <TouchableOpacity style={styles.hoursSection} onPress={() => setShowHours(!showHours)} activeOpacity={0.7}>
               <View style={styles.hoursHeader}>
                 <Clock size={16} color={Colors.dark.text} />
                 <Text style={styles.hoursTitle}>Nyitva</Text>
                 <Text style={styles.hoursTime}>Zárás {getCurrentHours()}</Text>
-                <ChevronDown 
-                  size={20} 
-                  color={Colors.dark.text} 
-                  style={[styles.chevron, showHours && styles.chevronUp]}
-                />
+                <ChevronDown size={20} color={Colors.dark.text} style={[styles.chevron, showHours && styles.chevronUp]} />
               </View>
               {showHours && (
                 <View style={styles.hoursDetails}>
@@ -353,75 +155,58 @@ export default function VenueModalScreen() {
                 </View>
               )}
             </TouchableOpacity>
-            
-            {/* Free Drink Section */}
+
             <View style={styles.drinkSection}>
-              <Text style={styles.drinkTitle}>Ingyen ital</Text>
-              <Text style={styles.drinkName}>{freeDrink?.name}</Text>
-              
-              <Image
-                source={{ uri: freeDrink?.image }}
-                style={styles.drinkImage}
-                resizeMode="cover"
-              />
-              
-              <Text style={styles.drinkAvailability}>Az ital az alábbi idő pontokban elérhető</Text>
-              
-              <View style={styles.timeSlots}>
-                {['Hét', 'Ked', 'Sze', 'Csü', 'Pén', 'Szo'].map((day) => (
-                  <View key={day} style={styles.timeSlot}>
-                    <Text style={styles.dayText}>{day}</Text>
-                    <Text style={styles.timeText}>11:00-23:00</Text>
-                  </View>
-                ))}
-              </View>
+              <Text style={styles.drinkTitle}>Ingyen italok</Text>
+              {freeDrinks.length === 0 ? (
+                <Text style={styles.ingredientsText}>Nincs elérhető ingyen ital.</Text>
+              ) : (
+                freeDrinks.map((drink) => {
+                  const dWindows: FreeDrinkWindow[] = windows.filter((w) => w.drinkId === drink.id);
+                  return (
+                    <View key={drink.id} style={styles.drinkItem}>
+                      <Text style={styles.drinkName}>{drink.drinkName}</Text>
+                      {drink.imageUrl ? (
+                        <Image source={{ uri: drink.imageUrl }} style={styles.drinkImage} resizeMode="cover" />
+                      ) : null}
+                      <Text style={styles.drinkAvailability}>Az ital az alábbi időpontokban elérhető</Text>
+                      <View style={styles.timeSlots}>
+                        {dWindows.length === 0 ? (
+                          <Text style={styles.timeText}>Nincs megadott idősáv</Text>
+                        ) : (
+                          dWindows.map((w) => (
+                            <View key={w.id} style={styles.timeSlot}>
+                              <Text style={styles.dayText}>{['Hét','Ked','Sze','Csü','Pén','Szo','Vas'][w.dayOfWeek % 7]}</Text>
+                              <Text style={styles.timeText}>{w.start}-{w.end}</Text>
+                            </View>
+                          ))
+                        )}
+                      </View>
+                    </View>
+                  );
+                })
+              )}
             </View>
-            
-            {/* About Drink Section */}
-            <View style={styles.aboutSection}>
-              <Text style={styles.aboutTitle}>Az italról</Text>
-              <Text style={styles.aboutText}>
-                {freeDrink?.description}
-              </Text>
-              
-              <Text style={styles.ingredientsTitle}>Összetevők:</Text>
-              <Text style={styles.ingredientsText}>
-                {freeDrink?.ingredients}
-              </Text>
-            </View>
-            
-            {/* Map Section */}
+
             <View style={styles.mapSection}>
               <View style={styles.mapPlaceholder}>
                 <MapPin size={24} color={Colors.dark.text} />
                 <Text style={styles.mapText}>Map View</Text>
                 <Text style={styles.mapSubtext}>Tap to view on map</Text>
               </View>
-              
               <TouchableOpacity style={styles.directionsButton}>
                 <Text style={styles.directionsText}>Mutasd a térképen</Text>
               </TouchableOpacity>
             </View>
-            
           </View>
         </ScrollView>
-        
-        {/* Bottom Carousel */}
+
         <View style={styles.bottomCarousel}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            onMomentumScrollEnd={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
-              setCurrentRewardIndex(index);
-            }}
-          >
-            <TouchableOpacity 
-              style={styles.carouselCard}
-              onPress={() => setShowRedeemModal(true)}
-              activeOpacity={0.9}
-            >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled onMomentumScrollEnd={(e) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
+            setCurrentRewardIndex(index);
+          }}>
+            <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
               <View style={styles.carouselContent}>
                 <View style={styles.carouselIcon}>
                   <Text style={styles.carouselIconText}>🍺</Text>
@@ -439,12 +224,8 @@ export default function VenueModalScreen() {
           </ScrollView>
         </View>
       </View>
-      
-      <RedeemModal 
-        visible={showRedeemModal} 
-        onClose={() => setShowRedeemModal(false)}
-        rewardImage={freeDrink?.image ?? null}
-      />
+
+      <RedeemModal visible={showRedeemModal} onClose={() => setShowRedeemModal(false)} rewardImage={freeDrinks[0]?.imageUrl ?? null} />
     </Modal>
   );
 }
@@ -521,12 +302,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   imageContainer: {
-    height: height * 0.45,
     position: 'relative',
   },
 
   image: {
-    width: '100%',
     height: '100%',
   },
   closeButton: {
@@ -667,6 +446,9 @@ const styles = StyleSheet.create({
   timeSlot: {
     width: '30%',
     marginBottom: 8,
+  },
+  drinkItem: {
+    marginBottom: 16,
   },
   dayText: {
     color: Colors.dark.text,
@@ -818,7 +600,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   carouselCard: {
-    width: width - 40,
     height: 70,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -886,15 +667,15 @@ const redeemStyles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    width: width * 0.9,
-    maxHeight: height * 0.8,
+    width: '90%',
+    maxHeight: 560,
     backgroundColor: Colors.dark.background,
     borderRadius: 20,
     overflow: 'hidden',
   },
   drinkImage: {
     width: '100%',
-    height: height * 0.4,
+    height: 320,
   },
   content: {
     padding: 24,
