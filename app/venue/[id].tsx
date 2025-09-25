@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Linking, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ArrowRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
@@ -15,7 +15,7 @@ export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
-  const [, setCurrentRewardIndex] = useState<number>(0);
+
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +48,12 @@ export default function VenueModalScreen() {
     fetchVenue();
   }, [id]);
 
-  const galleryImages = useMemo(() => {
+  const venueImages = useMemo(() => {
     const arr: string[] = [];
     if (venue?.hero_image_url) arr.push(venue.hero_image_url);
     if (venue?.image_url) arr.push(venue.image_url);
     (venue?.images ?? []).forEach((imageUrl) => { 
-      if (imageUrl && imageUrl.trim() && imageUrl.length <= 2000 && !arr.includes(imageUrl)) {
+      if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim() && imageUrl.length <= 2000 && !arr.includes(imageUrl)) {
         arr.push(imageUrl.trim()); 
       }
     });
@@ -61,51 +61,70 @@ export default function VenueModalScreen() {
   }, [venue]);
 
   const freeDrinks: VenueDrink[] = useMemo(() => (venue?.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
-  const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
+  const freeDrinkWindows = useMemo(() => venue?.freeDrinkWindows ?? [], [venue]);
 
-  const formatTimeSlots = (drinkId: string): string => {
-    const drinkWindows = freeDrinkWindows.filter((w) => w.drinkId === drinkId);
-    if (drinkWindows.length === 0) return 'Nincs megadott idősáv';
+  // Check if any free drink is currently available
+  const isCurrentlyAvailable = useMemo(() => {
+    if (freeDrinks.length === 0 || freeDrinkWindows.length === 0) return false;
     
-    const dayNames = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
-    const groupedByTime: Record<string, number[]> = {};
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const currentTime = now.toTimeString().slice(0, 5); // HH:mm format
     
-    drinkWindows.forEach((w) => {
-      const timeKey = `${w.start}–${w.end}`;
-      if (!groupedByTime[timeKey]) groupedByTime[timeKey] = [];
-      groupedByTime[timeKey].push(w.dayOfWeek);
+    // Convert Sunday=0 to Monday=0 format (0=Mon, 1=Tue, ..., 6=Sun)
+    const dayIndex = currentDay === 0 ? 6 : currentDay - 1;
+    
+    return freeDrinkWindows.some(window => {
+      if (window.dayOfWeek !== dayIndex) return false;
+      return currentTime >= window.start && currentTime <= window.end;
+    });
+  }, [freeDrinks, freeDrinkWindows]);
+
+  // Get the primary free drink (first one)
+  const primaryFreeDrink = freeDrinks[0] || null;
+
+  // Get hero image for free drink section
+  const freeDrinkHeroImage = useMemo(() => {
+    if (primaryFreeDrink?.imageUrl) return primaryFreeDrink.imageUrl;
+    if (venue?.hero_image_url) return venue.hero_image_url;
+    if (venue?.image_url) return venue.image_url;
+    if (venueImages[0]) return venueImages[0];
+    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200';
+  }, [primaryFreeDrink, venue, venueImages]);
+
+  // Generate day grid for free drink availability
+  const generateDayGrid = (): {day: string, timeSlots: string[], isActive: boolean}[] => {
+    const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+    const shortDayNames = ['H', 'K', 'Sz', 'Cs', 'P', 'Szo', 'V'];
+    
+    return dayNames.map((dayName, index) => {
+      const dayWindows = freeDrinkWindows.filter(w => w.dayOfWeek === index);
+      const timeSlots = dayWindows.map(w => `${w.start}–${w.end}`);
+      
+      return {
+        day: shortDayNames[index],
+        timeSlots,
+        isActive: timeSlots.length > 0
+      };
+    });
+  };
+
+  const openMapsApp = () => {
+    // Mock coordinates for demo - in real app this would come from venue data
+    const lat = 47.4979;
+    const lng = 19.0402;
+    
+    const url = Platform.select({
+      ios: `maps:0,0?q=${lat},${lng}`,
+      android: `geo:0,0?q=${lat},${lng}`,
+      web: `https://maps.google.com/?q=${lat},${lng}`
     });
     
-    return Object.entries(groupedByTime).map(([timeRange, days]) => {
-      const sortedDays = days.sort((a, b) => a - b);
-      let dayRange = '';
-      
-      if (sortedDays.length === 1) {
-        dayRange = dayNames[sortedDays[0]];
-      } else if (sortedDays.length === 5 && sortedDays.every((d, i) => d === i)) {
-        dayRange = 'H-P';
-      } else if (sortedDays.length === 7) {
-        dayRange = 'H-V';
-      } else {
-        const ranges: string[] = [];
-        let start = sortedDays[0];
-        let end = start;
-        
-        for (let i = 1; i < sortedDays.length; i++) {
-          if (sortedDays[i] === end + 1) {
-            end = sortedDays[i];
-          } else {
-            ranges.push(start === end ? dayNames[start] : `${dayNames[start]}-${dayNames[end]}`);
-            start = sortedDays[i];
-            end = start;
-          }
-        }
-        ranges.push(start === end ? dayNames[start] : `${dayNames[start]}-${dayNames[end]}`);
-        dayRange = ranges.join(', ');
-      }
-      
-      return `${dayRange} • ${timeRange}`;
-    }).join('\n');
+    if (url) {
+      Linking.openURL(url).catch((err: unknown) => {
+        console.error('Error opening maps:', err instanceof Error ? err.message : String(err));
+      });
+    }
   };
 
   if (loading) {
@@ -144,7 +163,7 @@ export default function VenueModalScreen() {
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-              {galleryImages.map((uri, idx) => (
+              {venueImages.map((uri, idx) => (
                 <Image testID={`venue-image-${idx}`} key={`${uri || 'img'}-${idx}`} source={{ uri }} style={[styles.image, { width }]} resizeMode="cover" />
               ))}
             </ScrollView>
@@ -195,75 +214,125 @@ export default function VenueModalScreen() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.drinkSection}>
-              <Text style={styles.drinkTitle}>Ingyen italok</Text>
-              {freeDrinks.length === 0 ? (
-                <Text style={styles.emptyStateText}>Nincs elérhető ingyen ital.</Text>
-              ) : (
-                freeDrinks.map((drink) => {
-                  const timeSlotText = formatTimeSlots(drink.id);
-                  return (
-                    <View key={drink.id} style={styles.freeDrinkCard}>
-                      <View style={styles.freeDrinkContent}>
-                        <View style={styles.freeDrinkImageContainer}>
-                          {drink.imageUrl ? (
-                            <Image 
-                              source={{ uri: drink.imageUrl }} 
-                              style={styles.freeDrinkThumbnail} 
-                              resizeMode="cover" 
-                            />
-                          ) : (
-                            <View style={styles.freeDrinkPlaceholder}>
-                              <Text style={styles.freeDrinkPlaceholderText}>🍺</Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={styles.freeDrinkInfo}>
-                          <Text style={styles.freeDrinkName}>{drink.drinkName}</Text>
-                          <Text style={styles.freeDrinkTimeSlots}>{timeSlotText}</Text>
-                        </View>
-                      </View>
+            {/* Free Drink Section */}
+            {primaryFreeDrink && (
+              <View style={styles.freeDrinkSection}>
+                {/* Hero Image */}
+                <View style={styles.freeDrinkHeroContainer}>
+                  <Image 
+                    source={{ uri: freeDrinkHeroImage }}
+                    style={styles.freeDrinkHeroImage}
+                    resizeMode="cover"
+                  />
+                </View>
+                
+                {/* Drink Title */}
+                <View style={styles.freeDrinkTitleContainer}>
+                  <Text style={styles.freeDrinkTitle}>{primaryFreeDrink.drinkName}</Text>
+                  {isCurrentlyAvailable && (
+                    <View style={styles.availableChip}>
+                      <Text style={styles.availableChipText}>Most elérhető</Text>
                     </View>
-                  );
-                })
-              )}
-            </View>
-
-            <View style={styles.mapSection}>
-              <View style={styles.mapPlaceholder}>
-                <MapPin size={24} color={Colors.dark.text} />
-                <Text style={styles.mapText}>Map View</Text>
-                <Text style={styles.mapSubtext}>Tap to view on map</Text>
+                  )}
+                </View>
+                
+                {/* Availability Schedule */}
+                <Text style={styles.availabilityTitle}>Az ital az alábbi időpontokban elérhető</Text>
+                
+                <View style={styles.dayGrid}>
+                  {generateDayGrid().map((dayInfo) => (
+                    <View key={dayInfo.day} style={[styles.dayCell, dayInfo.isActive && styles.dayCellActive]}>
+                      <Text style={[styles.dayName, dayInfo.isActive && styles.dayNameActive]}>
+                        {dayInfo.day}
+                      </Text>
+                      <Text style={[styles.dayTime, dayInfo.isActive && styles.dayTimeActive]}>
+                        {dayInfo.timeSlots.length > 0 ? dayInfo.timeSlots[0] : '–'}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                
+                {/* About the Drink */}
+                {primaryFreeDrink.drinkName && (
+                  <View style={styles.aboutDrinkSection}>
+                    <Text style={styles.aboutDrinkTitle}>Az italról</Text>
+                    <Text style={styles.aboutDrinkText}>
+                      Örök komlóval fűszerezett, virágos illatbombájú, sűrű, gyümölcsszerűen átjárszó New England IPA.
+                    </Text>
+                  </View>
+                )}
+                
+                {/* Ingredients */}
+                <View style={styles.ingredientsSection}>
+                  <Text style={styles.ingredientsTitle}>Összetevők:</Text>
+                  <Text style={styles.ingredientsText}>
+                    Pale Ale, Búzapehely, Pilsner, Búzamaláta, Zabmaláta, CaraHell, CaraPils
+                  </Text>
+                </View>
               </View>
-              <TouchableOpacity style={styles.directionsButton}>
+            )}
+
+            {/* Map Section */}
+            <View style={styles.mapSection}>
+              <View style={styles.mapContainer}>
+                <View style={styles.mapPlaceholder}>
+                  <MapPin size={32} color={Colors.dark.primary} />
+                  <Text style={styles.mapText}>FIRST Local Craft Beer and Kitchen</Text>
+                  <Text style={styles.mapSubtext}>FIRST Craft Beer & BBQ</Text>
+                </View>
+                {/* Mock map pins overlay */}
+                <View style={styles.mapPinsOverlay}>
+                  <View style={[styles.mapPin, { top: 60, left: 120 }]}>
+                    <MapPin size={20} color="#FF4444" fill="#FF4444" />
+                  </View>
+                  <View style={[styles.mapPin, { top: 100, left: 180 }]}>
+                    <MapPin size={20} color="#FF4444" fill="#FF4444" />
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.directionsButton} onPress={openMapsApp}>
                 <Text style={styles.directionsText}>Mutasd a térképen</Text>
               </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
 
-        <View style={styles.bottomCarousel}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled onMomentumScrollEnd={(e) => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
-            setCurrentRewardIndex(index);
-          }}>
-            <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
-              <View style={styles.carouselContent}>
-                <View style={styles.carouselIcon}>
-                  <Text style={styles.carouselIconText}>🍺</Text>
+        {/* Sticky CTA */}
+        {primaryFreeDrink && (
+          <View style={styles.stickyCTA}>
+            <TouchableOpacity 
+              style={styles.ctaButton} 
+              onPress={() => setShowRedeemModal(true)} 
+              activeOpacity={0.9}
+            >
+              <View style={styles.ctaContent}>
+                <View style={styles.ctaIconContainer}>
+                  {primaryFreeDrink.imageUrl ? (
+                    <Image 
+                      source={{ uri: primaryFreeDrink.imageUrl }}
+                      style={styles.ctaIcon}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.ctaIconPlaceholder}>
+                      <Text style={styles.ctaIconText}>🍺</Text>
+                    </View>
+                  )}
                 </View>
-                <View>
-                  <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
-                  <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+                <View style={styles.ctaTextContainer}>
+                  <Text style={styles.ctaTitle}>Kérd INGYEN italod</Text>
+                  {isCurrentlyAvailable && (
+                    <Text style={styles.ctaSubtitle}>Most elérhető</Text>
+                  )}
                 </View>
               </View>
-              <View style={styles.carouselBrand}>
-                <Text style={styles.carouselBrandText}>FIRST</Text>
+              <View style={styles.ctaBrand}>
+                <Text style={styles.ctaBrandText}>FIRST</Text>
               </View>
-              <ChevronDown size={16} color="#000000" style={styles.carouselArrow} />
+              <ArrowRight size={16} color="#000000" style={styles.ctaArrow} />
             </TouchableOpacity>
-          </ScrollView>
-        </View>
+          </View>
+        )}
       </View>
 
       <RedeemModal visible={showRedeemModal} onClose={() => setShowRedeemModal(false)} rewardImage={freeDrinks[0]?.imageUrl ?? null} />
@@ -709,6 +778,191 @@ const styles = StyleSheet.create({
   },
   carouselArrow: {
     transform: [{ rotate: '270deg' }],
+    marginRight: 4,
+  },
+  // Free Drink Section Styles
+  freeDrinkSection: {
+    marginBottom: 24,
+  },
+  freeDrinkHeroContainer: {
+    marginBottom: 16,
+  },
+  freeDrinkHeroImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  freeDrinkTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  freeDrinkTitle: {
+    color: Colors.dark.text,
+    fontSize: 22,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  availableChip: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  availableChipText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  availabilityTitle: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  dayGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  dayCell: {
+    flex: 1,
+    minWidth: 45,
+    backgroundColor: Colors.dark.card,
+    borderRadius: 8,
+    padding: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  dayCellActive: {
+    backgroundColor: '#1E3A8A',
+    borderColor: '#3B82F6',
+  },
+  dayName: {
+    color: Colors.dark.subtext,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  dayNameActive: {
+    color: '#fff',
+  },
+  dayTime: {
+    color: Colors.dark.subtext,
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  dayTimeActive: {
+    color: '#E5E7EB',
+  },
+  aboutDrinkSection: {
+    marginBottom: 16,
+  },
+  aboutDrinkTitle: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  aboutDrinkText: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  ingredientsSection: {
+    marginBottom: 20,
+  },
+  // Map Section Updates
+  mapPinsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  mapPin: {
+    position: 'absolute',
+  },
+  // Sticky CTA Styles
+  stickyCTA: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+  },
+  ctaButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  ctaContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  ctaIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  ctaIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  ctaIconPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.dark.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctaIconText: {
+    fontSize: 20,
+  },
+  ctaTextContainer: {
+    flex: 1,
+  },
+  ctaTitle: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  ctaSubtitle: {
+    color: '#4CAF50',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  ctaBrand: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  ctaBrandText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  ctaArrow: {
     marginRight: 4,
   },
 });
