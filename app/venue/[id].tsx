@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
-import { VenueWithDetails, VenueDrink, FreeDrinkWindow } from '@/types/venue';
+import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const placeholder = require('../../assets/images/splash-icon.png');
@@ -52,12 +52,61 @@ export default function VenueModalScreen() {
     const arr: string[] = [];
     if (venue?.hero_image_url) arr.push(venue.hero_image_url);
     if (venue?.image_url) arr.push(venue.image_url);
-    (venue?.images ?? []).forEach((u) => { if (u && !arr.includes(u)) arr.push(u); });
+    (venue?.images ?? []).forEach((imageUrl) => { 
+      if (imageUrl && imageUrl.trim() && imageUrl.length <= 2000 && !arr.includes(imageUrl)) {
+        arr.push(imageUrl.trim()); 
+      }
+    });
     return arr.length > 0 ? arr : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
   }, [venue]);
 
   const freeDrinks: VenueDrink[] = useMemo(() => (venue?.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
-  const windows = venue?.freeDrinkWindows ?? [];
+  const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
+
+  const formatTimeSlots = (drinkId: string): string => {
+    const drinkWindows = freeDrinkWindows.filter((w) => w.drinkId === drinkId);
+    if (drinkWindows.length === 0) return 'Nincs megadott idősáv';
+    
+    const dayNames = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+    const groupedByTime: Record<string, number[]> = {};
+    
+    drinkWindows.forEach((w) => {
+      const timeKey = `${w.start}–${w.end}`;
+      if (!groupedByTime[timeKey]) groupedByTime[timeKey] = [];
+      groupedByTime[timeKey].push(w.dayOfWeek);
+    });
+    
+    return Object.entries(groupedByTime).map(([timeRange, days]) => {
+      const sortedDays = days.sort((a, b) => a - b);
+      let dayRange = '';
+      
+      if (sortedDays.length === 1) {
+        dayRange = dayNames[sortedDays[0]];
+      } else if (sortedDays.length === 5 && sortedDays.every((d, i) => d === i)) {
+        dayRange = 'H-P';
+      } else if (sortedDays.length === 7) {
+        dayRange = 'H-V';
+      } else {
+        const ranges: string[] = [];
+        let start = sortedDays[0];
+        let end = start;
+        
+        for (let i = 1; i < sortedDays.length; i++) {
+          if (sortedDays[i] === end + 1) {
+            end = sortedDays[i];
+          } else {
+            ranges.push(start === end ? dayNames[start] : `${dayNames[start]}-${dayNames[end]}`);
+            start = sortedDays[i];
+            end = start;
+          }
+        }
+        ranges.push(start === end ? dayNames[start] : `${dayNames[start]}-${dayNames[end]}`);
+        dayRange = ranges.join(', ');
+      }
+      
+      return `${dayRange} • ${timeRange}`;
+    }).join('\n');
+  };
 
   if (loading) {
     return (
@@ -149,28 +198,30 @@ export default function VenueModalScreen() {
             <View style={styles.drinkSection}>
               <Text style={styles.drinkTitle}>Ingyen italok</Text>
               {freeDrinks.length === 0 ? (
-                <Text style={styles.ingredientsText}>Nincs elérhető ingyen ital.</Text>
+                <Text style={styles.emptyStateText}>Nincs elérhető ingyen ital.</Text>
               ) : (
                 freeDrinks.map((drink) => {
-                  const dWindows: FreeDrinkWindow[] = windows.filter((w) => w.drinkId === drink.id);
+                  const timeSlotText = formatTimeSlots(drink.id);
                   return (
-                    <View key={drink.id} style={styles.drinkItem}>
-                      <Text style={styles.drinkName}>{drink.drinkName}</Text>
-                      {drink.imageUrl ? (
-                        <Image source={{ uri: drink.imageUrl }} style={styles.drinkImage} resizeMode="cover" />
-                      ) : null}
-                      <Text style={styles.drinkAvailability}>Az ital az alábbi időpontokban elérhető</Text>
-                      <View style={styles.timeSlots}>
-                        {dWindows.length === 0 ? (
-                          <Text style={styles.timeText}>Nincs megadott idősáv</Text>
-                        ) : (
-                          dWindows.map((w) => (
-                            <View key={w.id} style={styles.timeSlot}>
-                              <Text style={styles.dayText}>{['Hét','Ked','Sze','Csü','Pén','Szo','Vas'][w.dayOfWeek % 7]}</Text>
-                              <Text style={styles.timeText}>{w.start}-{w.end}</Text>
+                    <View key={drink.id} style={styles.freeDrinkCard}>
+                      <View style={styles.freeDrinkContent}>
+                        <View style={styles.freeDrinkImageContainer}>
+                          {drink.imageUrl ? (
+                            <Image 
+                              source={{ uri: drink.imageUrl }} 
+                              style={styles.freeDrinkThumbnail} 
+                              resizeMode="cover" 
+                            />
+                          ) : (
+                            <View style={styles.freeDrinkPlaceholder}>
+                              <Text style={styles.freeDrinkPlaceholderText}>🍺</Text>
                             </View>
-                          ))
-                        )}
+                          )}
+                        </View>
+                        <View style={styles.freeDrinkInfo}>
+                          <Text style={styles.freeDrinkName}>{drink.drinkName}</Text>
+                          <Text style={styles.freeDrinkTimeSlots}>{timeSlotText}</Text>
+                        </View>
                       </View>
                     </View>
                   );
@@ -408,45 +459,59 @@ const styles = StyleSheet.create({
     color: Colors.dark.text,
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  drinkName: {
-    color: Colors.dark.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  drinkImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  drinkAvailability: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  timeSlots: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  timeSlot: {
-    width: '30%',
-    marginBottom: 8,
-  },
-  drinkItem: {
     marginBottom: 16,
   },
-  dayText: {
-    color: Colors.dark.text,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  timeText: {
+  emptyStateText: {
     color: Colors.dark.subtext,
-    fontSize: 12,
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  freeDrinkCard: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  freeDrinkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  freeDrinkImageContainer: {
+    marginRight: 16,
+  },
+  freeDrinkThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  freeDrinkPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: Colors.dark.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  freeDrinkPlaceholderText: {
+    fontSize: 24,
+  },
+  freeDrinkInfo: {
+    flex: 1,
+  },
+  freeDrinkName: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  freeDrinkTimeSlots: {
+    color: Colors.dark.subtext,
+    fontSize: 14,
+    lineHeight: 20,
   },
   aboutSection: {
     marginBottom: 20,
