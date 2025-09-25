@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, FlatList, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Search, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
@@ -16,11 +16,16 @@ type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 
 
 export default function SearchScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [venues, setVenues] = useState<SupaVenue[]>([]);
   const [filteredVenues, setFilteredVenues] = useState<SupaVenue[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Check if we're showing "no results" for a specific category
+  const categoryName = params.category as string;
+  const showNoResults = params.noResults === 'true';
 
   const loadVenues = useCallback(async () => {
     console.info('[SearchScreen] Loading venues for search');
@@ -64,6 +69,17 @@ export default function SearchScreen() {
   };
 
   const renderEmptyState = () => {
+    if (showNoResults && categoryName) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Nincs releváns helyszín</Text>
+          <Text style={styles.emptySubtext}>
+            A &quot;{categoryName}&quot; kategóriában jelenleg nincs elérhető helyszín.
+          </Text>
+        </View>
+      );
+    }
+
     if (loading) {
       return (
         <View style={styles.emptyContainer}>
@@ -117,11 +133,11 @@ export default function SearchScreen() {
             <Search size={20} color={Colors.textSecondary} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Keresés helyszínekben..."
+              placeholder={showNoResults ? `Keresés a "${categoryName}" kategóriában...` : 'Keresés helyszínekben...'}
               placeholderTextColor={Colors.textSecondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              autoFocus={true}
+              autoFocus={!showNoResults}
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (
@@ -230,6 +246,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  emptySubtext: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 8,
+    opacity: 0.8,
   },
   errorText: {
     color: '#FF4444',
