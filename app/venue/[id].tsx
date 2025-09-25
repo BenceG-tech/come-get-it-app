@@ -612,18 +612,26 @@ const styles = StyleSheet.create({
     marginBottom: 100,
   },
   mapContainer: {
-    height: 200,
-    borderRadius: 12,
-    marginBottom: 12,
+    height: 240,
+    borderRadius: 16,
+    marginBottom: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   mapPlaceholder: {
-    height: 200,
+    height: 240,
     backgroundColor: Colors.dark.card,
-    borderRadius: 12,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    position: 'relative',
   },
   mapText: {
     color: Colors.dark.text,
@@ -786,11 +794,19 @@ const styles = StyleSheet.create({
   },
   freeDrinkHeroContainer: {
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   freeDrinkHeroImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 12,
+    aspectRatio: 16/9,
+    borderRadius: 16,
   },
   freeDrinkTitleContainer: {
     flexDirection: 'row',
@@ -806,9 +822,9 @@ const styles = StyleSheet.create({
   },
   availableChip: {
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   availableChipText: {
     color: '#fff',
@@ -823,22 +839,24 @@ const styles = StyleSheet.create({
   },
   dayGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   dayCell: {
     flex: 1,
-    minWidth: 45,
+    minWidth: 40,
+    height: 64,
     backgroundColor: Colors.dark.card,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.dark.border,
   },
   dayCellActive: {
-    backgroundColor: '#1E3A8A',
+    backgroundColor: '#1E40AF',
     borderColor: '#3B82F6',
   },
   dayName: {
@@ -854,18 +872,19 @@ const styles = StyleSheet.create({
     color: Colors.dark.subtext,
     fontSize: 10,
     textAlign: 'center',
+    lineHeight: 12,
   },
   dayTimeActive: {
     color: '#E5E7EB',
   },
   aboutDrinkSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   aboutDrinkTitle: {
     color: Colors.dark.text,
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   aboutDrinkText: {
     color: Colors.dark.text,
@@ -873,7 +892,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   ingredientsSection: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   // Map Section Updates
   mapPinsOverlay: {
@@ -899,15 +918,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
   },
   ctaContent: {
     flex: 1,
