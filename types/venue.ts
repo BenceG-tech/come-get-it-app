@@ -14,6 +14,7 @@ export type Venue = {
   points_per_visit?: number | null;
   opening_hours?: OpeningHours | null;
   distance?: number | null; // in meters
+  tags?: string[];
 };
 
 export type OpeningHours = {

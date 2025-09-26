@@ -97,13 +97,18 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
           </View>
         </View>
         
-        {/* Blue action row */}
-        <TouchableOpacity style={styles.earnPointsButton} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+        {/* Szerezz pontokat and tags row */}
+        <View style={styles.earnPointsAndTagsRow}>
           <View style={styles.earnPointsContent}>
             <Star size={14} color="#2BB7FF" fill="#2BB7FF" />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
           </View>
-        </TouchableOpacity>
+          {venue.tags && venue.tags.length > 0 && (
+            <Text style={styles.tagsText} numberOfLines={1} ellipsizeMode="tail">
+              {venue.tags.join(' • ')}
+            </Text>
+          )}
+        </View>
         
         {/* Meta row */}
         <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
@@ -204,8 +209,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  earnPointsButton: {
-    marginBottom: 4, // More compact
+  earnPointsAndTagsRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: 4,
+    gap: 8,
   },
   earnPointsContent: {
     flexDirection: 'row' as const,
@@ -216,6 +224,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500' as const,
     color: '#2BB7FF',
+  },
+  tagsText: {
+    fontSize: 13,
+    color: '#A6A6AD',
+    flex: 1,
   },
   stars: {
     flexDirection: 'row' as const,

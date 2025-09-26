@@ -12,6 +12,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 50,
     distance: 300,
+    tags: ['kávé', 'ingyen ital', 'terasz'],
   },
   {
     id: "2",
@@ -24,6 +25,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 75,
     distance: 500,
+    tags: ['koktél', 'ingyen ital', 'ruin pub'],
   },
   {
     id: "3",
@@ -36,6 +38,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 100,
     distance: 700,
+    tags: ['rooftop', 'koktél', 'kilátás'],
   },
   {
     id: "4",
@@ -48,6 +51,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 60,
     distance: 400,
+    tags: ['bor', 'ingyen ital', 'sajtok'],
   },
   {
     id: "5",
@@ -60,6 +64,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 120,
     distance: 600,
+    tags: ['koktél', 'mixológia', 'elegáns'],
   },
   {
     id: "6",
@@ -72,6 +77,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 40,
     distance: 1200,
+    tags: ['sör', 'kézműves', 'kert', 'ingyen ital'],
   },
   {
     id: "7",
@@ -84,6 +90,7 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 80,
     distance: 800,
+    tags: ['közel-keleti', 'kert', 'kulturális'],
   },
   {
     id: "8",
@@ -96,5 +103,6 @@ export const venues: Venue[] = [
     participates_in_points: true,
     points_per_visit: 30,
     distance: 900,
+    tags: ['olcsó', 'ingyen ital', 'bulizás'],
   }
 ];
