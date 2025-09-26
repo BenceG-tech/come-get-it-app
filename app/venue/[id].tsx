@@ -162,7 +162,6 @@ export default function VenueModalScreen() {
 
           <View style={styles.content}>
             <Text style={styles.venueName}>{venue.name}</Text>
-            <Text style={styles.distanceText}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km away</Text>
 
             <View style={styles.earnPointsContent} testID="earn-points-card">
               <View style={styles.earnPointsIcon} testID="earn-points-icon">
@@ -242,7 +241,7 @@ export default function VenueModalScreen() {
           </View>
         </ScrollView>
 
-        <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}>
+        <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24 }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled contentContainerStyle={{ width }} onMomentumScrollEnd={(e) => {
             const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
             setCurrentRewardIndex(index);
@@ -537,7 +536,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   mapSection: {
-    marginBottom: 100,
+    marginBottom: 80,
   },
   mapContainer: {
     height: 200,
@@ -652,9 +651,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 44,
+    minHeight: 44,
     backgroundColor: 'transparent',
-    paddingHorizontal: 0,
+    paddingHorizontal: 20,
   },
   carouselCard: {
     height: 44,
