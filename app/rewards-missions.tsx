@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions, ImageBackground } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Info } from "lucide-react-native";
@@ -387,10 +387,14 @@ export default function RewardsMissionsScreen() {
 
   const renderProgressBar = (progress: number, total: number) => {
     const percentage = (progress / total) * 100;
+    const progressBarFillStyle = {
+      ...styles.progressBarFill,
+      width: `${percentage}%` as const,
+    };
     return (
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
+          <View style={progressBarFillStyle} />
         </View>
         <Text style={styles.progressText}>{progress} / {total}</Text>
       </View>
@@ -423,19 +427,25 @@ export default function RewardsMissionsScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Come Get It Rewards</Text>
-        <TouchableOpacity style={styles.infoButton}>
-          <Info size={24} color={Colors.text} />
-        </TouchableOpacity>
-      </View>
+    <ImageBackground 
+      source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787' }}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <StatusBar style="light" />
+          
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ArrowLeft size={24} color={Colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Come Get It Rewards</Text>
+            <TouchableOpacity style={styles.infoButton}>
+              <Info size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
 
       {/* Rewards Card */}
       <LinearGradient
@@ -497,20 +507,29 @@ export default function RewardsMissionsScreen() {
           {missions.map(renderMissionCard)}
         </ScrollView>
       </View>
-    </View>
+        </View>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 60,
+    paddingTop: 70,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
