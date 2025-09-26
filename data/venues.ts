@@ -13,6 +13,8 @@ export const venues: Venue[] = [
     points_per_visit: 50,
     distance: 300,
     tags: ['kávé', 'ingyen ital', 'terasz'],
+    latitude: 47.5017,
+    longitude: 19.0608,
   },
   {
     id: "2",
@@ -26,6 +28,8 @@ export const venues: Venue[] = [
     points_per_visit: 75,
     distance: 500,
     tags: ['koktél', 'ingyen ital', 'ruin pub'],
+    latitude: 47.4979,
+    longitude: 19.0625,
   },
   {
     id: "3",
@@ -39,6 +43,8 @@ export const venues: Venue[] = [
     points_per_visit: 100,
     distance: 700,
     tags: ['rooftop', 'koktél', 'kilátás'],
+    latitude: 47.4969,
+    longitude: 19.0514,
   },
   {
     id: "4",
@@ -52,6 +58,8 @@ export const venues: Venue[] = [
     points_per_visit: 60,
     distance: 400,
     tags: ['bor', 'ingyen ital', 'sajtok'],
+    latitude: 47.4967,
+    longitude: 19.0640,
   },
   {
     id: "5",
@@ -65,6 +73,8 @@ export const venues: Venue[] = [
     points_per_visit: 120,
     distance: 600,
     tags: ['koktél', 'mixológia', 'elegáns'],
+    latitude: 47.5020,
+    longitude: 19.0580,
   },
   {
     id: "6",
@@ -78,6 +88,8 @@ export const venues: Venue[] = [
     points_per_visit: 40,
     distance: 1200,
     tags: ['sör', 'kézműves', 'kert', 'ingyen ital'],
+    latitude: 47.4816,
+    longitude: 19.0864,
   },
   {
     id: "7",
@@ -91,6 +103,8 @@ export const venues: Venue[] = [
     points_per_visit: 80,
     distance: 800,
     tags: ['közel-keleti', 'kert', 'kulturális'],
+    latitude: 47.4995,
+    longitude: 19.0655,
   },
   {
     id: "8",
@@ -104,5 +118,7 @@ export const venues: Venue[] = [
     points_per_visit: 30,
     distance: 900,
     tags: ['olcsó', 'ingyen ital', 'bulizás'],
+    latitude: 47.5055,
+    longitude: 19.0595,
   }
 ];
