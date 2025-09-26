@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { StyleSheet } from "react-native";
-import { Wine, Filter, Star, User } from "lucide-react-native";
+import { Wine, Star, User } from "lucide-react-native";
 import Colors from "@/constants/colors";
 
 export default function TabLayout() {
@@ -20,13 +20,6 @@ export default function TabLayout() {
         options={{
           title: "Vendéglátóhelyek",
           tabBarIcon: ({ color }) => <Wine size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="guides"
-        options={{
-          title: "Felfedezés",
-          tabBarIcon: ({ color }) => <Filter size={24} color={color} />,
         }}
       />
       <Tabs.Screen
