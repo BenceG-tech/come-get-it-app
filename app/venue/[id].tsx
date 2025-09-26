@@ -629,13 +629,15 @@ const styles = StyleSheet.create({
     minHeight: 72,
   },
   tagsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
+    gap: 12,
   },
   earnPointsLabel: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 8,
   },
   earnPointsLabelText: {
     color: Colors.dark.primary,
@@ -646,6 +648,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    flex: 1,
   },
   tagText: {
     color: '#AAAAAA',
