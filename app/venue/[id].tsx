@@ -282,7 +282,7 @@ interface RedeemModalProps {
 }
 
 function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
-  const bg = rewardImage ?? 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ccwk5zntudvm9yh5fjo47';
+  const bg = 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ddlayzwi6fgj2ujl1jgji';
   return (
     <Modal
       animationType="slide"
@@ -777,7 +777,7 @@ const redeemStyles = StyleSheet.create({
   },
   bgImage: {
     borderRadius: 20,
-    opacity: 0.6,
+    opacity: 0.8,
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
@@ -787,6 +787,8 @@ const redeemStyles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     gap: 24,
+    justifyContent: 'flex-end',
+    minHeight: '100%',
   },
   title: {
     color: Colors.dark.text,
