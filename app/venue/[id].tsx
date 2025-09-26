@@ -169,11 +169,9 @@ export default function VenueModalScreen() {
                 <Star size={16} color={Colors.dark.primary} fill={Colors.dark.primary} />
                 <Text style={styles.earnPointsLabelText}>Szerezz pontokat</Text>
               </View>
-              <View style={styles.tagsContainer}>
-                <Text style={styles.tagText}>pizza</Text>
-                <Text style={styles.tagText}>ingyen ital</Text>
-                <Text style={styles.tagText}>terasz</Text>
-              </View>
+              <Text style={styles.tagsText}>
+                {venue.tags && venue.tags.length > 0 ? venue.tags.join(' • ') : 'pizza • ingyen ital • terasz'}
+              </Text>
             </View>
 
             <View style={styles.earnPointsContent} testID="earn-points-card">
@@ -649,15 +647,10 @@ const styles = StyleSheet.create({
     color: Colors.dark.primary,
     fontSize: 14,
   },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    flex: 1,
-  },
-  tagText: {
+  tagsText: {
     color: '#AAAAAA',
     fontSize: 14,
+    flex: 1,
   },
   earnPointsIcon: {
     width: 40,
