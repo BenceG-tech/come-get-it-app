@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: 'contain',
-    marginTop: 26,
+    marginTop: 28,
   },
   headerActions: {
     marginLeft: 'auto',
