@@ -164,6 +164,12 @@ export default function VenueModalScreen() {
           </View>
 
           <View style={styles.content}>
+            <View style={styles.tagsContainer}>
+              <Text style={styles.tagText}>pizza</Text>
+              <Text style={styles.tagText}>ingyen ital</Text>
+              <Text style={styles.tagText}>terasz</Text>
+            </View>
+
             <View style={styles.earnPointsContent} testID="earn-points-card">
               <View style={styles.earnPointsIcon} testID="earn-points-icon">
                 <Star size={22} color={Colors.dark.primary} fill={Colors.dark.primary} />
@@ -171,18 +177,6 @@ export default function VenueModalScreen() {
               <View style={styles.earnPointsTextContainer} testID="earn-points-text">
                 <Text style={styles.earnPointsTitle}>SZEREZZ PONTOKAT</Text>
                 <Text style={styles.earnPointsDescription} numberOfLines={2} ellipsizeMode="tail">Ha itt fogyasztasz, gyűlnek a pontjaid, melyeket értékes jutalmakra válthatsz.</Text>
-              </View>
-            </View>
-
-            <View style={styles.tagsContainer}>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>pizza</Text>
-              </View>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>ingyen ital</Text>
-              </View>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>terasz</Text>
               </View>
             </View>
 
@@ -631,19 +625,13 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-  },
-  tag: {
-    backgroundColor: '#333333',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    gap: 12,
+    marginBottom: 16,
   },
   tagText: {
     color: '#AAAAAA',
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '400',
   },
   earnPointsIcon: {
     width: 40,
