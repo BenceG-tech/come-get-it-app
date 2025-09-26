@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ChevronRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
@@ -242,7 +242,7 @@ export default function VenueModalScreen() {
           </View>
         </ScrollView>
 
-        <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }]}>
+        <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled contentContainerStyle={{ width }} onMomentumScrollEnd={(e) => {
             const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
             setCurrentRewardIndex(index);
@@ -253,14 +253,11 @@ export default function VenueModalScreen() {
                   <Text style={styles.carouselIconText}>🍺</Text>
                 </View>
                 <View>
-                  <Text style={styles.carouselTitle}>Kérd INGYEN italod</Text>
+                  <Text style={styles.carouselTitle}>Kérd ingyen italod</Text>
                   <Text style={styles.carouselSubtitle}>Most elérhető</Text>
                 </View>
               </View>
-              <View style={styles.carouselBrand}>
-                <Text style={styles.carouselBrandText}>FIRST</Text>
-              </View>
-              <ChevronDown size={16} color="#FFFFFF" style={styles.carouselArrow} />
+              <ChevronRight size={16} color="#FFFFFF" style={styles.carouselArrow} />
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -380,8 +377,8 @@ const styles = StyleSheet.create({
   },
   distanceBadge: {
     position: 'absolute',
-    top: 50,
-    right: 70,
+    bottom: 16,
+    right: 16,
     backgroundColor: Colors.dark.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -655,14 +652,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 56,
+    height: 44,
     backgroundColor: 'transparent',
+    paddingHorizontal: 0,
   },
   carouselCard: {
-    height: 56,
+    height: 44,
     width: '100%',
     backgroundColor: '#000000',
-    borderRadius: 0,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.9)',
     flexDirection: 'row',
@@ -676,6 +674,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 6,
     elevation: 8,
+    marginHorizontal: 0,
   },
   carouselContent: {
     flex: 1,
@@ -705,22 +704,8 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
     fontSize: 11,
   },
-  carouselBrand: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
-  },
-  carouselBrandText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
+
   carouselArrow: {
-    transform: [{ rotate: '270deg' }],
     marginRight: 4,
     color: '#FFFFFF',
   },
