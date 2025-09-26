@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
+  Image,
+  useWindowDimensions,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Search, MapPin, Filter } from "lucide-react-native";
@@ -21,8 +23,14 @@ export default function BarsScreen() {
   const router = useRouter();
   const { selectedFilters, setSelectedFilters } = useAppContext();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const logoUri = useMemo(() => (
+    "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/hyz5pz2ymzhnjwx3w67to"
+  ), []);
+  const iconSize = width <= 375 ? 20 : 22;
+  const headerHeight = Math.max(56, 44 + insets.top);
 
   // Fetch venues from Supabase with fallback
   useEffect(() => {
@@ -79,37 +87,54 @@ export default function BarsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <StatusBar style="light" />
       
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Come</Text>
+      <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>        
+        <View style={styles.headerCenter}>
+          <Image
+            source={{ uri: logoUri }}
+            accessibilityLabel="Come Get It logo"
+            style={[styles.brandLogo, { height: width <= 375 ? 24 : 28 }]}
+          />
+        </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={openSearch} style={styles.headerButton}>
-            <Search size={24} color={Colors.text} />
+          <TouchableOpacity
+            testID="home-search"
+            onPress={openSearch}
+            style={styles.headerButton}
+            activeOpacity={0.7}
+          >
+            <Search size={iconSize} color="#EAEAEA" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={openMap} style={styles.headerButton}>
-            <MapPin size={24} color={Colors.text} />
+          <TouchableOpacity
+            testID="home-map"
+            onPress={openMap}
+            style={styles.headerButton}
+            activeOpacity={0.7}
+          >
+            <MapPin size={iconSize} color="#EAEAEA" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Filter Pills */}
+      {/* Filter Chips */}
       <View style={styles.filtersContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+        <View style={styles.filtersContent}>          
           <TouchableOpacity 
+            testID="chip-nyitva"
             style={[
               styles.filterPill,
               selectedFilters.includes('nyitva') && styles.filterPillActive
             ]}
             onPress={() => {
-              // Toggle the filter
               const newFilters = selectedFilters.includes('nyitva') 
                 ? selectedFilters.filter(f => f !== 'nyitva')
                 : [...selectedFilters, 'nyitva'];
               setSelectedFilters(newFilters);
             }}
+            activeOpacity={0.7}
           >
             <Text style={[
               styles.filterPillText,
@@ -118,17 +143,18 @@ export default function BarsScreen() {
           </TouchableOpacity>
           
           <TouchableOpacity 
+            testID="chip-free"
             style={[
               styles.filterPill,
               selectedFilters.includes('ingyen-ital') && styles.filterPillActive
             ]}
             onPress={() => {
-              // Toggle the filter
               const newFilters = selectedFilters.includes('ingyen-ital') 
                 ? selectedFilters.filter(f => f !== 'ingyen-ital')
                 : [...selectedFilters, 'ingyen-ital'];
               setSelectedFilters(newFilters);
             }}
+            activeOpacity={0.7}
           >
             <Text style={[
               styles.filterPillText,
@@ -136,11 +162,11 @@ export default function BarsScreen() {
             ]}>Ingyen ital elérhető</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.filterButton} onPress={openFilter}>
-            <Filter size={18} color={Colors.text} />
+          <TouchableOpacity testID="chip-filters" style={styles.filterButton} onPress={openFilter} activeOpacity={0.7}>
+            <Filter size={width <= 375 ? 16 : 18} color="rgba(234,234,234,0.7)" />
             <Text style={styles.filterButtonText}>Szűrők</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </View>
 
       {/* Venues List */}
@@ -172,82 +198,97 @@ export default function BarsScreen() {
   );
 }
 
+const pillRadius = 9999 as const;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   header: {
+    position: 'relative',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    backgroundColor: '#000000',
+    borderBottomWidth: 0,
+    paddingHorizontal: 12,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text,
+  headerCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brandLogo: {
+    width: undefined as unknown as number,
+    aspectRatio: 3.5,
+    resizeMode: 'contain',
   },
   headerActions: {
+    marginLeft: 'auto',
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
+    paddingRight: 12,
   },
   headerButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filtersContainer: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingVertical: 8,
+    borderBottomWidth: 0,
+    backgroundColor: Colors.background,
   },
   filtersContent: {
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    height: 28,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: pillRadius,
+    backgroundColor: '#1A1F24',
+    borderWidth: 0,
   },
   filterPillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: '#24303A',
   },
   filterPillText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    color: Colors.textSecondary,
+    color: '#EAEAEA',
   },
   filterPillTextActive: {
-    color: Colors.background,
+    color: '#FFFFFF',
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    height: 28,
+    paddingHorizontal: 12,
+    borderRadius: pillRadius,
+    backgroundColor: '#1A1F24',
     gap: 6,
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    color: Colors.text,
+    color: '#EAEAEA',
   },
   venuesList: {
     flex: 1,
   },
   venuesContent: {
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 100,
   },
   emptyState: {
