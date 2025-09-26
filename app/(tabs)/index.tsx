@@ -84,7 +84,7 @@ export default function BarsScreen() {
           <Image
             source={{ uri: logoUri }}
             accessibilityLabel="Come Get It logo"
-            style={[styles.brandLogo, { height: width <= 375 ? 28 : 32 }]}
+            style={[styles.brandLogo, { height: width <= 375 ? 34 : 38 }]}
           />
         </View>
         <View style={styles.headerActions}>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: 'contain',
-    marginTop: 6,
+    marginTop: 10,
   },
   headerActions: {
     marginLeft: 'auto',
