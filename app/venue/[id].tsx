@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    gap: 12,
+    gap: 6,
   },
   earnPointsLabel: {
     flexDirection: 'row',
@@ -642,18 +642,18 @@ const styles = StyleSheet.create({
   earnPointsLabelText: {
     color: Colors.dark.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 6,
     flex: 1,
   },
   tagText: {
     color: '#AAAAAA',
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: 'bold',
   },
   earnPointsIcon: {
     width: 40,
