@@ -11,6 +11,7 @@ export default {
   success: "#4CAF50",
   warning: "#FF9800",
   error: "#F44336",
+  accentEarn: "#0A5A6B",
   dark: {
     background: "#000000",
     text: "#FFFFFF",

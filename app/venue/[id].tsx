@@ -164,13 +164,13 @@ export default function VenueModalScreen() {
             <Text style={styles.venueName}>{venue.name}</Text>
             <Text style={styles.distanceText}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km away</Text>
 
-            <View style={styles.earnPointsContent}>
-              <View style={styles.earnPointsIcon}>
-                <Star size={24} color="#fff" fill="#fff" />
+            <View style={styles.earnPointsContent} testID="earn-points-card">
+              <View style={styles.earnPointsIcon} testID="earn-points-icon">
+                <Star size={22} color="#FFFFFF" fill="#FFFFFF" />
               </View>
-              <View style={styles.earnPointsTextContainer}>
-                <Text style={styles.earnPointsTitle}>EARN POINTS</Text>
-                <Text style={styles.earnPointsDescription}>When you spend money at this bar, you earn{"\n"}points to redeem on rewards</Text>
+              <View style={styles.earnPointsTextContainer} testID="earn-points-text">
+                <Text style={styles.earnPointsTitle}>SZEREZZ PONTOKAT</Text>
+                <Text style={styles.earnPointsDescription} numberOfLines={2} ellipsizeMode="tail">Ha itt fogyasztasz, gyűlnek a pontjaid, melyeket értékes jutalmakra válthatsz.</Text>
               </View>
             </View>
 
@@ -235,7 +235,7 @@ export default function VenueModalScreen() {
                 <Text style={styles.mapText}>Map View</Text>
                 <Text style={styles.mapSubtext}>Tap to view on map</Text>
               </View>
-              <TouchableOpacity style={styles.directionsButton}>
+              <TouchableOpacity style={styles.directionsButton} testID="show-on-map-button" accessibilityRole="button" accessibilityLabel="Mutasd a térképen">
                 <Text style={styles.directionsText}>Mutasd a térképen</Text>
               </TouchableOpacity>
             </View>
@@ -580,13 +580,15 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   directionsButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: Colors.accentEarn,
+    height: 46,
+    paddingVertical: 0,
+    justifyContent: 'center',
+    borderRadius: 12,
     alignItems: 'center',
   },
   directionsText: {
-    color: Colors.dark.background,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -603,19 +605,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   earnPointsContent: {
-    backgroundColor: '#0A5A6B',
-    borderRadius: 8,
-    padding: 16,
+    backgroundColor: Colors.accentEarn,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    marginBottom: 20,
+    gap: 12,
+    marginBottom: 14,
+    minHeight: 72,
   },
   earnPointsIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -623,15 +627,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   earnPointsTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginBottom: 2,
   },
   earnPointsDescription: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 13,
-    lineHeight: 18,
+    color: '#CFEAEC',
+    fontSize: 12,
+    lineHeight: 16,
   },
   hoursDetails: {
     marginTop: 12,
