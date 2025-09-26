@@ -242,8 +242,8 @@ export default function VenueModalScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.bottomCarousel}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled onMomentumScrollEnd={(e) => {
+        <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled contentContainerStyle={{ width }} onMomentumScrollEnd={(e) => {
             const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
             setCurrentRewardIndex(index);
           }}>
@@ -260,7 +260,7 @@ export default function VenueModalScreen() {
               <View style={styles.carouselBrand}>
                 <Text style={styles.carouselBrandText}>FIRST</Text>
               </View>
-              <ChevronDown size={16} color="#000000" style={styles.carouselArrow} />
+              <ChevronDown size={16} color="#FFFFFF" style={styles.carouselArrow} />
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -652,26 +652,29 @@ const styles = StyleSheet.create({
   },
   bottomCarousel: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    height: 70,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 56,
     backgroundColor: 'transparent',
   },
   carouselCard: {
-    height: 70,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    height: 56,
+    width: '100%',
+    backgroundColor: '#000000',
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    shadowColor: '#000',
+    shadowColor: 'rgba(255,255,255,0.6)',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 0,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
     elevation: 8,
   },
   carouselContent: {
@@ -684,7 +687,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.dark.primary,
+    backgroundColor: '#000000',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -692,29 +697,32 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   carouselTitle: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 'bold',
   },
   carouselSubtitle: {
-    color: '#666666',
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 11,
   },
   carouselBrand: {
-    backgroundColor: Colors.dark.primary,
+    backgroundColor: 'transparent',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
     marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   carouselBrandText: {
-    color: '#000',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: 'bold',
   },
   carouselArrow: {
     transform: [{ rotate: '270deg' }],
     marginRight: 4,
+    color: '#FFFFFF',
   },
 });
 
