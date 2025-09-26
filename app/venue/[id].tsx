@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -282,6 +282,7 @@ interface RedeemModalProps {
 }
 
 function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
+  const bg = rewardImage ?? 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ccwk5zntudvm9yh5fjo47';
   return (
     <Modal
       animationType="slide"
@@ -291,35 +292,40 @@ function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
     >
       <View style={redeemStyles.overlay}>
         <View style={redeemStyles.container}>
-          <Image
-            source={rewardImage ? { uri: rewardImage } : placeholder}
-            style={redeemStyles.drinkImage}
-            resizeMode="cover"
-          />
-          
-          <View style={redeemStyles.content}>
-            <Text style={redeemStyles.title}>
-              Legyél a vendéglátóhelyen,{"\n"}
-              hogy igényelhesed az{"\n"}
-              ingyen italod
-            </Text>
-            
-            <View style={redeemStyles.buttonContainer}>
-              <TouchableOpacity 
-                style={redeemStyles.confirmButton}
-                onPress={onClose}
-              >
-                <Text style={redeemStyles.confirmButtonText}>Itt vagyok</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={redeemStyles.cancelButton}
-                onPress={onClose}
-              >
-                <Text style={redeemStyles.cancelButtonText}>Vissza</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <ImageBackground 
+            source={{ uri: bg }} 
+            resizeMode="cover" 
+            style={redeemStyles.bg}
+            imageStyle={redeemStyles.bgImage}
+            defaultSource={placeholder}
+          >
+            <View style={redeemStyles.scrim} />
+            <ScrollView contentContainerStyle={redeemStyles.content} showsVerticalScrollIndicator={false}>
+              <Text style={redeemStyles.title}>
+                Legyél a vendéglátóhelyen,{"\n"}
+                hogy igényelhesed az{"\n"}
+                ingyen italod
+              </Text>
+
+              <View style={redeemStyles.buttonContainer}>
+                <TouchableOpacity 
+                  style={redeemStyles.confirmButton}
+                  onPress={onClose}
+                  testID="confirm-here-button"
+                >
+                  <Text style={redeemStyles.confirmButtonText}>Itt vagyok</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={redeemStyles.cancelButton}
+                  onPress={onClose}
+                  testID="cancel-back-button"
+                >
+                  <Text style={redeemStyles.cancelButtonText}>Vissza</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </ImageBackground>
         </View>
       </View>
     </Modal>
@@ -759,35 +765,44 @@ const redeemStyles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    width: '90%',
-    maxHeight: 560,
-    backgroundColor: Colors.dark.background,
+    width: '92%',
+    height: '82%',
+    backgroundColor: 'transparent',
     borderRadius: 20,
     overflow: 'hidden',
   },
-  drinkImage: {
-    width: '100%',
-    height: 320,
+  bg: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  bgImage: {
+    borderRadius: 20,
+    opacity: 0.6,
+  },
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   content: {
     padding: 24,
     alignItems: 'center',
+    gap: 24,
   },
   title: {
     color: Colors.dark.text,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
-    lineHeight: 32,
-    marginBottom: 40,
+    lineHeight: 30,
+    marginBottom: 8,
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
+    gap: 12,
   },
   confirmButton: {
     backgroundColor: Colors.dark.primary,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
@@ -798,7 +813,7 @@ const redeemStyles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: 'transparent',
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,

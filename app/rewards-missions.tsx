@@ -384,6 +384,7 @@ export default function RewardsMissionsScreen() {
   const router = useRouter();
   const { points } = useAppContext();
   const [selectedTab, setSelectedTab] = useState<'missions' | 'rewards'>('missions');
+  const [bgUri, setBgUri] = useState<string>('https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787');
 
   const renderProgressBar = (progress: number, total: number) => {
     const percentage = (progress / total) * 100;
@@ -428,8 +429,10 @@ export default function RewardsMissionsScreen() {
 
   return (
     <ImageBackground 
-      source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787' }}
+      source={{ uri: bgUri }}
+      onError={() => setBgUri('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2060&auto=format&fit=crop')}
       style={styles.backgroundImage}
+      imageStyle={styles.backgroundImageStyle}
       resizeMode="cover"
     >
       <View style={styles.overlay}>
@@ -516,10 +519,11 @@ export default function RewardsMissionsScreen() {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
   container: {
     flex: 1,
@@ -796,5 +800,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#FF9500",
+  },
+  backgroundImageStyle: {
+    opacity: 0.65,
   },
 });
