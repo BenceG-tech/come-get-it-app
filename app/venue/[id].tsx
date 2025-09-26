@@ -152,6 +152,9 @@ export default function VenueModalScreen() {
               <MapPin size={14} color={Colors.dark.text} />
               <Text style={styles.locationText}>Budapest</Text>
             </View>
+            <View style={styles.venueNameOverlay}>
+              <Text style={styles.venueNameOverlayText}>{venue.name}</Text>
+            </View>
             <View style={styles.distanceBadge}>
               <Text style={styles.distanceTextBadge}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km</Text>
             </View>
@@ -161,7 +164,6 @@ export default function VenueModalScreen() {
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.venueName}>{venue.name}</Text>
 
             <View style={styles.earnPointsContent} testID="earn-points-card">
               <View style={styles.earnPointsIcon} testID="earn-points-icon">
@@ -242,23 +244,18 @@ export default function VenueModalScreen() {
         </ScrollView>
 
         <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24 }]}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} pagingEnabled contentContainerStyle={{ width }} onMomentumScrollEnd={(e) => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / (width - 40));
-            setCurrentRewardIndex(index);
-          }}>
-            <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
-              <View style={styles.carouselContent}>
-                <View style={styles.carouselIcon}>
-                  <Text style={styles.carouselIconText}>🍺</Text>
-                </View>
-                <View>
-                  <Text style={styles.carouselTitle}>Kérd ingyen italod</Text>
-                  <Text style={styles.carouselSubtitle}>Most elérhető</Text>
-                </View>
+          <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
+            <View style={styles.carouselContent}>
+              <View style={styles.carouselIcon}>
+                <Text style={styles.carouselIconText}>🍺</Text>
               </View>
-              <ChevronRight size={16} color="#FFFFFF" style={styles.carouselArrow} />
-            </TouchableOpacity>
-          </ScrollView>
+              <View>
+                <Text style={styles.carouselTitle}>Kérd ingyen italod</Text>
+                <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+              </View>
+            </View>
+            <ChevronRight size={16} color="#FFFFFF" style={styles.carouselArrow} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -396,11 +393,20 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
-  venueName: {
+  venueNameOverlay: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    maxWidth: '70%',
+  },
+  venueNameOverlayText: {
     color: Colors.dark.text,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
   },
   earnPointsContainer: {
     flexDirection: 'row',
@@ -653,11 +659,10 @@ const styles = StyleSheet.create({
     right: 0,
     minHeight: 44,
     backgroundColor: 'transparent',
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
   },
   carouselCard: {
     height: 44,
-    width: '100%',
     backgroundColor: '#000000',
     borderRadius: 8,
     borderWidth: 1,
@@ -673,7 +678,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 6,
     elevation: 8,
-    marginHorizontal: 0,
+    marginHorizontal: 20,
   },
   carouselContent: {
     flex: 1,
