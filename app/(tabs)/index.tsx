@@ -32,7 +32,6 @@ export default function BarsScreen() {
   const iconSize = width <= 375 ? 20 : 22;
   const headerHeight = Math.max(56, 44 + insets.top);
 
-  // Fetch venues from Supabase with fallback
   useEffect(() => {
     const fetchVenues = async () => {
       try {
@@ -43,7 +42,6 @@ export default function BarsScreen() {
         setVenues(data && data.length > 0 ? data : fallbackVenues);
       } catch (error) {
         console.error('Error fetching venues:', error);
-        // Fallback to local data if Supabase fails
         console.log('Using fallback venues data');
         setVenues(fallbackVenues);
       } finally {
@@ -54,23 +52,15 @@ export default function BarsScreen() {
     fetchVenues();
   }, []);
 
-  // Apply filtering based on selected filters
   const filteredVenues = venues.filter(venue => {
     if (selectedFilters.length === 0) return true;
-    
     let passesFilters = true;
-    
-    // Check each filter
     if (selectedFilters.includes('nyitva')) {
-      // For demo, assume all venues are open
       passesFilters = passesFilters && true;
     }
-    
     if (selectedFilters.includes('ingyen-ital')) {
-      // For demo, assume all venues have free drinks available
       passesFilters = passesFilters && true;
     }
-    
     return passesFilters;
   });
 
@@ -89,8 +79,6 @@ export default function BarsScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      
-      {/* Header */}
       <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>        
         <View style={styles.headerCenter}>
           <Image
@@ -119,7 +107,6 @@ export default function BarsScreen() {
         </View>
       </View>
 
-      {/* Filter Chips */}
       <View style={styles.filtersContainer}>
         <View style={styles.filtersContent}>          
           <TouchableOpacity 
@@ -169,7 +156,6 @@ export default function BarsScreen() {
         </View>
       </View>
 
-      {/* Venues List */}
       <ScrollView 
         style={styles.venuesList}
         showsVerticalScrollIndicator={false}
@@ -226,6 +212,7 @@ const styles = StyleSheet.create({
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: 'contain',
+    marginTop: 6,
   },
   headerActions: {
     marginLeft: 'auto',
