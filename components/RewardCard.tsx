@@ -1,4 +1,5 @@
 import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
+import { router } from "expo-router";
 import Colors from "@/constants/colors";
 import { Reward } from "@/types/reward";
 
@@ -16,8 +17,12 @@ export default function RewardCard({ reward }: RewardCardProps) {
     return categoryMap[category] || category.toUpperCase();
   };
 
+  const handlePress = () => {
+    router.push(`/reward/${reward.id}`);
+  };
+
   return (
-    <TouchableOpacity style={styles.container} testID={`reward-card-${reward.id}`}>
+    <TouchableOpacity style={styles.container} testID={`reward-card-${reward.id}`} onPress={handlePress}>
       <Image source={{ uri: reward.image }} style={styles.image} />
       
       <View style={styles.pointsBadge}>
@@ -40,7 +45,7 @@ export default function RewardCard({ reward }: RewardCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: 220,
+    width: 180,
     backgroundColor: Colors.cardBackground,
     borderRadius: 12,
     overflow: "hidden",
@@ -48,7 +53,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 150,
+    height: 120,
   },
   pointsBadge: {
     position: "absolute",
@@ -82,7 +87,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   content: {
-    padding: 15,
+    padding: 12,
   },
   category: {
     fontSize: 11,
@@ -92,7 +97,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     color: Colors.text,
   },
