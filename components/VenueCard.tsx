@@ -103,11 +103,11 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
             <Star size={14} color="#2BB7FF" fill="#2BB7FF" />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
           </View>
-          {venue.tags && venue.tags.length > 0 && (
+          {venue.tags && venue.tags.length > 0 ? (
             <Text style={styles.tagsText} numberOfLines={1} ellipsizeMode="tail">
               {venue.tags.join(' • ')}
             </Text>
-          )}
+          ) : null}
         </View>
         
         {/* Meta row */}

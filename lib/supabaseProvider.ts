@@ -58,7 +58,7 @@ export type VenueUpdateInput = Partial<Venue> & {
 export async function updateVenueWithDetails(id: string, updates: VenueUpdateInput): Promise<VenueWithDetails> {
   console.info('[Provider] updateVenueWithDetails', id, JSON.stringify(Object.keys(updates)));
 
-  if (updates && (updates.name || updates.address || updates.description || updates.image_url || updates.hero_image_url)) {
+  if (updates && (updates.name || updates.address || updates.description || updates.image_url || updates.hero_image_url || updates.tags !== undefined)) {
     const res = await rest(`/venues?id=eq.${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

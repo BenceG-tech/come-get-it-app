@@ -169,9 +169,11 @@ export default function VenueModalScreen() {
                 <Star size={16} color={Colors.dark.primary} fill={Colors.dark.primary} />
                 <Text style={styles.earnPointsLabelText}>Szerezz pontokat</Text>
               </View>
-              <Text style={styles.tagsText}>
-                {venue.tags && venue.tags.length > 0 ? venue.tags.join(' • ') : 'pizza • ingyen ital • terasz'}
-              </Text>
+              {venue.tags && venue.tags.length > 0 ? (
+                <Text style={styles.tagsText}>
+                  {venue.tags.join(' • ')}
+                </Text>
+              ) : null}
             </View>
 
             <View style={styles.earnPointsContent} testID="earn-points-card">
