@@ -31,14 +31,14 @@ export default function FilterScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.title}>Filter bars</Text>
+        <Text style={styles.title}>Bárok szűrése</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
           <X size={24} color={Colors.text} />
         </TouchableOpacity>
       </View>
       
       <TouchableOpacity style={styles.showAllButton} onPress={clearFilters}>
-        <Text style={styles.showAllText}>Show all</Text>
+        <Text style={styles.showAllText}>Összes megjelenítése</Text>
       </TouchableOpacity>
       
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -68,7 +68,7 @@ export default function FilterScreen() {
       </ScrollView>
       
       <TouchableOpacity style={styles.applyButton} onPress={applyFilters}>
-        <Text style={styles.applyButtonText}>Apply Filters</Text>
+        <Text style={styles.applyButtonText}>Szűrők alkalmazása</Text>
       </TouchableOpacity>
     </View>
   );

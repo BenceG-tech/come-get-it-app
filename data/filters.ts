@@ -1,23 +1,23 @@
 export const filterCategories = [
   {
     id: "offers",
-    name: "OFFERS",
+    name: "AJÁNLATOK",
     filters: [
       {
         id: "free-drink",
-        name: "Free Drink",
+        name: "Ingyenes Ital",
         icon: "🍹",
         color: "#333333"
       },
       {
         id: "reward-bar",
-        name: "Reward Bar",
+        name: "Jutalom Bár",
         icon: "⭐",
         color: "#333333"
       },
       {
         id: "el-jimador",
-        name: "El Jimador Cocktail",
+        name: "El Jimador Koktél",
         icon: "🍸",
         color: "#1A3A3D"
       },
@@ -37,59 +37,59 @@ export const filterCategories = [
   },
   {
     id: "perfect-for",
-    name: "PERFECT FOR",
+    name: "TÖKÉLETES EHHEZ",
     filters: [
       {
         id: "pub-garden",
-        name: "Pub Garden",
+        name: "Pub Kert",
         icon: "🌿",
         color: "#2A3D1A"
       },
       {
         id: "student-friendly",
-        name: "Student-friendly",
+        name: "Diákbarát",
         icon: "🎓",
         color: "#333333"
       },
       {
         id: "listening-bars",
-        name: "Listening Bars",
+        name: "Zenehallgatós Bárok",
         icon: "🎧",
         color: "#333333"
       },
       {
         id: "small-plates",
-        name: "Small Plates",
+        name: "Kis Tányérok",
         icon: "🍽️",
         color: "#333333"
       },
       {
         id: "groups",
-        name: "Groups",
+        name: "Csoportok",
         icon: "👥",
         color: "#333333"
       },
       {
         id: "date-night",
-        name: "Date Night",
+        name: "Randevú Este",
         icon: "💘",
         color: "#333333"
       },
       {
         id: "female-owned",
-        name: "Female Owned",
+        name: "Női Tulajdonú",
         icon: "👑",
         color: "#333333"
       },
       {
         id: "new-bars",
-        name: "1-800-NEW-BARS",
+        name: "Új Bárok",
         icon: "NEW",
         color: "#333333"
       },
       {
         id: "foodie-spots",
-        name: "Foodie Spots",
+        name: "Gourmet Helyek",
         icon: "🍕",
         color: "#333333"
       }
@@ -97,11 +97,11 @@ export const filterCategories = [
   },
   {
     id: "venue-type",
-    name: "VENUE TYPE",
+    name: "HELY TÍPUSA",
     filters: [
       {
         id: "cocktails",
-        name: "Killer Cocktails",
+        name: "Fantasztikus Koktélok",
         icon: "🍸",
         color: "#333333"
       },
@@ -113,49 +113,49 @@ export const filterCategories = [
       },
       {
         id: "wine",
-        name: "Wine",
+        name: "Bor",
         icon: "🍷",
         color: "#333333"
       },
       {
         id: "craft-beer",
-        name: "Craft Beer",
+        name: "Kézműves Sör",
         icon: "🍺",
         color: "#333333"
       },
       {
         id: "dog-friendly",
-        name: "Dog-Friendly",
+        name: "Kutyabarát",
         icon: "🐶",
         color: "#333333"
       },
       {
         id: "baller",
-        name: "Baller",
+        name: "Luxus",
         icon: "💰",
         color: "#333333"
       },
       {
         id: "street-food",
-        name: "Street Food",
+        name: "Utcai Kaja",
         icon: "🌮",
         color: "#333333"
       },
       {
         id: "organised-fun",
-        name: "Organised Fun",
+        name: "Szervezett Szórakozás",
         icon: "🎲",
         color: "#333333"
       },
       {
         id: "outdoor",
-        name: "Outdoor",
+        name: "Kültéri",
         icon: "☀️",
         color: "#333333"
       },
       {
         id: "rooftop",
-        name: "Rooftop",
+        name: "Tetőtéri",
         icon: "🏙️",
         color: "#333333"
       }
