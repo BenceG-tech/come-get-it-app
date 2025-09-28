@@ -19,16 +19,40 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     rest(`/free_drink_windows?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
   ]);
 
-  const venueList: Venue[] = await venueRes.json();
+  let venueList: Venue[];
+  try {
+    venueList = await venueRes.json();
+  } catch (parseError) {
+    console.error('[Provider] Failed to parse venue response as JSON:', parseError);
+    try {
+      const responseText = await venueRes.clone().text();
+      console.error('[Provider] Response text:', responseText.substring(0, 500));
+    } catch (textError) {
+      console.error('[Provider] Could not get response text:', textError);
+    }
+    return null;
+  }
+  
   if (!Array.isArray(venueList) || venueList.length === 0) return null;
   const venue = venueList[0];
   console.info('[Provider] Venue opening_hours from DB:', JSON.stringify(venue.opening_hours, null, 2));
   console.info('[Provider] Full venue object keys:', Object.keys(venue));
   console.info('[Provider] Venue object:', JSON.stringify(venue, null, 2));
 
-  const imagesRows: { id: string; venue_id: string; image_url: string }[] = await imagesRes.json();
-  const drinksRows: { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null }[] = await drinksRes.json();
-  const windowsRows: { id: string; venue_id: string; drink_id: string; day_of_week: number; start_time: string; end_time: string }[] = await windowsRes.json();
+  let imagesRows: { id: string; venue_id: string; image_url: string }[];
+  let drinksRows: { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null }[];
+  let windowsRows: { id: string; venue_id: string; drink_id: string; day_of_week: number; start_time: string; end_time: string }[];
+  
+  try {
+    imagesRows = await imagesRes.json();
+    drinksRows = await drinksRes.json();
+    windowsRows = await windowsRes.json();
+  } catch (parseError) {
+    console.error('[Provider] Failed to parse related data as JSON:', parseError);
+    imagesRows = [];
+    drinksRows = [];
+    windowsRows = [];
+  }
 
   const drinks: VenueDrink[] = (drinksRows ?? []).map((d) => ({
     id: String(d.id),

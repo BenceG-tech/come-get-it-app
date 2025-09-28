@@ -37,7 +37,27 @@ export default function BarsScreen() {
       try {
         console.log('Fetching venues from Supabase...');
         const response = await rest('/venues');
-        const data = await response.json();
+        
+        // Check if response is ok
+        if (!response.ok) {
+          console.error('Response not ok:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Get response text first to debug
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText.substring(0, 200));
+        
+        // Try to parse JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          console.error('Response text that failed to parse:', responseText.substring(0, 500));
+          throw new Error('Failed to parse response as JSON');
+        }
+        
         console.log('Venues fetched:', data);
         if (data && data.length > 0) {
           console.log('Using database venues, first venue opening_hours:', JSON.stringify(data[0]?.opening_hours, null, 2));

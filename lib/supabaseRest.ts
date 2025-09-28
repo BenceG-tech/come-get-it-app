@@ -34,5 +34,10 @@ export async function rest(path: string, init: RequestInit = {}) {
     );
     throw err;
   }
+  
+  // Log response details for debugging
+  console.info('[SupabaseMobile] Response status:', res.status);
+  console.info('[SupabaseMobile] Response headers:', Object.fromEntries(res.headers.entries()));
+  
   return res;
 }

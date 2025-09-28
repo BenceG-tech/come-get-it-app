@@ -6,7 +6,7 @@ export type BusinessHours = {
   };
 };
 
-export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | null): BusinessHours | null {
+export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | string | null): BusinessHours | null {
   if (!openingHours) {
     console.log('[OpeningHours] No opening hours provided');
     return null;
@@ -20,11 +20,18 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
   // Handle case where openingHours might be a string (JSON)
   let parsedHours = openingHours;
   if (typeof openingHours === 'string') {
-    try {
-      parsedHours = JSON.parse(openingHours);
-      console.log('[OpeningHours] Parsed from string:', JSON.stringify(parsedHours, null, 2));
-    } catch (e) {
-      console.error('[OpeningHours] Failed to parse opening hours string:', e);
+    // Check if it's a valid JSON string
+    const trimmed = openingHours.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        parsedHours = JSON.parse(openingHours);
+        console.log('[OpeningHours] Parsed from string:', JSON.stringify(parsedHours, null, 2));
+      } catch (e) {
+        console.error('[OpeningHours] Failed to parse opening hours string:', e, 'String was:', trimmed.substring(0, 100));
+        return null;
+      }
+    } else {
+      console.error('[OpeningHours] Invalid JSON string format:', trimmed.substring(0, 100));
       return null;
     }
   }
