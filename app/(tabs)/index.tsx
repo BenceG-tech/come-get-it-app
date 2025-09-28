@@ -39,7 +39,13 @@ export default function BarsScreen() {
         const response = await rest('/venues');
         const data = await response.json();
         console.log('Venues fetched:', data);
-        setVenues(data && data.length > 0 ? data : fallbackVenues);
+        if (data && data.length > 0) {
+          console.log('Using database venues, first venue opening_hours:', data[0]?.opening_hours);
+          setVenues(data);
+        } else {
+          console.log('Using fallback venues');
+          setVenues(fallbackVenues);
+        }
       } catch (error) {
         console.error('Error fetching venues:', error);
         console.log('Using fallback venues data');

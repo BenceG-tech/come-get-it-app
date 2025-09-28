@@ -7,7 +7,12 @@ export type BusinessHours = {
 };
 
 export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | null): BusinessHours | null {
-  if (!openingHours) return null;
+  if (!openingHours) {
+    console.log('[OpeningHours] No opening hours provided');
+    return null;
+  }
+
+  console.log('[OpeningHours] Converting opening hours:', openingHours);
 
   const dayMapping = {
     monday: 1,
@@ -23,6 +28,7 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
 
   Object.entries(dayMapping).forEach(([dayName, dayNumber]) => {
     const dayHours = openingHours[dayName as keyof OpeningHours];
+    console.log(`[OpeningHours] ${dayName} (${dayNumber}):`, dayHours);
     if (dayHours && !('closed' in dayHours && dayHours.closed)) {
       byDay[dayNumber] = {
         open: dayHours.open,
@@ -33,7 +39,9 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
     }
   });
 
-  return { byDay };
+  const result = { byDay };
+  console.log('[OpeningHours] Converted result:', result);
+  return result;
 }
 
 export function isVenueOpenNow(venue: { business_hours?: BusinessHours | null }, now: Date = new Date()): boolean {

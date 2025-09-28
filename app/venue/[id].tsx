@@ -39,6 +39,7 @@ export default function VenueModalScreen() {
         if (!v) {
           setError('Venue not found');
         }
+        console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
         setVenue(v);
       } catch (e) {
         console.error('[VenueDetail] Failed to load', e);
@@ -205,7 +206,7 @@ export default function VenueModalScreen() {
               {showHours && (
                 <View style={styles.hoursDetails}>
                   <OpeningHoursDisplay 
-                    openingHours={venue?.opening_hours} 
+                    businessHours={venue?.opening_hours ? convertOpeningHoursToBusinessHours(venue.opening_hours) : null}
                     showStatus={false} 
                   />
                 </View>

@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
 import { LinearGradient } from 'expo-linear-gradient';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
+import { convertOpeningHoursToBusinessHours } from '@/utils/openingHours';
 import Colors from '@/constants/colors';
 
 type VenueCardProps = {
@@ -120,7 +121,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
             Vendéglátóhely • {venue.address || 'Budapest'} • Pontszerzés
           </Text>
           <OpeningHoursDisplay 
-            openingHours={venue.opening_hours} 
+            businessHours={venue.opening_hours ? convertOpeningHoursToBusinessHours(venue.opening_hours) : null}
             showStatus={Boolean(venue.opening_hours)} 
             compact 
             style={styles.openingHoursStyle} 
