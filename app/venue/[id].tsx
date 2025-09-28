@@ -200,7 +200,9 @@ export default function VenueModalScreen() {
             <TouchableOpacity style={styles.hoursSection} onPress={() => setShowHours(!showHours)} activeOpacity={0.7}>
               <View style={styles.hoursHeader}>
                 <Clock size={16} color={Colors.dark.text} />
-                <Text style={styles.hoursTitle}>{isOpen ? 'Nyitva' : 'Zárva'}</Text>
+                <Text style={styles.hoursTitle}>
+                  {businessHours ? (isOpen ? 'Nyitva' : 'Zárva') : 'Nyitvatartás'}
+                </Text>
                 {closingTime && isOpen && (
                   <Text style={styles.hoursTime}>Zárás {closingTime}</Text>
                 )}
@@ -209,7 +211,7 @@ export default function VenueModalScreen() {
               {showHours && (
                 <View style={styles.hoursDetails}>
                   <OpeningHoursDisplay 
-                    businessHours={venue?.opening_hours ? convertOpeningHoursToBusinessHours(venue.opening_hours) : null}
+                    businessHours={businessHours}
                     showStatus={false} 
                   />
                 </View>

@@ -14,32 +14,35 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
 
   console.log('[OpeningHours] Converting opening hours:', JSON.stringify(openingHours, null, 2));
   console.log('[OpeningHours] Type of openingHours:', typeof openingHours);
-  console.log('[OpeningHours] Is array:', Array.isArray(openingHours));
-  console.log('[OpeningHours] Keys:', Object.keys(openingHours));
 
   // Handle case where openingHours might be a string (JSON)
   let parsedHours = openingHours;
   if (typeof openingHours === 'string') {
-    // Check if it's a valid JSON string
     const trimmed = openingHours.trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    console.log('[OpeningHours] String to parse:', trimmed.substring(0, 100));
+    
+    // Only try to parse if it looks like JSON
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       try {
-        parsedHours = JSON.parse(openingHours);
-        console.log('[OpeningHours] Parsed from string:', JSON.stringify(parsedHours, null, 2));
+        parsedHours = JSON.parse(trimmed);
+        console.log('[OpeningHours] Successfully parsed from string:', JSON.stringify(parsedHours, null, 2));
       } catch (e) {
-        console.error('[OpeningHours] Failed to parse opening hours string:', e, 'String was:', trimmed.substring(0, 100));
+        console.error('[OpeningHours] Failed to parse opening hours string:', e);
+        console.error('[OpeningHours] String was:', trimmed.substring(0, 200));
         return null;
       }
     } else {
-      console.error('[OpeningHours] Invalid JSON string format:', trimmed.substring(0, 100));
+      console.error('[OpeningHours] String does not look like JSON:', trimmed.substring(0, 100));
       return null;
     }
   }
 
   if (!parsedHours || typeof parsedHours !== 'object') {
-    console.log('[OpeningHours] Invalid opening hours format');
+    console.log('[OpeningHours] Invalid opening hours format after parsing');
     return null;
   }
+
+  console.log('[OpeningHours] Parsed hours keys:', Object.keys(parsedHours));
 
   const dayMapping = {
     monday: 1,
@@ -75,13 +78,20 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
         close: String(dayHours.close),
       };
     } else {
-      console.log(`[OpeningHours] ${dayName} has no valid hours, treating as closed`);
+      console.log(`[OpeningHours] ${dayName} has no valid hours, treating as closed. Value:`, dayHours);
       byDay[dayNumber] = null;
     }
   });
 
   const result = { byDay };
-  console.log('[OpeningHours] Converted result:', JSON.stringify(result, null, 2));
+  console.log('[OpeningHours] Final converted result:', JSON.stringify(result, null, 2));
+  
+  // Validate that we have at least some valid hours
+  const hasValidHours = Object.values(byDay).some(hours => hours !== null);
+  if (!hasValidHours) {
+    console.warn('[OpeningHours] No valid opening hours found in conversion');
+  }
+  
   return result;
 }
 
@@ -142,7 +152,12 @@ export function formatOpeningHours(businessHours: BusinessHours | null): { day: 
 }
 
 export function groupConsecutiveHours(businessHours: BusinessHours | null): { days: string; hours: string }[] {
-  if (!businessHours) return [];
+  if (!businessHours) {
+    console.log('[groupConsecutiveHours] No business hours provided');
+    return [];
+  }
+
+  console.log('[groupConsecutiveHours] Input businessHours:', JSON.stringify(businessHours, null, 2));
 
   const dayNames = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
   const fullDayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
@@ -153,6 +168,7 @@ export function groupConsecutiveHours(businessHours: BusinessHours | null): { da
   for (let i = 1; i <= 7; i++) {
     const dayHours = businessHours.byDay[i];
     const hoursString = dayHours ? `${dayHours.open} - ${dayHours.close}` : 'Zárva';
+    console.log(`[groupConsecutiveHours] Day ${i} (${dayNames[i-1]}): ${hoursString}`);
     
     if (!hoursMap[hoursString]) {
       hoursMap[hoursString] = [];
@@ -160,9 +176,18 @@ export function groupConsecutiveHours(businessHours: BusinessHours | null): { da
     hoursMap[hoursString].push(i);
   }
   
+  console.log('[groupConsecutiveHours] Hours map:', hoursMap);
+  
   const result: { days: string; hours: string }[] = [];
   
-  Object.entries(hoursMap).forEach(([hours, days]) => {
+  // Sort entries to show open hours first, then closed
+  const sortedEntries = Object.entries(hoursMap).sort(([hoursA], [hoursB]) => {
+    if (hoursA === 'Zárva' && hoursB !== 'Zárva') return 1;
+    if (hoursA !== 'Zárva' && hoursB === 'Zárva') return -1;
+    return 0;
+  });
+  
+  sortedEntries.forEach(([hours, days]) => {
     if (hours === 'Zárva') {
       // Handle closed days individually or in groups
       const sortedDays = days.sort();
@@ -227,6 +252,7 @@ export function groupConsecutiveHours(businessHours: BusinessHours | null): { da
     }
   });
   
+  console.log('[groupConsecutiveHours] Final result:', result);
   return result;
 }
 
