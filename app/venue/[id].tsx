@@ -131,7 +131,20 @@ export default function VenueModalScreen() {
   }
 
 
-  const getCurrentHours = () => '23:00';
+  const getCurrentHours = () => {
+    if (!venue?.opening_hours) return 'Nincs adat';
+    
+    const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayKey = dayKeys[today] as keyof typeof venue.opening_hours;
+    const todayHours = venue.opening_hours[todayKey];
+    
+    if (!todayHours || todayHours.closed) {
+      return 'Zárva';
+    }
+    
+    return todayHours.close;
+  };
 
   return (
     <Modal
@@ -197,12 +210,26 @@ export default function VenueModalScreen() {
               </View>
               {showHours && (
                 <View style={styles.hoursDetails}>
-                  {['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'].map((day) => (
-                    <View key={day} style={styles.hoursRow}>
-                      <Text style={styles.hoursDay}>{day}</Text>
-                      <Text style={styles.hoursTime}>09:00 - 23:00</Text>
-                    </View>
-                  ))}
+                  {venue?.opening_hours ? (
+                    (() => {
+                      const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+                      const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                      
+                      return dayKeys.map((dayKey, index) => {
+                        const dayHours = venue.opening_hours?.[dayKey as keyof typeof venue.opening_hours];
+                        return (
+                          <View key={dayKey} style={styles.hoursRow}>
+                            <Text style={styles.hoursDay}>{dayNames[index]}</Text>
+                            <Text style={styles.hoursTime}>
+                              {!dayHours || dayHours.closed ? 'Zárva' : `${dayHours.open} - ${dayHours.close}`}
+                            </Text>
+                          </View>
+                        );
+                      });
+                    })()
+                  ) : (
+                    <Text style={styles.hoursTime}>Nincs megadott nyitvatartás</Text>
+                  )}
                 </View>
               )}
             </TouchableOpacity>

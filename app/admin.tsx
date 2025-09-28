@@ -13,13 +13,13 @@ import {
   Switch,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { Edit3, Save, X, Plus, Trash2, Coffee } from 'lucide-react-native';
+import { Edit3, Save, X, Plus, Trash2, Coffee, Clock } from 'lucide-react-native';
 import { trpc } from '@/lib/trpc';
-import { Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
+import { Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails, OpeningHours, DayHours } from '@/types/venue';
 import Colors from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type AdminMode = 'tags' | 'drinks';
+type AdminMode = 'tags' | 'drinks' | 'hours';
 
 type EditingDrink = {
   id: string;
@@ -53,11 +53,17 @@ export default function AdminScreen() {
   const [editingDrinks, setEditingDrinks] = useState<EditingDrink[]>([]);
   const [showDrinksModal, setShowDrinksModal] = useState(false);
   const [savingDrinks, setSavingDrinks] = useState(false);
+  
+  // Hours editing
+  const [editingVenueHours, setEditingVenueHours] = useState<Venue | null>(null);
+  const [editingHours, setEditingHours] = useState<OpeningHours | null>(null);
+  const [showHoursModal, setShowHoursModal] = useState(false);
+  const [savingHours, setSavingHours] = useState(false);
 
   const venuesQuery = trpc.venues.getAll.useQuery();
   const updateTagsMutation = trpc.venues.updateTags.useMutation();
-  // We'll use the query directly in the function
   const updateDrinksMutation = trpc.venues.updateDrinks.useMutation();
+  const updateHoursMutation = trpc.venues.updateHours.useMutation();
 
   useEffect(() => {
     if (venuesQuery.data) {
@@ -114,6 +120,21 @@ export default function AdminScreen() {
     }
   };
 
+  const handleEditHours = (venue: Venue) => {
+    if (!venue?.name?.trim()) return;
+    setEditingVenueHours(venue);
+    setEditingHours(venue.opening_hours || {
+      monday: null,
+      tuesday: null,
+      wednesday: null,
+      thursday: null,
+      friday: null,
+      saturday: null,
+      sunday: null,
+    });
+    setShowHoursModal(true);
+  };
+
   const handleSaveTags = async () => {
     if (!editingVenue) return;
 
@@ -159,6 +180,12 @@ export default function AdminScreen() {
     setShowDrinksModal(false);
     setEditingVenueWithDrinks(null);
     setEditingDrinks([]);
+  };
+
+  const closeHoursModal = () => {
+    setShowHoursModal(false);
+    setEditingVenueHours(null);
+    setEditingHours(null);
   };
 
   const addNewDrink = () => {
@@ -260,7 +287,43 @@ export default function AdminScreen() {
     }
   };
 
+  const handleSaveHours = async () => {
+    if (!editingVenueHours || !editingHours) return;
+
+    setSavingHours(true);
+    try {
+      await updateHoursMutation.mutateAsync({
+        venueId: editingVenueHours.id,
+        openingHours: editingHours,
+      });
+
+      // Update local state
+      setVenues(prev => prev.map(v => 
+        v.id === editingVenueHours.id 
+          ? { ...v, opening_hours: editingHours }
+          : v
+      ));
+
+      closeHoursModal();
+      Alert.alert('Success', 'Opening hours updated successfully');
+    } catch (error) {
+      console.error('Failed to update hours:', error);
+      Alert.alert('Error', 'Failed to update opening hours');
+    } finally {
+      setSavingHours(false);
+    }
+  };
+
+  const updateDayHours = (day: keyof OpeningHours, hours: DayHours | null) => {
+    if (!editingHours) return;
+    setEditingHours({
+      ...editingHours,
+      [day]: hours,
+    });
+  };
+
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayKeys: (keyof OpeningHours)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   if (loading) {
     return (
@@ -299,6 +362,13 @@ export default function AdminScreen() {
               <Coffee size={16} color={mode === 'drinks' ? Colors.dark.background : Colors.dark.text} />
               <Text style={[styles.modeButtonText, mode === 'drinks' && styles.modeButtonTextActive]}>Free Drinks</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeButton, mode === 'hours' && styles.modeButtonActive]}
+              onPress={() => setMode('hours')}
+            >
+              <Clock size={16} color={mode === 'hours' ? Colors.dark.background : Colors.dark.text} />
+              <Text style={[styles.modeButtonText, mode === 'hours' && styles.modeButtonTextActive]}>Hours</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -308,7 +378,11 @@ export default function AdminScreen() {
               <Text style={styles.venueName}>{venue.name}</Text>
               <TouchableOpacity
                 style={styles.editButton}
-                onPress={() => mode === 'tags' ? handleEditTags(venue) : handleEditDrinks(venue)}
+                onPress={() => {
+                  if (mode === 'tags') handleEditTags(venue);
+                  else if (mode === 'drinks') handleEditDrinks(venue);
+                  else if (mode === 'hours') handleEditHours(venue);
+                }}
                 disabled={saving}
               >
                 {saving ? (
@@ -336,10 +410,29 @@ export default function AdminScreen() {
                   <Text style={styles.noTagsText}>No tags set</Text>
                 )}
               </View>
-            ) : (
+            ) : mode === 'drinks' ? (
               <View style={styles.drinksContainer}>
                 <Text style={styles.tagsLabel}>Free Drinks:</Text>
                 <Text style={styles.drinksHint}>Click edit to manage free drinks and time slots</Text>
+              </View>
+            ) : (
+              <View style={styles.hoursContainer}>
+                <Text style={styles.tagsLabel}>Opening Hours:</Text>
+                {venue.opening_hours ? (
+                  <View style={styles.hoursPreview}>
+                    {dayKeys.map((dayKey, index) => {
+                      const dayHours = venue.opening_hours?.[dayKey];
+                      if (!dayHours) return null;
+                      return (
+                        <Text key={dayKey} style={styles.hoursPreviewText}>
+                          {dayNames[index]}: {dayHours.closed ? 'Zárva' : `${dayHours.open} - ${dayHours.close}`}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text style={styles.drinksHint}>Click edit to set opening hours</Text>
+                )}
               </View>
             )}
           </View>
@@ -579,6 +672,90 @@ export default function AdminScreen() {
                 </View>
               </View>
             ))}
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Edit Hours Modal */}
+      <Modal
+        visible={showHoursModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeHoursModal}
+      >
+        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={closeHoursModal}>
+              <X size={24} color={Colors.dark.text} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Opening Hours</Text>
+            <TouchableOpacity
+              onPress={handleSaveHours}
+              disabled={savingHours}
+              style={[styles.saveButton, savingHours && styles.saveButtonDisabled]}
+            >
+              {savingHours ? (
+                <ActivityIndicator size="small" color={Colors.dark.primary} />
+              ) : (
+                <Save size={20} color={Colors.dark.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+            <Text style={styles.editingVenueName}>{editingVenueHours?.name}</Text>
+            
+            <Text style={styles.hoursInstructions}>
+              Set the opening hours for each day. Leave a day empty if the venue is closed that day.
+            </Text>
+
+            {dayKeys.map((dayKey, index) => {
+              const dayHours = editingHours?.[dayKey];
+              return (
+                <View key={dayKey} style={styles.dayHoursCard}>
+                  <View style={styles.dayHoursHeader}>
+                    <Text style={styles.dayName}>{dayNames[index]}</Text>
+                    <Switch
+                      value={dayHours !== null && !dayHours?.closed}
+                      onValueChange={(isOpen) => {
+                        if (isOpen) {
+                          updateDayHours(dayKey, { open: '09:00', close: '23:00', closed: false });
+                        } else {
+                          updateDayHours(dayKey, null);
+                        }
+                      }}
+                      trackColor={{ false: Colors.dark.border, true: Colors.dark.primary }}
+                      thumbColor={dayHours !== null && !dayHours?.closed ? Colors.dark.background : Colors.dark.subtext}
+                    />
+                  </View>
+                  
+                  {dayHours !== null && !dayHours?.closed && (
+                    <View style={styles.timeInputsRow}>
+                      <View style={styles.timeInputContainer}>
+                        <Text style={styles.timeSlotLabel}>Open</Text>
+                        <TextInput
+                          style={styles.timeInput}
+                          value={dayHours?.open || ''}
+                          onChangeText={(text) => updateDayHours(dayKey, { open: text, close: dayHours?.close || '23:00', closed: false })}
+                          placeholder="09:00"
+                          placeholderTextColor={Colors.dark.subtext}
+                        />
+                      </View>
+                      <View style={styles.timeInputContainer}>
+                        <Text style={styles.timeSlotLabel}>Close</Text>
+                        <TextInput
+                          style={styles.timeInput}
+                          value={dayHours?.close || ''}
+                          onChangeText={(text) => updateDayHours(dayKey, { open: dayHours?.open || '09:00', close: text, closed: false })}
+                          placeholder="23:00"
+                          placeholderTextColor={Colors.dark.subtext}
+                        />
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </ScrollView>
         </View>
       </Modal>
@@ -958,5 +1135,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.dark.text,
     textAlign: 'center',
+  },
+  hoursContainer: {
+    marginTop: 8,
+  },
+  hoursPreview: {
+    gap: 4,
+  },
+  hoursPreviewText: {
+    fontSize: 12,
+    color: Colors.dark.text,
+  },
+  hoursInstructions: {
+    fontSize: 14,
+    color: Colors.dark.subtext,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  dayHoursCard: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  dayHoursHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dayName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.dark.text,
   },
 });
