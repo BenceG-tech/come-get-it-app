@@ -3,11 +3,16 @@ import { publicProcedure } from '@/backend/trpc/create-context';
 import { rest } from '@/lib/supabaseRest';
 
 
-const dayHoursSchema = z.object({
-  open: z.string(),
-  close: z.string(),
-  closed: z.boolean().optional(),
-}).nullable();
+const dayHoursSchema = z.union([
+  z.object({
+    open: z.string(),
+    close: z.string(),
+    closed: z.boolean().optional(),
+  }),
+  z.object({
+    closed: z.literal(true),
+  })
+]).nullable();
 
 const openingHoursSchema = z.object({
   monday: dayHoursSchema.optional(),

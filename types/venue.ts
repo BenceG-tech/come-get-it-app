@@ -31,6 +31,10 @@ export type DayHours = {
   open: string;
   close: string;
   closed?: boolean;
+} | {
+  closed: true;
+  open?: never;
+  close?: never;
 };
 
 export type VenueDrink = {

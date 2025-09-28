@@ -6,6 +6,8 @@ import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
+import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
 
 const placeholder = require('../../assets/images/splash-icon.png');
 
@@ -131,20 +133,10 @@ export default function VenueModalScreen() {
   }
 
 
-  const getCurrentHours = () => {
-    if (!venue?.opening_hours) return 'Nincs adat';
-    
-    const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const todayKey = dayKeys[today] as keyof typeof venue.opening_hours;
-    const todayHours = venue.opening_hours[todayKey];
-    
-    if (!todayHours || todayHours.closed) {
-      return 'Zárva';
-    }
-    
-    return todayHours.close;
-  };
+  const businessHours = venue?.opening_hours ? convertOpeningHoursToBusinessHours(venue.opening_hours) : null;
+  const venueLike = businessHours ? { business_hours: businessHours } : null;
+  const isOpen = venueLike ? isVenueOpenNow(venueLike) : false;
+  const closingTime = venueLike ? getClosingTimeToday(venueLike) : null;
 
   return (
     <Modal
@@ -204,32 +196,18 @@ export default function VenueModalScreen() {
             <TouchableOpacity style={styles.hoursSection} onPress={() => setShowHours(!showHours)} activeOpacity={0.7}>
               <View style={styles.hoursHeader}>
                 <Clock size={16} color={Colors.dark.text} />
-                <Text style={styles.hoursTitle}>Nyitva</Text>
-                <Text style={styles.hoursTime}>Zárás {getCurrentHours()}</Text>
+                <Text style={styles.hoursTitle}>{isOpen ? 'Nyitva' : 'Zárva'}</Text>
+                {closingTime && isOpen && (
+                  <Text style={styles.hoursTime}>Zárás {closingTime}</Text>
+                )}
                 <ChevronDown size={20} color={Colors.dark.text} style={[styles.chevron, showHours && styles.chevronUp]} />
               </View>
               {showHours && (
                 <View style={styles.hoursDetails}>
-                  {venue?.opening_hours ? (
-                    (() => {
-                      const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-                      const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                      
-                      return dayKeys.map((dayKey, index) => {
-                        const dayHours = venue.opening_hours?.[dayKey as keyof typeof venue.opening_hours];
-                        return (
-                          <View key={dayKey} style={styles.hoursRow}>
-                            <Text style={styles.hoursDay}>{dayNames[index]}</Text>
-                            <Text style={styles.hoursTime}>
-                              {!dayHours || dayHours.closed ? 'Zárva' : `${dayHours.open} - ${dayHours.close}`}
-                            </Text>
-                          </View>
-                        );
-                      });
-                    })()
-                  ) : (
-                    <Text style={styles.hoursTime}>Nincs megadott nyitvatartás</Text>
-                  )}
+                  <OpeningHoursDisplay 
+                    openingHours={venue?.opening_hours} 
+                    showStatus={false} 
+                  />
                 </View>
               )}
             </TouchableOpacity>

@@ -13,6 +13,15 @@ export const venues: Venue[] = [
     points_per_visit: 50,
     distance: 300,
     tags: ['kávé', 'ingyen ital', 'terasz'],
+    opening_hours: {
+      monday: { open: '08:00', close: '22:00' },
+      tuesday: { open: '08:00', close: '22:00' },
+      wednesday: { open: '08:00', close: '22:00' },
+      thursday: { open: '08:00', close: '22:00' },
+      friday: { open: '08:00', close: '23:00' },
+      saturday: { open: '09:00', close: '23:00' },
+      sunday: { open: '09:00', close: '21:00' },
+    },
   },
   {
     id: "2",
@@ -26,6 +35,15 @@ export const venues: Venue[] = [
     points_per_visit: 75,
     distance: 500,
     tags: ['koktél', 'ingyen ital', 'ruin pub'],
+    opening_hours: {
+      monday: { open: '16:00', close: '02:00' },
+      tuesday: { open: '16:00', close: '02:00' },
+      wednesday: { open: '16:00', close: '02:00' },
+      thursday: { open: '16:00', close: '02:00' },
+      friday: { open: '16:00', close: '03:00' },
+      saturday: { open: '14:00', close: '03:00' },
+      sunday: { open: '14:00', close: '01:00' },
+    },
   },
   {
     id: "3",
@@ -39,6 +57,15 @@ export const venues: Venue[] = [
     points_per_visit: 100,
     distance: 700,
     tags: ['rooftop', 'koktél', 'kilátás'],
+    opening_hours: {
+      monday: { open: '17:00', close: '01:00' },
+      tuesday: { open: '17:00', close: '01:00' },
+      wednesday: { open: '17:00', close: '01:00' },
+      thursday: { open: '17:00', close: '02:00' },
+      friday: { open: '17:00', close: '03:00' },
+      saturday: { open: '17:00', close: '03:00' },
+      sunday: { closed: true },
+    },
   },
   {
     id: "4",
@@ -52,6 +79,15 @@ export const venues: Venue[] = [
     points_per_visit: 60,
     distance: 400,
     tags: ['bor', 'ingyen ital', 'sajtok'],
+    opening_hours: {
+      monday: { closed: true },
+      tuesday: { open: '15:00', close: '23:00' },
+      wednesday: { open: '15:00', close: '23:00' },
+      thursday: { open: '15:00', close: '23:00' },
+      friday: { open: '15:00', close: '24:00' },
+      saturday: { open: '12:00', close: '24:00' },
+      sunday: { open: '12:00', close: '22:00' },
+    },
   },
   {
     id: "5",
@@ -65,6 +101,15 @@ export const venues: Venue[] = [
     points_per_visit: 120,
     distance: 600,
     tags: ['koktél', 'mixológia', 'elegáns'],
+    opening_hours: {
+      monday: { closed: true },
+      tuesday: { closed: true },
+      wednesday: { open: '18:00', close: '02:00' },
+      thursday: { open: '18:00', close: '02:00' },
+      friday: { open: '18:00', close: '03:00' },
+      saturday: { open: '18:00', close: '03:00' },
+      sunday: { open: '18:00', close: '01:00' },
+    },
   },
   {
     id: "6",
@@ -78,6 +123,15 @@ export const venues: Venue[] = [
     points_per_visit: 40,
     distance: 1200,
     tags: ['sör', 'kézműves', 'kert', 'ingyen ital'],
+    opening_hours: {
+      monday: { open: '12:00', close: '22:00' },
+      tuesday: { open: '12:00', close: '22:00' },
+      wednesday: { open: '12:00', close: '22:00' },
+      thursday: { open: '12:00', close: '22:00' },
+      friday: { open: '12:00', close: '23:00' },
+      saturday: { open: '11:00', close: '23:00' },
+      sunday: { open: '11:00', close: '21:00' },
+    },
   },
   {
     id: "7",
@@ -91,6 +145,15 @@ export const venues: Venue[] = [
     points_per_visit: 80,
     distance: 800,
     tags: ['közel-keleti', 'kert', 'kulturális'],
+    opening_hours: {
+      monday: { open: '11:00', close: '23:00' },
+      tuesday: { open: '11:00', close: '23:00' },
+      wednesday: { open: '11:00', close: '23:00' },
+      thursday: { open: '11:00', close: '24:00' },
+      friday: { open: '11:00', close: '01:00' },
+      saturday: { open: '11:00', close: '01:00' },
+      sunday: { open: '11:00', close: '23:00' },
+    },
   },
   {
     id: "8",
@@ -104,5 +167,14 @@ export const venues: Venue[] = [
     points_per_visit: 30,
     distance: 900,
     tags: ['olcsó', 'ingyen ital', 'bulizás'],
+    opening_hours: {
+      monday: { open: '19:00', close: '04:00' },
+      tuesday: { open: '19:00', close: '04:00' },
+      wednesday: { open: '19:00', close: '04:00' },
+      thursday: { open: '19:00', close: '05:00' },
+      friday: { open: '19:00', close: '06:00' },
+      saturday: { open: '19:00', close: '06:00' },
+      sunday: { open: '19:00', close: '03:00' },
+    },
   }
 ];

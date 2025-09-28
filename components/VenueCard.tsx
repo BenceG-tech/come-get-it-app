@@ -1,9 +1,11 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, useWindowDimensions } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
 import { LinearGradient } from 'expo-linear-gradient';
+import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
+import Colors from '@/constants/colors';
 
 type VenueCardProps = {
   venue: Venue;
@@ -13,6 +15,8 @@ type VenueCardProps = {
 export default function VenueCard({ venue, showRating = true }: VenueCardProps) {
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = screenWidth;
 
   const openVenueDetails = () => {
     router.push(`/venue/${venue.id}`);
@@ -61,7 +65,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         testID={`venue-card-${venue.id}`}
       >
       {/* Image section with overlays */}
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { height: Math.round(cardWidth * 9 / 16) }]}>
         <Image
           source={imageSource}
           style={styles.image}
@@ -110,18 +114,25 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
           ) : null}
         </View>
         
-        {/* Meta row */}
-        <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
-          Vendéglátóhely • {venue.address || 'Budapest'} • Pontszerzés
-        </Text>
+        {/* Meta row with opening hours */}
+        <View style={styles.metaRow}>
+          <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
+            Vendéglátóhely • {venue.address || 'Budapest'} • Pontszerzés
+          </Text>
+          <OpeningHoursDisplay 
+            openingHours={venue.opening_hours} 
+            showStatus={Boolean(venue.opening_hours)} 
+            compact 
+            style={styles.openingHoursStyle} 
+          />
+        </View>
       </View>
     </TouchableOpacity>
     </Animated.View>
   );
 }
 
-const { width: screenWidth } = Dimensions.get('window');
-const cardWidth = screenWidth; // Full width, edge-to-edge
+
 
 const styles = StyleSheet.create({
   container: {
@@ -138,7 +149,6 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: Math.round(cardWidth * 9 / 16),
     position: 'relative' as const,
   },
   image: {
@@ -234,9 +244,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     gap: 2,
   },
+  metaRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between',
+    alignItems: 'center' as const,
+    gap: 8,
+  },
   subtitle: {
     fontSize: 13,
     color: '#A6A6AD',
     lineHeight: 18,
+    flex: 1,
+  },
+  openingHoursStyle: {
+    color: Colors.textSecondary,
   },
 });
