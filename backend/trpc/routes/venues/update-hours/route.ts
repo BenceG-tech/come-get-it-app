@@ -31,14 +31,18 @@ export const updateVenueHoursRoute = publicProcedure
   }))
   .mutation(async ({ input }) => {
     console.info('[tRPC] updateVenueHours', input.venueId);
+    console.info('[tRPC] updateVenueHours input.openingHours:', JSON.stringify(input.openingHours, null, 2));
     
     try {
+      const updatePayload = {
+        opening_hours: input.openingHours,
+      };
+      console.info('[tRPC] updateVenueHours payload:', JSON.stringify(updatePayload, null, 2));
+      
       const response = await rest(`/venues?id=eq.${input.venueId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          opening_hours: input.openingHours,
-        }),
+        body: JSON.stringify(updatePayload),
       });
 
       if (!response.ok) {

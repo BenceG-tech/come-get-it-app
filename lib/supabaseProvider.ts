@@ -22,7 +22,9 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   const venueList: Venue[] = await venueRes.json();
   if (!Array.isArray(venueList) || venueList.length === 0) return null;
   const venue = venueList[0];
-  console.info('[Provider] Venue opening_hours from DB:', venue.opening_hours);
+  console.info('[Provider] Venue opening_hours from DB:', JSON.stringify(venue.opening_hours, null, 2));
+  console.info('[Provider] Full venue object keys:', Object.keys(venue));
+  console.info('[Provider] Venue object:', JSON.stringify(venue, null, 2));
 
   const imagesRows: { id: string; venue_id: string; image_url: string }[] = await imagesRes.json();
   const drinksRows: { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null }[] = await drinksRes.json();

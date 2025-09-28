@@ -134,10 +134,13 @@ export default function VenueModalScreen() {
   }
 
 
+  console.log('[VenueDetail] Raw venue opening_hours:', JSON.stringify(venue?.opening_hours, null, 2));
   const businessHours = venue?.opening_hours ? convertOpeningHoursToBusinessHours(venue.opening_hours) : null;
+  console.log('[VenueDetail] Converted businessHours:', JSON.stringify(businessHours, null, 2));
   const venueLike = businessHours ? { business_hours: businessHours } : null;
   const isOpen = venueLike ? isVenueOpenNow(venueLike) : false;
   const closingTime = venueLike ? getClosingTimeToday(venueLike) : null;
+  console.log('[VenueDetail] isOpen:', isOpen, 'closingTime:', closingTime);
 
   return (
     <Modal

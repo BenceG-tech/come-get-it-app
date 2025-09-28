@@ -18,6 +18,8 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = screenWidth;
+  
+  console.log(`[VenueCard] ${venue.name} opening_hours:`, JSON.stringify(venue.opening_hours, null, 2));
 
   const openVenueDetails = () => {
     router.push(`/venue/${venue.id}`);

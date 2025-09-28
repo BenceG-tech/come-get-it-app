@@ -40,7 +40,8 @@ export default function BarsScreen() {
         const data = await response.json();
         console.log('Venues fetched:', data);
         if (data && data.length > 0) {
-          console.log('Using database venues, first venue opening_hours:', data[0]?.opening_hours);
+          console.log('Using database venues, first venue opening_hours:', JSON.stringify(data[0]?.opening_hours, null, 2));
+          console.log('All venues opening_hours:', data.map((v: Venue) => ({ name: v.name, opening_hours: v.opening_hours })));
           setVenues(data);
         } else {
           console.log('Using fallback venues');

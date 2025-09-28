@@ -12,7 +12,27 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
     return null;
   }
 
-  console.log('[OpeningHours] Converting opening hours:', openingHours);
+  console.log('[OpeningHours] Converting opening hours:', JSON.stringify(openingHours, null, 2));
+  console.log('[OpeningHours] Type of openingHours:', typeof openingHours);
+  console.log('[OpeningHours] Is array:', Array.isArray(openingHours));
+  console.log('[OpeningHours] Keys:', Object.keys(openingHours));
+
+  // Handle case where openingHours might be a string (JSON)
+  let parsedHours = openingHours;
+  if (typeof openingHours === 'string') {
+    try {
+      parsedHours = JSON.parse(openingHours);
+      console.log('[OpeningHours] Parsed from string:', JSON.stringify(parsedHours, null, 2));
+    } catch (e) {
+      console.error('[OpeningHours] Failed to parse opening hours string:', e);
+      return null;
+    }
+  }
+
+  if (!parsedHours || typeof parsedHours !== 'object') {
+    console.log('[OpeningHours] Invalid opening hours format');
+    return null;
+  }
 
   const dayMapping = {
     monday: 1,
@@ -27,20 +47,34 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
   const byDay: BusinessHours['byDay'] = {};
 
   Object.entries(dayMapping).forEach(([dayName, dayNumber]) => {
-    const dayHours = openingHours[dayName as keyof OpeningHours];
-    console.log(`[OpeningHours] ${dayName} (${dayNumber}):`, dayHours);
-    if (dayHours && !('closed' in dayHours && dayHours.closed)) {
+    const dayHours = parsedHours[dayName as keyof OpeningHours];
+    console.log(`[OpeningHours] ${dayName} (${dayNumber}):`, JSON.stringify(dayHours, null, 2));
+    
+    // Handle null or undefined
+    if (!dayHours) {
+      console.log(`[OpeningHours] ${dayName} is null/undefined, treating as closed`);
+      byDay[dayNumber] = null;
+      return;
+    }
+    
+    // Check if the day is explicitly closed
+    if (typeof dayHours === 'object' && 'closed' in dayHours && dayHours.closed === true) {
+      console.log(`[OpeningHours] ${dayName} is explicitly closed`);
+      byDay[dayNumber] = null;
+    } else if (typeof dayHours === 'object' && dayHours.open && dayHours.close) {
+      console.log(`[OpeningHours] ${dayName} is open: ${dayHours.open} - ${dayHours.close}`);
       byDay[dayNumber] = {
-        open: dayHours.open,
-        close: dayHours.close,
+        open: String(dayHours.open),
+        close: String(dayHours.close),
       };
     } else {
+      console.log(`[OpeningHours] ${dayName} has no valid hours, treating as closed`);
       byDay[dayNumber] = null;
     }
   });
 
   const result = { byDay };
-  console.log('[OpeningHours] Converted result:', result);
+  console.log('[OpeningHours] Converted result:', JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -187,4 +221,25 @@ export function groupConsecutiveHours(businessHours: BusinessHours | null): { da
   });
   
   return result;
+}
+
+// Debug function to test opening hours conversion
+export function debugOpeningHours(openingHours: any) {
+  console.log('=== DEBUG OPENING HOURS ===');
+  console.log('Input:', JSON.stringify(openingHours, null, 2));
+  console.log('Type:', typeof openingHours);
+  console.log('Is null:', openingHours === null);
+  console.log('Is undefined:', openingHours === undefined);
+  
+  if (openingHours) {
+    console.log('Keys:', Object.keys(openingHours));
+    console.log('Monday value:', openingHours.monday);
+    console.log('Tuesday value:', openingHours.tuesday);
+  }
+  
+  const converted = convertOpeningHoursToBusinessHours(openingHours);
+  console.log('Converted result:', JSON.stringify(converted, null, 2));
+  console.log('=== END DEBUG ===');
+  
+  return converted;
 }
