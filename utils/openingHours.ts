@@ -6,7 +6,7 @@ export type BusinessHours = {
   };
 };
 
-export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | string | null): BusinessHours | null {
+export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | string | null | any): BusinessHours | null {
   if (!openingHours) {
     console.log('[OpeningHours] No opening hours provided');
     return null;
@@ -44,6 +44,37 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
 
   console.log('[OpeningHours] Parsed hours keys:', Object.keys(parsedHours));
 
+  // Check if this is already in the database format with byDay and numeric keys
+  if ('byDay' in parsedHours && typeof parsedHours.byDay === 'object') {
+    console.log('[OpeningHours] Detected database format with byDay structure');
+    const byDay: BusinessHours['byDay'] = {};
+    
+    // Convert numeric string keys to numbers and validate structure
+    for (let i = 1; i <= 7; i++) {
+      const dayData = parsedHours.byDay[String(i)] || parsedHours.byDay[i];
+      
+      if (!dayData) {
+        console.log(`[OpeningHours] Day ${i} is null/undefined`);
+        byDay[i] = null;
+      } else if (dayData.open && dayData.close) {
+        console.log(`[OpeningHours] Day ${i} is open: ${dayData.open} - ${dayData.close}`);
+        byDay[i] = {
+          open: String(dayData.open),
+          close: String(dayData.close),
+        };
+      } else {
+        console.log(`[OpeningHours] Day ${i} has no valid hours`);
+        byDay[i] = null;
+      }
+    }
+    
+    const result = { byDay };
+    console.log('[OpeningHours] Converted from database format:', JSON.stringify(result, null, 2));
+    return result;
+  }
+
+  // Legacy format: convert from day names to numeric keys
+  console.log('[OpeningHours] Using legacy format with day names');
   const dayMapping = {
     monday: 1,
     tuesday: 2,
