@@ -1,14 +1,65 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search } from 'lucide-react-native';
+import { ArrowLeft, Search, MapPin as MapPinIcon } from 'lucide-react-native';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import * as Location from 'expo-location';
 import Colors from '@/constants/colors';
+import { Venue } from '@/types/venue';
+import { rest } from '@/lib/supabaseRest';
 
 export default function MapScreen() {
   const router = useRouter();
   const statusBarStyle = "light" as const;
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchVenuesAndLocation = async () => {
+      try {
+        const [venuesResponse, locationStatus] = await Promise.all([
+          rest('/venues?select=*'),
+          Location.requestForegroundPermissionsAsync()
+        ]);
+
+        if (locationStatus.status === 'granted') {
+          setLocationPermission(true);
+          const location = await Location.getCurrentPositionAsync({});
+          setUserLocation(location);
+          console.log('[Map] User location:', location.coords);
+        } else {
+          console.log('[Map] Location permission denied');
+        }
+
+        const venuesData: Venue[] = await venuesResponse.json();
+        console.log('[Map] Fetched venues:', venuesData.length);
+        setVenues(venuesData.filter(v => v.latitude && v.longitude));
+      } catch (error) {
+        console.error('[Map] Error fetching data:', error);
+        Alert.alert('Hiba', 'Nem sikerült betölteni a térképet');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVenuesAndLocation();
+  }, []);
+
+  const initialRegion = userLocation ? {
+    latitude: userLocation.coords.latitude,
+    longitude: userLocation.coords.longitude,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  } : {
+    latitude: 47.4979,
+    longitude: 19.0402,
+    latitudeDelta: 0.1,
+    longitudeDelta: 0.1,
+  };
 
   return (
     <View style={styles.container}>
@@ -46,14 +97,40 @@ export default function MapScreen() {
             <Text style={styles.webFallbackButtonText}>Keresés megnyitása</Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <View style={styles.webFallback} testID="native-map-unavailable">
-          <Text style={styles.webFallbackTitle}>Térkép nem érhető el</Text>
-          <Text style={styles.webFallbackText}>A térkép funkció jelenleg nem elérhető ezen az eszközön.</Text>
-          <TouchableOpacity onPress={() => router.push('/search')} style={styles.webFallbackButton} testID="native-map-fallback-search">
-            <Text style={styles.webFallbackButtonText}>Keresés megnyitása</Text>
-          </TouchableOpacity>
+      ) : loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.dark.primary} />
+          <Text style={styles.loadingText}>Térkép betöltése...</Text>
         </View>
+      ) : (
+        <MapView
+          style={styles.map}
+          provider={PROVIDER_DEFAULT}
+          initialRegion={initialRegion}
+          showsUserLocation={locationPermission}
+          showsMyLocationButton={locationPermission}
+          testID="map-view"
+        >
+          {venues.map((venue) => (
+            <Marker
+              key={venue.id}
+              coordinate={{
+                latitude: venue.latitude!,
+                longitude: venue.longitude!,
+              }}
+              title={venue.name}
+              description={venue.address}
+              onCalloutPress={() => router.push(`/venue/${venue.id}`)}
+              testID={`marker-${venue.id}`}
+            >
+              <View style={styles.markerContainer}>
+                <View style={styles.marker}>
+                  <MapPinIcon size={20} color="#FFFFFF" />
+                </View>
+              </View>
+            </Marker>
+          ))}
+        </MapView>
       )}
     </View>
   );
@@ -106,6 +183,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  map: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    color: Colors.text,
+    fontSize: 16,
+    marginTop: 12,
+  },
   webFallback: {
     flex: 1,
     alignItems: 'center',
@@ -135,5 +226,23 @@ const styles = StyleSheet.create({
     color: '#0B0B0B',
     fontSize: 14,
     fontWeight: '600',
+  },
+  markerContainer: {
+    alignItems: 'center',
+  },
+  marker: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.dark.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
 });

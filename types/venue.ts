@@ -15,6 +15,8 @@ export type Venue = {
   opening_hours?: OpeningHours | null;
   distance?: number | null; // in meters
   tags?: string[];
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type OpeningHours = {

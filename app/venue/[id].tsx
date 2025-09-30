@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown, ChevronRight } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
@@ -257,13 +258,69 @@ export default function VenueModalScreen() {
             </View>
 
             <View style={styles.mapSection}>
-              <View style={styles.mapPlaceholder}>
-                <MapPin size={24} color={Colors.dark.text} />
-                <Text style={styles.mapText}>Map View</Text>
-                <Text style={styles.mapSubtext}>Tap to view on map</Text>
-              </View>
-              <TouchableOpacity style={styles.directionsButton} testID="show-on-map-button" accessibilityRole="button" accessibilityLabel="Mutasd a térképen">
-                <Text style={styles.directionsText}>Mutasd a térképen</Text>
+              {venue.latitude && venue.longitude && Platform.OS !== 'web' ? (
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.mapView}
+                    provider={PROVIDER_DEFAULT}
+                    initialRegion={{
+                      latitude: venue.latitude,
+                      longitude: venue.longitude,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                    testID="venue-map"
+                  >
+                    <Marker
+                      coordinate={{
+                        latitude: venue.latitude,
+                        longitude: venue.longitude,
+                      }}
+                      title={venue.name}
+                      description={venue.address}
+                    >
+                      <View style={styles.markerContainer}>
+                        <View style={styles.marker}>
+                          <MapPin size={20} color="#FFFFFF" />
+                        </View>
+                      </View>
+                    </Marker>
+                  </MapView>
+                </View>
+              ) : (
+                <View style={styles.mapPlaceholder}>
+                  <MapPin size={24} color={Colors.dark.text} />
+                  <Text style={styles.mapText}>Térkép</Text>
+                  <Text style={styles.mapSubtext}>{venue.address}</Text>
+                </View>
+              )}
+              <TouchableOpacity 
+                style={styles.directionsButton} 
+                testID="show-on-map-button" 
+                accessibilityRole="button" 
+                accessibilityLabel="Útvonaltervezés"
+                onPress={() => {
+                  if (venue.latitude && venue.longitude) {
+                    const scheme = Platform.select({ ios: 'maps:', android: 'geo:' });
+                    const url = Platform.select({
+                      ios: `maps:?daddr=${venue.latitude},${venue.longitude}&dirflg=d`,
+                      android: `geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}(${encodeURIComponent(venue.name)})`,
+                      default: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
+                    });
+                    if (url) {
+                      Linking.openURL(url).catch(err => {
+                        console.error('[VenueDetail] Failed to open maps:', err);
+                      });
+                    }
+                  }
+                }}
+              >
+                <Navigation size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.directionsText}>Útvonaltervezés</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -581,6 +638,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
+    backgroundColor: Colors.dark.card,
+  },
+  mapView: {
+    flex: 1,
   },
   mapPlaceholder: {
     height: 200,
@@ -620,6 +681,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     alignItems: 'center',
+    flexDirection: 'row',
   },
   directionsText: {
     color: '#FFFFFF',
