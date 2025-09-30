@@ -349,64 +349,44 @@ export default function VenueModalScreen() {
                   )}
 
                   <View style={styles.dayTabsContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayTabsScroll}>
-                      {dayNames.map((day, index) => {
-                        const currentDrink = freeDrinks[selectedDrinkIndex];
-                        const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, index) : null;
-                        const isAvailable = availability !== null;
-                        const isSelected = selectedDay === index;
-                        return (
-                          <TouchableOpacity
-                            key={index}
-                            style={[
-                              styles.dayTab,
-                              isSelected && styles.dayTabSelected,
-                              !isAvailable && styles.dayTabDisabled
-                            ]}
-                            onPress={() => {
-                              console.log(`[VenueDetail] Day tab pressed: ${day} (${index}), isAvailable: ${isAvailable}, availability: ${availability}`);
-                              if (isAvailable) {
-                                setSelectedDay(index);
-                              }
-                            }}
-                            disabled={!isAvailable}
-                            activeOpacity={isAvailable ? 0.7 : 1}
-                          >
-                            <Text style={[
-                              styles.dayTabTextShort,
-                              isSelected && styles.dayTabTextSelected,
-                              !isAvailable && styles.dayTabTextDisabled
-                            ]}>
-                              {dayNamesShort[index]}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-
-                  <View style={styles.availabilityInfo}>
-                    {(() => {
+                    {dayNames.map((day, index) => {
                       const currentDrink = freeDrinks[selectedDrinkIndex];
-                      const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, selectedDay) : null;
-                      if (availability) {
-                        return (
-                          <View style={styles.availabilityCard}>
-                            <Text style={styles.availabilityTitle}>Az ital az alábbi időpontokban elérhető</Text>
-                            <View style={styles.availabilityTimeContainer}>
-                              <Clock size={16} color={Colors.dark.primary} />
-                              <Text style={styles.availabilityTime}>{availability}</Text>
+                      const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, index) : null;
+                      const isAvailable = availability !== null;
+                      const isSelected = selectedDay === index;
+                      return (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.dayTabRow,
+                            isSelected && styles.dayTabRowSelected,
+                            !isAvailable && styles.dayTabRowDisabled
+                          ]}
+                          onPress={() => {
+                            console.log(`[VenueDetail] Day tab pressed: ${day} (${index}), isAvailable: ${isAvailable}, availability: ${availability}`);
+                            if (isAvailable) {
+                              setSelectedDay(index);
+                            }
+                          }}
+                          disabled={!isAvailable}
+                          activeOpacity={isAvailable ? 0.7 : 1}
+                        >
+                          <Text style={[
+                            styles.dayTabRowText,
+                            isSelected && styles.dayTabRowTextSelected,
+                            !isAvailable && styles.dayTabRowTextDisabled
+                          ]}>
+                            {day}
+                          </Text>
+                          {isSelected && isAvailable && availability && (
+                            <View style={styles.inlineTimeContainer}>
+                              <Clock size={14} color={Colors.dark.primary} />
+                              <Text style={styles.inlineTimeText}>{availability}</Text>
                             </View>
-                          </View>
-                        );
-                      } else {
-                        return (
-                          <View style={styles.availabilityCard}>
-                            <Text style={styles.availabilityUnavailable}>Ezen a napon nem elérhető</Text>
-                          </View>
-                        );
-                      }
-                    })()}
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 </View>
               )}
@@ -819,77 +799,54 @@ const styles = StyleSheet.create({
   },
   dayTabsContainer: {
     marginBottom: 16,
-  },
-  dayTabsScroll: {
     gap: 8,
-    paddingHorizontal: 2,
   },
-  dayTab: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  dayTabRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    minWidth: 90,
-    alignItems: 'center',
+    minHeight: 50,
   },
-  dayTabSelected: {
+  dayTabRowSelected: {
     backgroundColor: Colors.dark.primary,
     borderColor: Colors.dark.primary,
     borderWidth: 2,
   },
-  dayTabDisabled: {
+  dayTabRowDisabled: {
     opacity: 0.3,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
-  dayTabTextShort: {
+  dayTabRowText: {
     color: Colors.dark.text,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
-  dayTabTextLong: {
-    color: Colors.dark.subtext,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  dayTabTextSelected: {
+  dayTabRowTextSelected: {
     color: '#000000',
     fontWeight: '700',
   },
-  dayTabTextDisabled: {
+  dayTabRowTextDisabled: {
     color: 'rgba(255, 255, 255, 0.3)',
   },
-  availabilityInfo: {
-    marginTop: 8,
-  },
-  availabilityCard: {
-    backgroundColor: Colors.dark.card,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-  },
-  availabilityTitle: {
-    color: Colors.dark.text,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  availabilityTimeContainer: {
+  inlineTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
-  availabilityTime: {
-    color: Colors.dark.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  availabilityUnavailable: {
-    color: Colors.dark.subtext,
+  inlineTimeText: {
+    color: '#000000',
     fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontWeight: '700',
   },
   aboutSection: {
     marginBottom: 20,
