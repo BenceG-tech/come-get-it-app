@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Beer } from 'lucide-react-native';
@@ -20,6 +20,8 @@ export default function VenueModalScreen() {
   const [showHours, setShowHours] = useState<boolean>(false);
   const [, setCurrentRewardIndex] = useState<number>(0);
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState<boolean>(false);
@@ -91,15 +93,34 @@ export default function VenueModalScreen() {
 
   const galleryImages = useMemo(() => {
     const arr: string[] = [];
+    const fromDb = (venue?.images ?? []).filter((u) => typeof u === 'string' && u.trim().length > 0 && u.trim().length <= 2000);
+    if (fromDb.length > 0) {
+      arr.push(...fromDb);
+    }
     if (venue?.hero_image_url) arr.push(venue.hero_image_url);
     if (venue?.image_url) arr.push(venue.image_url);
-    (venue?.images ?? []).forEach((imageUrl) => { 
-      if (imageUrl && imageUrl.trim() && imageUrl.length <= 2000 && !arr.includes(imageUrl)) {
-        arr.push(imageUrl.trim()); 
-      }
-    });
-    return arr.length > 0 ? arr : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
+    const uniq: string[] = [];
+    const seen = new Set<string>();
+    for (const u of arr) {
+      const t = u.trim();
+      if (!seen.has(t)) { seen.add(t); uniq.push(t); }
+    }
+    return uniq.length > 0 ? uniq : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
   }, [venue]);
+
+  useEffect(() => {
+    setImages(galleryImages);
+    setActiveIndex(0);
+  }, [galleryImages]);
+
+  const onImageError = useCallback((index: number) => {
+    setImages((prev) => {
+      if (!prev || index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200';
+      return next;
+    });
+  }, []);
 
   const freeDrinks: VenueDrink[] = useMemo(() => (venue?.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
   const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
@@ -190,11 +211,34 @@ export default function VenueModalScreen() {
       <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
-            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-              {galleryImages.map((uri, idx) => (
-                <Image testID={`venue-image-${idx}`} key={`${uri || 'img'}-${idx}`} source={{ uri }} style={[styles.image, { width }]} resizeMode="cover" />
-              ))}
-            </ScrollView>
+            <Image
+              testID="venue-image-main"
+              key={`main-${images[activeIndex] ?? 'img'}-${activeIndex}`}
+              source={{ uri: images[activeIndex] }}
+              style={[styles.image, { width }]}
+              resizeMode="cover"
+              onError={() => onImageError(activeIndex)}
+            />
+            <View style={styles.thumbBar}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbScrollContent}>
+                {images.map((uri, idx) => (
+                  <TouchableOpacity
+                    key={`thumb-${uri}-${idx}`}
+                    onPress={() => setActiveIndex(idx)}
+                    activeOpacity={0.8}
+                    style={[styles.thumbItem, activeIndex === idx ? styles.thumbItemActive : null]}
+                    testID={`venue-thumb-${idx}`}
+                  >
+                    <Image
+                      source={{ uri }}
+                      style={styles.thumbImage}
+                      resizeMode="cover"
+                      onError={() => onImageError(idx)}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
             <View style={styles.locationBadge}>
               <MapPin size={14} color={Colors.dark.text} />
               <Text style={styles.locationText}>Budapest</Text>
@@ -483,6 +527,37 @@ const styles = StyleSheet.create({
   },
 
   image: {
+    height: '100%',
+  },
+  thumbBar: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    right: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 10,
+  },
+  thumbScrollContent: {
+    paddingHorizontal: 6,
+    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  thumbItem: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+  },
+  thumbItemActive: {
+    borderColor: Colors.dark.primary,
+    borderWidth: 2,
+  },
+  thumbImage: {
+    width: '100%',
     height: '100%',
   },
   closeButton: {

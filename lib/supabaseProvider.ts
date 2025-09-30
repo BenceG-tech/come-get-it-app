@@ -36,7 +36,6 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   if (!Array.isArray(venueList) || venueList.length === 0) return null;
   let venue = venueList[0];
   
-  // Parse opening_hours if it's a string
   if (venue.opening_hours && typeof venue.opening_hours === 'string') {
     try {
       venue.opening_hours = JSON.parse(venue.opening_hours);
@@ -51,7 +50,8 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   console.info('[Provider] Full venue object keys:', Object.keys(venue));
   console.info('[Provider] Venue object:', JSON.stringify(venue, null, 2));
 
-  let imagesRows: { id: string; venue_id: string; image_url: string }[];
+  type ImageRow = { id: string; venue_id: string; image_url?: string | null; url?: string | null; label?: string | null; is_cover?: boolean | null };
+  let imagesRows: ImageRow[];
   let drinksRows: { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null }[];
   let windowsRows: { id: string; venue_id: string; drink_id: string; day_of_week: number; start_time: string; end_time: string }[];
   
@@ -84,7 +84,22 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     end: w.end_time,
   }));
 
-  const images = (imagesRows ?? []).map((r) => r.image_url).filter(Boolean);
+  const urls = (imagesRows ?? [])
+    .map((r) => ({
+      url: (r.image_url ?? r.url ?? '') as string,
+      isCover: Boolean(r.is_cover ?? false),
+    }))
+    .filter((r) => typeof r.url === 'string' && r.url.trim().length > 0 && r.url.trim().length <= 2000);
+
+  const sorted = urls.sort((a, b) => Number(b.isCover) - Number(a.isCover));
+  const seen = new Set<string>();
+  const images = sorted
+    .map((r) => r.url.trim())
+    .filter((u) => {
+      if (seen.has(u)) return false;
+      seen.add(u);
+      return true;
+    });
 
   return { ...venue, images, drinks, freeDrinkWindows: windows };
 }
@@ -135,7 +150,6 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
       }
     }
 
-    // Re-map for windows linking
     updates.drinks = incoming.map((i) => ({
       id: String(i.id),
       venueId: String(i.venue_id),
