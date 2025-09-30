@@ -124,50 +124,16 @@ export default function VenueModalScreen() {
 
   const freeDrinks: VenueDrink[] = useMemo(() => (venue?.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
   const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
+  const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
+  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
 
-  const formatTimeSlots = (drinkId: string): string => {
-    const drinkWindows = freeDrinkWindows.filter((w) => w.drinkId === drinkId);
-    if (drinkWindows.length === 0) return 'Nincs megadott idősáv';
-    
-    const dayNames = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
-    const groupedByTime: Record<string, number[]> = {};
-    
-    drinkWindows.forEach((w) => {
-      const timeKey = `${w.start}–${w.end}`;
-      if (!groupedByTime[timeKey]) groupedByTime[timeKey] = [];
-      groupedByTime[timeKey].push(w.dayOfWeek);
-    });
-    
-    return Object.entries(groupedByTime).map(([timeRange, days]) => {
-      const sortedDays = days.sort((a, b) => a - b);
-      let dayRange = '';
-      
-      if (sortedDays.length === 1) {
-        dayRange = dayNames[sortedDays[0]];
-      } else if (sortedDays.length === 5 && sortedDays.every((d, i) => d === i)) {
-        dayRange = 'H-P';
-      } else if (sortedDays.length === 7) {
-        dayRange = 'H-V';
-      } else {
-        const ranges: string[] = [];
-        let start = sortedDays[0];
-        let end = start;
-        
-        for (let i = 1; i < sortedDays.length; i++) {
-          if (sortedDays[i] === end + 1) {
-            end = sortedDays[i];
-          } else {
-            ranges.push(start === end ? dayNames[start] : `${dayNames[start]}-${dayNames[end]}`);
-            start = sortedDays[i];
-            end = start;
-          }
-        }
-        ranges.push(start === end ? dayNames[start] : `${dayNames[start]}-${dayNames[end]}`);
-        dayRange = ranges.join(', ');
-      }
-      
-      return `${dayRange} • ${timeRange}`;
-    }).join('\n');
+  const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+  const dayNamesShort = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+
+  const getAvailabilityForDrink = (drinkId: string, dayOfWeek: number): string | null => {
+    const windows = freeDrinkWindows.filter((w) => w.drinkId === drinkId && w.dayOfWeek === dayOfWeek);
+    if (windows.length === 0) return null;
+    return windows.map((w) => `${w.start}–${w.end}`).join(', ');
   };
 
   if (loading) {
@@ -317,32 +283,84 @@ export default function VenueModalScreen() {
               {freeDrinks.length === 0 ? (
                 <Text style={styles.emptyStateText}>Nincs elérhető ingyen ital.</Text>
               ) : (
-                freeDrinks.map((drink) => {
-                  const timeSlotText = formatTimeSlots(drink.id);
-                  return (
-                    <View key={drink.id} style={styles.freeDrinkCard}>
-                      <View style={styles.freeDrinkContent}>
-                        <View style={styles.freeDrinkImageContainer}>
-                          {drink.imageUrl ? (
-                            <Image 
-                              source={{ uri: drink.imageUrl }} 
-                              style={styles.freeDrinkThumbnail} 
-                              resizeMode="cover" 
-                            />
-                          ) : (
-                            <View style={styles.freeDrinkPlaceholder}>
-                              <Text style={styles.freeDrinkPlaceholderText}>🍺</Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={styles.freeDrinkInfo}>
-                          <Text style={styles.freeDrinkName}>{drink.drinkName}</Text>
-                          <Text style={styles.freeDrinkTimeSlots}>{timeSlotText}</Text>
-                        </View>
+                <View>
+                  <View style={styles.drinkImageContainer}>
+                    {freeDrinks[selectedDrinkIndex]?.imageUrl ? (
+                      <Image 
+                        source={{ uri: freeDrinks[selectedDrinkIndex].imageUrl }} 
+                        style={styles.drinkMainImage} 
+                        resizeMode="cover" 
+                      />
+                    ) : (
+                      <View style={styles.drinkImagePlaceholder}>
+                        <Text style={styles.drinkImagePlaceholderText}>🍺</Text>
                       </View>
+                    )}
+                    <View style={styles.drinkNameOverlay}>
+                      <Text style={styles.drinkNameText}>{freeDrinks[selectedDrinkIndex]?.drinkName}</Text>
                     </View>
-                  );
-                })
+                  </View>
+
+                  <View style={styles.dayTabsContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayTabsScroll}>
+                      {dayNames.map((day, index) => {
+                        const availability = getAvailabilityForDrink(freeDrinks[selectedDrinkIndex]?.id, index);
+                        const isAvailable = availability !== null;
+                        const isSelected = selectedDay === index;
+                        return (
+                          <TouchableOpacity
+                            key={index}
+                            style={[
+                              styles.dayTab,
+                              isSelected && styles.dayTabSelected,
+                              !isAvailable && styles.dayTabDisabled
+                            ]}
+                            onPress={() => setSelectedDay(index)}
+                            disabled={!isAvailable}
+                          >
+                            <Text style={[
+                              styles.dayTabTextShort,
+                              isSelected && styles.dayTabTextSelected,
+                              !isAvailable && styles.dayTabTextDisabled
+                            ]}>
+                              {dayNamesShort[index]}
+                            </Text>
+                            <Text style={[
+                              styles.dayTabTextLong,
+                              isSelected && styles.dayTabTextSelected,
+                              !isAvailable && styles.dayTabTextDisabled
+                            ]}>
+                              {day}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+
+                  <View style={styles.availabilityInfo}>
+                    {(() => {
+                      const availability = getAvailabilityForDrink(freeDrinks[selectedDrinkIndex]?.id, selectedDay);
+                      if (availability) {
+                        return (
+                          <View style={styles.availabilityCard}>
+                            <Text style={styles.availabilityTitle}>Az ital az alábbi időpontokban elérhető</Text>
+                            <View style={styles.availabilityTimeContainer}>
+                              <Clock size={16} color={Colors.dark.primary} />
+                              <Text style={styles.availabilityTime}>{availability}</Text>
+                            </View>
+                          </View>
+                        );
+                      } else {
+                        return (
+                          <View style={styles.availabilityCard}>
+                            <Text style={styles.availabilityUnavailable}>Ezen a napon nem elérhető</Text>
+                          </View>
+                        );
+                      }
+                    })()}
+                  </View>
+                </View>
               )}
             </View>
 
@@ -691,50 +709,111 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
   },
-  freeDrinkCard: {
+  drinkImageContainer: {
+    position: 'relative',
+    height: 280,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  drinkMainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  drinkImagePlaceholder: {
+    width: '100%',
+    height: '100%',
     backgroundColor: Colors.dark.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-  },
-  freeDrinkContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  freeDrinkImageContainer: {
-    marginRight: 16,
-  },
-  freeDrinkThumbnail: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-  },
-  freeDrinkPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: Colors.dark.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  freeDrinkPlaceholderText: {
-    fontSize: 24,
+  drinkImagePlaceholderText: {
+    fontSize: 80,
   },
-  freeDrinkInfo: {
-    flex: 1,
+  drinkNameOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
-  freeDrinkName: {
+  drinkNameText: {
     color: Colors.dark.text,
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  dayTabsContainer: {
+    marginBottom: 16,
+  },
+  dayTabsScroll: {
+    gap: 8,
+    paddingHorizontal: 2,
+  },
+  dayTab: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.dark.card,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  dayTabSelected: {
+    backgroundColor: Colors.dark.primary,
+    borderColor: Colors.dark.primary,
+  },
+  dayTabDisabled: {
+    opacity: 0.4,
+  },
+  dayTabTextShort: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  dayTabTextLong: {
+    color: Colors.dark.subtext,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  dayTabTextSelected: {
+    color: Colors.dark.background,
+  },
+  dayTabTextDisabled: {
+    color: Colors.dark.subtext,
+  },
+  availabilityInfo: {
+    marginTop: 8,
+  },
+  availabilityCard: {
+    backgroundColor: Colors.dark.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  availabilityTitle: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  availabilityTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  availabilityTime: {
+    color: Colors.dark.primary,
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
-  freeDrinkTimeSlots: {
+  availabilityUnavailable: {
     color: Colors.dark.subtext,
     fontSize: 14,
-    lineHeight: 20,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   aboutSection: {
     marginBottom: 20,
