@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 50,
+    top: 16,
     right: 16,
     width: 40,
     height: 40,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   locationBadge: {
     position: 'absolute',
-    top: 50,
+    top: 16,
     left: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 12,
