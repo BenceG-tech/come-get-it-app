@@ -7,15 +7,20 @@ import { ArrowLeft, Search, Beer } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
-import { MapView, Marker } from '@/lib/mapComponents';
+
 
 let Location: any = null;
+let MapView: any = null;
+let Marker: any = null;
 
 if (Platform.OS !== 'web') {
   try {
     Location = require('expo-location');
+    const maps = require('react-native-maps');
+    MapView = maps.default;
+    Marker = maps.Marker;
   } catch (e) {
-    console.warn('[Map] Failed to load expo-location:', e);
+    console.warn('[Map] Failed to load native modules:', e);
   }
 }
 
