@@ -122,10 +122,20 @@ export default function VenueModalScreen() {
     });
   }, []);
 
-  const freeDrinks: VenueDrink[] = useMemo(() => (venue?.drinks ?? []).filter((d) => d.isFreeDrink), [venue]);
+  const freeDrinks: VenueDrink[] = useMemo(() => {
+    const drinks = (venue?.drinks ?? []).filter((d) => d.isFreeDrink);
+    console.log('[VenueDetail] Free drinks:', drinks.length, drinks.map(d => d.drinkName));
+    return drinks;
+  }, [venue]);
   const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
+  const [selectedDay, setSelectedDay] = useState<number>(0);
+  
+  useEffect(() => {
+    console.log('[VenueDetail] Venue drinks:', venue?.drinks?.length ?? 0);
+    console.log('[VenueDetail] All drinks:', venue?.drinks?.map(d => ({ name: d.drinkName, isFree: d.isFreeDrink })));
+    console.log('[VenueDetail] Free drink windows:', freeDrinkWindows.length);
+  }, [venue, freeDrinkWindows]);
 
   const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
   const dayNamesShort = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
@@ -284,27 +294,62 @@ export default function VenueModalScreen() {
                 <Text style={styles.emptyStateText}>Nincs elérhető ingyen ital.</Text>
               ) : (
                 <View>
-                  <View style={styles.drinkImageContainer}>
-                    {freeDrinks[selectedDrinkIndex]?.imageUrl ? (
-                      <Image 
-                        source={{ uri: freeDrinks[selectedDrinkIndex].imageUrl }} 
-                        style={styles.drinkMainImage} 
-                        resizeMode="cover" 
-                      />
-                    ) : (
-                      <View style={styles.drinkImagePlaceholder}>
-                        <Text style={styles.drinkImagePlaceholderText}>🍺</Text>
+                  <ScrollView
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                      const offsetX = e.nativeEvent.contentOffset.x;
+                      const index = Math.round(offsetX / width);
+                      if (index !== selectedDrinkIndex) {
+                        setSelectedDrinkIndex(index);
+                        setSelectedDay(0);
+                      }
+                    }}
+                    scrollEventThrottle={16}
+                    style={styles.drinkCarousel}
+                  >
+                    {freeDrinks.map((drink, idx) => (
+                      <View key={`drink-${drink.id}-${idx}`} style={[styles.drinkSlide, { width }]}>
+                        <View style={styles.drinkImageContainer}>
+                          {drink.imageUrl ? (
+                            <Image 
+                              source={{ uri: drink.imageUrl }} 
+                              style={styles.drinkMainImage} 
+                              resizeMode="cover" 
+                            />
+                          ) : (
+                            <View style={styles.drinkImagePlaceholder}>
+                              <Text style={styles.drinkImagePlaceholderText}>🍺</Text>
+                            </View>
+                          )}
+                          <View style={styles.drinkNameOverlay}>
+                            <Text style={styles.drinkNameText}>{drink.drinkName}</Text>
+                          </View>
+                        </View>
                       </View>
-                    )}
-                    <View style={styles.drinkNameOverlay}>
-                      <Text style={styles.drinkNameText}>{freeDrinks[selectedDrinkIndex]?.drinkName}</Text>
+                    ))}
+                  </ScrollView>
+
+                  {freeDrinks.length > 1 && (
+                    <View style={styles.drinkPaginationDots}>
+                      {freeDrinks.map((_, idx) => (
+                        <View
+                          key={`drink-dot-${idx}`}
+                          style={[
+                            styles.drinkDot,
+                            selectedDrinkIndex === idx && styles.drinkDotActive
+                          ]}
+                        />
+                      ))}
                     </View>
-                  </View>
+                  )}
 
                   <View style={styles.dayTabsContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayTabsScroll}>
                       {dayNames.map((day, index) => {
-                        const availability = getAvailabilityForDrink(freeDrinks[selectedDrinkIndex]?.id, index);
+                        const currentDrink = freeDrinks[selectedDrinkIndex];
+                        const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, index) : null;
                         const isAvailable = availability !== null;
                         const isSelected = selectedDay === index;
                         return (
@@ -316,8 +361,10 @@ export default function VenueModalScreen() {
                               !isAvailable && styles.dayTabDisabled
                             ]}
                             onPress={() => {
-                              console.log(`[VenueDetail] Day tab clicked: ${day} (${index})`);
-                              setSelectedDay(index);
+                              if (isAvailable) {
+                                console.log(`[VenueDetail] Day tab clicked: ${day} (${index}), availability: ${availability}`);
+                                setSelectedDay(index);
+                              }
                             }}
                             disabled={!isAvailable}
                             activeOpacity={0.7}
@@ -337,7 +384,8 @@ export default function VenueModalScreen() {
 
                   <View style={styles.availabilityInfo}>
                     {(() => {
-                      const availability = getAvailabilityForDrink(freeDrinks[selectedDrinkIndex]?.id, selectedDay);
+                      const currentDrink = freeDrinks[selectedDrinkIndex];
+                      const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, selectedDay) : null;
                       if (availability) {
                         return (
                           <View style={styles.availabilityCard}>
@@ -706,12 +754,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
   },
+  drinkCarousel: {
+    marginHorizontal: -20,
+  },
+  drinkSlide: {
+    paddingHorizontal: 20,
+  },
   drinkImageContainer: {
     position: 'relative',
     height: 280,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 16,
+  },
+  drinkPaginationDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
+  drinkDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  drinkDotActive: {
+    backgroundColor: Colors.dark.primary,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   drinkMainImage: {
     width: '100%',
