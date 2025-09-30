@@ -300,6 +300,46 @@ export default function VenueModalScreen() {
                   <ActivityIndicator size="small" color={Colors.dark.primary} />
                   <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
+              ) : venue.latitude && venue.longitude ? (
+                Platform.OS === 'web' ? (
+                  <View style={styles.mapContainer}>
+                    <iframe
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude - 0.01},${venue.latitude - 0.01},${venue.longitude + 0.01},${venue.latitude + 0.01}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                      }}
+                      title="Venue Map"
+                    />
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.mapContainer}
+                    onPress={() => {
+                      const url = Platform.select({
+                        ios: `maps:?daddr=${venue.latitude},${venue.longitude}&dirflg=d`,
+                        android: `geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}(${encodeURIComponent(venue.name)})`,
+                        default: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
+                      });
+                      if (url) {
+                        Linking.openURL(url).catch(err => {
+                          console.error('[VenueDetail] Failed to open maps:', err);
+                        });
+                      }
+                    }}
+                  >
+                    <Image
+                      source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+2BB7FF(${venue.longitude},${venue.latitude})/${venue.longitude},${venue.latitude},14,0/400x200@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw` }}
+                      style={styles.mapView}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.mapOverlay}>
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
+                    </View>
+                  </TouchableOpacity>
+                )
               ) : (
                 <View style={styles.mapPlaceholder}>
                   <MapPin size={24} color={Colors.dark.text} />
@@ -657,6 +697,27 @@ const styles = StyleSheet.create({
   },
   mapView: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  mapOverlay: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  mapOverlayText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   mapPlaceholder: {
     height: 200,

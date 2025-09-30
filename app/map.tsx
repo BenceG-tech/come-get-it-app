@@ -7,7 +7,7 @@ import { ArrowLeft, Search, Beer } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
-
+import { MapView, Marker } from '@/lib/mapComponents';
 
 let Location: any = null;
 
@@ -139,22 +139,43 @@ export default function MapScreen() {
         </View>
       </SafeAreaView>
 
-      {Platform.OS === 'web' ? (
-        <View style={styles.webFallback} testID="web-map-fallback">
-          <Text style={styles.webFallbackTitle}>Térkép nem érhető el a web előnézetben</Text>
-          <Text style={styles.webFallbackText}>Nyisd meg az appot az Expo Go-val iOS-en vagy Androidon a térképes nézethez.</Text>
-          <TouchableOpacity onPress={() => router.push('/search')} style={styles.webFallbackButton} testID="web-map-fallback-search">
-            <Text style={styles.webFallbackButtonText}>Keresés megnyitása</Text>
-          </TouchableOpacity>
-        </View>
-      ) : loading ? (
+      {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.dark.primary} />
           <Text style={styles.loadingText}>Térkép betöltése...</Text>
         </View>
+      ) : Platform.OS === 'web' ? (
+        <WebMapView venues={venues} initialRegion={initialRegion} router={router} />
+      ) : MapView ? (
+        <MapView
+          style={styles.map}
+          initialRegion={initialRegion}
+          showsUserLocation={locationPermission}
+          showsMyLocationButton={locationPermission}
+          testID="native-map"
+        >
+          {venues.map((venue) => (
+            <Marker
+              key={venue.id}
+              coordinate={{
+                latitude: venue.latitude!,
+                longitude: venue.longitude!,
+              }}
+              title={venue.name}
+              description={venue.address}
+              onPress={() => router.push(`/venue/${venue.id}`)}
+            >
+              <View style={styles.markerContainer}>
+                <View style={styles.marker}>
+                  <Beer size={20} color="#fff" />
+                </View>
+              </View>
+            </Marker>
+          ))}
+        </MapView>
       ) : (
-        <View style={styles.map}>
-          <Text style={styles.loadingText}>Térkép csak mobilon érhető el</Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Térkép nem érhető el</Text>
         </View>
       )}
     </View>
@@ -270,4 +291,34 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 5,
   },
+  webMapContainer: {
+    flex: 1,
+    position: 'relative',
+  },
 });
+
+function WebMapView({ venues, initialRegion, router }: { venues: Venue[], initialRegion: any, router: any }) {
+  const markers = venues.map(v => `${v.latitude},${v.longitude}`).join('|');
+  const center = `${initialRegion.latitude},${initialRegion.longitude}`;
+  
+  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${initialRegion.longitude - 0.05},${initialRegion.latitude - 0.05},${initialRegion.longitude + 0.05},${initialRegion.latitude + 0.05}&layer=mapnik&marker=${center}`;
+
+  return (
+    <View style={styles.webMapContainer}>
+      <iframe
+        src={mapUrl}
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+        }}
+        title="Map"
+      />
+      <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, paddingHorizontal: 16 }}>
+        <Text style={{ color: Colors.text, fontSize: 12, textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.7)', padding: 8, borderRadius: 8 }}>
+          {venues.length} helyszín • Kattints a térképen a részletekért
+        </Text>
+      </View>
+    </View>
+  );
+}
