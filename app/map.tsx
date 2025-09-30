@@ -3,26 +3,13 @@ import { StyleSheet, View, Text, TouchableOpacity, Platform, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, Beer } from 'lucide-react-native';
+import { ArrowLeft, Search } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
 
 
 let Location: any = null;
-let MapView: any = null;
-let Marker: any = null;
-
-if (Platform.OS !== 'web') {
-  try {
-    Location = require('expo-location');
-    const maps = require('react-native-maps');
-    MapView = maps.default;
-    Marker = maps.Marker;
-  } catch (e) {
-    console.warn('[Map] Failed to load native modules:', e);
-  }
-}
 
 export default function MapScreen() {
   const router = useRouter();
@@ -30,7 +17,6 @@ export default function MapScreen() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [userLocation, setUserLocation] = useState<any>(null);
-  const [locationPermission, setLocationPermission] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchVenuesAndLocation = async () => {
@@ -85,7 +71,6 @@ export default function MapScreen() {
         if (Platform.OS !== 'web' && Location) {
           const locationStatus = await Location.requestForegroundPermissionsAsync();
           if (locationStatus.status === 'granted') {
-            setLocationPermission(true);
             const location = await Location.getCurrentPositionAsync({});
             setUserLocation(location);
             console.log('[Map] User location:', location.coords);
@@ -149,39 +134,8 @@ export default function MapScreen() {
           <ActivityIndicator size="large" color={Colors.dark.primary} />
           <Text style={styles.loadingText}>Térkép betöltése...</Text>
         </View>
-      ) : Platform.OS === 'web' ? (
-        <WebMapView venues={venues} initialRegion={initialRegion} router={router} />
-      ) : MapView ? (
-        <MapView
-          style={styles.map}
-          initialRegion={initialRegion}
-          showsUserLocation={locationPermission}
-          showsMyLocationButton={locationPermission}
-          testID="native-map"
-        >
-          {venues.map((venue) => (
-            <Marker
-              key={venue.id}
-              coordinate={{
-                latitude: venue.latitude!,
-                longitude: venue.longitude!,
-              }}
-              title={venue.name}
-              description={venue.address}
-              onPress={() => router.push(`/venue/${venue.id}`)}
-            >
-              <View style={styles.markerContainer}>
-                <View style={styles.marker}>
-                  <Beer size={20} color="#fff" />
-                </View>
-              </View>
-            </Marker>
-          ))}
-        </MapView>
       ) : (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Térkép nem érhető el</Text>
-        </View>
+        <WebMapView venues={venues} initialRegion={initialRegion} router={router} />
       )}
     </View>
   );
@@ -303,7 +257,6 @@ const styles = StyleSheet.create({
 });
 
 function WebMapView({ venues, initialRegion, router }: { venues: Venue[], initialRegion: any, router: any }) {
-  const markers = venues.map(v => `${v.latitude},${v.longitude}`).join('|');
   const center = `${initialRegion.latitude},${initialRegion.longitude}`;
   
   const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${initialRegion.longitude - 0.05},${initialRegion.latitude - 0.05},${initialRegion.longitude + 0.05},${initialRegion.latitude + 0.05}&layer=mapnik&marker=${center}`;
