@@ -153,9 +153,13 @@ export default function VenueModalScreen() {
 
   const getAvailabilityForDrink = (drinkId: string, dayOfWeek: number): string | null => {
     console.log(`[VenueDetail] getAvailabilityForDrink - drinkId: ${drinkId}, dayOfWeek: ${dayOfWeek}`);
-    console.log(`[VenueDetail] All windows:`, freeDrinkWindows.map(w => ({ drinkId: w.drinkId, dayOfWeek: w.dayOfWeek, start: w.start, end: w.end })));
-    const windows = freeDrinkWindows.filter((w) => w.drinkId === drinkId && w.dayOfWeek === dayOfWeek);
-    console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayOfWeek}:`, windows);
+    console.log(`[VenueDetail] All windows:`, JSON.stringify(freeDrinkWindows.map(w => ({ drinkId: w.drinkId, dayOfWeek: w.dayOfWeek, start: w.start, end: w.end }))));
+    const windows = freeDrinkWindows.filter((w) => {
+      const matches = w.drinkId === drinkId && w.dayOfWeek === dayOfWeek;
+      console.log(`[VenueDetail] Checking window: drinkId=${w.drinkId} (match: ${w.drinkId === drinkId}), dayOfWeek=${w.dayOfWeek} (match: ${w.dayOfWeek === dayOfWeek}), overall: ${matches}`);
+      return matches;
+    });
+    console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayOfWeek}:`, JSON.stringify(windows));
     if (windows.length === 0) return null;
     return windows.map((w) => {
       const start = w.start.includes(':') ? w.start.substring(0, 5) : w.start;
