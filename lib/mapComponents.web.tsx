@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 
 interface MapViewProps {
   style?: any;
+  provider?: any;
   initialRegion?: {
     latitude: number;
     longitude: number;
@@ -13,11 +14,13 @@ interface MapViewProps {
   zoomEnabled?: boolean;
   pitchEnabled?: boolean;
   rotateEnabled?: boolean;
+  showsUserLocation?: boolean;
+  showsMyLocationButton?: boolean;
   testID?: string;
   children?: React.ReactNode;
 }
 
-export const MapView: React.FC<MapViewProps> = ({ style, initialRegion, testID }) => {
+export const MapView: React.FC<MapViewProps> = ({ style, initialRegion, testID, children }) => {
   if (!initialRegion) return null;
   
   const { latitude, longitude } = initialRegion;
@@ -41,7 +44,19 @@ export const MapView: React.FC<MapViewProps> = ({ style, initialRegion, testID }
   );
 };
 
-export const Marker: any = null;
+interface MarkerProps {
+  coordinate: {
+    latitude: number;
+    longitude: number;
+  };
+  title?: string;
+  description?: string;
+  onCalloutPress?: () => void;
+  testID?: string;
+  children?: React.ReactNode;
+}
+
+export const Marker: React.FC<MarkerProps> = () => null;
 export const PROVIDER_DEFAULT: any = null;
 
 const styles = StyleSheet.create({
