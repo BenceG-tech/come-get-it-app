@@ -2,13 +2,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
+
+let MapView: any;
+let Marker: any;
+let PROVIDER_DEFAULT: any;
+
+if (Platform.OS !== 'web') {
+  MapView = require('react-native-maps').default;
+  Marker = require('react-native-maps').Marker;
+  PROVIDER_DEFAULT = require('react-native-maps').PROVIDER_DEFAULT;
+}
 
 const placeholder = require('../../assets/images/splash-icon.png');
 

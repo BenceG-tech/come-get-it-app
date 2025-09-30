@@ -4,40 +4,49 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Search, MapPin as MapPinIcon } from 'lucide-react-native';
-import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import * as Location from 'expo-location';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
+
+let MapView: any;
+let Marker: any;
+let PROVIDER_DEFAULT: any;
+let Location: any;
+
+if (Platform.OS !== 'web') {
+  MapView = require('react-native-maps').default;
+  Marker = require('react-native-maps').Marker;
+  PROVIDER_DEFAULT = require('react-native-maps').PROVIDER_DEFAULT;
+  Location = require('expo-location');
+}
 
 export default function MapScreen() {
   const router = useRouter();
   const statusBarStyle = "light" as const;
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+  const [userLocation, setUserLocation] = useState<any>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchVenuesAndLocation = async () => {
       try {
-        const [venuesResponse, locationStatus] = await Promise.all([
-          rest('/venues?select=*'),
-          Location.requestForegroundPermissionsAsync()
-        ]);
-
-        if (locationStatus.status === 'granted') {
-          setLocationPermission(true);
-          const location = await Location.getCurrentPositionAsync({});
-          setUserLocation(location);
-          console.log('[Map] User location:', location.coords);
-        } else {
-          console.log('[Map] Location permission denied');
-        }
-
+        const venuesResponse = await rest('/venues?select=*');
         const venuesData: Venue[] = await venuesResponse.json();
         console.log('[Map] Fetched venues:', venuesData.length);
         setVenues(venuesData.filter(v => v.latitude && v.longitude));
+
+        if (Platform.OS !== 'web' && Location) {
+          const locationStatus = await Location.requestForegroundPermissionsAsync();
+          if (locationStatus.status === 'granted') {
+            setLocationPermission(true);
+            const location = await Location.getCurrentPositionAsync({});
+            setUserLocation(location);
+            console.log('[Map] User location:', location.coords);
+          } else {
+            console.log('[Map] Location permission denied');
+          }
+        }
       } catch (error) {
         console.error('[Map] Error fetching data:', error);
         Alert.alert('Hiba', 'Nem sikerült betölteni a térképet');
