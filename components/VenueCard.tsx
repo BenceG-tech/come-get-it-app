@@ -107,23 +107,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         {/* Szerezz pontokat and tags row */}
         <View style={styles.earnPointsAndTagsRow}>
           <View style={styles.earnPointsContent}>
-            <View style={styles.starsContainer}>
-              <Image 
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/a6xi86pshwapm07u42vme' }} 
-                style={styles.starImage} 
-                resizeMode="contain"
-              />
-              <Image 
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/a6xi86pshwapm07u42vme' }} 
-                style={styles.starImage} 
-                resizeMode="contain"
-              />
-              <Image 
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/a6xi86pshwapm07u42vme' }} 
-                style={styles.starImage} 
-                resizeMode="contain"
-              />
-            </View>
+            <Star size={14} color="#2BB7FF" fill="#2BB7FF" />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
           </View>
           {venue.tags && venue.tags.length > 0 ? (
@@ -247,16 +231,7 @@ const styles = StyleSheet.create({
   earnPointsContent: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 6,
-  },
-  starsContainer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 3,
-  },
-  starImage: {
-    width: 18,
-    height: 18,
+    gap: 4,
   },
   earnPointsText: {
     fontSize: 15,
