@@ -8,7 +8,7 @@ import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
-import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
+
 
 const placeholder = require('../../assets/images/splash-icon.png');
 
@@ -295,42 +295,7 @@ export default function VenueModalScreen() {
             </View>
 
             <View style={styles.mapSection}>
-              {venue.latitude && venue.longitude ? (
-                <View style={styles.mapContainer}>
-                  <MapView
-                    style={styles.mapView}
-                    provider={PROVIDER_DEFAULT}
-                    initialRegion={{
-                      latitude: venue.latitude,
-                      longitude: venue.longitude,
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    }}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    pitchEnabled={false}
-                    rotateEnabled={false}
-                    testID="venue-map"
-                  >
-                    {Platform.OS !== 'web' && (
-                      <Marker
-                        coordinate={{
-                          latitude: venue.latitude,
-                          longitude: venue.longitude,
-                        }}
-                        title={venue.name}
-                        description={venue.address}
-                      >
-                        <View style={styles.markerContainer}>
-                          <View style={styles.marker}>
-                            <Beer size={20} color="#FFFFFF" />
-                          </View>
-                        </View>
-                      </Marker>
-                    )}
-                  </MapView>
-                </View>
-              ) : geocoding ? (
+              {geocoding ? (
                 <View style={styles.mapPlaceholder}>
                   <ActivityIndicator size="small" color={Colors.dark.primary} />
                   <Text style={styles.mapText}>Cím geokódolása...</Text>

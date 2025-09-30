@@ -7,7 +7,7 @@ import { ArrowLeft, Search, Beer } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
-import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
+
 
 let Location: any = null;
 
@@ -153,34 +153,9 @@ export default function MapScreen() {
           <Text style={styles.loadingText}>Térkép betöltése...</Text>
         </View>
       ) : (
-        <MapView
-          style={styles.map}
-          provider={PROVIDER_DEFAULT}
-          initialRegion={initialRegion}
-          showsUserLocation={locationPermission}
-          showsMyLocationButton={locationPermission}
-          testID="map-view"
-        >
-          {venues.map((venue) => (
-            <Marker
-              key={venue.id}
-              coordinate={{
-                latitude: venue.latitude!,
-                longitude: venue.longitude!,
-              }}
-              title={venue.name}
-              description={venue.address}
-              onCalloutPress={() => router.push(`/venue/${venue.id}`)}
-              testID={`marker-${venue.id}`}
-            >
-              <View style={styles.markerContainer}>
-                <View style={styles.marker}>
-                  <Beer size={20} color="#FFFFFF" />
-                </View>
-              </View>
-            </Marker>
-          ))}
-        </MapView>
+        <View style={styles.map}>
+          <Text style={styles.loadingText}>Térkép csak mobilon érhető el</Text>
+        </View>
       )}
     </View>
   );
