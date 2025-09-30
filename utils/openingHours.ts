@@ -196,73 +196,19 @@ export function groupConsecutiveHours(businessHours: BusinessHours | null): { da
 
   const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
   
-  const hoursMap: { [hours: string]: number[] } = {};
+  const result: { days: string; hours: string }[] = [];
   
-  // Group days by their hours
+  // Display each day on a separate line
   for (let i = 1; i <= 7; i++) {
     const dayHours = businessHours.byDay[i];
     const hoursString = dayHours ? `${dayHours.open} - ${dayHours.close}` : 'Zárva';
     console.log(`[groupConsecutiveHours] Day ${i} (${dayNames[i-1]}): ${hoursString}`);
     
-    if (!hoursMap[hoursString]) {
-      hoursMap[hoursString] = [];
-    }
-    hoursMap[hoursString].push(i);
+    result.push({
+      days: dayNames[i - 1],
+      hours: hoursString
+    });
   }
-  
-  console.log('[groupConsecutiveHours] Hours map:', hoursMap);
-  
-  const result: { days: string; hours: string }[] = [];
-  
-  // Sort entries to show open hours first, then closed
-  const sortedEntries = Object.entries(hoursMap).sort(([hoursA], [hoursB]) => {
-    if (hoursA === 'Zárva' && hoursB !== 'Zárva') return 1;
-    if (hoursA !== 'Zárva' && hoursB === 'Zárva') return -1;
-    return 0;
-  });
-  
-  sortedEntries.forEach(([hours, days]) => {
-    const sortedDays = days.sort();
-    
-    // Check for common patterns first
-    if (sortedDays.length === 7) {
-      result.push({ days: 'Hétfő-Vasárnap', hours });
-    } else if (sortedDays.length === 5 && sortedDays.every((d, i) => d === i + 1)) {
-      result.push({ days: 'Hétfő-Péntek', hours });
-    } else if (sortedDays.length === 2 && sortedDays[0] === 6 && sortedDays[1] === 7) {
-      result.push({ days: 'Szombat-Vasárnap', hours });
-    } else {
-      // Create ranges for consecutive days or list individual days
-      let dayRanges: string[] = [];
-      let start = 0;
-      
-      while (start < sortedDays.length) {
-        let end = start;
-        while (end + 1 < sortedDays.length && sortedDays[end + 1] === sortedDays[end] + 1) {
-          end++;
-        }
-        
-        if (start === end) {
-          // Single day
-          dayRanges.push(dayNames[sortedDays[start] - 1]);
-        } else if (end === start + 1) {
-          // Two consecutive days - list them separately for clarity
-          dayRanges.push(dayNames[sortedDays[start] - 1]);
-          dayRanges.push(dayNames[sortedDays[end] - 1]);
-        } else {
-          // Three or more consecutive days - use range
-          dayRanges.push(`${dayNames[sortedDays[start] - 1]}-${dayNames[sortedDays[end] - 1]}`);
-        }
-        
-        start = end + 1;
-      }
-      
-      result.push({
-        days: dayRanges.join(', '),
-        hours
-      });
-    }
-  });
   
   console.log('[groupConsecutiveHours] Final result:', result);
   return result;
