@@ -141,7 +141,10 @@ export default function VenueModalScreen() {
   const dayNamesShort = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
 
   const getAvailabilityForDrink = (drinkId: string, dayOfWeek: number): string | null => {
+    console.log(`[VenueDetail] getAvailabilityForDrink - drinkId: ${drinkId}, dayOfWeek: ${dayOfWeek}`);
+    console.log(`[VenueDetail] All windows:`, freeDrinkWindows.map(w => ({ drinkId: w.drinkId, dayOfWeek: w.dayOfWeek, start: w.start, end: w.end })));
     const windows = freeDrinkWindows.filter((w) => w.drinkId === drinkId && w.dayOfWeek === dayOfWeek);
+    console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayOfWeek}:`, windows);
     if (windows.length === 0) return null;
     return windows.map((w) => `${w.start}–${w.end}`).join(', ');
   };
@@ -361,13 +364,13 @@ export default function VenueModalScreen() {
                               !isAvailable && styles.dayTabDisabled
                             ]}
                             onPress={() => {
+                              console.log(`[VenueDetail] Day tab pressed: ${day} (${index}), isAvailable: ${isAvailable}, availability: ${availability}`);
                               if (isAvailable) {
-                                console.log(`[VenueDetail] Day tab clicked: ${day} (${index}), availability: ${availability}`);
                                 setSelectedDay(index);
                               }
                             }}
                             disabled={!isAvailable}
-                            activeOpacity={0.7}
+                            activeOpacity={isAvailable ? 0.7 : 1}
                           >
                             <Text style={[
                               styles.dayTabTextShort,
