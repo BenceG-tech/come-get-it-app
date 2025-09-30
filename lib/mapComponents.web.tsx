@@ -20,7 +20,7 @@ interface MapViewProps {
   children?: React.ReactNode;
 }
 
-export const MapView: React.FC<MapViewProps> = ({ style, initialRegion, testID, children }) => {
+export function MapView({ style, initialRegion, testID, children }: MapViewProps) {
   if (!initialRegion) return null;
   
   const { latitude, longitude } = initialRegion;
@@ -42,7 +42,7 @@ export const MapView: React.FC<MapViewProps> = ({ style, initialRegion, testID, 
       />
     </View>
   );
-};
+}
 
 interface MarkerProps {
   coordinate: {
@@ -56,7 +56,10 @@ interface MarkerProps {
   children?: React.ReactNode;
 }
 
-export const Marker: React.FC<MarkerProps> = () => null;
+export function Marker(_props: MarkerProps) {
+  return null;
+}
+
 export const PROVIDER_DEFAULT: any = null;
 
 const styles = StyleSheet.create({
