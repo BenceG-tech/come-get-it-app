@@ -29,38 +29,41 @@ export default function VenueModalScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   
-  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
+  const [scrollY, setScrollY] = useState<number>(0);
   
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         const { dx, dy } = gestureState;
-        return Math.abs(dx) > Math.abs(dy) && dx > 10;
+        return scrollY <= 0 && Math.abs(dy) > Math.abs(dx) && dy > 10;
       },
       onPanResponderGrant: () => {
         setScrollEnabled(false);
       },
       onPanResponderMove: (evt, gestureState) => {
-        if (gestureState.dx > 0) {
-          translateX.setValue(gestureState.dx);
+        if (gestureState.dy > 0 && scrollY <= 0) {
+          translateY.setValue(gestureState.dy);
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
         setScrollEnabled(true);
-        if (gestureState.dx > width * 0.3) {
-          Animated.timing(translateX, {
-            toValue: width,
-            duration: 200,
+        if (gestureState.dy > height * 0.2) {
+          Animated.timing(translateY, {
+            toValue: height,
+            duration: 250,
             useNativeDriver: true,
           }).start(() => {
             router.back();
           });
         } else {
-          Animated.spring(translateX, {
+          Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
+            tension: 50,
+            friction: 8,
           }).start();
         }
       },
@@ -250,7 +253,7 @@ export default function VenueModalScreen() {
           { 
             paddingTop: insets.top, 
             paddingBottom: insets.bottom,
-            transform: [{ translateX }]
+            transform: [{ translateY }]
           }
         ]}
         {...panResponder.panHandlers}
@@ -260,6 +263,10 @@ export default function VenueModalScreen() {
           showsVerticalScrollIndicator={false} 
           bounces={false}
           scrollEnabled={scrollEnabled}
+          onScroll={(e) => {
+            setScrollY(e.nativeEvent.contentOffset.y);
+          }}
+          scrollEventThrottle={16}
         >
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
             <ScrollView
