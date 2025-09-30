@@ -99,8 +99,8 @@ export default function OpeningHoursDisplay({
 
   return (
     <View style={styles.hoursContainer}>
-      {groupedHours.map((group) => (
-        <View key={`${group.days}-${group.hours}`} style={styles.hoursRow}>
+      {groupedHours.map((group, index) => (
+        <View key={`${group.days}-${group.hours}-${index}`} style={styles.hoursRow}>
           <Text style={styles.daysText}>{group.days}</Text>
           <Text style={[
             styles.hoursText,

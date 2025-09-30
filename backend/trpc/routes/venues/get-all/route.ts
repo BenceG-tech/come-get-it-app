@@ -16,7 +16,20 @@ export const getAllVenuesRoute = publicProcedure
     
     try {
       const response = await rest(`/venues?select=*&limit=${limit}&offset=${offset}&order=created_at.desc`);
-      const venues: Venue[] = await response.json();
+      let venues: Venue[] = await response.json();
+      
+      // Parse opening_hours if it's a string
+      venues = venues.map(venue => {
+        if (venue.opening_hours && typeof venue.opening_hours === 'string') {
+          try {
+            venue.opening_hours = JSON.parse(venue.opening_hours);
+          } catch (e) {
+            console.error('[tRPC] Failed to parse opening_hours for venue', venue.id, e);
+            venue.opening_hours = null;
+          }
+        }
+        return venue;
+      });
       
       return {
         venues: venues || [],

@@ -34,7 +34,19 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   }
   
   if (!Array.isArray(venueList) || venueList.length === 0) return null;
-  const venue = venueList[0];
+  let venue = venueList[0];
+  
+  // Parse opening_hours if it's a string
+  if (venue.opening_hours && typeof venue.opening_hours === 'string') {
+    try {
+      venue.opening_hours = JSON.parse(venue.opening_hours);
+      console.info('[Provider] Parsed opening_hours from string');
+    } catch (e) {
+      console.error('[Provider] Failed to parse opening_hours string:', e);
+      venue.opening_hours = null;
+    }
+  }
+  
   console.info('[Provider] Venue opening_hours from DB:', JSON.stringify(venue.opening_hours, null, 2));
   console.info('[Provider] Full venue object keys:', Object.keys(venue));
   console.info('[Provider] Venue object:', JSON.stringify(venue, null, 2));
