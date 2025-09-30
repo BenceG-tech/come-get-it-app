@@ -676,8 +676,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   earnPointsStarImage: {
-    width: 48,
-    height: 48,
+    width: 56,
+    height: 56,
   },
   earnPointsTextContainer: {
     flex: 1,
