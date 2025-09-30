@@ -188,7 +188,7 @@ export default function VenueModalScreen() {
             <View style={styles.earnPointsContent} testID="earn-points-card">
               <View style={styles.earnPointsIconGroup} testID="earn-points-icon">
                 <Image 
-                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/zxmev2vsyg0jyghz6tlxp" }}
+                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rs2niibi4dcxmdl56oabc" }}
                   style={styles.earnPointsStarImage}
                   resizeMode="contain"
                 />
@@ -672,11 +672,12 @@ const styles = StyleSheet.create({
   earnPointsIconGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
   },
   earnPointsStarImage: {
-    width: 50,
-    height: 50,
+    width: 48,
+    height: 48,
   },
   earnPointsTextContainer: {
     flex: 1,
