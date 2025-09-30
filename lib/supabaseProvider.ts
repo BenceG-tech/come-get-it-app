@@ -20,16 +20,14 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   ]);
 
   let venueList: Venue[];
+  let responseText: string = '';
   try {
-    venueList = await venueRes.json();
+    responseText = await venueRes.text();
+    console.info('[Provider] Raw venue response:', responseText.substring(0, 500));
+    venueList = JSON.parse(responseText);
   } catch (parseError) {
     console.error('[Provider] Failed to parse venue response as JSON:', parseError);
-    try {
-      const responseText = await venueRes.clone().text();
-      console.error('[Provider] Response text:', responseText.substring(0, 500));
-    } catch (textError) {
-      console.error('[Provider] Could not get response text:', textError);
-    }
+    console.error('[Provider] Response text:', responseText.substring(0, 500));
     return null;
   }
   
