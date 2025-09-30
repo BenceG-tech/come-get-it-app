@@ -128,7 +128,7 @@ export default function VenueModalScreen() {
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
 
   const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-  const dayNamesShort = ['H', 'K', 'Sze', 'Cs', 'P', 'Szo', 'V'];
+  const dayNamesShort = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
 
   const getAvailabilityForDrink = (drinkId: string, dayOfWeek: number): string | null => {
     const windows = freeDrinkWindows.filter((w) => w.drinkId === drinkId && w.dayOfWeek === dayOfWeek);
@@ -315,8 +315,12 @@ export default function VenueModalScreen() {
                               isSelected && styles.dayTabSelected,
                               !isAvailable && styles.dayTabDisabled
                             ]}
-                            onPress={() => setSelectedDay(index)}
+                            onPress={() => {
+                              console.log(`[VenueDetail] Day tab clicked: ${day} (${index})`);
+                              setSelectedDay(index);
+                            }}
                             disabled={!isAvailable}
+                            activeOpacity={0.7}
                           >
                             <Text style={[
                               styles.dayTabTextShort,
@@ -324,13 +328,6 @@ export default function VenueModalScreen() {
                               !isAvailable && styles.dayTabTextDisabled
                             ]}>
                               {dayNamesShort[index]}
-                            </Text>
-                            <Text style={[
-                              styles.dayTabTextLong,
-                              isSelected && styles.dayTabTextSelected,
-                              !isAvailable && styles.dayTabTextDisabled
-                            ]}>
-                              {day}
                             </Text>
                           </TouchableOpacity>
                         );
@@ -752,25 +749,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   dayTab: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.dark.card,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.dark.border,
-    minWidth: 80,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    minWidth: 90,
     alignItems: 'center',
   },
   dayTabSelected: {
     backgroundColor: Colors.dark.primary,
     borderColor: Colors.dark.primary,
+    borderWidth: 2,
   },
   dayTabDisabled: {
-    opacity: 0.4,
+    opacity: 0.3,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   dayTabTextShort: {
     color: Colors.dark.text,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   dayTabTextLong: {
@@ -779,10 +778,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dayTabTextSelected: {
-    color: Colors.dark.background,
+    color: '#000000',
+    fontWeight: '700',
   },
   dayTabTextDisabled: {
-    color: Colors.dark.subtext,
+    color: 'rgba(255, 255, 255, 0.3)',
   },
   availabilityInfo: {
     marginTop: 8,
