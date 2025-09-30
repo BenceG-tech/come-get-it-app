@@ -104,12 +104,16 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
           </View>
         </View>
         
-        {/* Szerezz pontokat and tags row */}
-        <View style={styles.earnPointsAndTagsRow}>
+        {/* Szerezz pontokat row */}
+        <View style={styles.earnPointsRow}>
           <View style={styles.earnPointsContent}>
             <Star size={14} color="#2BB7FF" fill="#2BB7FF" />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
           </View>
+        </View>
+        
+        {/* Tags row */}
+        <View style={styles.tagsRow}>
           {venue.tags && venue.tags.length > 0 ? (
             <Text style={styles.tagsText} numberOfLines={1} ellipsizeMode="tail">
               {venue.tags.join(' • ')}
@@ -119,9 +123,6 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         
         {/* Meta row with opening hours */}
         <View style={styles.metaRow}>
-          <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
-            Vendéglátóhely • {venue.address || 'Budapest'} • Pontszerzés
-          </Text>
           <OpeningHoursDisplay 
             businessHours={venue.opening_hours ? convertOpeningHoursToBusinessHours(venue.opening_hours) : null}
             showStatus={Boolean(venue.opening_hours)} 
@@ -222,11 +223,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  earnPointsAndTagsRow: {
+  earnPointsRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     marginBottom: 4,
-    gap: 8,
   },
   earnPointsContent: {
     flexDirection: 'row' as const,
@@ -238,10 +238,12 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     color: '#2BB7FF',
   },
+  tagsRow: {
+    marginBottom: 4,
+  },
   tagsText: {
     fontSize: 13,
     color: '#A6A6AD',
-    flex: 1,
   },
   stars: {
     flexDirection: 'row' as const,
