@@ -71,7 +71,11 @@ export function convertOpeningHoursToBusinessHours(openingHours: OpeningHours | 
     if (typeof dayHours === 'object' && 'closed' in dayHours && dayHours.closed === true) {
       console.log(`[OpeningHours] ${dayName} is explicitly closed`);
       byDay[dayNumber] = null;
-    } else if (typeof dayHours === 'object' && dayHours.open && dayHours.close) {
+      return;
+    }
+    
+    // Check if day has open and close times (regardless of closed field value)
+    if (typeof dayHours === 'object' && 'open' in dayHours && 'close' in dayHours && dayHours.open && dayHours.close) {
       console.log(`[OpeningHours] ${dayName} is open: ${dayHours.open} - ${dayHours.close}`);
       byDay[dayNumber] = {
         open: String(dayHours.open),
