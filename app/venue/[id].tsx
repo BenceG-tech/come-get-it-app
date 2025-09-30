@@ -711,19 +711,19 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    minHeight: 44,
+    minHeight: 56,
     backgroundColor: 'transparent',
     paddingHorizontal: 0,
   },
   carouselCard: {
-    height: 44,
+    height: 56,
     backgroundColor: '#000000',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.9)',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     shadowColor: 'rgba(255,255,255,0.6)',
     shadowOffset: {
       width: 0,
@@ -741,9 +741,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   carouselIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#000000',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.9)',
@@ -751,16 +751,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   carouselIconText: {
-    fontSize: 18,
+    fontSize: 22,
   },
   carouselTitle: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   carouselSubtitle: {
     color: 'rgba(255,255,255,0.7)',
-    fontSize: 11,
+    fontSize: 13,
   },
 
   carouselArrow: {
