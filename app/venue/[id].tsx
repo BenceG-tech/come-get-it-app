@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Beer } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
@@ -18,7 +18,7 @@ export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
-  const [, setCurrentRewardIndex] = useState<number>(0);
+
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [images, setImages] = useState<string[]>([]);
@@ -211,34 +211,42 @@ export default function VenueModalScreen() {
       <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
-            <Image
-              testID="venue-image-main"
-              key={`main-${images[activeIndex] ?? 'img'}-${activeIndex}`}
-              source={{ uri: images[activeIndex] }}
-              style={[styles.image, { width }]}
-              resizeMode="cover"
-              onError={() => onImageError(activeIndex)}
-            />
-            <View style={styles.thumbBar}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbScrollContent}>
-                {images.map((uri, idx) => (
-                  <TouchableOpacity
-                    key={`thumb-${uri}-${idx}`}
-                    onPress={() => setActiveIndex(idx)}
-                    activeOpacity={0.8}
-                    style={[styles.thumbItem, activeIndex === idx ? styles.thumbItemActive : null]}
-                    testID={`venue-thumb-${idx}`}
-                  >
-                    <Image
-                      source={{ uri }}
-                      style={styles.thumbImage}
-                      resizeMode="cover"
-                      onError={() => onImageError(idx)}
-                    />
-                  </TouchableOpacity>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                const offsetX = e.nativeEvent.contentOffset.x;
+                const index = Math.round(offsetX / width);
+                setActiveIndex(index);
+              }}
+              scrollEventThrottle={16}
+              style={styles.imageScroller}
+            >
+              {images.map((uri, idx) => (
+                <Image
+                  key={`img-${uri}-${idx}`}
+                  testID={`venue-image-${idx}`}
+                  source={{ uri }}
+                  style={[styles.image, { width }]}
+                  resizeMode="cover"
+                  onError={() => onImageError(idx)}
+                />
+              ))}
+            </ScrollView>
+            {images.length > 1 && (
+              <View style={styles.paginationDots}>
+                {images.map((_, idx) => (
+                  <View
+                    key={`dot-${idx}`}
+                    style={[
+                      styles.dot,
+                      activeIndex === idx && styles.dotActive
+                    ]}
+                  />
                 ))}
-              </ScrollView>
-            </View>
+              </View>
+            )}
             <View style={styles.locationBadge}>
               <MapPin size={14} color={Colors.dark.text} />
               <Text style={styles.locationText}>Budapest</Text>
@@ -526,39 +534,33 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
 
+  imageScroller: {
+    flex: 1,
+  },
   image: {
     height: '100%',
   },
-  thumbBar: {
+  paginationDots: {
     position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    borderRadius: 10,
-  },
-  thumbScrollContent: {
-    paddingHorizontal: 6,
-    gap: 6,
+    bottom: 16,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 6,
   },
-  thumbItem: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
-  thumbItemActive: {
-    borderColor: Colors.dark.primary,
-    borderWidth: 2,
-  },
-  thumbImage: {
-    width: '100%',
-    height: '100%',
+  dotActive: {
+    backgroundColor: Colors.dark.primary,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   closeButton: {
     position: 'absolute',
