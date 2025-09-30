@@ -349,17 +349,23 @@ export default function VenueModalScreen() {
                 accessibilityLabel="Útvonaltervezés"
                 onPress={() => {
                   if (venue.latitude && venue.longitude) {
-                    const scheme = Platform.select({ ios: 'maps:', android: 'geo:' });
                     const url = Platform.select({
                       ios: `maps:?daddr=${venue.latitude},${venue.longitude}&dirflg=d`,
                       android: `geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}(${encodeURIComponent(venue.name)})`,
+                      web: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
                       default: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
                     });
                     if (url) {
-                      Linking.openURL(url).catch(err => {
-                        console.error('[VenueDetail] Failed to open maps:', err);
-                      });
+                      if (Platform.OS === 'web') {
+                        window.open(url, '_blank');
+                      } else {
+                        Linking.openURL(url).catch(err => {
+                          console.error('[VenueDetail] Failed to open maps:', err);
+                        });
+                      }
                     }
+                  } else {
+                    console.warn('[VenueDetail] No coordinates available for directions');
                   }
                 }}
               >
