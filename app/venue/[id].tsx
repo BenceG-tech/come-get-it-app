@@ -8,16 +8,7 @@ import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
-
-let MapView: any;
-let Marker: any;
-let PROVIDER_DEFAULT: any;
-
-if (Platform.OS !== 'web') {
-  MapView = require('react-native-maps').default;
-  Marker = require('react-native-maps').Marker;
-  PROVIDER_DEFAULT = require('react-native-maps').PROVIDER_DEFAULT;
-}
+import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
 
 const placeholder = require('../../assets/images/splash-icon.png');
 

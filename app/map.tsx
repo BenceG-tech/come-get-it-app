@@ -7,17 +7,16 @@ import { ArrowLeft, Search, MapPin as MapPinIcon } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
+import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
 
-let MapView: any;
-let Marker: any;
-let PROVIDER_DEFAULT: any;
-let Location: any;
+let Location: any = null;
 
 if (Platform.OS !== 'web') {
-  MapView = require('react-native-maps').default;
-  Marker = require('react-native-maps').Marker;
-  PROVIDER_DEFAULT = require('react-native-maps').PROVIDER_DEFAULT;
-  Location = require('expo-location');
+  try {
+    Location = require('expo-location');
+  } catch (e) {
+    console.warn('[Map] Failed to load expo-location:', e);
+  }
 }
 
 export default function MapScreen() {
