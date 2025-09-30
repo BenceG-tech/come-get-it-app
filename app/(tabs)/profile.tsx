@@ -93,9 +93,11 @@ export default function ProfileScreen() {
           <View style={styles.rewardsContent}>
             <View style={styles.pointsSection}>
               <View style={styles.starsContainer}>
-                <Text style={styles.starText}>★</Text>
-                <Text style={styles.starText}>★</Text>
-                <Text style={styles.starText}>★</Text>
+                <Image 
+                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/zxmev2vsyg0jyghz6tlxp" }}
+                  style={styles.starImage}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={styles.pointsValue}>{points}</Text>
             </View>
@@ -419,11 +421,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginRight: 12,
-    gap: 4,
   },
-  starText: {
-    fontSize: 16,
-    color: Colors.background,
+  starImage: {
+    width: 60,
+    height: 60,
   },
   pointsValue: {
     fontSize: 38,

@@ -187,9 +187,11 @@ export default function VenueModalScreen() {
 
             <View style={styles.earnPointsContent} testID="earn-points-card">
               <View style={styles.earnPointsIconGroup} testID="earn-points-icon">
-                <Star size={18} color={Colors.dark.primary} fill={Colors.dark.primary} />
-                <Star size={18} color={Colors.dark.primary} fill={Colors.dark.primary} />
-                <Star size={18} color={Colors.dark.primary} fill={Colors.dark.primary} />
+                <Image 
+                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/zxmev2vsyg0jyghz6tlxp" }}
+                  style={styles.earnPointsStarImage}
+                  resizeMode="contain"
+                />
               </View>
               <View style={styles.earnPointsTextContainer} testID="earn-points-text">
                 <Text style={styles.earnPointsTitle}>SZEREZZ PONTOKAT</Text>
@@ -671,6 +673,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  earnPointsStarImage: {
+    width: 50,
+    height: 50,
   },
   earnPointsTextContainer: {
     flex: 1,
