@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -28,6 +28,44 @@ export default function VenueModalScreen() {
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  
+  const translateX = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
+  
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        const { dx, dy } = gestureState;
+        return Math.abs(dx) > Math.abs(dy) && dx > 10;
+      },
+      onPanResponderGrant: () => {
+        setScrollEnabled(false);
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (gestureState.dx > 0) {
+          translateX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        setScrollEnabled(true);
+        if (gestureState.dx > width * 0.3) {
+          Animated.timing(translateX, {
+            toValue: width,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            router.back();
+          });
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     const fetchVenue = async () => {
@@ -206,8 +244,23 @@ export default function VenueModalScreen() {
       visible={true}
       onRequestClose={() => router.back()}
 >
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+      <Animated.View 
+        style={[
+          styles.container, 
+          { 
+            paddingTop: insets.top, 
+            paddingBottom: insets.bottom,
+            transform: [{ translateX }]
+          }
+        ]}
+        {...panResponder.panHandlers}
+      >
+        <ScrollView 
+          ref={scrollViewRef}
+          showsVerticalScrollIndicator={false} 
+          bounces={false}
+          scrollEnabled={scrollEnabled}
+        >
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
             <ScrollView
               horizontal
@@ -517,7 +570,10 @@ export default function VenueModalScreen() {
           </View>
         </ScrollView>
 
-        <View style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24 }]}>
+        <View 
+          style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24 }]}
+          pointerEvents="box-none"
+        >
           <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
             <View style={styles.carouselContent}>
               <View style={styles.carouselIcon}>
@@ -531,7 +587,7 @@ export default function VenueModalScreen() {
             <ChevronRight size={16} color="#FFFFFF" style={styles.carouselArrow} />
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
 
       <RedeemModal visible={showRedeemModal} onClose={() => setShowRedeemModal(false)} rewardImage={freeDrinks[0]?.imageUrl ?? null} />
     </Modal>
