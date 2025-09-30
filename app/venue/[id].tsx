@@ -188,7 +188,7 @@ export default function VenueModalScreen() {
             <View style={styles.earnPointsContent} testID="earn-points-card">
               <View style={styles.earnPointsIconGroup} testID="earn-points-icon">
                 <Image 
-                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/rs2niibi4dcxmdl56oabc" }}
+                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/3a1fkjr5hx679da6zl8hz" }}
                   style={styles.earnPointsStarImage}
                   resizeMode="contain"
                 />
