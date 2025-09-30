@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Platform, ActivityIndicator, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, MapPin as MapPinIcon } from 'lucide-react-native';
+import { ArrowLeft, Search, Beer } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
@@ -31,9 +31,51 @@ export default function MapScreen() {
     const fetchVenuesAndLocation = async () => {
       try {
         const venuesResponse = await rest('/venues?select=*');
-        const venuesData: Venue[] = await venuesResponse.json();
+        let venuesData: Venue[] = await venuesResponse.json();
         console.log('[Map] Fetched venues:', venuesData.length);
-        setVenues(venuesData.filter(v => v.latitude && v.longitude));
+        
+        // Geocode venues that don't have coordinates
+        const venuesWithCoords = await Promise.all(
+          venuesData.map(async (venue) => {
+            if (venue.latitude && venue.longitude) {
+              return venue;
+            }
+            
+            // Try to geocode the address
+            if (venue.address) {
+              try {
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(venue.address + ', Budapest, Hungary')}&limit=1`;
+                const geocodeResponse = await fetch(geocodeUrl, {
+                  headers: {
+                    'User-Agent': 'RorkApp/1.0'
+                  }
+                });
+                const geocodeData = await geocodeResponse.json();
+                
+                if (geocodeData && geocodeData.length > 0) {
+                  const lat = parseFloat(geocodeData[0].lat);
+                  const lon = parseFloat(geocodeData[0].lon);
+                  console.log(`[Map] Geocoded ${venue.name}: ${lat}, ${lon}`);
+                  
+                  // Update venue in database
+                  await rest(`/venues?id=eq.${venue.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ latitude: lat, longitude: lon })
+                  });
+                  
+                  return { ...venue, latitude: lat, longitude: lon };
+                }
+              } catch (geocodeError) {
+                console.error(`[Map] Failed to geocode ${venue.name}:`, geocodeError);
+              }
+            }
+            
+            return venue;
+          })
+        );
+        
+        setVenues(venuesWithCoords.filter(v => v.latitude && v.longitude));
 
         if (Platform.OS !== 'web' && Location) {
           const locationStatus = await Location.requestForegroundPermissionsAsync();
@@ -133,7 +175,7 @@ export default function MapScreen() {
             >
               <View style={styles.markerContainer}>
                 <View style={styles.marker}>
-                  <MapPinIcon size={20} color="#FFFFFF" />
+                  <Beer size={20} color="#FFFFFF" />
                 </View>
               </View>
             </Marker>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Beer } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
@@ -22,6 +22,7 @@ export default function VenueModalScreen() {
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [geocoding, setGeocoding] = useState<boolean>(false);
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -36,11 +37,47 @@ export default function VenueModalScreen() {
       try {
         setLoading(true);
         console.info('[VenueDetail] Loading venue', id);
-        const v = await getVenueWithDetails(String(id));
+        let v = await getVenueWithDetails(String(id));
         if (!v) {
           setError('Venue not found');
+          return;
         }
         console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
+        
+        // Geocode if no coordinates
+        if ((!v.latitude || !v.longitude) && v.address) {
+          setGeocoding(true);
+          try {
+            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(v.address + ', Budapest, Hungary')}&limit=1`;
+            const geocodeResponse = await fetch(geocodeUrl, {
+              headers: {
+                'User-Agent': 'RorkApp/1.0'
+              }
+            });
+            const geocodeData = await geocodeResponse.json();
+            
+            if (geocodeData && geocodeData.length > 0) {
+              const lat = parseFloat(geocodeData[0].lat);
+              const lon = parseFloat(geocodeData[0].lon);
+              console.log(`[VenueDetail] Geocoded ${v.name}: ${lat}, ${lon}`);
+              
+              // Update venue in database
+              const { rest } = await import('@/lib/supabaseRest');
+              await rest(`/venues?id=eq.${v.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latitude: lat, longitude: lon })
+              });
+              
+              v = { ...v, latitude: lat, longitude: lon };
+            }
+          } catch (geocodeError) {
+            console.error(`[VenueDetail] Failed to geocode:`, geocodeError);
+          } finally {
+            setGeocoding(false);
+          }
+        }
+        
         setVenue(v);
       } catch (e) {
         console.error('[VenueDetail] Failed to load', e);
@@ -258,7 +295,7 @@ export default function VenueModalScreen() {
             </View>
 
             <View style={styles.mapSection}>
-              {venue.latitude && venue.longitude && Platform.OS !== 'web' ? (
+              {venue.latitude && venue.longitude ? (
                 <View style={styles.mapContainer}>
                   <MapView
                     style={styles.mapView}
@@ -275,21 +312,28 @@ export default function VenueModalScreen() {
                     rotateEnabled={false}
                     testID="venue-map"
                   >
-                    <Marker
-                      coordinate={{
-                        latitude: venue.latitude,
-                        longitude: venue.longitude,
-                      }}
-                      title={venue.name}
-                      description={venue.address}
-                    >
-                      <View style={styles.markerContainer}>
-                        <View style={styles.marker}>
-                          <MapPin size={20} color="#FFFFFF" />
+                    {Platform.OS !== 'web' && (
+                      <Marker
+                        coordinate={{
+                          latitude: venue.latitude,
+                          longitude: venue.longitude,
+                        }}
+                        title={venue.name}
+                        description={venue.address}
+                      >
+                        <View style={styles.markerContainer}>
+                          <View style={styles.marker}>
+                            <Beer size={20} color="#FFFFFF" />
+                          </View>
                         </View>
-                      </View>
-                    </Marker>
+                      </Marker>
+                    )}
                   </MapView>
+                </View>
+              ) : geocoding ? (
+                <View style={styles.mapPlaceholder}>
+                  <ActivityIndicator size="small" color={Colors.dark.primary} />
+                  <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
               ) : (
                 <View style={styles.mapPlaceholder}>
