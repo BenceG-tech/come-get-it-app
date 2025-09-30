@@ -135,10 +135,21 @@ export default function VenueModalScreen() {
     console.log('[VenueDetail] Venue drinks:', venue?.drinks?.length ?? 0);
     console.log('[VenueDetail] All drinks:', venue?.drinks?.map(d => ({ name: d.drinkName, isFree: d.isFreeDrink })));
     console.log('[VenueDetail] Free drink windows:', freeDrinkWindows.length);
-  }, [venue, freeDrinkWindows]);
+    console.log('[VenueDetail] Free drink windows detail:', freeDrinkWindows);
+    
+    if (freeDrinks.length > 0 && freeDrinkWindows.length > 0) {
+      const firstDrink = freeDrinks[0];
+      const availableDays = freeDrinkWindows
+        .filter(w => w.drinkId === firstDrink.id)
+        .map(w => w.dayOfWeek);
+      console.log('[VenueDetail] Available days for first drink:', availableDays);
+      if (availableDays.length > 0) {
+        setSelectedDay(availableDays[0]);
+      }
+    }
+  }, [venue, freeDrinkWindows, freeDrinks]);
 
   const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-  const dayNamesShort = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
 
   const getAvailabilityForDrink = (drinkId: string, dayOfWeek: number): string | null => {
     console.log(`[VenueDetail] getAvailabilityForDrink - drinkId: ${drinkId}, dayOfWeek: ${dayOfWeek}`);
@@ -146,7 +157,11 @@ export default function VenueModalScreen() {
     const windows = freeDrinkWindows.filter((w) => w.drinkId === drinkId && w.dayOfWeek === dayOfWeek);
     console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayOfWeek}:`, windows);
     if (windows.length === 0) return null;
-    return windows.map((w) => `${w.start}–${w.end}`).join(', ');
+    return windows.map((w) => {
+      const start = w.start.includes(':') ? w.start.substring(0, 5) : w.start;
+      const end = w.end.includes(':') ? w.end.substring(0, 5) : w.end;
+      return `${start}–${end}`;
+    }).join(', ');
   };
 
   if (loading) {
@@ -304,9 +319,17 @@ export default function VenueModalScreen() {
                     onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
                       const offsetX = e.nativeEvent.contentOffset.x;
                       const index = Math.round(offsetX / width);
-                      if (index !== selectedDrinkIndex) {
+                      if (index !== selectedDrinkIndex && index >= 0 && index < freeDrinks.length) {
                         setSelectedDrinkIndex(index);
-                        setSelectedDay(0);
+                        const newDrink = freeDrinks[index];
+                        const availableDays = freeDrinkWindows
+                          .filter(w => w.drinkId === newDrink.id)
+                          .map(w => w.dayOfWeek);
+                        if (availableDays.length > 0) {
+                          setSelectedDay(availableDays[0]);
+                        } else {
+                          setSelectedDay(0);
+                        }
                       }
                     }}
                     scrollEventThrottle={16}
