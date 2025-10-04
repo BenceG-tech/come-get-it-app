@@ -184,6 +184,8 @@ export default function VenueModalScreen() {
         .filter(w => w.drinkId === firstDrink.id)
         .map(w => w.dayOfWeek);
       console.log('[VenueDetail] Available days for first drink:', availableDays);
+      console.log('[VenueDetail] First drink ID:', firstDrink.id);
+      console.log('[VenueDetail] All free drink windows:', JSON.stringify(freeDrinkWindows));
       if (availableDays.length > 0) {
         setSelectedDay(availableDays[0]);
       }
@@ -192,15 +194,15 @@ export default function VenueModalScreen() {
 
   const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
 
-  const getAvailabilityForDrink = (drinkId: string, dayOfWeek: number): string | null => {
-    console.log(`[VenueDetail] getAvailabilityForDrink - drinkId: ${drinkId}, dayOfWeek: ${dayOfWeek}`);
+  const getAvailabilityForDrink = (drinkId: string, dayIndex: number): string | null => {
+    console.log(`[VenueDetail] getAvailabilityForDrink - drinkId: ${drinkId}, dayIndex: ${dayIndex}`);
     console.log(`[VenueDetail] All windows:`, JSON.stringify(freeDrinkWindows.map(w => ({ drinkId: w.drinkId, dayOfWeek: w.dayOfWeek, start: w.start, end: w.end }))));
     const windows = freeDrinkWindows.filter((w) => {
-      const matches = w.drinkId === drinkId && w.dayOfWeek === dayOfWeek;
-      console.log(`[VenueDetail] Checking window: drinkId=${w.drinkId} (match: ${w.drinkId === drinkId}), dayOfWeek=${w.dayOfWeek} (match: ${w.dayOfWeek === dayOfWeek}), overall: ${matches}`);
+      const matches = w.drinkId === drinkId && w.dayOfWeek === dayIndex;
+      console.log(`[VenueDetail] Checking window: drinkId=${w.drinkId} (match: ${w.drinkId === drinkId}), dayOfWeek=${w.dayOfWeek} (match: ${w.dayOfWeek === dayIndex}), overall: ${matches}`);
       return matches;
     });
-    console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayOfWeek}:`, JSON.stringify(windows));
+    console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayIndex}:`, JSON.stringify(windows));
     if (windows.length === 0) return null;
     return windows.map((w) => {
       const start = w.start.includes(':') ? w.start.substring(0, 5) : w.start;
