@@ -170,12 +170,8 @@ export default function VenueModalScreen() {
   }, [venue]);
   const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
   const windowsNormalized = useMemo(() => {
-    const mapped = freeDrinkWindows.map(w => {
-      const raw = w.dayOfWeek;
-      const normalized = raw >= 1 && raw <= 7 ? raw - 1 : raw;
-      return { ...w, dayOfWeek: normalized };
-    });
-    console.log('[VenueDetail] Normalized windows:', mapped);
+    const mapped = freeDrinkWindows.map(w => ({ ...w }));
+    console.log('[VenueDetail] Windows (no normalization applied):', mapped);
     return mapped;
   }, [freeDrinkWindows]);
 
@@ -183,43 +179,36 @@ export default function VenueModalScreen() {
   const [selectedDay, setSelectedDay] = useState<number>(0);
   
   useEffect(() => {
-    console.log('[VenueDetail] Venue drinks:', venue?.drinks?.length ?? 0);
-    console.log('[VenueDetail] All drinks:', venue?.drinks?.map(d => ({ name: d.drinkName, isFree: d.isFreeDrink })));
-    console.log('[VenueDetail] Free drink windows (raw):', freeDrinkWindows.length);
-    console.log('[VenueDetail] Free drink windows (normalized):', windowsNormalized);
-    
-    if (freeDrinks.length > 0 && windowsNormalized.length > 0) {
+    if (freeDrinks.length > 0) {
       const firstDrink = freeDrinks[0];
-      const availableDays = windowsNormalized
-        .filter(w => w.drinkId === firstDrink.id)
-        .map(w => w.dayOfWeek)
-        .filter((d, i, arr) => arr.indexOf(d) === i)
-        .sort((a, b) => a - b);
-      console.log('[VenueDetail] Available days for first drink (normalized):', availableDays);
-      console.log('[VenueDetail] First drink ID:', firstDrink.id);
-      console.log('[VenueDetail] All free drink windows (normalized):', JSON.stringify(windowsNormalized));
-      if (availableDays.length > 0) {
-        setSelectedDay(availableDays[0]);
+      const daysOrder = [0,1,2,3,4,5,6];
+      const firstAvailable = daysOrder.find(d => getAvailabilityForDrink(firstDrink.id, d));
+      if (typeof firstAvailable === 'number') {
+        setSelectedDay(firstAvailable);
       }
     }
-  }, [venue, windowsNormalized, freeDrinks]);
+  }, [freeDrinks, windowsNormalized]);
 
   const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
 
   const getAvailabilityForDrink = (drinkId: string, dayIndex: number): string | null => {
-    console.log(`[VenueDetail] getAvailabilityForDrink - drinkId: ${drinkId}, dayIndex: ${dayIndex}`);
-    console.log(`[VenueDetail] All windows (normalized):`, JSON.stringify(windowsNormalized.map(w => ({ drinkId: w.drinkId, dayOfWeek: w.dayOfWeek, start: w.start, end: w.end }))));
-    const windows = windowsNormalized.filter((w) => {
-      const matches = w.drinkId === drinkId && w.dayOfWeek === dayIndex;
-      console.log(`[VenueDetail] Checking window: drinkId=${w.drinkId} (match: ${w.drinkId === drinkId}), dayOfWeek=${w.dayOfWeek} (match: ${w.dayOfWeek === dayIndex}), overall: ${matches}`);
-      return matches;
-    });
-    console.log(`[VenueDetail] Filtered windows for drink ${drinkId} on day ${dayIndex}:`, JSON.stringify(windows));
+    const dayOneBased = ((dayIndex + 1 - 1) % 7) + 1; // 1..7
+    const matchDay = (w: { dayOfWeek?: number; [k: string]: any }) => {
+      const d = Number(w.dayOfWeek);
+      const arr = Array.isArray((w as any).days) ? (w as any).days as number[] : [];
+      const matchesArray = arr.includes(dayOneBased) || arr.includes(dayIndex) || arr.includes(((dayIndex + 6) % 7));
+      const matchesNumber = d === dayIndex || d === dayOneBased;
+      return matchesArray || matchesNumber;
+    };
+
+    const windows = windowsNormalized.filter((w) => w.drinkId === drinkId && matchDay(w as any));
     if (windows.length === 0) return null;
     return windows.map((w) => {
-      const start = w.start.includes(':') ? w.start.substring(0, 5) : w.start;
-      const end = w.end.includes(':') ? w.end.substring(0, 5) : w.end;
-      return `${start}-${end}`;
+      const start = (w.start ?? '').toString();
+      const end = (w.end ?? '').toString();
+      const s = start.includes(':') ? start.substring(0, 5) : start;
+      const e = end.includes(':') ? end.substring(0, 5) : end;
+      return `${s}-${e}`;
     }).join(', ');
   };
 
@@ -462,7 +451,7 @@ export default function VenueModalScreen() {
                       {dayNames.map((day, index) => {
                         const currentDrink = freeDrinks[selectedDrinkIndex];
                         const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, index) : null;
-                        const isAvailable = availability !== null;
+                        const isAvailable = Boolean(availability);
                         const isSelected = selectedDay === index;
                         return (
                           <TouchableOpacity
