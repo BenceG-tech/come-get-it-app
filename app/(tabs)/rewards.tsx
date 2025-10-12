@@ -1,21 +1,20 @@
-import { useMemo, useState } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Platform } from "react-native";
+import { useMemo } from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Lock } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { rewards } from "@/data/rewards";
 import RewardCard from "@/components/RewardCard";
+import { router } from "expo-router";
 
 export default function RewardsScreen() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
   const filteredEditorPicks = useMemo(() => {
-    return selectedCategory ? rewards.filter(r => r.category === selectedCategory) : rewards.slice(0, 3);
-  }, [selectedCategory]);
+    return rewards.slice(0, 3);
+  }, []);
 
-  const handleSelect = (cat: string | null) => {
-    console.log("[Rewards] Category pressed:", cat);
-    setSelectedCategory(cat);
+  const goToCategory = (cat: string) => {
+    console.log("[Rewards] Navigate to category:", cat);
+    router.push({ pathname: "/(tabs)/rewards-category/[category]", params: { category: cat } });
   };
 
   return (
@@ -91,15 +90,12 @@ export default function RewardsScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>📋 Kategóriák</Text>
-            {selectedCategory !== null && (
-              <Text style={styles.sectionSubtitle} testID="selected-category">Szűrő: {selectedCategory}</Text>
-            )}
           </View>
           
           <View style={styles.categoriesGrid}>
             <TouchableOpacity 
-              style={[styles.categoryCard, selectedCategory === 'drinks' ? styles.categoryCardActive : undefined]}
-              onPress={() => handleSelect('drinks')}
+              style={styles.categoryCard}
+              onPress={() => goToCategory('drinks')}
               accessibilityRole="button"
               accessibilityLabel="Italok kategória"
               testID="cat-drinks"
@@ -115,8 +111,8 @@ export default function RewardsScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.categoryCard, selectedCategory === 'food' ? styles.categoryCardActive : undefined]}
-              onPress={() => handleSelect('food')}
+              style={styles.categoryCard}
+              onPress={() => goToCategory('food')}
               accessibilityRole="button"
               accessibilityLabel="Étel kategória"
               testID="cat-food"
@@ -132,8 +128,8 @@ export default function RewardsScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.categoryCard, selectedCategory === 'lifestyle' ? styles.categoryCardActive : undefined]}
-              onPress={() => handleSelect('lifestyle')}
+              style={styles.categoryCard}
+              onPress={() => goToCategory('lifestyle')}
               accessibilityRole="button"
               accessibilityLabel="Életmód kategória"
               testID="cat-lifestyle"
@@ -149,8 +145,8 @@ export default function RewardsScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.categoryCard, selectedCategory === null ? styles.categoryCardActive : undefined]}
-              onPress={() => handleSelect(null)}
+              style={styles.categoryCard}
+              onPress={() => goToCategory('all')}
               accessibilityRole="button"
               accessibilityLabel="Összes megtekintése"
               testID="cat-all"
