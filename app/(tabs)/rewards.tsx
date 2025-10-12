@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { useMemo, useState } from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Lock } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -8,11 +8,18 @@ import RewardCard from "@/components/RewardCard";
 
 export default function RewardsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
-  // We'll use the selected category to filter rewards when needed
+
+  const filteredEditorPicks = useMemo(() => {
+    return selectedCategory ? rewards.filter(r => r.category === selectedCategory) : rewards.slice(0, 3);
+  }, [selectedCategory]);
+
+  const handleSelect = (cat: string | null) => {
+    console.log("[Rewards] Category pressed:", cat);
+    setSelectedCategory(cat);
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="rewards-screen">
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.title}>Jutalmak</Text>
@@ -21,18 +28,19 @@ export default function RewardsScreen() {
         </View>
       </View>
       
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} accessibilityRole="scrollbar">
         <View style={styles.cardSection}>
           <View style={styles.addCardContainer}>
             <Image 
               source={{ uri: "https://cdn-icons-png.flaticon.com/512/6772/6772415.png" }} 
               style={styles.cardIcon} 
+              accessibilityIgnoresInvertColors
             />
             <View style={styles.addCardTextContainer}>
               <Text style={styles.addCardTitle}>ADJ HOZZÁ EGY KÁRTYÁT, HOGY JUTALOM PONTOKAT SZEREZZ MINDEN ALKALOMMAL, AMIKOR A BÁRJAINKBAN KÖLTESZ</Text>
               <Text style={styles.addCardSubtitle}>Biztonságos és <Text style={styles.bold}>soha nem terhelünk meg</Text>.</Text>
             </View>
-            <TouchableOpacity style={styles.addCardButton}>
+            <TouchableOpacity style={styles.addCardButton} accessibilityRole="button" testID="add-card-button">
               <Lock size={16} color={Colors.text} />
               <Text style={styles.addCardButtonText}>Kártya hozzáadása</Text>
             </TouchableOpacity>
@@ -63,16 +71,13 @@ export default function RewardsScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
           >
-            {(selectedCategory 
-              ? rewards.filter(reward => reward.category === selectedCategory)
-              : rewards.slice(0, 3)
-            ).map(reward => (
+            {filteredEditorPicks.map(reward => (
               <RewardCard key={reward.id} reward={reward} />
             ))}
           </ScrollView>
         </View>
         
-        <TouchableOpacity style={styles.referButton}>
+        <TouchableOpacity style={styles.referButton} testID="refer-friend">
           <Image 
             source={{ uri: "https://cdn-icons-png.flaticon.com/512/3682/3682321.png" }} 
             style={styles.referIcon} 
@@ -83,62 +88,79 @@ export default function RewardsScreen() {
           </View>
         </TouchableOpacity>
         
-
-        
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>📋 Kategóriák</Text>
+            {selectedCategory !== null && (
+              <Text style={styles.sectionSubtitle} testID="selected-category">Szűrő: {selectedCategory}</Text>
+            )}
           </View>
           
           <View style={styles.categoriesGrid}>
             <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => setSelectedCategory('drinks')}
+              style={[styles.categoryCard, selectedCategory === 'drinks' ? styles.categoryCardActive : undefined]}
+              onPress={() => handleSelect('drinks')}
+              accessibilityRole="button"
+              accessibilityLabel="Italok kategória"
+              testID="cat-drinks"
+              activeOpacity={0.8}
             >
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" }} 
+                source={{ uri: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1470&q=80" }} 
                 style={styles.categoryImage} 
               />
-              <View style={styles.categoryOverlay}>
+              <View style={styles.categoryOverlay} pointerEvents="none">
                 <Text style={styles.categoryTitle}>Italok</Text>
               </View>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => setSelectedCategory('food')}
+              style={[styles.categoryCard, selectedCategory === 'food' ? styles.categoryCardActive : undefined]}
+              onPress={() => handleSelect('food')}
+              accessibilityRole="button"
+              accessibilityLabel="Étel kategória"
+              testID="cat-food"
+              activeOpacity={0.8}
             >
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" }} 
+                source={{ uri: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1470&q=80" }} 
                 style={styles.categoryImage} 
               />
-              <View style={styles.categoryOverlay}>
+              <View style={styles.categoryOverlay} pointerEvents="none">
                 <Text style={styles.categoryTitle}>Étel</Text>
               </View>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => setSelectedCategory('lifestyle')}
+              style={[styles.categoryCard, selectedCategory === 'lifestyle' ? styles.categoryCardActive : undefined]}
+              onPress={() => handleSelect('lifestyle')}
+              accessibilityRole="button"
+              accessibilityLabel="Életmód kategória"
+              testID="cat-lifestyle"
+              activeOpacity={0.8}
             >
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }} 
+                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=1548&q=80" }} 
                 style={styles.categoryImage} 
               />
-              <View style={styles.categoryOverlay}>
+              <View style={styles.categoryOverlay} pointerEvents="none">
                 <Text style={styles.categoryTitle}>Életmód</Text>
               </View>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => setSelectedCategory(null)}
+              style={[styles.categoryCard, selectedCategory === null ? styles.categoryCardActive : undefined]}
+              onPress={() => handleSelect(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Összes megtekintése"
+              testID="cat-all"
+              activeOpacity={0.8}
             >
               <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1567696153798-9111f9cd3d0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }} 
+                source={{ uri: "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1548&q=80" }} 
                 style={styles.categoryImage} 
               />
-              <View style={styles.categoryOverlay}>
+              <View style={styles.categoryOverlay} pointerEvents="none">
                 <Text style={styles.categoryTitle}>Összes megtekintése</Text>
               </View>
             </TouchableOpacity>
@@ -312,6 +334,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  categoryCardActive: {
+    borderColor: Colors.text,
   },
   categoryImage: {
     width: "100%",
@@ -319,7 +346,7 @@ const styles = StyleSheet.create({
   },
   categoryOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.35)",
     justifyContent: "center",
     alignItems: "center",
   },
