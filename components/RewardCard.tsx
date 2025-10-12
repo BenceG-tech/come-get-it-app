@@ -1,18 +1,21 @@
-import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text, Image, TouchableOpacity, Dimensions } from "react-native";
 import { router } from "expo-router";
 import Colors from "@/constants/colors";
 import { Reward } from "@/types/reward";
 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 type RewardCardProps = {
   reward: Reward;
+  variant?: "grid" | "page";
 };
 
-export default function RewardCard({ reward }: RewardCardProps) {
+export default function RewardCard({ reward, variant = "grid" }: RewardCardProps) {
   const getCategoryName = (category: string) => {
     const categoryMap: Record<string, string> = {
-      'drinks': 'ITALOK',
-      'food': 'ÉTEL',
-      'lifestyle': 'ÉLETMÓD'
+      drinks: "ITALOK",
+      food: "ÉTEL",
+      lifestyle: "ÉLETMÓD",
     };
     return categoryMap[category] || category.toUpperCase();
   };
@@ -21,23 +24,39 @@ export default function RewardCard({ reward }: RewardCardProps) {
     router.push(`/reward/${reward.id}`);
   };
 
+  const containerStyle = [
+    styles.container,
+    variant === "page" ? styles.pageContainer : undefined,
+  ];
+  const imageStyle = [
+    styles.image,
+    variant === "page" ? styles.pageImage : undefined,
+  ];
+
   return (
-    <TouchableOpacity style={styles.container} testID={`reward-card-${reward.id}`} onPress={handlePress}>
-      <Image source={{ uri: reward.image }} style={styles.image} />
-      
+    <TouchableOpacity
+      style={containerStyle}
+      testID={`reward-card-${reward.id}`}
+      onPress={handlePress}
+      accessibilityRole="button"
+    >
+      <Image source={{ uri: reward.image }} style={imageStyle} />
+
       <View style={styles.pointsBadge}>
         <Text style={styles.pointsText}>{reward.points} Pont</Text>
       </View>
-      
+
       {reward.brandLogo && (
         <View style={styles.brandContainer}>
           <Image source={{ uri: reward.brandLogo }} style={styles.brandLogo} />
         </View>
       )}
-      
+
       <View style={styles.content}>
         <Text style={styles.category}>{getCategoryName(reward.category)}</Text>
-        <Text style={styles.title} numberOfLines={2}>{reward.title}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {reward.title}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -51,9 +70,17 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginRight: 15,
   },
+  pageContainer: {
+    width: SCREEN_WIDTH,
+    marginRight: 0,
+    borderRadius: 0,
+  },
   image: {
     width: "100%",
     height: 120,
+  },
+  pageImage: {
+    height: 300,
   },
   pointsBadge: {
     position: "absolute",
@@ -87,17 +114,17 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   content: {
-    padding: 12,
+    padding: 16,
   },
   category: {
     fontSize: 11,
     color: Colors.primary,
-    marginBottom: 5,
+    marginBottom: 6,
     fontWeight: "600",
     letterSpacing: 1,
   },
   title: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "bold",
     color: Colors.text,
   },
