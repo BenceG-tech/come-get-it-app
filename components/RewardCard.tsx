@@ -7,7 +7,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 type RewardCardProps = {
   reward: Reward;
-  variant?: "grid" | "page";
+  variant?: "grid" | "page" | "list";
 };
 
 export default function RewardCard({ reward, variant = "grid" }: RewardCardProps) {
@@ -27,10 +27,12 @@ export default function RewardCard({ reward, variant = "grid" }: RewardCardProps
   const containerStyle = [
     styles.container,
     variant === "page" ? styles.pageContainer : undefined,
+    variant === "list" ? styles.listContainer : undefined,
   ];
   const imageStyle = [
     styles.image,
     variant === "page" ? styles.pageImage : undefined,
+    variant === "list" ? styles.listImage : undefined,
   ];
 
   return (
@@ -81,6 +83,15 @@ const styles = StyleSheet.create({
   },
   pageImage: {
     height: 300,
+  },
+  listContainer: {
+    width: "100%",
+    marginRight: 0,
+    marginBottom: 15,
+    borderRadius: 12,
+  },
+  listImage: {
+    height: 150,
   },
   pointsBadge: {
     position: "absolute",
