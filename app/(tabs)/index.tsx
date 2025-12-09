@@ -36,7 +36,7 @@ export default function BarsScreen() {
     const fetchVenues = async () => {
       try {
         console.log('Fetching venues from Supabase...');
-        const response = await rest('/venues');
+        const response = await rest('/venues?select=*');
         
         // Check if response is ok
         if (!response.ok) {
@@ -62,7 +62,38 @@ export default function BarsScreen() {
         if (data && data.length > 0) {
           console.log('Using database venues, first venue opening_hours:', JSON.stringify(data[0]?.opening_hours, null, 2));
           console.log('All venues opening_hours:', data.map((v: Venue) => ({ name: v.name, opening_hours: v.opening_hours })));
-          setVenues(data);
+          
+          // Fetch images for all venues
+          const venuesWithImages = await Promise.all(
+            data.map(async (venue: Venue) => {
+              try {
+                // If venue already has image_url or hero_image_url, use it
+                if (venue.image_url || venue.hero_image_url) {
+                  console.log(`Venue ${venue.name} already has image_url:`, venue.image_url || venue.hero_image_url);
+                  return venue;
+                }
+                
+                // Otherwise, fetch from venue_images table
+                const imagesResponse = await rest(`/venue_images?venue_id=eq.${venue.id}&select=url,image_url,is_cover&order=is_cover.desc,created_at.asc&limit=1`);
+                const imagesText = await imagesResponse.text();
+                const images = JSON.parse(imagesText);
+                
+                if (images && images.length > 0) {
+                  const imageUrl = images[0].url || images[0].image_url;
+                  console.log(`Fetched image for ${venue.name}:`, imageUrl);
+                  return { ...venue, image_url: imageUrl };
+                }
+                
+                console.log(`No image found for ${venue.name}`);
+                return venue;
+              } catch (imgError) {
+                console.error(`Error fetching images for venue ${venue.id}:`, imgError);
+                return venue;
+              }
+            })
+          );
+          
+          setVenues(venuesWithImages);
         } else {
           console.log('Using fallback venues');
           setVenues(fallbackVenues);
