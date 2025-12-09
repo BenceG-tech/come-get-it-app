@@ -59,9 +59,19 @@ export default function RewardsCategoryScreen() {
           )}
         </ScrollView>
       ) : (
-        <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          pagingEnabled
+          snapToInterval={width}
+          decelerationRate="fast"
+          snapToAlignment="start"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.verticalList}
+          testID="rewards-all-list"
+        >
           {filtered.map((item) => (
-            <RewardCard key={item.id} reward={item} />
+            <View key={item.id} style={{ width }}>
+              <RewardCard reward={item} variant="page" />
+            </View>
           ))}
           {filtered.length === 0 && (
             <View style={styles.empty}>
@@ -86,6 +96,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 15,
+  },
+  verticalList: {
+    paddingBottom: 40,
   },
   empty: {
     padding: 24,

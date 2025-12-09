@@ -14,7 +14,7 @@ export const rewards: Reward[] = [
     id: "2",
     title: "FREE Bottle of Prosecco",
     description: "Redeem for a complimentary bottle at participating venues",
-    image: "https://images.unsplash.com/photo-1594372367309-d3c39d0a2b42?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80",
+    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80",
     brandLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Craft_Gin_Club_logo.png/1200px-Craft_Gin_Club_logo.png",
     points: 300,
     category: "drinks"
