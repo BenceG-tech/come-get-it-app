@@ -5,7 +5,7 @@ export const rewards: Reward[] = [
     id: "1",
     title: "65% off Rum box of the month",
     description: "Get our premium rum selection box at a special discount",
-    image: "https://images.unsplash.com/photo-1609951651556-5334e2706168?w=800&q=80",
+    image: "https://images.unsplash.com/photo-1609951651556-5334e2706168?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80",
     brandLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Craft_Gin_Club_logo.png/1200px-Craft_Gin_Club_logo.png",
     points: 200,
     category: "drinks"
@@ -14,7 +14,7 @@ export const rewards: Reward[] = [
     id: "2",
     title: "FREE Bottle of Prosecco",
     description: "Redeem for a complimentary bottle at participating venues",
-    image: "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=800&q=80",
+    image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80",
     brandLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Craft_Gin_Club_logo.png/1200px-Craft_Gin_Club_logo.png",
     points: 300,
     category: "drinks"
