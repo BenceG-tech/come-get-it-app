@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView } from "react-native";
+import { StyleSheet, View, Text, ScrollView, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import Colors from "@/constants/colors";
 import { rewards } from "@/data/rewards";
@@ -8,6 +8,7 @@ import RewardCard from "@/components/RewardCard";
 export default function RewardsCategoryScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
   const category = (params.category ?? "all") as string;
+  const { width } = useWindowDimensions();
 
   const filtered = useMemo(() => {
     if (category === "all") return rewards;
@@ -22,7 +23,7 @@ export default function RewardsCategoryScreen() {
   };
 
   const title = titleMap[category] ?? category;
-
+  const isPaged = category !== "all";
 
   return (
     <View style={styles.container} testID="rewards-category-screen">
@@ -35,20 +36,50 @@ export default function RewardsCategoryScreen() {
         }}
       />
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.verticalList}
-        testID="rewards-category-list"
-      >
-        {filtered.map((item) => (
-          <RewardCard key={item.id} reward={item} variant="list" />
-        ))}
-        {filtered.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Nincs jutalom ebben a kategóriában.</Text>
-          </View>
-        )}
-      </ScrollView>
+      {isPaged ? (
+        <ScrollView
+          horizontal
+          pagingEnabled
+          snapToInterval={width}
+          decelerationRate="fast"
+          snapToAlignment="center"
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{}}
+          testID="rewards-category-pager"
+       >
+          {filtered.map((item) => (
+            <View key={item.id} style={{ width }}>
+              <RewardCard reward={item} variant="page" />
+            </View>
+          ))}
+          {filtered.length === 0 && (
+            <View style={[styles.empty, { width }]}> 
+              <Text style={styles.emptyText}>Nincs jutalom ebben a kategóriában.</Text>
+            </View>
+          )}
+        </ScrollView>
+      ) : (
+        <ScrollView 
+          pagingEnabled
+          snapToInterval={width}
+          decelerationRate="fast"
+          snapToAlignment="start"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.verticalList}
+          testID="rewards-all-list"
+        >
+          {filtered.map((item) => (
+            <View key={item.id} style={{ width }}>
+              <RewardCard reward={item} variant="page" />
+            </View>
+          ))}
+          {filtered.length === 0 && (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>Nincs jutalom ebben a kategóriában.</Text>
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -67,8 +98,6 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   verticalList: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 40,
   },
   empty: {
