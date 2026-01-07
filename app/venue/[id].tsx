@@ -36,9 +36,11 @@ export default function VenueModalScreen() {
   
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         const { dx, dy } = gestureState;
-        return scrollY <= 0 && Math.abs(dy) > Math.abs(dx) && dy > 10;
+        // Only capture vertical swipes when at top of scroll and swiping down significantly
+        return scrollY <= 0 && Math.abs(dy) > Math.abs(dx) && dy > 20;
       },
       onPanResponderGrant: () => {
         setScrollEnabled(false);
@@ -478,7 +480,8 @@ export default function VenueModalScreen() {
                               console.log(`[VenueDetail] Day tab pressed: ${day.full} (ISO ${isoDay}), isAvailable: ${isAvailable}, availability: ${availability}`);
                               setSelectedDay(isoDay);
                             }}
-                            activeOpacity={0.7}
+                            activeOpacity={0.6}
+                            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                           >
                             <Text style={[
                               styles.dayTabText,
@@ -599,7 +602,7 @@ export default function VenueModalScreen() {
         </ScrollView>
 
         <View 
-          style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 16 : 24 }]}
+          style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}
           pointerEvents="box-none"
         >
           <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
@@ -845,6 +848,7 @@ const styles = StyleSheet.create({
   },
   drinkSection: {
     marginBottom: 20,
+    zIndex: 5,
   },
   drinkTitle: {
     color: Colors.dark.text,
@@ -921,15 +925,16 @@ const styles = StyleSheet.create({
   },
   dayTab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 40,
+    minWidth: 42,
+    minHeight: 44,
   },
   dayTabSelected: {
     backgroundColor: Colors.dark.primary,
@@ -1010,10 +1015,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   mapSection: {
-    marginBottom: 100,
+    marginBottom: 120,
+    paddingBottom: 20,
   },
   daySelectSection: {
     marginTop: 8,
+    zIndex: 10,
   },
   dayTabsRow: {
     flexDirection: 'row',
@@ -1184,6 +1191,7 @@ const styles = StyleSheet.create({
     minHeight: 56,
     backgroundColor: 'transparent',
     paddingHorizontal: 0,
+    zIndex: 100,
   },
   carouselCard: {
     height: 56,
