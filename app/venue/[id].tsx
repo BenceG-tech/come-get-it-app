@@ -168,37 +168,40 @@ export default function VenueModalScreen() {
     console.log('[VenueDetail] Free drinks:', drinks.length, drinks.map(d => d.drinkName));
     return drinks;
   }, [venue]);
-  const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
+
   const windowsNormalized = useMemo(() => {
+    const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
     const mapped = freeDrinkWindows.map(w => ({ ...w }));
     console.log('[VenueDetail] Windows (no normalization applied):', mapped);
     return mapped;
-  }, [freeDrinkWindows]);
+  }, [venue?.freeDrinkWindows]);
 
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<number>(0);
-  
-  useEffect(() => {
-    if (freeDrinks.length > 0) {
-      const firstDrink = freeDrinks[0];
-      const daysOrder = [0,1,2,3,4,5,6];
-      const firstAvailable = daysOrder.find(d => getAvailabilityForDrink(firstDrink.id, d));
-      if (typeof firstAvailable === 'number') {
-        setSelectedDay(firstAvailable);
-      }
-    }
-  }, [freeDrinks, windowsNormalized]);
+  const [selectedDay, setSelectedDay] = useState<number>(1); // ISO 8601: 1=Monday...7=Sunday
 
-  const dayNames = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+  // ISO 8601: 1=Monday, 2=Tuesday, ..., 7=Sunday
+  const dayLabels: { short: string; full: string }[] = [
+    { short: 'H', full: 'Hétfő' },
+    { short: 'K', full: 'Kedd' },
+    { short: 'Sze', full: 'Szerda' },
+    { short: 'Cs', full: 'Csütörtök' },
+    { short: 'P', full: 'Péntek' },
+    { short: 'Szo', full: 'Szombat' },
+    { short: 'V', full: 'Vasárnap' },
+  ];
 
-  const getAvailabilityForDrink = (drinkId: string, dayIndex: number): string | null => {
-    const dayOneBased = ((dayIndex + 1 - 1) % 7) + 1; // 1..7
+  const getAvailabilityForDrink = useCallback((drinkId: string, isoDay: number): string | null => {
+    // isoDay is 1-7 (Monday-Sunday per ISO 8601)
     const matchDay = (w: { dayOfWeek?: number; [k: string]: any }) => {
+      // Check if window has 'days' array (ISO format 1-7)
+      const daysArr = Array.isArray((w as any).days) ? (w as any).days as number[] : [];
+      if (daysArr.length > 0) {
+        return daysArr.includes(isoDay);
+      }
+      // Fallback to dayOfWeek field
       const d = Number(w.dayOfWeek);
-      const arr = Array.isArray((w as any).days) ? (w as any).days as number[] : [];
-      const matchesArray = arr.includes(dayOneBased) || arr.includes(dayIndex) || arr.includes(((dayIndex + 6) % 7));
-      const matchesNumber = d === dayIndex || d === dayOneBased;
-      return matchesArray || matchesNumber;
+      // dayOfWeek might be 0-6 (JS) or 1-7 (ISO)
+      return d === isoDay || d === (isoDay - 1); // Support both formats
     };
 
     const windows = windowsNormalized.filter((w) => w.drinkId === drinkId && matchDay(w as any));
@@ -210,7 +213,22 @@ export default function VenueModalScreen() {
       const e = end.includes(':') ? end.substring(0, 5) : end;
       return `${s}-${e}`;
     }).join(', ');
-  };
+  }, [windowsNormalized]);
+  
+  useEffect(() => {
+    if (freeDrinks.length > 0) {
+      const firstDrink = freeDrinks[0];
+      // Try to find first available day (1-7 ISO format)
+      for (let day = 1; day <= 7; day++) {
+        if (getAvailabilityForDrink(firstDrink.id, day)) {
+          setSelectedDay(day);
+          return;
+        }
+      }
+      // Default to Monday if no availability found
+      setSelectedDay(1);
+    }
+  }, [freeDrinks, getAvailabilityForDrink]);
 
 
   if (loading) {
@@ -390,16 +408,14 @@ export default function VenueModalScreen() {
                       if (index !== selectedDrinkIndex && index >= 0 && index < freeDrinks.length) {
                         setSelectedDrinkIndex(index);
                         const newDrink = freeDrinks[index];
-                        const availableDays = windowsNormalized
-                          .filter(w => w.drinkId === newDrink.id)
-                          .map(w => w.dayOfWeek)
-                          .filter((d, i, arr) => arr.indexOf(d) === i)
-                          .sort((a, b) => a - b);
-                        if (availableDays.length > 0) {
-                          setSelectedDay(availableDays[0]);
-                        } else {
-                          setSelectedDay(0);
+                        // Find first available ISO day (1-7) for new drink
+                        for (let day = 1; day <= 7; day++) {
+                          if (getAvailabilityForDrink(newDrink.id, day)) {
+                            setSelectedDay(day);
+                            return;
+                          }
                         }
+                        setSelectedDay(1);
                       }
                     }}
                     scrollEventThrottle={16}
@@ -441,56 +457,54 @@ export default function VenueModalScreen() {
                     </View>
                   )}
 
-                  <View>
-                    <ScrollView 
-                      horizontal 
-                      showsHorizontalScrollIndicator={false}
-                      style={styles.dayTabsContainer}
-                      contentContainerStyle={styles.dayTabsContent}
-                    >
-                      {dayNames.map((day, index) => {
+                  <View style={styles.daySelectSection}>
+                    <View style={styles.dayTabsRow}>
+                      {dayLabels.map((day, index) => {
+                        const isoDay = index + 1; // Convert to ISO 8601 (1-7)
                         const currentDrink = freeDrinks[selectedDrinkIndex];
-                        const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, index) : null;
+                        const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, isoDay) : null;
                         const isAvailable = Boolean(availability);
-                        const isSelected = selectedDay === index;
+                        const isSelected = selectedDay === isoDay;
                         return (
                           <TouchableOpacity
-                            key={index}
-                            testID={`day-tab-${index}`}
+                            key={isoDay}
+                            testID={`day-tab-${isoDay}`}
                             style={[
                               styles.dayTab,
                               isSelected && styles.dayTabSelected,
                               !isAvailable && styles.dayTabDisabled
                             ]}
                             onPress={() => {
-                              console.log(`[VenueDetail] Day tab pressed: ${day} (${index}), isAvailable: ${isAvailable}, availability: ${availability}`);
-                              if (isAvailable) {
-                                setSelectedDay(index);
-                              }
+                              console.log(`[VenueDetail] Day tab pressed: ${day.full} (ISO ${isoDay}), isAvailable: ${isAvailable}, availability: ${availability}`);
+                              setSelectedDay(isoDay);
                             }}
-                            disabled={!isAvailable}
-                            activeOpacity={isAvailable ? 0.7 : 1}
+                            activeOpacity={0.7}
                           >
                             <Text style={[
                               styles.dayTabText,
                               isSelected && styles.dayTabTextSelected,
                               !isAvailable && styles.dayTabTextDisabled
                             ]}>
-                              {day}
+                              {day.short}
                             </Text>
                           </TouchableOpacity>
                         );
                       })}
-                    </ScrollView>
+                    </View>
                     {freeDrinks[selectedDrinkIndex] && (() => {
                       const currentDrink = freeDrinks[selectedDrinkIndex];
                       const availability = getAvailabilityForDrink(currentDrink.id, selectedDay);
+                      const dayLabel = dayLabels[selectedDay - 1]?.full ?? '';
                       return availability ? (
                         <View style={styles.timeSlotDisplay}>
                           <Clock size={16} color={Colors.dark.primary} />
-                          <Text testID="time-slot-text" style={styles.timeSlotText}>{`${dayNames[selectedDay]} ${availability}`}</Text>
+                          <Text testID="time-slot-text" style={styles.timeSlotText}>{`${dayLabel} ${availability}`}</Text>
                         </View>
-                      ) : null;
+                      ) : (
+                        <View style={styles.noTimeSlotDisplay}>
+                          <Text style={styles.noTimeSlotText}>Ezen a napon nincs elérhető idősáv</Text>
+                        </View>
+                      );
                     })()}
                   </View>
                 </View>
@@ -905,20 +919,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  dayTabsContainer: {
-    marginBottom: 12,
-  },
-  dayTabsContent: {
-    gap: 8,
-    paddingHorizontal: 2,
-  },
   dayTab: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 40,
   },
   dayTabSelected: {
     backgroundColor: Colors.dark.primary,
@@ -957,6 +968,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  noTimeSlotDisplay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  noTimeSlotText: {
+    color: Colors.dark.subtext,
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
   aboutSection: {
     marginBottom: 20,
   },
@@ -984,7 +1010,15 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   mapSection: {
-    marginBottom: 80,
+    marginBottom: 100,
+  },
+  daySelectSection: {
+    marginTop: 8,
+  },
+  dayTabsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 6,
   },
   mapContainer: {
     height: 200,
