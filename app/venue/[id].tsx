@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, ImageBackground, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
+import RedeemQRModal from '@/components/RedeemQRModal';
 
 
-const placeholder = require('../../assets/images/splash-icon.png');
+function getTodayISODay(): number {
+  const jsDay = new Date().getDay();
+  return jsDay === 0 ? 7 : jsDay;
+}
 
 
 
@@ -179,7 +184,7 @@ export default function VenueModalScreen() {
   }, [venue?.freeDrinkWindows]);
 
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<number>(1); // ISO 8601: 1=Monday...7=Sunday
+  const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
 
   // ISO 8601: 1=Monday, 2=Tuesday, ..., 7=Sunday
   const dayLabels: { short: string; full: string }[] = [
@@ -468,20 +473,21 @@ export default function VenueModalScreen() {
                         const isAvailable = Boolean(availability);
                         const isSelected = selectedDay === isoDay;
                         return (
-                          <TouchableOpacity
+                          <Pressable
                             key={isoDay}
                             testID={`day-tab-${isoDay}`}
-                            style={[
+                            style={({ pressed }) => [
                               styles.dayTab,
                               isSelected && styles.dayTabSelected,
-                              !isAvailable && styles.dayTabDisabled
+                              !isAvailable && styles.dayTabDisabled,
+                              pressed && styles.dayTabPressed,
                             ]}
                             onPress={() => {
                               console.log(`[VenueDetail] Day tab pressed: ${day.full} (ISO ${isoDay}), isAvailable: ${isAvailable}, availability: ${availability}`);
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                               setSelectedDay(isoDay);
                             }}
-                            activeOpacity={0.6}
-                            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                            hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                           >
                             <Text style={[
                               styles.dayTabText,
@@ -490,7 +496,7 @@ export default function VenueModalScreen() {
                             ]}>
                               {day.short}
                             </Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         );
                       })}
                     </View>
@@ -602,10 +608,19 @@ export default function VenueModalScreen() {
         </ScrollView>
 
         <View 
-          style={[styles.bottomCarousel, { left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}
+          style={[styles.bottomCarousel, { paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}
           pointerEvents="box-none"
         >
-          <TouchableOpacity style={styles.carouselCard} onPress={() => setShowRedeemModal(true)} activeOpacity={0.9}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.carouselCard,
+              pressed && styles.carouselCardPressed,
+            ]} 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowRedeemModal(true);
+            }}
+          >
             <View style={styles.carouselContent}>
               <View style={styles.carouselIcon}>
                 <Text style={styles.carouselIconText}>🍺</Text>
@@ -616,68 +631,18 @@ export default function VenueModalScreen() {
               </View>
             </View>
             <ChevronRight size={16} color="#FFFFFF" style={styles.carouselArrow} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </Animated.View>
 
-      <RedeemModal visible={showRedeemModal} onClose={() => setShowRedeemModal(false)} rewardImage={freeDrinks[0]?.imageUrl ?? null} />
-    </Modal>
-  );
-}
-
-interface RedeemModalProps {
-  visible: boolean;
-  onClose: () => void;
-  rewardImage: string | null;
-}
-
-function RedeemModal({ visible, onClose, rewardImage }: RedeemModalProps) {
-  const bg = 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ddlayzwi6fgj2ujl1jgji';
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <View style={redeemStyles.overlay}>
-        <View style={redeemStyles.container}>
-          <ImageBackground 
-            source={{ uri: bg }} 
-            resizeMode="cover" 
-            style={redeemStyles.bg}
-            imageStyle={redeemStyles.bgImage}
-            defaultSource={placeholder}
-          >
-            <View style={redeemStyles.scrim} />
-            <ScrollView contentContainerStyle={redeemStyles.content} showsVerticalScrollIndicator={false}>
-              <Text style={redeemStyles.title}>
-                Legyél a vendéglátóhelyen,{"\n"}
-                hogy igényelhesed az{"\n"}
-                ingyen italod
-              </Text>
-
-              <View style={redeemStyles.buttonContainer}>
-                <TouchableOpacity 
-                  style={redeemStyles.confirmButton}
-                  onPress={onClose}
-                  testID="confirm-here-button"
-                >
-                  <Text style={redeemStyles.confirmButtonText}>Itt vagyok</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={redeemStyles.cancelButton}
-                  onPress={onClose}
-                  testID="cancel-back-button"
-                >
-                  <Text style={redeemStyles.cancelButtonText}>Vissza</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </ImageBackground>
-        </View>
-      </View>
+      <RedeemQRModal
+        visible={showRedeemModal}
+        onClose={() => setShowRedeemModal(false)}
+        venueId={venue.id}
+        venueName={venue.name}
+        drink={freeDrinks[selectedDrinkIndex] ?? null}
+        freeDrinkWindows={windowsNormalized}
+      />
     </Modal>
   );
 }
@@ -944,6 +909,10 @@ const styles = StyleSheet.create({
     opacity: 0.4,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
+  dayTabPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
+  },
   dayTabText: {
     color: Colors.dark.text,
     fontSize: 14,
@@ -1015,8 +984,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   mapSection: {
-    marginBottom: 120,
-    paddingBottom: 20,
+    marginBottom: 140,
+    paddingBottom: 24,
   },
   daySelectSection: {
     marginTop: 8,
@@ -1189,8 +1158,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     minHeight: 56,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     paddingHorizontal: 0,
+    paddingTop: 12,
     zIndex: 100,
   },
   carouselCard: {
@@ -1245,75 +1215,8 @@ const styles = StyleSheet.create({
     marginRight: 4,
     color: '#FFFFFF',
   },
-});
-
-const redeemStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  container: {
-    width: '92%',
-    height: '82%',
-    backgroundColor: 'transparent',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  bg: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  bgImage: {
-    borderRadius: 20,
-    opacity: 0.8,
-  },
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  content: {
-    padding: 24,
-    alignItems: 'center',
-    gap: 24,
-    justifyContent: 'flex-end',
-    minHeight: '100%',
-  },
-  title: {
-    color: Colors.dark.text,
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 30,
-    marginBottom: 8,
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: 12,
-  },
-  confirmButton: {
-    backgroundColor: Colors.dark.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  confirmButtonText: {
-    color: Colors.dark.background,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-  },
-  cancelButtonText: {
-    color: Colors.dark.text,
-    fontSize: 18,
-    fontWeight: '500',
+  carouselCardPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
 });

@@ -96,7 +96,7 @@ export default function AdminScreen() {
           .filter((window: FreeDrinkWindow) => window.drinkId === drink.id)
           .map((window: FreeDrinkWindow) => ({
             id: window.id,
-            dayOfWeek: window.dayOfWeek,
+            dayOfWeek: window.dayOfWeek ?? (window.days?.[0] ?? 1),
             start: window.start,
             end: window.end,
           }));
@@ -260,12 +260,13 @@ export default function AdminScreen() {
         isCover: null,
       }));
 
-      const freeDrinkWindows: FreeDrinkWindow[] = editingDrinks.flatMap(d => 
+      const freeDrinkWindows = editingDrinks.flatMap(d => 
         d.timeSlots.map(slot => ({
           id: slot.id,
           venueId: editingVenueWithDrinks.id,
           drinkId: d.id,
           dayOfWeek: slot.dayOfWeek,
+          days: [slot.dayOfWeek],
           start: slot.start,
           end: slot.end,
         }))
