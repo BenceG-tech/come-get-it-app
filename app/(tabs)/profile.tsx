@@ -116,7 +116,7 @@ export default function ProfileScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickActionItem}>
+          <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push('/visit-history')}>
             <History size={22} color={Colors.text} />
             <View style={styles.quickActionContent}>
               <Text style={styles.quickActionTitle}>Látogatási előzmények</Text>
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
             <ChevronRight size={20} color={Colors.textSecondary} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.quickActionItem}>
+          <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push('/credits-tokens')}>
             <CreditCard size={22} color={Colors.text} />
             <View style={styles.quickActionContent}>
               <Text style={styles.quickActionTitle}>Kreditek és tokenek</Text>
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
             <TouchableOpacity>
               <Text style={styles.promoButtonText}>Elrejtés</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/invite-friends')}>
               <Text style={styles.promoButtonTextLarge}>Barátok meghívása</Text>
             </TouchableOpacity>
           </View>
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Kedvenceid</Text>
-            <TouchableOpacity style={styles.viewAllButtonContainer}>
+            <TouchableOpacity style={styles.viewAllButtonContainer} onPress={() => router.push('/favorites')}>
               <Text style={styles.viewAllButton}>Összes megtekintése</Text>
             </TouchableOpacity>
           </View>
@@ -217,25 +217,25 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Gyors elérés</Text>
           
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/invite-friends')}>
               <UserPlus size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Barátok meghívása</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/redeem-coupon')}>
               <Text style={[styles.menuIcon, { fontSize: 22 }]}>🎫</Text>
               <Text style={styles.menuTitle}>Kuponkód beváltása</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/help')}>
               <HelpCircle size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Segítség</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/order-history')}>
               <History size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Rendelési előzmények</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
@@ -307,25 +307,25 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Beállítások</Text>
           
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/account')}>
               <User size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Fiók</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/credits-tokens')}>
               <CreditCard size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Kreditek és Tokenek</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/payment-methods')}>
               <Text style={[styles.menuIcon, { fontSize: 22 }]}>💳</Text>
               <Text style={styles.menuTitle}>Fizetési módok</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/addresses')}>
               <MapPin size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Címeim</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
