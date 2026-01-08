@@ -119,15 +119,26 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
     await res.json();
   }
 
+  // Build mapping from temp drink IDs to new UUIDs BEFORE processing
+  const tempToNewDrinkId: Record<string, string> = {};
+  
   if (updates.drinks) {
-    const incoming = updates.drinks.map((d) => ({
-      id: d.id && !String(d.id).startsWith('drink-') ? d.id : uuid(),
-      venue_id: id,
-      drink_name: d.drinkName,
-      image_url: d.imageUrl ?? null,
-      is_free_drink: d.isFreeDrink ?? null,
-      is_cover: d.isCover ?? null,
-    }));
+    const incoming = updates.drinks.map((d) => {
+      const oldId = String(d.id);
+      const newId = oldId.startsWith('drink-') ? uuid() : oldId;
+      tempToNewDrinkId[oldId] = newId;
+      
+      return {
+        id: newId,
+        venue_id: id,
+        drink_name: d.drinkName,
+        image_url: d.imageUrl ?? null,
+        is_free_drink: d.isFreeDrink ?? null,
+        is_cover: d.isCover ?? null,
+      };
+    });
+    
+    console.log('[Provider] Temp to new drink ID mapping:', tempToNewDrinkId);
 
     const existingRes = await rest(`/venue_drinks?venue_id=eq.${id}&select=id`);
     const existing: { id: string }[] = await existingRes.json();
@@ -159,18 +170,30 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
   }
 
   if (updates.freeDrinkWindows) {
-    const drinks = updates.drinks ?? [];
-    const idByTemp: Record<string, string> = {};
-    drinks.forEach((d) => { idByTemp[String(d.id)] = String(d.id); });
+    console.log('[Provider] Free drink windows to save:', updates.freeDrinkWindows.map(w => ({
+      drinkId: w.drinkId,
+      dayOfWeek: w.dayOfWeek,
+      start: w.start,
+      end: w.end
+    })));
+    console.log('[Provider] Using temp to new drink ID mapping:', tempToNewDrinkId);
 
-    const incomingW = updates.freeDrinkWindows.map((w) => ({
-      id: w.id && !String(w.id).startsWith('window-') ? w.id : uuid(),
-      venue_id: id,
-      drink_id: idByTemp[String(w.drinkId)] ?? String(w.drinkId),
-      day_of_week: Number(w.dayOfWeek),
-      start_time: w.start,
-      end_time: w.end,
-    }));
+    const incomingW = updates.freeDrinkWindows.map((w) => {
+      // Use the mapping from temp IDs to new UUIDs
+      const mappedDrinkId = tempToNewDrinkId[String(w.drinkId)] ?? String(w.drinkId);
+      const dayOfWeek = Number(w.dayOfWeek);
+      
+      console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, dayOfWeek: ${dayOfWeek}`);
+      
+      return {
+        id: w.id && !String(w.id).startsWith('window-') ? w.id : uuid(),
+        venue_id: id,
+        drink_id: mappedDrinkId,
+        day_of_week: dayOfWeek,
+        start_time: w.start,
+        end_time: w.end,
+      };
+    });
 
     const existingWRes = await rest(`/free_drink_windows?venue_id=eq.${id}&select=id`);
     const existingW: { id: string }[] = await existingWRes.json();
