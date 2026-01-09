@@ -25,7 +25,24 @@ export async function rest(path: string, init: RequestInit = {}) {
   const url = `${SUPABASE_URL}/rest/v1${normalized}`;
   console.info('[SupabaseMobile] REST', url);
 
-  const res = await fetch(url, { ...init, headers });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, headers, signal: controller.signal });
+  } catch (fetchError: any) {
+    clearTimeout(timeoutId);
+    if (fetchError?.name === 'AbortError') {
+      console.warn('[SupabaseMobile] Request timeout, returning empty response');
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    throw fetchError;
+  }
+  clearTimeout(timeoutId);
   if (!res.ok) {
     let body: unknown = null;
     try {
