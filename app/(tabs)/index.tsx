@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -33,102 +33,53 @@ export default function BarsScreen() {
   const iconSize = width <= 375 ? 20 : 22;
   const headerHeight = Math.max(56, 44 + insets.top);
 
-  const loadingRef = useRef(true);
-  loadingRef.current = loading;
-
   useEffect(() => {
     let isMounted = true;
-    const timeoutId = setTimeout(() => {
-      if (isMounted && loadingRef.current) {
-        console.warn('[BarsScreen] Fetch timeout, using fallback venues');
-        setVenues(fallbackVenues);
-        setLoading(false);
-      }
-    }, 10000);
-
-    const fetchVenues = async () => {
+    
+    console.log('[BarsScreen] Starting venue fetch...');
+    
+    const loadVenues = async () => {
       try {
-        console.log('[BarsScreen] Fetching venues from Supabase...');
-        let response: Response;
-        try {
-          response = await rest('/venues?select=*');
-        } catch (fetchError) {
-          console.error('[BarsScreen] Fetch error:', fetchError);
-          if (isMounted) {
-            setVenues(fallbackVenues);
-            setLoading(false);
-          }
-          return;
-        }
+        const response = await Promise.race([
+          rest('/venues?select=*'),
+          new Promise<null>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          )
+        ]);
         
         if (!isMounted) return;
         
-        if (!response.ok) {
-          console.error('[BarsScreen] Response not ok:', response.status, response.statusText);
-          if (isMounted) {
-            setVenues(fallbackVenues);
-            setLoading(false);
-          }
+        if (!response || !response.ok) {
+          console.log('[BarsScreen] No valid response, using fallback');
+          setVenues(fallbackVenues);
+          setLoading(false);
           return;
         }
         
-        let responseText: string;
-        try {
-          responseText = await response.text();
-        } catch (textError) {
-          console.error('[BarsScreen] Error reading response text:', textError);
-          if (isMounted) {
-            setVenues(fallbackVenues);
-            setLoading(false);
-          }
-          return;
-        }
-        
-        console.log('[BarsScreen] Raw response text:', responseText.substring(0, 200));
-        
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('[BarsScreen] JSON parse error:', parseError);
-          if (isMounted) {
-            setVenues(fallbackVenues);
-            setLoading(false);
-          }
-          return;
-        }
-        
-        if (!isMounted) return;
-        
+        const data = await response.json();
         console.log('[BarsScreen] Venues fetched:', data?.length || 0);
-        if (data && Array.isArray(data) && data.length > 0) {
-          // Don't fetch images separately - just use what we have
-          // This avoids potential errors with venue_images table
-          if (isMounted) {
+        
+        if (isMounted) {
+          if (Array.isArray(data) && data.length > 0) {
             setVenues(data);
-            setLoading(false);
-          }
-        } else {
-          console.log('[BarsScreen] No venues from API, using fallback');
-          if (isMounted) {
+          } else {
             setVenues(fallbackVenues);
-            setLoading(false);
           }
+          setLoading(false);
         }
       } catch (error) {
-        console.error('[BarsScreen] Error fetching venues:', error);
+        console.log('[BarsScreen] Error or timeout, using fallback:', error);
         if (isMounted) {
           setVenues(fallbackVenues);
           setLoading(false);
         }
       }
     };
-
-    fetchVenues();
+    
+    loadVenues();
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
     };
   }, []);
 
