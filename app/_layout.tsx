@@ -1,17 +1,10 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppProvider } from "@/context/AppContext";
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-// On web this can throw / behave differently, so guard + swallow to avoid blocking mount.
-if (typeof window === 'undefined') {
-  SplashScreen.preventAutoHideAsync().catch((e) => {
-    console.warn('[SplashScreen] preventAutoHideAsync failed:', e);
-  });
-}
 
 function RootLayoutNav() {
   return (
@@ -28,9 +21,11 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync().catch((e) => {
-      console.warn('[SplashScreen] hideAsync failed:', e);
-    });
+    if (Platform.OS !== 'web') {
+      SplashScreen.hideAsync().catch((e) => {
+        console.warn('[SplashScreen] hideAsync failed:', e);
+      });
+    }
   }, []);
 
   return (

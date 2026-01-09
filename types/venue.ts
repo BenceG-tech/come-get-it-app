@@ -1,3 +1,8 @@
+export type VenueCoordinates = {
+  lat: number;
+  lng: number;
+};
+
 export type Venue = {
   id: string;
   name: string;
@@ -17,6 +22,7 @@ export type Venue = {
   tags?: string[];
   latitude?: number | null;
   longitude?: number | null;
+  coordinates?: VenueCoordinates | null;
 };
 
 export type OpeningHours = {

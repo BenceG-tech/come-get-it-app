@@ -183,6 +183,30 @@ export default function VenueModalScreen() {
     return mapped;
   }, [venue?.freeDrinkWindows]);
 
+  const resolvedCoords = useMemo(() => {
+    const latRaw = (venue?.coordinates?.lat ?? venue?.latitude) as unknown;
+    const lngRaw = (venue?.coordinates?.lng ?? venue?.longitude) as unknown;
+
+    const lat = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN;
+    const lng = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? Number(lngRaw) : NaN;
+
+    const isValid = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+
+    console.log('[VenueDetail] resolvedCoords:', {
+      latRaw,
+      lngRaw,
+      lat,
+      lng,
+      isValid,
+    });
+
+    return {
+      lat,
+      lng,
+      isValid,
+    };
+  }, [venue?.coordinates?.lat, venue?.coordinates?.lng, venue?.latitude, venue?.longitude]);
+
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
 
@@ -538,11 +562,11 @@ export default function VenueModalScreen() {
                   <ActivityIndicator size="small" color={Colors.dark.primary} />
                   <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
-              ) : (venue.latitude != null && venue.longitude != null && (venue.latitude !== 0 || venue.longitude !== 0)) ? (
+              ) : resolvedCoords.isValid ? (
                 Platform.OS === 'web' ? (
                   <View style={styles.mapContainer}>
                     <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude - 0.01},${venue.latitude - 0.01},${venue.longitude + 0.01},${venue.latitude + 0.01}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`}
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${resolvedCoords.lng - 0.01},${resolvedCoords.lat - 0.01},${resolvedCoords.lng + 0.01},${resolvedCoords.lat + 0.01}&layer=mapnik&marker=${resolvedCoords.lat},${resolvedCoords.lng}`}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -556,9 +580,9 @@ export default function VenueModalScreen() {
                     style={styles.mapContainer}
                     onPress={() => {
                       const url = Platform.select({
-                        ios: `maps:?daddr=${venue.latitude},${venue.longitude}&dirflg=d`,
-                        android: `geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}(${encodeURIComponent(venue.name)})`,
-                        default: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
+                        ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
+                        android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
+                        default: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
                       });
                       if (url) {
                         Linking.openURL(url).catch(err => {
@@ -568,7 +592,7 @@ export default function VenueModalScreen() {
                     }}
                   >
                     <Image
-                      source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+2BB7FF(${venue.longitude},${venue.latitude})/${venue.longitude},${venue.latitude},14,0/400x200@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw` }}
+                      source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+2BB7FF(${resolvedCoords.lng},${resolvedCoords.lat})/${resolvedCoords.lng},${resolvedCoords.lat},14,0/400x200@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw` }}
                       style={styles.mapView}
                       resizeMode="cover"
                     />
@@ -591,12 +615,12 @@ export default function VenueModalScreen() {
                 accessibilityRole="button" 
                 accessibilityLabel="Útvonaltervezés"
                 onPress={() => {
-                  if (venue.latitude && venue.longitude) {
+                  if (resolvedCoords.isValid) {
                     const url = Platform.select({
-                      ios: `maps:?daddr=${venue.latitude},${venue.longitude}&dirflg=d`,
-                      android: `geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}(${encodeURIComponent(venue.name)})`,
-                      web: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
-                      default: `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
+                      ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
+                      android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
+                      web: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                      default: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
                     });
                     if (url) {
                       if (Platform.OS === 'web') {
