@@ -94,7 +94,7 @@ export default function VenueModalScreen() {
         }
         console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
         
-        // Geocode if no coordinates
+        // Geocode if no coordinates (for display only, not persisted)
         if ((!v.latitude || !v.longitude) && v.address) {
           setGeocoding(true);
           try {
@@ -111,14 +111,7 @@ export default function VenueModalScreen() {
               const lon = parseFloat(geocodeData[0].lon);
               console.log(`[VenueDetail] Geocoded ${v.name}: ${lat}, ${lon}`);
               
-              // Update venue in database
-              const { rest } = await import('@/lib/supabaseRest');
-              await rest(`/venues?id=eq.${v.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ latitude: lat, longitude: lon })
-              });
-              
+              // Update local state only (latitude/longitude columns don't exist in DB)
               v = { ...v, latitude: lat, longitude: lon };
             }
           } catch (geocodeError) {
