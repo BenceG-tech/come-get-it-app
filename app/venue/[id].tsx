@@ -78,6 +78,10 @@ export default function VenueModalScreen() {
   ).current;
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let loadingStarted = true;
+    
     const fetchVenue = async () => {
       if (!id) {
         setError('No venue ID provided');
@@ -87,9 +91,25 @@ export default function VenueModalScreen() {
       try {
         setLoading(true);
         console.info('[VenueDetail] Loading venue', id);
+        
+        // Add timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (isMounted && loadingStarted) {
+            console.warn('[VenueDetail] Fetch timeout');
+            setError('Loading timed out. Please try again.');
+            setLoading(false);
+            loadingStarted = false;
+          }
+        }, 15000);
+        
         let v = await getVenueWithDetails(String(id));
+        
+        if (!isMounted) return;
         if (!v) {
-          setError('Venue not found');
+          if (isMounted) {
+            setError('Venue not found');
+            setLoading(false);
+          }
           return;
         }
         console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
@@ -117,19 +137,31 @@ export default function VenueModalScreen() {
           } catch (geocodeError) {
             console.error(`[VenueDetail] Failed to geocode:`, geocodeError);
           } finally {
-            setGeocoding(false);
+            if (isMounted) setGeocoding(false);
           }
         }
         
-        setVenue(v);
+        if (isMounted) {
+          setVenue(v);
+          setLoading(false);
+          loadingStarted = false;
+        }
       } catch (e) {
         console.error('[VenueDetail] Failed to load', e);
-        setError('Failed to load venue');
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setError('Failed to load venue');
+          setLoading(false);
+          loadingStarted = false;
+        }
       }
     };
     fetchVenue();
+    
+    return () => {
+      isMounted = false;
+      loadingStarted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [id]);
 
   const galleryImages = useMemo(() => {
