@@ -226,27 +226,25 @@ export default function VenueModalScreen() {
     // Database stores dayOfWeek as 0-6 where Monday=0, Sunday=6
     const dbDayIndex = isoDay - 1; // Convert ISO (1-7) to DB format (0-6)
     
-    console.log(`[VenueDetail] getAvailabilityForDrink: drinkId=${drinkId}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}, totalWindows=${windowsNormalized.length}`);
+    console.log(`[VenueDetail] getAvailabilityForDrink: drinkId=${drinkId}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}`);
+    console.log(`[VenueDetail] Total windows: ${windowsNormalized.length}`);
+    windowsNormalized.forEach((w, i) => {
+      console.log(`[VenueDetail] Window ${i}: drinkId=${w.drinkId}, dayOfWeek=${w.dayOfWeek}, start=${w.start}, end=${w.end}`);
+    });
     
     const matchingWindows = windowsNormalized.filter((w) => {
-      const drinkMatches = w.drinkId === drinkId;
+      const drinkMatches = String(w.drinkId) === String(drinkId);
       
-      // Check if window has 'days' array (ISO format 1-7)
-      const daysArr = Array.isArray((w as any).days) ? (w as any).days as number[] : [];
-      let dayMatches = false;
+      // Check dayOfWeek field (stored as 0-6 where Monday=0)
+      const windowDay = typeof w.dayOfWeek === 'number' ? w.dayOfWeek : parseInt(String(w.dayOfWeek), 10);
+      const dayMatches = !isNaN(windowDay) && windowDay === dbDayIndex;
       
-      if (daysArr.length > 0) {
-        // days array - check both ISO and DB format for compatibility
-        dayMatches = daysArr.includes(isoDay) || daysArr.includes(dbDayIndex);
-      } else if (w.dayOfWeek !== undefined && w.dayOfWeek !== null) {
-        // dayOfWeek field (stored as 0-6 where Monday=0)
-        dayMatches = w.dayOfWeek === dbDayIndex;
-      }
+      console.log(`[VenueDetail] Checking window: drinkMatches=${drinkMatches} (${w.drinkId} vs ${drinkId}), dayMatches=${dayMatches} (windowDay=${windowDay} vs dbDayIndex=${dbDayIndex})`);
       
       return drinkMatches && dayMatches;
     });
     
-    console.log(`[VenueDetail] Found ${matchingWindows.length} matching windows for day ${isoDay}`);
+    console.log(`[VenueDetail] Found ${matchingWindows.length} matching windows for isoDay ${isoDay} (dbDay ${dbDayIndex})`);
     
     if (matchingWindows.length === 0) return null;
     return matchingWindows.map((w) => {
@@ -563,57 +561,41 @@ export default function VenueModalScreen() {
                   <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
               ) : resolvedCoords.isValid ? (
-                Platform.OS === 'web' ? (
-                  <TouchableOpacity
-                    style={styles.mapContainer}
-                    activeOpacity={0.9}
-                    testID="venue-web-map"
-                    onPress={() => {
-                      const url = `https://www.openstreetmap.org/?mlat=${resolvedCoords.lat}&mlon=${resolvedCoords.lng}#map=16/${resolvedCoords.lat}/${resolvedCoords.lng}`;
-                      if (typeof window !== 'undefined') {
+                <TouchableOpacity
+                  style={styles.mapContainer}
+                  activeOpacity={0.9}
+                  testID="venue-map"
+                  onPress={() => {
+                    const url = Platform.select({
+                      ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
+                      android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
+                      web: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                      default: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                    });
+                    if (url) {
+                      if (Platform.OS === 'web' && typeof window !== 'undefined') {
                         window.open(url, '_blank');
-                      }
-                    }}
-                  >
-                    <Image
-                      source={{
-                        uri: `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(`${resolvedCoords.lat},${resolvedCoords.lng}`)}&zoom=16&size=900x450&maptype=mapnik&markers=${encodeURIComponent(`${resolvedCoords.lat},${resolvedCoords.lng}`)},lightblue1`,
-                      }}
-                      style={styles.mapView}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.mapOverlay}>
-                      <MapPin size={16} color="#fff" />
-                      <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
-                    </View>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity 
-                    style={styles.mapContainer}
-                    onPress={() => {
-                      const url = Platform.select({
-                        ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
-                        android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
-                        default: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
-                      });
-                      if (url) {
+                      } else {
                         Linking.openURL(url).catch(err => {
                           console.error('[VenueDetail] Failed to open maps:', err);
                         });
                       }
+                    }
+                  }}
+                >
+                  <Image
+                    source={{ 
+                      uri: `https://maps.geoapify.com/v1/staticmap?style=dark-matter&width=800&height=400&center=lonlat:${resolvedCoords.lng},${resolvedCoords.lat}&zoom=15&marker=lonlat:${resolvedCoords.lng},${resolvedCoords.lat};color:%232BB7FF;size:large&apiKey=6dc7fb95a3b246cfa0f3bcef5ce9ed9a`
                     }}
-                  >
-                    <Image
-                      source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+2BB7FF(${resolvedCoords.lng},${resolvedCoords.lat})/${resolvedCoords.lng},${resolvedCoords.lat},14,0/400x200@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw` }}
-                      style={styles.mapView}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.mapOverlay}>
-                      <MapPin size={16} color="#fff" />
-                      <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
-                    </View>
-                  </TouchableOpacity>
-                )
+                    style={styles.mapView}
+                    resizeMode="cover"
+                    onError={(e) => console.log('[VenueDetail] Map image failed to load:', e.nativeEvent.error)}
+                  />
+                  <View style={styles.mapOverlay}>
+                    <MapPin size={16} color="#fff" />
+                    <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
+                  </View>
+                </TouchableOpacity>
               ) : (
                 <View style={styles.mapPlaceholder}>
                   <MapPin size={24} color={Colors.dark.text} />
