@@ -2,7 +2,7 @@ import * as React from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, Shield } from "lucide-react-native";
+import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, Shield, Sparkles, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
@@ -25,37 +25,42 @@ export default function ProfileScreen() {
         </View>
 
         {/* Come Get It Rewards Card */}
-        <TouchableOpacity onPress={() => router.push('/rewards-missions')} activeOpacity={0.9}>
+        <TouchableOpacity onPress={() => router.push('/rewards-missions')} activeOpacity={0.9} testID="open-rewards-card">
           <LinearGradient
-            colors={["#0B2D3B", "#063041", "#05232F"]}
-            start={{ x: 0.08, y: 0.1 }}
+            colors={["rgba(6, 35, 47, 0.92)", "rgba(11, 45, 59, 0.88)"]}
+            start={{ x: 0.12, y: 0.06 }}
             end={{ x: 1, y: 1 }}
             style={styles.rewardsCard}
           >
-          <View style={styles.rewardsHeader}>
-            <Text style={styles.rewardsTitle}>Come Get It Rewards</Text>
-          </View>
-          <View style={styles.rewardsContent}>
-            <View style={styles.pointsSection}>
-              <View style={styles.starsContainer}>
-                <Image 
-                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/zxmev2vsyg0jyghz6tlxp" }}
-                  style={styles.starImage}
-                  resizeMode="contain"
-                />
+            <View style={styles.rewardsHeader}>
+              <View style={styles.rewardsTitleRow}>
+                <View style={styles.rewardsBadge}>
+                  <Gift size={14} color={"rgba(255,255,255,0.86)"} />
+                  <Text style={styles.rewardsBadgeText}>Rewards</Text>
+                </View>
+                <Text style={styles.rewardsTitle}>Come Get It</Text>
               </View>
-              <Text style={styles.pointsValue} testID="profile-points">{points}</Text>
+              <View style={styles.accentDot} />
             </View>
-            <Text style={styles.rewardsSubtitle}>Koppints és nézd meg a jutalmakat →</Text>
-          </View>
-          <View style={styles.mascotContainer} pointerEvents="none">
-            <Text style={styles.mascot}>🍺</Text>
-          </View>
-          {/* Multiple texture overlays for more gradient effect */}
-          <View style={styles.textureOverlay1} />
-          <View style={styles.textureOverlay2} />
-          <View style={styles.gradientTexture1} />
-          <View style={styles.gradientTexture2} />
+
+            <View style={styles.rewardsContent}>
+              <View style={styles.pointsBlock}>
+                <View style={styles.pointsLabelRow}>
+                  <Sparkles size={14} color={"rgba(0, 209, 255, 0.95)"} />
+                  <Text style={styles.pointsLabel}>Pontok</Text>
+                </View>
+                <Text style={styles.pointsValue} testID="profile-points">{points}</Text>
+              </View>
+
+              <View style={styles.rewardsCtaRow}>
+                <View style={styles.rewardsCtaPill}>
+                  <Text style={styles.rewardsCtaText}>Jutalmak megnyitása</Text>
+                  <ChevronRight size={18} color={"rgba(0,0,0,0.9)"} />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.shineOverlay} pointerEvents="none" />
           </LinearGradient>
         </TouchableOpacity>
 
@@ -323,16 +328,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 16,
     borderRadius: 18,
-    padding: 18,
+    padding: 16,
     position: "relative",
     overflow: "hidden",
-    minHeight: 160,
+    minHeight: 164,
+    borderWidth: 1,
+    borderColor: "rgba(0, 209, 255, 0.18)",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 10,
     },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.32,
     shadowRadius: 18,
     elevation: 10,
   },
@@ -340,56 +347,106 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 14,
+  },
+  rewardsTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  rewardsBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  rewardsBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.84)",
+    letterSpacing: 0.2,
   },
   rewardsTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "rgba(255,255,255,0.92)",
     letterSpacing: 0.2,
+  },
+  accentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(0, 209, 255, 0.95)",
+    shadowColor: "#00D1FF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
   },
 
   rewardsContent: {
     flexDirection: "column",
+    gap: 14,
   },
-  pointsSection: {
+  pointsBlock: {
+    flexDirection: "column",
+    gap: 6,
+  },
+  pointsLabelRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    gap: 8,
   },
-  starsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  starImage: {
-    width: 60,
-    height: 60,
+  pointsLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "rgba(255,255,255,0.68)",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
   },
   pointsValue: {
-    fontSize: 40,
+    fontSize: 44,
     fontWeight: "900",
     color: "#00D1FF",
-    lineHeight: 44,
-    letterSpacing: -1,
+    lineHeight: 48,
+    letterSpacing: -1.2,
   },
-  rewardsSubtitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.78)",
-    fontWeight: "600",
+  rewardsCtaRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
   },
-  mascotContainer: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    bottom: 20,
-    justifyContent: "center",
+  rewardsCtaPill: {
+    flexDirection: "row",
     alignItems: "center",
-    width: 70,
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: "rgba(0, 209, 255, 0.92)",
   },
-  mascot: {
-    fontSize: 64,
+  rewardsCtaText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "rgba(0,0,0,0.92)",
+    letterSpacing: 0.2,
   },
+  shineOverlay: {
+    position: "absolute",
+    top: -60,
+    right: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    transform: [{ rotate: "20deg" }],
+  },
+
   quickActions: {
     marginHorizontal: 12,
     marginBottom: 16,
