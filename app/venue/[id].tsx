@@ -538,7 +538,7 @@ export default function VenueModalScreen() {
                   <ActivityIndicator size="small" color={Colors.dark.primary} />
                   <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
-              ) : venue.latitude && venue.longitude ? (
+              ) : (venue.latitude != null && venue.longitude != null && (venue.latitude !== 0 || venue.longitude !== 0)) ? (
                 Platform.OS === 'web' ? (
                   <View style={styles.mapContainer}>
                     <iframe

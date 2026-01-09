@@ -1,14 +1,14 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, TextInput } from "react-native";
+import * as React from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, Shield } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
+import { rest } from "@/lib/supabaseRest";
 
 type SupabaseVenue = { id: string | number; name: string; address?: string | null };
-
-import { rest } from "@/lib/supabaseRest";
 function SupabaseTestList() {
   const [venues, setVenues] = React.useState<SupabaseVenue[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -59,8 +59,6 @@ function SupabaseTestList() {
     </View>
   );
 }
-
-import * as React from "react";
 
 export default function ProfileScreen() {
   const router = useRouter();
