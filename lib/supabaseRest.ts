@@ -1,11 +1,19 @@
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
-const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 function ensureLeadingSlash(p: string) {
   return p.startsWith('/') ? p : `/${p}`;
 }
 
 export async function rest(path: string, init: RequestInit = {}) {
+  if (!SUPABASE_URL || !SUPABASE_ANON) {
+    console.warn('[SupabaseMobile] Missing Supabase credentials, returning empty response');
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const headers = {
     apikey: SUPABASE_ANON,
     Authorization: `Bearer ${SUPABASE_ANON}`,

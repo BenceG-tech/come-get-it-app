@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Search, MapPin, Filter } from "lucide-react-native";
@@ -32,82 +33,96 @@ export default function BarsScreen() {
   const iconSize = width <= 375 ? 20 : 22;
   const headerHeight = Math.max(56, 44 + insets.top);
 
+  const loadingRef = useRef(true);
+  loadingRef.current = loading;
+
   useEffect(() => {
+    let isMounted = true;
+    const timeoutId = setTimeout(() => {
+      if (isMounted && loadingRef.current) {
+        console.warn('[BarsScreen] Fetch timeout, using fallback venues');
+        setVenues(fallbackVenues);
+        setLoading(false);
+      }
+    }, 10000);
+
     const fetchVenues = async () => {
       try {
-        console.log('Fetching venues from Supabase...');
+        console.log('[BarsScreen] Fetching venues from Supabase...');
         const response = await rest('/venues?select=*');
         
-        // Check if response is ok
+        if (!isMounted) return;
+        
         if (!response.ok) {
-          console.error('Response not ok:', response.status, response.statusText);
+          console.error('[BarsScreen] Response not ok:', response.status, response.statusText);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        // Get response text first to debug
         const responseText = await response.text();
-        console.log('Raw response text:', responseText.substring(0, 200));
+        console.log('[BarsScreen] Raw response text:', responseText.substring(0, 200));
         
-        // Try to parse JSON
         let data;
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
-          console.error('Response text that failed to parse:', responseText.substring(0, 500));
+          console.error('[BarsScreen] JSON parse error:', parseError);
           throw new Error('Failed to parse response as JSON');
         }
         
-        console.log('Venues fetched:', data);
+        if (!isMounted) return;
+        
+        console.log('[BarsScreen] Venues fetched:', data?.length || 0);
         if (data && data.length > 0) {
-          console.log('Using database venues, first venue opening_hours:', JSON.stringify(data[0]?.opening_hours, null, 2));
-          console.log('All venues opening_hours:', data.map((v: Venue) => ({ name: v.name, opening_hours: v.opening_hours })));
-          
-          // Fetch images for all venues
           const venuesWithImages = await Promise.all(
             data.map(async (venue: Venue) => {
               try {
-                // If venue already has image_url or hero_image_url, use it
                 if (venue.image_url || venue.hero_image_url) {
-                  console.log(`Venue ${venue.name} already has image_url:`, venue.image_url || venue.hero_image_url);
                   return venue;
                 }
                 
-                // Otherwise, fetch from venue_images table
                 const imagesResponse = await rest(`/venue_images?venue_id=eq.${venue.id}&select=url,is_cover&order=is_cover.desc,created_at.asc&limit=1`);
                 const imagesText = await imagesResponse.text();
                 const images = JSON.parse(imagesText);
                 
                 if (images && images.length > 0) {
-                  const imageUrl = images[0].url;
-                  console.log(`Fetched image for ${venue.name}:`, imageUrl);
-                  return { ...venue, image_url: imageUrl };
+                  return { ...venue, image_url: images[0].url };
                 }
                 
-                console.log(`No image found for ${venue.name}`);
                 return venue;
               } catch (imgError) {
-                console.error(`Error fetching images for venue ${venue.id}:`, imgError);
+                console.error(`[BarsScreen] Error fetching images for venue ${venue.id}:`, imgError);
                 return venue;
               }
             })
           );
           
-          setVenues(venuesWithImages);
+          if (isMounted) {
+            setVenues(venuesWithImages);
+          }
         } else {
-          console.log('Using fallback venues');
-          setVenues(fallbackVenues);
+          console.log('[BarsScreen] No venues from API, using fallback');
+          if (isMounted) {
+            setVenues(fallbackVenues);
+          }
         }
       } catch (error) {
-        console.error('Error fetching venues:', error);
-        console.log('Using fallback venues data');
-        setVenues(fallbackVenues);
+        console.error('[BarsScreen] Error fetching venues:', error);
+        if (isMounted) {
+          setVenues(fallbackVenues);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchVenues();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const filteredVenues = venues.filter(venue => {
@@ -214,30 +229,29 @@ export default function BarsScreen() {
         </View>
       </View>
 
-      <ScrollView 
-        style={styles.venuesList}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.venuesContent}
-      >
-        {loading ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>Betöltés...</Text>
-          </View>
-        ) : (
-          <>
-            {filteredVenues.map((venue) => (
-              <VenueCard key={venue.id} venue={venue} />
-            ))}
-            
-            {filteredVenues.length === 0 && !loading && (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Nincs találat</Text>
-                <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
-              </View>
-            )}
-          </>
-        )}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Betöltés...</Text>
+        </View>
+      ) : (
+        <ScrollView 
+          style={styles.venuesList}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.venuesContent}
+        >
+          {filteredVenues.map((venue) => (
+            <VenueCard key={venue.id} venue={venue} />
+          ))}
+          
+          {filteredVenues.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>Nincs találat</Text>
+              <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -335,6 +349,16 @@ const styles = StyleSheet.create({
   venuesContent: {
     paddingTop: 12,
     paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.text,
+    marginTop: 12,
   },
   emptyState: {
     flex: 1,
