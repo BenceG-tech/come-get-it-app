@@ -564,17 +564,29 @@ export default function VenueModalScreen() {
                 </View>
               ) : resolvedCoords.isValid ? (
                 Platform.OS === 'web' ? (
-                  <View style={styles.mapContainer}>
-                    <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${resolvedCoords.lng - 0.01},${resolvedCoords.lat - 0.01},${resolvedCoords.lng + 0.01},${resolvedCoords.lat + 0.01}&layer=mapnik&marker=${resolvedCoords.lat},${resolvedCoords.lng}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
+                  <TouchableOpacity
+                    style={styles.mapContainer}
+                    activeOpacity={0.9}
+                    testID="venue-web-map"
+                    onPress={() => {
+                      const url = `https://www.openstreetmap.org/?mlat=${resolvedCoords.lat}&mlon=${resolvedCoords.lng}#map=16/${resolvedCoords.lat}/${resolvedCoords.lng}`;
+                      if (typeof window !== 'undefined') {
+                        window.open(url, '_blank');
+                      }
+                    }}
+                  >
+                    <Image
+                      source={{
+                        uri: `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(`${resolvedCoords.lat},${resolvedCoords.lng}`)}&zoom=16&size=900x450&maptype=mapnik&markers=${encodeURIComponent(`${resolvedCoords.lat},${resolvedCoords.lng}`)},lightblue1`,
                       }}
-                      title="Venue Map"
+                      style={styles.mapView}
+                      resizeMode="cover"
                     />
-                  </View>
+                    <View style={styles.mapOverlay}>
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
+                    </View>
+                  </TouchableOpacity>
                 ) : (
                   <TouchableOpacity 
                     style={styles.mapContainer}

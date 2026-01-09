@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -256,25 +256,44 @@ const styles = StyleSheet.create({
   },
 });
 
-function WebMapView({ venues, initialRegion, router }: { venues: Venue[], initialRegion: any, router: any }) {
+function WebMapView({ venues, initialRegion, router }: { venues: Venue[]; initialRegion: any; router: any }) {
   const center = `${initialRegion.latitude},${initialRegion.longitude}`;
-  
-  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${initialRegion.longitude - 0.05},${initialRegion.latitude - 0.05},${initialRegion.longitude + 0.05},${initialRegion.latitude + 0.05}&layer=mapnik&marker=${center}`;
+  const staticUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(center)}&zoom=13&size=900x500&maptype=mapnik&markers=${encodeURIComponent(center)},lightblue1`;
 
   return (
     <View style={styles.webMapContainer}>
-      <iframe
-        src={mapUrl}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => {
+          const url = `https://www.openstreetmap.org/?mlat=${initialRegion.latitude}&mlon=${initialRegion.longitude}#map=13/${initialRegion.latitude}/${initialRegion.longitude}`;
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            window.open(url, '_blank');
+          } else {
+            Alert.alert('Térkép', 'A térkép megnyitása nem sikerült.');
+          }
         }}
-        title="Map"
-      />
+        style={{ flex: 1 }}
+        testID="web-map-open"
+      >
+        <Image
+          source={{ uri: staticUrl }}
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="cover"
+          accessibilityLabel="Térkép"
+        />
+      </TouchableOpacity>
       <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, paddingHorizontal: 16 }}>
-        <Text style={{ color: Colors.text, fontSize: 12, textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.7)', padding: 8, borderRadius: 8 }}>
-          {venues.length} helyszín • Kattints a térképen a részletekért
+        <Text
+          style={{
+            color: Colors.text,
+            fontSize: 12,
+            textAlign: 'center',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: 8,
+            borderRadius: 8,
+          }}
+        >
+          {venues.length} helyszín • Kattints a térképre a böngészőben
         </Text>
       </View>
     </View>
