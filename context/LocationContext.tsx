@@ -1,15 +1,23 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
-import { Platform, Alert } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Platform } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import { Venue } from '@/types/venue';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 const GEOFENCE_RADIUS = 500;
 
+type LocationCoords = {
+  latitude: number;
+  longitude: number;
+};
+
+type LocationObjectLike = {
+  coords: LocationCoords;
+  timestamp: number;
+};
+
 type LocationContextType = {
-  location: Location.LocationObject | null;
+  location: LocationObjectLike | null;
   hasPermission: boolean;
   isTracking: boolean;
   requestPermission: () => Promise<boolean>;
@@ -18,43 +26,114 @@ type LocationContextType = {
   checkProximityToVenues: (venues: Venue[]) => Venue[];
 };
 
+let cachedExpoLocationPromise: Promise<typeof import('expo-location')> | null = null;
+async function getExpoLocationModule(): Promise<typeof import('expo-location')> {
+  if (!cachedExpoLocationPromise) {
+    cachedExpoLocationPromise = import('expo-location');
+  }
+  return cachedExpoLocationPromise;
+}
+
+let cachedTaskManagerPromise: Promise<typeof import('expo-task-manager')> | null = null;
+async function getTaskManagerModule(): Promise<typeof import('expo-task-manager')> {
+  if (!cachedTaskManagerPromise) {
+    cachedTaskManagerPromise = import('expo-task-manager');
+  }
+  return cachedTaskManagerPromise;
+}
+
+function getWebLocationOnce(): Promise<LocationObjectLike> {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      reject(new Error('Geolocation is not available'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          coords: {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          },
+          timestamp: pos.timestamp,
+        });
+      },
+      (err) => reject(err),
+      { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
+    );
+  });
+}
+
 export const [LocationProvider, useLocation] = createContextHook<LocationContextType>(() => {
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [location, setLocation] = useState<LocationObjectLike | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [isTracking, setIsTracking] = useState<boolean>(false);
 
-  const checkPermissions = useCallback(async () => {
-    const { status } = await Location.getForegroundPermissionsAsync();
-    setHasPermission(status === 'granted');
-  }, []);
+  const webWatchIdRef = useRef<number | null>(null);
+  const nativeSubscriptionRef = useRef<{ remove: () => void } | null>(null);
 
   useEffect(() => {
-    checkPermissions();
-  }, [checkPermissions]);
+    let isMounted = true;
+
+    const init = async () => {
+      try {
+        if (Platform.OS === 'web') {
+          setHasPermission(true);
+          return;
+        }
+
+        const Location = await getExpoLocationModule();
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (isMounted) setHasPermission(status === 'granted');
+      } catch (e) {
+        console.error('[Location] init failed:', e);
+        if (isMounted) setHasPermission(false);
+      }
+    };
+
+    init();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     try {
+      if (Platform.OS === 'web') {
+        try {
+          await getWebLocationOnce();
+          setHasPermission(true);
+          return true;
+        } catch (e) {
+          console.error('[Location] Web permission / location failed:', e);
+          setHasPermission(false);
+          Alert.alert('Engedély szükséges', 'A böngészőben engedélyezned kell a helymeghatározást.');
+          return false;
+        }
+      }
+
+      const Location = await getExpoLocationModule();
       const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-      
+
       if (foregroundStatus !== 'granted') {
         Alert.alert(
           'Engedély szükséges',
           'A helymeghatározás engedélyezése szükséges a közeli helyszínek megjelenítéséhez.'
         );
+        setHasPermission(false);
         return false;
       }
 
       setHasPermission(true);
 
-      if (Platform.OS !== 'web') {
-        const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-        
-        if (backgroundStatus !== 'granted') {
-          Alert.alert(
-            'Háttér helymeghatározás',
-            'A háttérben történő helymeghatározás engedélyezése lehetővé teszi, hogy értesítést kapj, amikor egy partner helyszín közelében vagy.'
-          );
-        }
+      const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+      if (backgroundStatus !== 'granted') {
+        Alert.alert(
+          'Háttér helymeghatározás',
+          'A háttérben történő helymeghatározás engedélyezése lehetővé teszi, hogy értesítést kapj, amikor egy partner helyszín közelében vagy.'
+        );
       }
 
       return true;
@@ -62,7 +141,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       console.error('[Location] Permission request failed:', error);
       return false;
     }
-  }, [hasPermission]);
+  }, []);
 
   const startTracking = useCallback(async () => {
     if (!hasPermission) {
@@ -71,36 +150,88 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
     }
 
     try {
+      if (Platform.OS === 'web') {
+        const current = await getWebLocationOnce();
+        setLocation(current);
+        setIsTracking(true);
+
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          if (webWatchIdRef.current != null) {
+            navigator.geolocation.clearWatch(webWatchIdRef.current);
+          }
+          webWatchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+              setLocation({
+                coords: {
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                },
+                timestamp: pos.timestamp,
+              });
+            },
+            (err) => {
+              console.error('[Location] Web watch error:', err);
+            },
+            { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
+          );
+        }
+
+        console.log('[Location] Tracking started (web)');
+        return;
+      }
+
+      const Location = await getExpoLocationModule();
       const currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      setLocation(currentLocation);
+
+      setLocation({
+        coords: {
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+        },
+        timestamp: currentLocation.timestamp,
+      });
+
       setIsTracking(true);
 
-      if (Platform.OS !== 'web') {
-        await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-          accuracy: Location.Accuracy.Balanced,
-          timeInterval: 60000,
-          distanceInterval: 100,
-          foregroundService: {
-            notificationTitle: 'Come Get It',
-            notificationBody: 'Helymeghatározás aktív',
-          },
-        });
-      } else {
-        const watchId = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.Balanced,
-            timeInterval: 60000,
-            distanceInterval: 100,
-          },
-          (newLocation) => {
-            setLocation(newLocation);
+      try {
+        const TaskManager = await getTaskManagerModule();
+        TaskManager.defineTask(
+          LOCATION_TASK_NAME,
+          async ({ data, error }: { data: unknown; error: unknown }) => {
+            if (error) {
+              console.error('[Location Task] Error:', error);
+              return;
+            }
+            if (!data) return;
+
+            try {
+              const { locations } = data as { locations: { coords: LocationCoords; timestamp: number }[] };
+              const latest = locations?.[0];
+              if (latest?.coords) {
+                console.log('[Location Task] New location:', latest.coords);
+              }
+            } catch (e) {
+              console.error('[Location Task] Parse error:', e);
+            }
           }
         );
+      } catch (e) {
+        console.error('[Location Task] Failed to register background task:', e);
       }
 
-      console.log('[Location] Tracking started');
+      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+        accuracy: Location.Accuracy.Balanced,
+        timeInterval: 60000,
+        distanceInterval: 100,
+        foregroundService: {
+          notificationTitle: 'Come Get It',
+          notificationBody: 'Helymeghatározás aktív',
+        },
+      });
+
+      console.log('[Location] Tracking started (native)');
     } catch (error) {
       console.error('[Location] Failed to start tracking:', error);
       Alert.alert('Hiba', 'Nem sikerült elindítani a helymeghatározást');
@@ -109,51 +240,77 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
 
   const stopTracking = useCallback(async () => {
     try {
-      if (Platform.OS !== 'web') {
-        const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-        if (hasStarted) {
-          await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && navigator.geolocation && webWatchIdRef.current != null) {
+          navigator.geolocation.clearWatch(webWatchIdRef.current);
+          webWatchIdRef.current = null;
         }
+        nativeSubscriptionRef.current?.remove();
+        nativeSubscriptionRef.current = null;
+        setIsTracking(false);
+        console.log('[Location] Tracking stopped (web)');
+        return;
       }
+
+      const Location = await getExpoLocationModule();
+      const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+      if (hasStarted) {
+        await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      }
+
       setIsTracking(false);
-      console.log('[Location] Tracking stopped');
+      console.log('[Location] Tracking stopped (native)');
     } catch (error) {
       console.error('[Location] Failed to stop tracking:', error);
     }
   }, []);
 
-  const checkProximityToVenues = useCallback((venues: Venue[]): Venue[] => {
-    if (!location || !venues.length) return [];
+  const checkProximityToVenues = useCallback(
+    (venues: Venue[]): Venue[] => {
+      if (!location || !venues.length) return [];
 
-    const nearbyVenues: Venue[] = [];
+      const nearbyVenues: Venue[] = [];
 
-    venues.forEach((venue) => {
-      if (venue.latitude && venue.longitude) {
-        const distance = calculateDistance(
-          location.coords.latitude,
-          location.coords.longitude,
-          venue.latitude,
-          venue.longitude
-        );
+      venues.forEach((venue) => {
+        if (venue.latitude && venue.longitude) {
+          const distance = calculateDistance(
+            location.coords.latitude,
+            location.coords.longitude,
+            venue.latitude,
+            venue.longitude
+          );
 
-        if (distance <= GEOFENCE_RADIUS) {
-          nearbyVenues.push({ ...venue, distance });
+          if (distance <= GEOFENCE_RADIUS) {
+            nearbyVenues.push({ ...venue, distance });
+          }
         }
-      }
-    });
+      });
 
-    return nearbyVenues;
-  }, [location]);
+      return nearbyVenues;
+    },
+    [location]
+  );
 
-  return useMemo(() => ({
-    location,
-    hasPermission,
-    isTracking,
-    requestPermission,
-    startTracking,
-    stopTracking,
-    checkProximityToVenues,
-  }), [location, hasPermission, isTracking, requestPermission, startTracking, stopTracking, checkProximityToVenues]);
+  return useMemo(
+    () => ({
+      location,
+      hasPermission,
+      isTracking,
+      requestPermission,
+      startTracking,
+      stopTracking,
+      checkProximityToVenues,
+    }),
+    [
+      location,
+      hasPermission,
+      isTracking,
+      requestPermission,
+      startTracking,
+      stopTracking,
+      checkProximityToVenues,
+    ]
+  );
 });
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -169,18 +326,4 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
-}
-
-if (Platform.OS !== 'web') {
-  TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: { data: any; error: any }) => {
-    if (error) {
-      console.error('[Location Task] Error:', error);
-      return;
-    }
-    if (data) {
-      const { locations } = data as { locations: Location.LocationObject[] };
-      const latestLocation = locations[0];
-      console.log('[Location Task] New location:', latestLocation.coords);
-    }
-  });
 }
