@@ -6,59 +6,6 @@ import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, 
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
-import { rest } from "@/lib/supabaseRest";
-
-type SupabaseVenue = { id: string | number; name: string; address?: string | null };
-function SupabaseTestList() {
-  const [venues, setVenues] = React.useState<SupabaseVenue[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const load = React.useCallback(async () => {
-    console.info("[SupabaseMobile] Loading test venues...");
-    setLoading(true);
-    setError(null);
-    setVenues([]);
-    try {
-      const res = await rest('/venues?select=id,name,address&order=created_at.desc&limit=5');
-      const data = (await res.json()) as SupabaseVenue[];
-      console.info("[SupabaseMobile] Received", Array.isArray(data) ? data.length : 0);
-      setVenues(Array.isArray(data) ? data : []);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      console.error("[SupabaseMobile] Fetch failed", e);
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    load();
-  }, [load]);
-
-  return (
-    <View style={styles.supabaseSection} testID="supabase-test">
-      <Text style={styles.sectionTitle}>Supabase Venues (test)</Text>
-      {loading ? <Text style={styles.hintText}>Loading...</Text> : null}
-      {error ? (
-        <Text style={styles.errorText} testID="error-text">{error}</Text>
-      ) : null}
-
-      <View style={styles.venueList}>
-        {venues.map((v) => (
-          <View key={String(v.id)} style={styles.venueItem} testID={`venue-${String(v.id)}`}>
-            <Text style={styles.venueName}>{v.name ?? "-"}</Text>
-            <Text style={styles.venueAddress}>{v.address ?? ""}</Text>
-          </View>
-        ))}
-        {!loading && venues.length === 0 && !error ? (
-          <Text style={styles.hintText} testID="hint-text">No venues yet</Text>
-        ) : null}
-      </View>
-    </View>
-  );
-}
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -72,16 +19,16 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.greeting}>Szia Bence!</Text>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}></Text>
+          <View style={styles.avatar} testID="profile-avatar">
+            <User size={20} color={Colors.text} />
           </View>
         </View>
 
         {/* Come Get It Rewards Card */}
         <TouchableOpacity onPress={() => router.push('/rewards-missions')} activeOpacity={0.9}>
           <LinearGradient
-            colors={['#00D1FF', '#0099CC', '#007EA7', '#005577']}
-            start={{ x: 0, y: 0 }}
+            colors={["#0B2D3B", "#063041", "#05232F"]}
+            start={{ x: 0.08, y: 0.1 }}
             end={{ x: 1, y: 1 }}
             style={styles.rewardsCard}
           >
@@ -97,11 +44,11 @@ export default function ProfileScreen() {
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.pointsValue}>{points}</Text>
+              <Text style={styles.pointsValue} testID="profile-points">{points}</Text>
             </View>
             <Text style={styles.rewardsSubtitle}>Koppints és nézd meg a jutalmakat →</Text>
           </View>
-          <View style={styles.mascotContainer}>
+          <View style={styles.mascotContainer} pointerEvents="none">
             <Text style={styles.mascot}>🍺</Text>
           </View>
           {/* Multiple texture overlays for more gradient effect */}
@@ -339,8 +286,6 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </View>
-
-        <SupabaseTestList />
       </ScrollView>
     </View>
   );
@@ -365,34 +310,31 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 4,
-    backgroundColor: "#00D1FF",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: Colors.background,
   },
   rewardsCard: {
     marginHorizontal: 12,
     marginBottom: 16,
-    borderRadius: 4,
-    padding: 24,
+    borderRadius: 18,
+    padding: 18,
     position: "relative",
     overflow: "hidden",
-    minHeight: 170,
-    shadowColor: "#00D1FF",
+    minHeight: 160,
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 10,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 10,
   },
   rewardsHeader: {
     flexDirection: "row",
@@ -401,10 +343,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   rewardsTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "700",
-    color: Colors.background,
-    fontStyle: "italic",
+    color: "rgba(255,255,255,0.92)",
+    letterSpacing: 0.2,
   },
 
   rewardsContent: {
@@ -425,17 +367,16 @@ const styles = StyleSheet.create({
     height: 60,
   },
   pointsValue: {
-    fontSize: 38,
+    fontSize: 40,
     fontWeight: "900",
-    color: Colors.background,
-    lineHeight: 42,
+    color: "#00D1FF",
+    lineHeight: 44,
     letterSpacing: -1,
   },
   rewardsSubtitle: {
-    fontSize: 15,
-    color: Colors.background,
-    opacity: 0.85,
-    fontWeight: "500",
+    fontSize: 14,
+    color: "rgba(255,255,255,0.78)",
+    fontWeight: "600",
   },
   mascotContainer: {
     position: "absolute",
@@ -721,50 +662,4 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
 
-  supabaseSection: {
-    marginTop: 8,
-    marginBottom: 40,
-    paddingHorizontal: 12,
-  },
-  inputRow: {
-    marginBottom: 0,
-  },
-  input: {
-    display: 'none',
-  },
-  loadBtn: {
-    display: 'none',
-  },
-  loadBtnText: {
-    display: 'none',
-  },
-  errorText: {
-    color: Colors.error,
-    marginBottom: 8,
-  },
-  hintText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    marginTop: 6,
-  },
-  venueList: {
-    marginTop: 4,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.primary,
-  },
-  venueItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.primary,
-  },
-  venueName: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  venueAddress: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
-  },
 });
