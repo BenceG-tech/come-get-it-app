@@ -74,12 +74,12 @@ export default function BarsScreen() {
                 }
                 
                 // Otherwise, fetch from venue_images table
-                const imagesResponse = await rest(`/venue_images?venue_id=eq.${venue.id}&select=url,image_url,is_cover&order=is_cover.desc,created_at.asc&limit=1`);
+                const imagesResponse = await rest(`/venue_images?venue_id=eq.${venue.id}&select=url,is_cover&order=is_cover.desc,created_at.asc&limit=1`);
                 const imagesText = await imagesResponse.text();
                 const images = JSON.parse(imagesText);
                 
                 if (images && images.length > 0) {
-                  const imageUrl = images[0].url || images[0].image_url;
+                  const imageUrl = images[0].url;
                   console.log(`Fetched image for ${venue.name}:`, imageUrl);
                   return { ...venue, image_url: imageUrl };
                 }
