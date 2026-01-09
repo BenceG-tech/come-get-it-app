@@ -202,45 +202,27 @@ export default function VenueModalScreen() {
     // Database stores dayOfWeek as 0-6 where Monday=0, Sunday=6
     const dbDayIndex = isoDay - 1; // Convert ISO (1-7) to DB format (0-6)
     
-    console.log(`[VenueDetail] getAvailabilityForDrink called: drinkId=${drinkId}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}`);
-    console.log(`[VenueDetail] All windows:`, windowsNormalized.map(w => ({
-      drinkId: w.drinkId,
-      dayOfWeek: w.dayOfWeek,
-      days: (w as any).days,
-      start: w.start,
-      end: w.end
-    })));
+    console.log(`[VenueDetail] getAvailabilityForDrink: drinkId=${drinkId}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}, totalWindows=${windowsNormalized.length}`);
     
-    const matchDay = (w: { dayOfWeek?: number; [k: string]: any }) => {
-      // Check if window has 'days' array (ISO format 1-7)
-      const daysArr = Array.isArray((w as any).days) ? (w as any).days as number[] : [];
-      if (daysArr.length > 0) {
-        // days array might be in ISO (1-7) or DB (0-6) format, check both
-        const matchesISO = daysArr.includes(isoDay);
-        const matchesDB = daysArr.includes(dbDayIndex);
-        console.log(`[VenueDetail] days array match: days=${JSON.stringify(daysArr)}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}, matchesISO=${matchesISO}, matchesDB=${matchesDB}`);
-        return matchesISO || matchesDB;
-      }
-      // Fallback to dayOfWeek field (stored as 0-6 where Monday=0)
-      const d = w.dayOfWeek;
-      if (d === undefined || d === null) {
-        console.log(`[VenueDetail] No dayOfWeek found`);
-        return false;
-      }
-      // dayOfWeek in DB is 0-6 (Monday=0), compare with converted dbDayIndex
-      const matches = d === dbDayIndex;
-      console.log(`[VenueDetail] dayOfWeek match: dayOfWeek=${d}, dbDayIndex=${dbDayIndex}, matches=${matches}`);
-      return matches;
-    };
-
     const matchingWindows = windowsNormalized.filter((w) => {
       const drinkMatches = w.drinkId === drinkId;
-      const dayMatches = matchDay(w as any);
-      console.log(`[VenueDetail] Window filter: windowDrinkId=${w.drinkId}, targetDrinkId=${drinkId}, drinkMatches=${drinkMatches}, dayMatches=${dayMatches}`);
+      
+      // Check if window has 'days' array (ISO format 1-7)
+      const daysArr = Array.isArray((w as any).days) ? (w as any).days as number[] : [];
+      let dayMatches = false;
+      
+      if (daysArr.length > 0) {
+        // days array - check both ISO and DB format for compatibility
+        dayMatches = daysArr.includes(isoDay) || daysArr.includes(dbDayIndex);
+      } else if (w.dayOfWeek !== undefined && w.dayOfWeek !== null) {
+        // dayOfWeek field (stored as 0-6 where Monday=0)
+        dayMatches = w.dayOfWeek === dbDayIndex;
+      }
+      
       return drinkMatches && dayMatches;
     });
     
-    console.log(`[VenueDetail] Matching windows for drinkId=${drinkId}, isoDay=${isoDay}:`, matchingWindows);
+    console.log(`[VenueDetail] Found ${matchingWindows.length} matching windows for day ${isoDay}`);
     
     if (matchingWindows.length === 0) return null;
     return matchingWindows.map((w) => {

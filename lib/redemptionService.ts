@@ -28,18 +28,36 @@ function getCurrentHour(): number {
   return new Date().getHours();
 }
 
+function dbDayToISO(dbDay: number): number {
+  // Database stores 0-6 (Monday=0, Sunday=6)
+  // ISO 8601 uses 1-7 (Monday=1, Sunday=7)
+  return dbDay + 1;
+}
+
 export function isCurrentlyInWindow(window: FreeDrinkWindow): boolean {
   const todayISO = getTodayISODay();
   const currentHour = getCurrentHour();
   
-  const windowDays = window.days ?? (window.dayOfWeek !== undefined ? [window.dayOfWeek] : []);
+  // Get days array - convert dayOfWeek (0-6) to ISO (1-7) if needed
+  let windowDaysISO: number[] = [];
+  if (window.days && window.days.length > 0) {
+    // days array is already in ISO format (1-7)
+    windowDaysISO = window.days;
+  } else if (window.dayOfWeek !== undefined) {
+    // dayOfWeek is in DB format (0-6), convert to ISO
+    windowDaysISO = [dbDayToISO(window.dayOfWeek)];
+  }
   
-  if (!windowDays.includes(todayISO)) {
+  console.log(`[RedemptionService] isCurrentlyInWindow: todayISO=${todayISO}, windowDaysISO=${JSON.stringify(windowDaysISO)}, dayOfWeek=${window.dayOfWeek}`);
+  
+  if (!windowDaysISO.includes(todayISO)) {
     return false;
   }
   
   const startHour = parseInt(window.start.split(':')[0], 10);
   const endHour = parseInt(window.end.split(':')[0], 10);
+  
+  console.log(`[RedemptionService] Time check: currentHour=${currentHour}, startHour=${startHour}, endHour=${endHour}`);
   
   return currentHour >= startHour && currentHour < endHour;
 }
@@ -54,21 +72,30 @@ export function findNextAvailableWindow(
   const todayISO = getTodayISODay();
   const currentHour = getCurrentHour();
   
+  console.log(`[RedemptionService] findNextAvailableWindow: drinkId=${drinkId}, todayISO=${todayISO}, drinkWindows=${drinkWindows.length}`);
+  
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDay = ((todayISO - 1 + dayOffset) % 7) + 1;
+    const checkDayISO = ((todayISO - 1 + dayOffset) % 7) + 1;
     
     for (const window of drinkWindows) {
-      const windowDays = window.days ?? (window.dayOfWeek !== undefined ? [window.dayOfWeek] : []);
+      // Get days in ISO format
+      let windowDaysISO: number[] = [];
+      if (window.days && window.days.length > 0) {
+        windowDaysISO = window.days;
+      } else if (window.dayOfWeek !== undefined) {
+        windowDaysISO = [dbDayToISO(window.dayOfWeek)];
+      }
       
-      if (windowDays.includes(checkDay)) {
+      if (windowDaysISO.includes(checkDayISO)) {
         const startHour = parseInt(window.start.split(':')[0], 10);
         
+        // Skip if it's today and we're past the start time
         if (dayOffset === 0 && currentHour >= startHour) {
           continue;
         }
         
         return {
-          day: checkDay,
+          day: checkDayISO,
           start: window.start,
           end: window.end,
         };
