@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   useWindowDimensions,
-  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Search, MapPin, Filter } from "lucide-react-native";
@@ -34,53 +33,81 @@ export default function BarsScreen() {
   const headerHeight = Math.max(56, 44 + insets.top);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    console.log('[BarsScreen] Starting venue fetch...');
-    
-    const loadVenues = async () => {
+    const fetchVenues = async () => {
       try {
-        const response = await Promise.race([
-          rest('/venues?select=*'),
-          new Promise<null>((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 5000)
-          )
-        ]);
+        console.log('Fetching venues from Supabase...');
+        const response = await rest('/venues?select=*');
         
-        if (!isMounted) return;
-        
-        if (!response || !response.ok) {
-          console.log('[BarsScreen] No valid response, using fallback');
-          setVenues(fallbackVenues);
-          setLoading(false);
-          return;
+        // Check if response is ok
+        if (!response.ok) {
+          console.error('Response not ok:', response.status, response.statusText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        console.log('[BarsScreen] Venues fetched:', data?.length || 0);
+        // Get response text first to debug
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText.substring(0, 200));
         
-        if (isMounted) {
-          if (Array.isArray(data) && data.length > 0) {
-            setVenues(data);
-          } else {
-            setVenues(fallbackVenues);
-          }
-          setLoading(false);
+        // Try to parse JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          console.error('Response text that failed to parse:', responseText.substring(0, 500));
+          throw new Error('Failed to parse response as JSON');
+        }
+        
+        console.log('Venues fetched:', data);
+        if (data && data.length > 0) {
+          console.log('Using database venues, first venue opening_hours:', JSON.stringify(data[0]?.opening_hours, null, 2));
+          console.log('All venues opening_hours:', data.map((v: Venue) => ({ name: v.name, opening_hours: v.opening_hours })));
+          
+          // Fetch images for all venues
+          const venuesWithImages = await Promise.all(
+            data.map(async (venue: Venue) => {
+              try {
+                // If venue already has image_url or hero_image_url, use it
+                if (venue.image_url || venue.hero_image_url) {
+                  console.log(`Venue ${venue.name} already has image_url:`, venue.image_url || venue.hero_image_url);
+                  return venue;
+                }
+                
+                // Otherwise, fetch from venue_images table
+                const imagesResponse = await rest(`/venue_images?venue_id=eq.${venue.id}&select=url,image_url,is_cover&order=is_cover.desc,created_at.asc&limit=1`);
+                const imagesText = await imagesResponse.text();
+                const images = JSON.parse(imagesText);
+                
+                if (images && images.length > 0) {
+                  const imageUrl = images[0].url || images[0].image_url;
+                  console.log(`Fetched image for ${venue.name}:`, imageUrl);
+                  return { ...venue, image_url: imageUrl };
+                }
+                
+                console.log(`No image found for ${venue.name}`);
+                return venue;
+              } catch (imgError) {
+                console.error(`Error fetching images for venue ${venue.id}:`, imgError);
+                return venue;
+              }
+            })
+          );
+          
+          setVenues(venuesWithImages);
+        } else {
+          console.log('Using fallback venues');
+          setVenues(fallbackVenues);
         }
       } catch (error) {
-        console.log('[BarsScreen] Error or timeout, using fallback:', error);
-        if (isMounted) {
-          setVenues(fallbackVenues);
-          setLoading(false);
-        }
+        console.error('Error fetching venues:', error);
+        console.log('Using fallback venues data');
+        setVenues(fallbackVenues);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    loadVenues();
 
-    return () => {
-      isMounted = false;
-    };
+    fetchVenues();
   }, []);
 
   const filteredVenues = venues.filter(venue => {
@@ -187,29 +214,30 @@ export default function BarsScreen() {
         </View>
       </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Betöltés...</Text>
-        </View>
-      ) : (
-        <ScrollView 
-          style={styles.venuesList}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.venuesContent}
-        >
-          {filteredVenues.map((venue) => (
-            <VenueCard key={venue.id} venue={venue} />
-          ))}
-          
-          {filteredVenues.length === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>Nincs találat</Text>
-              <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
-            </View>
-          )}
-        </ScrollView>
-      )}
+      <ScrollView 
+        style={styles.venuesList}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.venuesContent}
+      >
+        {loading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Betöltés...</Text>
+          </View>
+        ) : (
+          <>
+            {filteredVenues.map((venue) => (
+              <VenueCard key={venue.id} venue={venue} />
+            ))}
+            
+            {filteredVenues.length === 0 && !loading && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>Nincs találat</Text>
+                <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -307,16 +335,6 @@ const styles = StyleSheet.create({
   venuesContent: {
     paddingTop: 12,
     paddingBottom: 100,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: Colors.text,
-    marginTop: 12,
   },
   emptyState: {
     flex: 1,

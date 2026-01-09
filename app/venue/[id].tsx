@@ -78,10 +78,6 @@ export default function VenueModalScreen() {
   ).current;
 
   useEffect(() => {
-    let isMounted = true;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let loadingStarted = true;
-    
     const fetchVenue = async () => {
       if (!id) {
         setError('No venue ID provided');
@@ -91,30 +87,14 @@ export default function VenueModalScreen() {
       try {
         setLoading(true);
         console.info('[VenueDetail] Loading venue', id);
-        
-        // Add timeout to prevent infinite loading
-        timeoutId = setTimeout(() => {
-          if (isMounted && loadingStarted) {
-            console.warn('[VenueDetail] Fetch timeout');
-            setError('Loading timed out. Please try again.');
-            setLoading(false);
-            loadingStarted = false;
-          }
-        }, 15000);
-        
         let v = await getVenueWithDetails(String(id));
-        
-        if (!isMounted) return;
         if (!v) {
-          if (isMounted) {
-            setError('Venue not found');
-            setLoading(false);
-          }
+          setError('Venue not found');
           return;
         }
         console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
         
-        // Geocode if no coordinates (for display only, not persisted)
+        // Geocode if no coordinates
         if ((!v.latitude || !v.longitude) && v.address) {
           setGeocoding(true);
           try {
@@ -131,37 +111,32 @@ export default function VenueModalScreen() {
               const lon = parseFloat(geocodeData[0].lon);
               console.log(`[VenueDetail] Geocoded ${v.name}: ${lat}, ${lon}`);
               
-              // Update local state only (latitude/longitude columns don't exist in DB)
+              // Update venue in database
+              const { rest } = await import('@/lib/supabaseRest');
+              await rest(`/venues?id=eq.${v.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latitude: lat, longitude: lon })
+              });
+              
               v = { ...v, latitude: lat, longitude: lon };
             }
           } catch (geocodeError) {
             console.error(`[VenueDetail] Failed to geocode:`, geocodeError);
           } finally {
-            if (isMounted) setGeocoding(false);
+            setGeocoding(false);
           }
         }
         
-        if (isMounted) {
-          setVenue(v);
-          setLoading(false);
-          loadingStarted = false;
-        }
+        setVenue(v);
       } catch (e) {
         console.error('[VenueDetail] Failed to load', e);
-        if (isMounted) {
-          setError('Failed to load venue');
-          setLoading(false);
-          loadingStarted = false;
-        }
+        setError('Failed to load venue');
+      } finally {
+        setLoading(false);
       }
     };
     fetchVenue();
-    
-    return () => {
-      isMounted = false;
-      loadingStarted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-    };
   }, [id]);
 
   const galleryImages = useMemo(() => {
