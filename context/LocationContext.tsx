@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 import { Platform, Alert } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import { Venue } from '@/types/venue';
@@ -62,7 +61,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       console.error('[Location] Permission request failed:', error);
       return false;
     }
-  }, [hasPermission]);
+  }, []);
 
   const startTracking = useCallback(async () => {
     if (!hasPermission) {
@@ -88,7 +87,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
           },
         });
       } else {
-        const watchId = await Location.watchPositionAsync(
+        await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.Balanced,
             timeInterval: 60000,
@@ -172,15 +171,19 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 if (Platform.OS !== 'web') {
-  TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: { data: any; error: any }) => {
-    if (error) {
-      console.error('[Location Task] Error:', error);
-      return;
-    }
-    if (data) {
-      const { locations } = data as { locations: Location.LocationObject[] };
-      const latestLocation = locations[0];
-      console.log('[Location Task] New location:', latestLocation.coords);
-    }
+  import('expo-task-manager').then((TaskManager) => {
+    TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: { data: any; error: any }) => {
+      if (error) {
+        console.error('[Location Task] Error:', error);
+        return;
+      }
+      if (data) {
+        const { locations } = data as { locations: Location.LocationObject[] };
+        const latestLocation = locations[0];
+        console.log('[Location Task] New location:', latestLocation.coords);
+      }
+    });
+  }).catch((err) => {
+    console.error('[Location] Failed to load TaskManager:', err);
   });
 }
