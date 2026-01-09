@@ -12,12 +12,37 @@ function uuid(): string {
 
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {
   console.info('[Provider] getVenueWithDetails', id);
-  const [venueRes, imagesRes, drinksRes, windowsRes] = await Promise.all([
-    rest(`/venues?id=eq.${id}&select=*`),
-    rest(`/venue_images?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-    rest(`/venue_drinks?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-    rest(`/free_drink_windows?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-  ]);
+  
+  let venueRes: Response;
+  let imagesRes: Response;
+  let drinksRes: Response;
+  let windowsRes: Response;
+  
+  const emptyResponse = () => new Response(JSON.stringify([]), { status: 200 });
+  
+  try {
+    [venueRes, imagesRes, drinksRes, windowsRes] = await Promise.all([
+      rest(`/venues?id=eq.${id}&select=*`).catch((e) => {
+        console.error('[Provider] Error fetching venue:', e);
+        return emptyResponse();
+      }),
+      rest(`/venue_images?venue_id=eq.${id}&select=*`).catch((e) => {
+        console.warn('[Provider] Error fetching images:', e);
+        return emptyResponse();
+      }),
+      rest(`/venue_drinks?venue_id=eq.${id}&select=*`).catch((e) => {
+        console.warn('[Provider] Error fetching drinks:', e);
+        return emptyResponse();
+      }),
+      rest(`/free_drink_windows?venue_id=eq.${id}&select=*`).catch((e) => {
+        console.warn('[Provider] Error fetching windows:', e);
+        return emptyResponse();
+      }),
+    ]);
+  } catch (e) {
+    console.error('[Provider] Critical error in Promise.all:', e);
+    return null;
+  }
 
   let venueList: Venue[];
   let responseText: string = '';

@@ -49,16 +49,41 @@ export default function BarsScreen() {
     const fetchVenues = async () => {
       try {
         console.log('[BarsScreen] Fetching venues from Supabase...');
-        const response = await rest('/venues?select=*');
+        let response: Response;
+        try {
+          response = await rest('/venues?select=*');
+        } catch (fetchError) {
+          console.error('[BarsScreen] Fetch error:', fetchError);
+          if (isMounted) {
+            setVenues(fallbackVenues);
+            setLoading(false);
+          }
+          return;
+        }
         
         if (!isMounted) return;
         
         if (!response.ok) {
           console.error('[BarsScreen] Response not ok:', response.status, response.statusText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          if (isMounted) {
+            setVenues(fallbackVenues);
+            setLoading(false);
+          }
+          return;
         }
         
-        const responseText = await response.text();
+        let responseText: string;
+        try {
+          responseText = await response.text();
+        } catch (textError) {
+          console.error('[BarsScreen] Error reading response text:', textError);
+          if (isMounted) {
+            setVenues(fallbackVenues);
+            setLoading(false);
+          }
+          return;
+        }
+        
         console.log('[BarsScreen] Raw response text:', responseText.substring(0, 200));
         
         let data;
@@ -66,52 +91,34 @@ export default function BarsScreen() {
           data = JSON.parse(responseText);
         } catch (parseError) {
           console.error('[BarsScreen] JSON parse error:', parseError);
-          throw new Error('Failed to parse response as JSON');
+          if (isMounted) {
+            setVenues(fallbackVenues);
+            setLoading(false);
+          }
+          return;
         }
         
         if (!isMounted) return;
         
         console.log('[BarsScreen] Venues fetched:', data?.length || 0);
-        if (data && data.length > 0) {
-          const venuesWithImages = await Promise.all(
-            data.map(async (venue: Venue) => {
-              try {
-                if (venue.image_url || venue.hero_image_url) {
-                  return venue;
-                }
-                
-                const imagesResponse = await rest(`/venue_images?venue_id=eq.${venue.id}&select=url,is_cover&order=is_cover.desc,created_at.asc&limit=1`);
-                const imagesText = await imagesResponse.text();
-                const images = JSON.parse(imagesText);
-                
-                if (images && images.length > 0) {
-                  return { ...venue, image_url: images[0].url };
-                }
-                
-                return venue;
-              } catch (imgError) {
-                console.error(`[BarsScreen] Error fetching images for venue ${venue.id}:`, imgError);
-                return venue;
-              }
-            })
-          );
-          
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Don't fetch images separately - just use what we have
+          // This avoids potential errors with venue_images table
           if (isMounted) {
-            setVenues(venuesWithImages);
+            setVenues(data);
+            setLoading(false);
           }
         } else {
           console.log('[BarsScreen] No venues from API, using fallback');
           if (isMounted) {
             setVenues(fallbackVenues);
+            setLoading(false);
           }
         }
       } catch (error) {
         console.error('[BarsScreen] Error fetching venues:', error);
         if (isMounted) {
           setVenues(fallbackVenues);
-        }
-      } finally {
-        if (isMounted) {
           setLoading(false);
         }
       }
