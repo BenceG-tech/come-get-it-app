@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions, ImageBackground } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ImageBackground } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Info } from "lucide-react-native";
+import { ArrowLeft, Info, Gift, Sparkles, ChevronRight } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 
-const { width } = Dimensions.get('window');
 
 type Mission = {
   id: string;
@@ -383,7 +382,6 @@ const missions: Mission[] = [
 export default function RewardsMissionsScreen() {
   const router = useRouter();
   const { points } = useAppContext();
-  const [selectedTab, setSelectedTab] = useState<'missions' | 'rewards'>('missions');
   const [bgUri, setBgUri] = useState<string>('https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787');
 
   const renderProgressBar = (progress: number, total: number) => {
@@ -452,33 +450,43 @@ export default function RewardsMissionsScreen() {
 
       {/* Rewards Card */}
       <LinearGradient
-        colors={['#00D1FF', '#0099CC', '#007EA7', '#005577']}
-        start={{ x: 0, y: 0 }}
+        colors={["rgba(6, 35, 47, 0.92)", "rgba(11, 45, 59, 0.88)"]}
+        start={{ x: 0.12, y: 0.06 }}
         end={{ x: 1, y: 1 }}
         style={styles.rewardsCard}
+        testID="rewards-missions-rewards-card"
       >
-        <View style={styles.levelBadge}>
-          <Text style={styles.levelBadgeText}>FELTÖREKVŐ</Text>
-        </View>
-        
-        <Text style={styles.spendablePointsLabel}>Elkölthető pontok</Text>
-        
-        <View style={styles.pointsSection}>
-          <View style={styles.pointIcon}>
-            <Text style={styles.starText}>⭐</Text>
+        <View style={styles.rewardsHeader}>
+          <View style={styles.rewardsTitleRow}>
+            <View style={styles.rewardsBadge}>
+              <Gift size={14} color={"rgba(255,255,255,0.86)"} />
+              <Text style={styles.rewardsBadgeText}>Rewards</Text>
+            </View>
+            <Text style={styles.rewardsTitle}>Come Get It</Text>
           </View>
-          <Text style={styles.pointsValue}>{points}</Text>
+          <View style={styles.accentDot} />
         </View>
-        
-        <View style={styles.mascotContainer}>
-          <Text style={styles.mascot}>🍺</Text>
+
+        <View style={styles.rewardsContent}>
+          <View style={styles.pointsBlock}>
+            <View style={styles.pointsLabelRow}>
+              <Sparkles size={14} color={"rgba(0, 209, 255, 0.95)"} />
+              <Text style={styles.pointsLabel}>Elkölthető pontok</Text>
+            </View>
+            <Text style={styles.pointsValue} testID="rewards-missions-points">
+              {points}
+            </Text>
+          </View>
+
+          <View style={styles.rewardsCtaRow}>
+            <View style={styles.rewardsCtaPill}>
+              <Text style={styles.rewardsCtaText}>Jutalmak</Text>
+              <ChevronRight size={18} color={"rgba(0,0,0,0.9)"} />
+            </View>
+          </View>
         </View>
-        
-        {/* Gradient overlays for texture */}
-        <View style={styles.textureOverlay1} />
-        <View style={styles.textureOverlay2} />
-        <View style={styles.gradientTexture1} />
-        <View style={styles.gradientTexture2} />
+
+        <View style={styles.shineOverlay} pointerEvents="none" />
       </LinearGradient>
 
       {/* Level Progress */}
@@ -533,9 +541,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 70,
+    paddingTop: 54,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 14,
   },
   backButton: {
     width: 40,
@@ -561,124 +569,129 @@ const styles = StyleSheet.create({
   },
   rewardsCard: {
     marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 4,
-    padding: 24,
+    marginBottom: 14,
+    borderRadius: 18,
+    padding: 18,
     position: "relative",
     overflow: "hidden",
-    minHeight: 200,
+    minHeight: 156,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     shadowColor: "#00D1FF",
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 10,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 10,
   },
-  levelBadge: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+  rewardsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
   },
-  levelBadgeText: {
-    color: Colors.background,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  spendablePointsLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.background,
-    marginTop: 50,
-    marginBottom: 8,
-  },
-  pointsSection: {
+  rewardsTitleRow: {
     flexDirection: "row",
     alignItems: "center",
   },
-  pointIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 215, 0, 0.9)",
-    justifyContent: "center",
+  rewardsBadge: {
+    flexDirection: "row",
     alignItems: "center",
-    marginRight: 12,
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.10)",
+    marginRight: 10,
   },
-  starText: {
-    fontSize: 20,
+  rewardsBadgeText: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  rewardsTitle: {
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  accentDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: "rgba(0, 209, 255, 0.95)",
+    shadowColor: "#00D1FF",
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  rewardsContent: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  pointsBlock: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  pointsLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  pointsLabel: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 13,
+    fontWeight: "600",
   },
   pointsValue: {
-    fontSize: 48,
+    fontSize: 44,
     fontWeight: "900",
-    color: Colors.background,
-    lineHeight: 52,
+    color: Colors.text,
+    letterSpacing: -0.6,
+    lineHeight: 46,
   },
-  mascotContainer: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    bottom: 20,
-    justifyContent: "center",
+  rewardsCtaRow: {
+    justifyContent: "flex-end",
+  },
+  rewardsCtaPill: {
+    flexDirection: "row",
     alignItems: "center",
-    width: 80,
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 209, 255, 0.95)",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    minWidth: 120,
   },
-  mascot: {
-    fontSize: 72,
+  rewardsCtaText: {
+    color: "rgba(0,0,0,0.92)",
+    fontSize: 13,
+    fontWeight: "700",
+    marginRight: 6,
   },
-  textureOverlay1: {
+  shineOverlay: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    opacity: 0.4,
-  },
-  textureOverlay2: {
-    position: "absolute",
-    top: "20%",
-    left: "10%",
-    right: "10%",
-    bottom: "20%",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    opacity: 0.6,
-    borderRadius: 8,
-  },
-  gradientTexture1: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 209, 255, 0.15)",
-    opacity: 0.5,
-  },
-  gradientTexture2: {
-    position: "absolute",
-    top: "30%",
-    left: "20%",
-    right: "20%",
-    bottom: "30%",
-    backgroundColor: "rgba(0, 153, 204, 0.2)",
-    opacity: 0.3,
-    borderRadius: 12,
+    top: -40,
+    right: -60,
+    width: 180,
+    height: 180,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    transform: [{ rotate: "18deg" }],
   },
   levelProgressSection: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   levelProgressTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   levelProgressBar: {
     flexDirection: "row",
@@ -711,6 +724,7 @@ const styles = StyleSheet.create({
   missionsSection: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 4,
   },
   sectionTitle: {
     fontSize: 20,
@@ -719,7 +733,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   missionsList: {
-    paddingBottom: 100,
+    paddingBottom: 44,
   },
   missionCard: {
     flexDirection: "row",
