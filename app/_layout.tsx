@@ -1,11 +1,13 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@/context/AppContext";
 import Colors from "@/constants/colors";
+import { trpc, trpcClient } from "@/lib/trpc";
 
 function RootLayoutNav() {
   return (
@@ -41,21 +43,37 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [queryClient] = useState<QueryClient>(() => {
+    console.log("[ReactQuery] Creating QueryClient");
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: 1,
+          staleTime: 30_000,
+        },
+      },
+    });
+  });
+
   useEffect(() => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== "web") {
       SplashScreen.hideAsync().catch((e) => {
-        console.warn('[SplashScreen] hideAsync failed:', e);
+        console.warn("[SplashScreen] hideAsync failed:", e);
       });
     }
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <AppProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <RootLayoutNav />
-        </GestureHandlerRootView>
-      </AppProvider>
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <SafeAreaProvider>
+          <AppProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <RootLayoutNav />
+            </GestureHandlerRootView>
+          </AppProvider>
+        </SafeAreaProvider>
+      </trpc.Provider>
+    </QueryClientProvider>
   );
 }
