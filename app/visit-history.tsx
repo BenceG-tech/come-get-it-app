@@ -57,20 +57,22 @@ export default function VisitHistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: "Látogatási előzmények", headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text }} />
+      <Stack.Screen options={{ title: "Látogatási előzmények", headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text, headerShadowVisible: false }} />
       <StatusBar style="light" />
       
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.statsContainer}>
+          <View style={styles.statsContainer} testID="visit-history-stats">
             <View style={styles.statBox}>
               <Text style={styles.statValue}>203</Text>
               <Text style={styles.statLabel}>Látogatás</Text>
             </View>
+            <View style={styles.statDivider} />
             <View style={styles.statBox}>
               <Text style={styles.statValue}>45</Text>
               <Text style={styles.statLabel}>Helyszín</Text>
             </View>
+            <View style={styles.statDivider} />
             <View style={styles.statBox}>
               <Text style={styles.statValue}>8,450</Text>
               <Text style={styles.statLabel}>Pontok</Text>
@@ -86,6 +88,8 @@ export default function VisitHistoryScreen() {
               key={visit.id}
               style={styles.visitItem}
               onPress={() => router.push(`/venue/${visit.id}`)}
+              activeOpacity={0.9}
+              testID={`visit-history-item-${visit.id}`}
             >
               <Image 
                 source={{ uri: visit.venueImage }}
@@ -119,33 +123,44 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
   },
   statsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 20,
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+  },
+  statDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: "rgba(255,255,255,0.10)",
+    marginHorizontal: 12,
   },
   statBox: {
+    flex: 1,
     alignItems: "center",
   },
   statValue: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#00D1FF",
+    fontSize: 26,
+    fontWeight: "900",
+    color: "rgba(0, 209, 255, 0.95)",
     marginBottom: 4,
+    letterSpacing: -0.4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 40,
   },
   sectionTitle: {
@@ -156,15 +171,17 @@ const styles = StyleSheet.create({
   },
   visitItem: {
     flexDirection: "row",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
   visitImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 4,
+    width: 78,
+    height: 78,
+    borderRadius: 14,
     marginRight: 12,
   },
   visitInfo: {
@@ -193,15 +210,17 @@ const styles = StyleSheet.create({
   },
   pointsBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginTop: 4,
+    backgroundColor: "rgba(0, 209, 255, 0.12)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0, 209, 255, 0.18)",
   },
   pointsText: {
     fontSize: 12,
-    color: "#00D1FF",
-    fontWeight: "600",
+    color: "rgba(0, 209, 255, 0.95)",
+    fontWeight: "800",
   },
 });
