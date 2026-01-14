@@ -51,7 +51,15 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   type ImageRow = { id: string; venue_id: string; image_url?: string | null; url?: string | null; label?: string | null; is_cover?: boolean | null };
   let imagesRows: ImageRow[];
   let drinksRows: { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null }[];
-  let windowsRows: { id: string; venue_id: string; drink_id: string; day_of_week: number; start_time: string; end_time: string }[];
+  let windowsRows: {
+    id: string;
+    venue_id: string;
+    drink_id: string;
+    day_of_week?: number | null;
+    days?: number[] | null;
+    start_time: string;
+    end_time: string;
+  }[];
   
   try {
     imagesRows = await imagesRes.json();
@@ -77,7 +85,8 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     id: String(w.id),
     venueId: String(w.venue_id),
     drinkId: String(w.drink_id),
-    dayOfWeek: Number(w.day_of_week),
+    dayOfWeek: w.day_of_week === null || w.day_of_week === undefined ? undefined : Number(w.day_of_week),
+    days: Array.isArray(w.days) ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d)) : undefined,
     start: w.start_time,
     end: w.end_time,
   }));
@@ -172,6 +181,7 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
   if (updates.freeDrinkWindows) {
     console.log('[Provider] Free drink windows to save:', updates.freeDrinkWindows.map(w => ({
       drinkId: w.drinkId,
+      days: w.days,
       dayOfWeek: w.dayOfWeek,
       start: w.start,
       end: w.end
@@ -181,15 +191,17 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
     const incomingW = updates.freeDrinkWindows.map((w) => {
       // Use the mapping from temp IDs to new UUIDs
       const mappedDrinkId = tempToNewDrinkId[String(w.drinkId)] ?? String(w.drinkId);
-      const dayOfWeek = Number(w.dayOfWeek);
+      const dayOfWeek = w.dayOfWeek === undefined || w.dayOfWeek === null ? null : Number(w.dayOfWeek);
+      const days = Array.isArray(w.days) ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d)) : null;
       
-      console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, dayOfWeek: ${dayOfWeek}`);
+      console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, dayOfWeek: ${dayOfWeek}, days: ${JSON.stringify(days)}`);
       
       return {
         id: w.id && !String(w.id).startsWith('window-') ? w.id : uuid(),
         venue_id: id,
         drink_id: mappedDrinkId,
         day_of_week: dayOfWeek,
+        days: days,
         start_time: w.start,
         end_time: w.end,
       };

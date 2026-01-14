@@ -222,54 +222,40 @@ export default function VenueModalScreen() {
   ];
 
   const getAvailabilityForDrink = useCallback((drinkId: string, isoDay: number): string | null => {
-    // isoDay is 1-7 (Monday-Sunday per ISO 8601)
-    // Database stores dayOfWeek as 0-6 where Monday=0, Sunday=6
-    const dbDayIndex = isoDay - 1; // Convert ISO (1-7) to DB format (0-6)
-    
+    const dbDayIndex = isoDay - 1;
+
     console.log(`[VenueDetail] getAvailabilityForDrink: drinkId=${drinkId}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}`);
     console.log(`[VenueDetail] Total windows: ${windowsNormalized.length}`);
-    windowsNormalized.forEach((w, i) => {
-      console.log(`[VenueDetail] Window ${i}: drinkId=${w.drinkId}, dayOfWeek=${w.dayOfWeek}, start=${w.start}, end=${w.end}`);
-    });
-    
+
     const matchingWindows = windowsNormalized.filter((w) => {
       const drinkMatches = String(w.drinkId) === String(drinkId);
-      
-      // Check dayOfWeek field (stored as 0-6 where Monday=0)
-      const windowDay = typeof w.dayOfWeek === 'number' ? w.dayOfWeek : parseInt(String(w.dayOfWeek), 10);
-      const dayMatches = !isNaN(windowDay) && windowDay === dbDayIndex;
-      
-      console.log(`[VenueDetail] Checking window: drinkMatches=${drinkMatches} (${w.drinkId} vs ${drinkId}), dayMatches=${dayMatches} (windowDay=${windowDay} vs dbDayIndex=${dbDayIndex})`);
-      
+
+      const daysMatches = Array.isArray(w.days) && w.days.includes(isoDay);
+      const legacyMatches = typeof w.dayOfWeek === 'number' && w.dayOfWeek === dbDayIndex;
+
+      const dayMatches = daysMatches || legacyMatches;
+
+      console.log(
+        `[VenueDetail] Checking window: drinkMatches=${drinkMatches} dayMatches=${dayMatches} days=${JSON.stringify(w.days)} dayOfWeek=${w.dayOfWeek} isoDay=${isoDay}`
+      );
+
       return drinkMatches && dayMatches;
     });
-    
-    console.log(`[VenueDetail] Found ${matchingWindows.length} matching windows for isoDay ${isoDay} (dbDay ${dbDayIndex})`);
-    
+
+    console.log(`[VenueDetail] Found ${matchingWindows.length} matching windows for isoDay ${isoDay}`);
+
     if (matchingWindows.length === 0) return null;
-    return matchingWindows.map((w) => {
-      const start = (w.start ?? '').toString();
-      const end = (w.end ?? '').toString();
-      const s = start.includes(':') ? start.substring(0, 5) : start;
-      const e = end.includes(':') ? end.substring(0, 5) : end;
-      return `${s}-${e}`;
-    }).join(', ');
+
+    return matchingWindows
+      .map((w) => {
+        const start = (w.start ?? '').toString();
+        const end = (w.end ?? '').toString();
+        const s = start.includes(':') ? start.substring(0, 5) : start;
+        const e = end.includes(':') ? end.substring(0, 5) : end;
+        return `${s}-${e}`;
+      })
+      .join(', ');
   }, [windowsNormalized]);
-  
-  useEffect(() => {
-    if (freeDrinks.length > 0) {
-      const firstDrink = freeDrinks[0];
-      // Try to find first available day (1-7 ISO format)
-      for (let day = 1; day <= 7; day++) {
-        if (getAvailabilityForDrink(firstDrink.id, day)) {
-          setSelectedDay(day);
-          return;
-        }
-      }
-      // Default to Monday if no availability found
-      setSelectedDay(1);
-    }
-  }, [freeDrinks, getAvailabilityForDrink]);
 
 
   if (loading) {
@@ -510,14 +496,16 @@ export default function VenueModalScreen() {
                           <Pressable
                             key={isoDay}
                             testID={`day-tab-${isoDay}`}
+                            disabled={!isAvailable}
                             style={({ pressed }) => [
                               styles.dayTab,
                               isSelected && styles.dayTabSelected,
                               !isAvailable && styles.dayTabDisabled,
-                              pressed && styles.dayTabPressed,
+                              pressed && isAvailable && styles.dayTabPressed,
                             ]}
                             onPress={() => {
-                              console.log(`[VenueDetail] Day tab pressed: ${day.full} (ISO ${isoDay}), isAvailable: ${isAvailable}, availability: ${availability}`);
+                              if (!isAvailable) return;
+                              console.log(`[VenueDetail] Day tab pressed: ${day.full} (ISO ${isoDay}), availability: ${availability}`);
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                               setSelectedDay(isoDay);
                             }}

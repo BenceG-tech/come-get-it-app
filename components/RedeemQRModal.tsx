@@ -55,6 +55,8 @@ export default function RedeemQRModal({
   const [state, setState] = useState<ModalState>('confirm_location');
   const [token, setToken] = useState<RedemptionToken | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(TOKEN_TTL_MS);
+  const [isExpired, setIsExpired] = useState<boolean>(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [nextWindow, setNextWindow] = useState<{ day: number; start: string; end: string } | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
@@ -74,6 +76,8 @@ export default function RedeemQRModal({
     clearTokenTimer();
     setToken(null);
     setTimeRemaining(TOKEN_TTL_MS);
+    setIsExpired(false);
+    setCooldownRemaining(0);
     setErrorMessage('');
     setNextWindow(null);
     setCooldownUntil(null);
@@ -107,20 +111,22 @@ export default function RedeemQRModal({
     }
   }, [state, pulseAnim]);
 
-  const startTokenTimer = useCallback((expiresAt: string, onExpire: () => void) => {
+  const startTokenTimer = useCallback((expiresAt: string) => {
     clearTokenTimer();
-    
+
     const updateTimer = () => {
       const remaining = getTimeRemainingMs(expiresAt);
       setTimeRemaining(remaining);
-      
+
       if (remaining <= 0) {
         clearTokenTimer();
-        console.log('[RedeemQRModal] Token expired, auto-refreshing...');
-        onExpire();
+        console.log('[RedeemQRModal] Token expired');
+        setIsExpired(true);
+        setToken(null);
       }
     };
-    
+
+    setIsExpired(false);
     updateTimer();
     timerRef.current = setInterval(updateTimer, 1000);
   }, [clearTokenTimer]);
@@ -130,6 +136,11 @@ export default function RedeemQRModal({
     
     console.log('[RedeemQRModal] Requesting new token...');
     setIsRefreshing(true);
+    setErrorMessage('');
+    setNextWindow(null);
+    setCooldownUntil(null);
+    setCooldownRemaining(0);
+    setIsExpired(false);
     setState('loading');
     
     try {
@@ -150,10 +161,7 @@ export default function RedeemQRModal({
         const mockToken = generateMockToken(venueId, drink.id);
         setToken(mockToken);
         setState('qr_display');
-        startTokenTimer(mockToken.expires_at, () => {
-          setToken(null);
-          setState('loading');
-        });
+        startTokenTimer(mockToken.expires_at);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         const response = await issueRedemptionToken(venueId, drink.id, userId);
@@ -161,10 +169,7 @@ export default function RedeemQRModal({
         if (response.success) {
           setToken(response.data);
           setState('qr_display');
-          startTokenTimer(response.data.expires_at, () => {
-            setToken(null);
-            setState('loading');
-          });
+          startTokenTimer(response.data.expires_at);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else {
           const error = response.error;
@@ -174,7 +179,10 @@ export default function RedeemQRModal({
             setNextWindow(error.next_available_window ?? null);
             setState('not_eligible');
           } else if (error.code === 'RATE_LIMITED') {
-            setCooldownUntil(error.cooldown_until ?? null);
+            const until = error.cooldown_until ?? null;
+            setCooldownUntil(until);
+            const remaining = until ? Math.max(0, new Date(until).getTime() - Date.now()) : 0;
+            setCooldownRemaining(remaining);
             setState('rate_limited');
           } else {
             setState('error');
@@ -191,6 +199,26 @@ export default function RedeemQRModal({
       setIsRefreshing(false);
     }
   }, [drink, venueId, userId, freeDrinkWindows, startTokenTimer]);
+
+  const computeCooldownRemainingMs = useCallback((until: string | null): number => {
+    if (!until) return 0;
+    const t = new Date(until).getTime();
+    if (!Number.isFinite(t)) return 0;
+    return Math.max(0, t - Date.now());
+  }, []);
+
+  useEffect(() => {
+    if (state !== 'rate_limited') return;
+
+    const tick = () => {
+      const remaining = computeCooldownRemainingMs(cooldownUntil);
+      setCooldownRemaining(remaining);
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [state, cooldownUntil, computeCooldownRemainingMs]);
 
   const handleConfirmLocation = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -253,13 +281,12 @@ export default function RedeemQRModal({
           </View>
         );
       
-      case 'qr_display':
-        if (!token) return null;
-        
-        const qrUrl = generateQRCodeUrl(token.qr_payload, 280);
-        const formattedTime = formatTimeRemaining(timeRemaining);
-        const isLowTime = timeRemaining < 30000;
-        
+      case 'qr_display': {
+        const canShowQr = Boolean(token);
+        const qrUrl = token ? generateQRCodeUrl(token.qr_payload, 280) : '';
+        const formattedTime = isExpired ? 'Lejárt' : formatTimeRemaining(timeRemaining);
+        const isLowTime = !isExpired && timeRemaining < 30000;
+
         return (
           <View style={styles.contentContainer}>
             <View style={styles.qrHeader}>
@@ -267,19 +294,26 @@ export default function RedeemQRModal({
               <Text style={styles.qrTitle}>Mutasd meg a pultosnak</Text>
             </View>
             
-            <Animated.View style={[styles.qrContainer, { transform: [{ scale: pulseAnim }] }]}>
-              <Image
-                source={{ uri: qrUrl }}
-                style={styles.qrImage}
-                resizeMode="contain"
-                testID="qr-code-image"
-              />
+            <Animated.View style={[styles.qrContainer, { transform: [{ scale: pulseAnim }], opacity: canShowQr ? 1 : 0.55 }]}>
+              {canShowQr ? (
+                <Image
+                  source={{ uri: qrUrl }}
+                  style={styles.qrImage}
+                  resizeMode="contain"
+                  testID="qr-code-image"
+                />
+              ) : (
+                <View style={styles.qrExpiredContainer}>
+                  <Text style={styles.qrExpiredTitle}>A QR kód lejárt</Text>
+                  <Text style={styles.qrExpiredSubtitle}>Kérj újat a folytatáshoz</Text>
+                </View>
+              )}
             </Animated.View>
             
-            <View style={[styles.timerContainer, isLowTime && styles.timerContainerWarning]}>
-              <Clock size={18} color={isLowTime ? '#FF6B6B' : Colors.dark.text} />
-              <Text style={[styles.timerText, isLowTime && styles.timerTextWarning]}>
-                Érvényes: {formattedTime}
+            <View style={[styles.timerContainer, (isLowTime || isExpired) && styles.timerContainerWarning]}>
+              <Clock size={18} color={isLowTime || isExpired ? '#FF6B6B' : Colors.dark.text} />
+              <Text style={[styles.timerText, (isLowTime || isExpired) && styles.timerTextWarning]}>
+                {isExpired ? 'Lejárt' : `Érvényes: ${formattedTime}`}
               </Text>
             </View>
             
@@ -311,6 +345,7 @@ export default function RedeemQRModal({
             </TouchableOpacity>
           </View>
         );
+      }
       
       case 'not_eligible':
         return (
@@ -355,7 +390,7 @@ export default function RedeemQRModal({
             
             {cooldownUntil && (
               <Text style={styles.cooldownText}>
-                Próbáld újra: {new Date(cooldownUntil).toLocaleTimeString('hu-HU')}
+                Próbáld újra: {formatTimeRemaining(cooldownRemaining)}
               </Text>
             )}
             
@@ -549,6 +584,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrExpiredContainer: {
+    width: 250,
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+  },
+  qrExpiredTitle: {
+    color: '#111111',
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  qrExpiredSubtitle: {
+    color: '#444444',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   qrImage: {
     width: 250,
