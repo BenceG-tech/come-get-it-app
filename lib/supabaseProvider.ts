@@ -51,29 +51,68 @@ async function invokeEdgeFunction<TResponse>(name: string, body: unknown): Promi
   return json;
 }
 
-export async function fetchRewards(venueId: string): Promise<Reward[]> {
-  console.info('[Provider] fetchRewards', { venueId });
-  const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>("get-rewards", {
-    venue_id: venueId,
-  });
-  const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
-  console.info('[Provider] fetchRewards result', { count: rewards.length });
+function toYyyyMmDd(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+async function fetchRewardsRest(params: { venueId?: string; scope: 'app' | 'venue' }): Promise<Reward[]> {
+  const today = toYyyyMmDd(new Date());
+  const base = `/rewards?select=*`;
+  const active = `&active=eq.true`;
+  const valid = `&valid_until=gte.${today}`;
+  const order = `&order=${encodeURIComponent('priority.desc.nullslast,points_required.asc')}`;
+
+  const venueId = params.venueId;
+  const or =
+    params.scope === 'venue' && venueId
+      ? `&or=${encodeURIComponent(`(venue_id.eq.${venueId},is_global.eq.true)`)}`
+      : '';
+
+  const url = `${base}${active}${valid}${or}${order}`;
+  console.info('[Provider] fetchRewardsRest', { scope: params.scope, venueId, url });
+
+  const res = await rest(url);
+  const json = (await res.json()) as unknown;
+  const rewards = Array.isArray(json) ? (json as Reward[]) : [];
+  console.info('[Provider] fetchRewardsRest result', { count: rewards.length });
   return rewards;
 }
 
-export async function fetchAppRewards(): Promise<Reward[]> {
-  console.info("[Provider] fetchAppRewards");
+export async function fetchRewards(venueId: string): Promise<Reward[]> {
+  console.info('[Provider] fetchRewards', { venueId });
+
   try {
-    const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>("get-rewards", {
-      venue_id: "global",
+    const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
+      venue_id: venueId,
     });
     const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
-    console.info("[Provider] fetchAppRewards result", { count: rewards.length });
-    return rewards;
+    console.info('[Provider] fetchRewards edge result', { count: rewards.length });
+    if (rewards.length > 0) return rewards;
   } catch (e) {
-    console.error("[Provider] fetchAppRewards failed, fallback to fetchRewards(global)", e);
-    return fetchRewards("global");
+    console.error('[Provider] fetchRewards edge failed, falling back to REST', e);
   }
+
+  return fetchRewardsRest({ venueId, scope: 'venue' });
+}
+
+export async function fetchAppRewards(): Promise<Reward[]> {
+  console.info('[Provider] fetchAppRewards');
+
+  try {
+    const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
+      venue_id: 'global',
+    });
+    const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
+    console.info('[Provider] fetchAppRewards edge result', { count: rewards.length });
+    if (rewards.length > 0) return rewards;
+  } catch (e) {
+    console.error('[Provider] fetchAppRewards edge failed, falling back to REST', e);
+  }
+
+  return fetchRewardsRest({ scope: 'app' });
 }
 
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {

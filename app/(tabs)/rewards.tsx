@@ -14,11 +14,13 @@ export default function RewardsScreen() {
   const rewardsQuery = useQuery({
     queryKey: ["rewards", "app"],
     queryFn: async () => {
+      console.log("[Rewards] queryFn start");
       const res = await fetchAppRewards();
+      console.log("[Rewards] queryFn success", { count: res.length });
       return res;
     },
     staleTime: 60_000,
-    retry: 1,
+    retry: 2,
   });
 
   const normalizedRewards = useMemo(() => {
@@ -140,9 +142,10 @@ export default function RewardsScreen() {
           </ScrollView>
         </View>
         
-        <TouchableOpacity style={styles.referButton} testID="refer-friend">
+        <TouchableOpacity style={styles.referButton} testID="refer-friend" activeOpacity={0.86}>
+          <View style={styles.referGlow} pointerEvents="none" />
           <View style={styles.referIconWrap}>
-            <Send size={22} color="rgba(255,255,255,0.75)" />
+            <Send size={22} color={"rgba(0, 209, 255, 0.95)"} />
           </View>
           <View style={styles.referTextContainer}>
             <Text style={styles.referTitle}>Hívj meg egy barátot</Text>
@@ -352,19 +355,31 @@ const styles = StyleSheet.create({
   referButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: "rgba(13, 22, 24, 0.92)",
     marginHorizontal: 20,
     marginVertical: 10,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0, 209, 255, 0.18)",
+    overflow: "hidden",
+  },
+  referGlow: {
+    position: "absolute",
+    top: -80,
+    right: -80,
+    width: 220,
+    height: 220,
+    borderRadius: 999,
+    backgroundColor: "rgba(0, 209, 255, 0.18)",
   },
   referIconWrap: {
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(0, 209, 255, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(0, 209, 255, 0.22)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 14,
