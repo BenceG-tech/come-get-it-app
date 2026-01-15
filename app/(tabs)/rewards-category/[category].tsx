@@ -12,13 +12,16 @@ export default function RewardsCategoryScreen() {
 
   const filtered = useMemo(() => {
     if (category === "all") return rewards;
-    return rewards.filter((r) => r.category === category);
+    return rewards.filter((r) => (r.category ?? "") === category);
   }, [category]);
 
   const titleMap: Record<string, string> = {
-    drinks: "Italok",
+    drink: "Italok",
     food: "Étel",
-    lifestyle: "Életmód",
+    vip: "VIP",
+    discount: "Kedvezmény",
+    experience: "Élmény",
+    partner: "Partnerek",
     all: "Összes jutalom",
   };
 

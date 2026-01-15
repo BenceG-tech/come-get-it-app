@@ -1,5 +1,6 @@
 import { rest } from '@/lib/supabaseRest';
 import { Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
+import { Reward } from '@/types/reward';
 
 function uuid(): string {
   try {
@@ -8,6 +9,56 @@ function uuid(): string {
   } catch {}
   const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
   return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+}
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
+const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+
+async function invokeEdgeFunction<TResponse>(name: string, body: unknown): Promise<TResponse> {
+  const url = `${SUPABASE_URL}/functions/v1/${name}`;
+  console.info('[Provider] invokeEdgeFunction', { name, url });
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+    },
+    body: JSON.stringify(body ?? {}),
+  });
+
+  if (!res.ok) {
+    let payload: unknown = null;
+    try {
+      payload = await res.json();
+    } catch {
+      try {
+        payload = await res.text();
+      } catch {
+        payload = null;
+      }
+    }
+
+    console.error('[Provider] Edge function error', { name, status: res.status, payload });
+    throw new Error(
+      JSON.stringify({ name, status: res.status, statusText: res.statusText, payload }, null, 2)
+    );
+  }
+
+  const json = (await res.json()) as TResponse;
+  console.info('[Provider] Edge function ok', { name });
+  return json;
+}
+
+export async function fetchRewards(venueId: string): Promise<Reward[]> {
+  console.info('[Provider] fetchRewards', { venueId });
+  const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
+    venue_id: venueId,
+  });
+  const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
+  console.info('[Provider] fetchRewards result', { count: rewards.length });
+  return rewards;
 }
 
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {

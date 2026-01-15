@@ -1,15 +1,17 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Copy, Smile } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { rewards } from "@/data/rewards";
+import { useAppContext } from "@/context/AppContext";
 
 export default function RewardDetailScreen() {
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const reward = rewards.find(r => r.id === id);
+  const { points } = useAppContext();
 
   if (!reward) {
     return (
@@ -33,10 +35,14 @@ export default function RewardDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Image */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: reward.image }} style={styles.heroImage} />
+          {reward.image_url ? (
+            <Image source={{ uri: reward.image_url }} style={styles.heroImage} />
+          ) : (
+            <View style={[styles.heroImage, { backgroundColor: Colors.cardBackground }]} />
+          )}
           <View style={styles.imageOverlay}>
-            <Text style={styles.categoryText}>Italok</Text>
-            <Text style={styles.discountText}>{reward.title}</Text>
+            <Text style={styles.categoryText}>{(reward.category ?? "jutalom").toUpperCase()}</Text>
+            <Text style={styles.discountText}>{reward.name}</Text>
           </View>
         </View>
 
@@ -85,8 +91,21 @@ export default function RewardDetailScreen() {
 
         {/* Get Reward Button */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.getRewardButton}>
-            <Text style={styles.getRewardButtonText}>Jutalom megszerzése</Text>
+          <TouchableOpacity
+            style={styles.getRewardButton}
+            onPress={() => {
+              const canRedeem = points >= reward.points_required;
+              console.log("[RewardDetail] redeem pressed", { rewardId: reward.id, canRedeem, points });
+              if (!canRedeem) {
+                Alert.alert("Nincs elég pont", `Ehhez a jutalomhoz ${reward.points_required} pontra van szükséged.`);
+                return;
+              }
+              Alert.alert("Beváltás", "A beváltás (redeem-reward) endpointot a következő lépésben kötjük be.");
+            }}
+          >
+            <Text style={styles.getRewardButtonText}>
+              {points >= reward.points_required ? "Beváltás" : `Beváltás (${reward.points_required} pont)`}
+            </Text>
             <ArrowLeft size={20} color={Colors.text} style={styles.arrowIcon} />
           </TouchableOpacity>
         </View>

@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { getVenueWithDetails } from '@/lib/supabaseProvider';
+import { fetchRewards, getVenueWithDetails } from '@/lib/supabaseProvider';
 import { VenueWithDetails, VenueDrink } from '@/types/venue';
+import { Reward, RewardCategory } from '@/types/reward';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
 import RedeemQRModal from '@/components/RedeemQRModal';
+import RewardCard from '@/components/RewardCard';
+import { useQuery } from '@tanstack/react-query';
+import { useAppContext } from '@/context/AppContext';
 
 
 function getTodayISODay(): number {
@@ -25,6 +29,7 @@ export default function VenueModalScreen() {
   const [showHours, setShowHours] = useState<boolean>(false);
 
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
+  const { points } = useAppContext();
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -209,6 +214,64 @@ export default function VenueModalScreen() {
 
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
+
+  const [selectedRewardCategory, setSelectedRewardCategory] = useState<"all" | RewardCategory>("all");
+
+  const rewardsQuery = useQuery({
+    queryKey: ["rewards", venue?.id],
+    enabled: Boolean(venue?.id),
+    queryFn: async () => {
+      const venueId = String(venue?.id ?? "");
+      const res = await fetchRewards(venueId);
+      return res;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const normalizedRewards = useMemo(() => {
+    const raw = rewardsQuery.data ?? [];
+    const today = new Date();
+    const cleaned = raw
+      .filter((r) => {
+        if (!r) return false;
+        if (r.active === false) return false;
+        const until = new Date(r.valid_until);
+        if (!Number.isNaN(until.getTime()) && until.getTime() < today.getTime()) return false;
+        const isGlobal = Boolean(r.is_global);
+        const matchesVenue = String(r.venue_id) === String(venue?.id);
+        return isGlobal || matchesVenue;
+      })
+      .sort((a, b) => {
+        const ap = a.priority ?? 0;
+        const bp = b.priority ?? 0;
+        if (bp !== ap) return bp - ap;
+        return a.points_required - b.points_required;
+      });
+
+    console.log("[VenueDetail] normalizedRewards", {
+      venueId: venue?.id,
+      rawCount: raw.length,
+      cleanedCount: cleaned.length,
+      categories: Array.from(new Set(cleaned.map((r) => r.category ?? ""))),
+    });
+
+    return cleaned;
+  }, [rewardsQuery.data, venue?.id]);
+
+  const availableRewardCategories = useMemo(() => {
+    const set = new Set<RewardCategory>();
+    for (const r of normalizedRewards) {
+      if (r.category) set.add(r.category);
+    }
+    const order: RewardCategory[] = ["drink", "food", "discount", "vip", "experience", "partner"];
+    return order.filter((c) => set.has(c));
+  }, [normalizedRewards]);
+
+  const filteredRewards = useMemo(() => {
+    if (selectedRewardCategory === "all") return normalizedRewards;
+    return normalizedRewards.filter((r) => r.category === selectedRewardCategory);
+  }, [normalizedRewards, selectedRewardCategory]);
 
   // ISO 8601: 1=Monday, 2=Tuesday, ..., 7=Sunday
   const dayLabels: { short: string; full: string }[] = [
@@ -538,6 +601,120 @@ export default function VenueModalScreen() {
                       );
                     })()}
                   </View>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.rewardsSection} testID="venue-rewards-section">
+              <View style={styles.rewardsHeaderRow}>
+                <Text style={styles.rewardsTitle}>Jutalmak</Text>
+                <View style={styles.rewardsPointsPill}>
+                  <Star size={14} color={Colors.dark.primary} fill={Colors.dark.primary} />
+                  <Text style={styles.rewardsPointsText}>{points.toLocaleString("hu-HU")} pont</Text>
+                </View>
+              </View>
+
+              {rewardsQuery.isLoading ? (
+                <View style={styles.rewardsLoading}>
+                  <ActivityIndicator size="small" color={Colors.dark.primary} />
+                  <Text style={styles.rewardsLoadingText}>Jutalmak betöltése...</Text>
+                </View>
+              ) : rewardsQuery.isError ? (
+                <View style={styles.rewardsErrorBox}>
+                  <Text style={styles.rewardsErrorText}>Nem sikerült betölteni a jutalmakat.</Text>
+                </View>
+              ) : normalizedRewards.length === 0 ? (
+                <View style={styles.rewardsEmptyBox}>
+                  <Text style={styles.rewardsEmptyText}>Jelenleg nincsenek elérhető jutalmak</Text>
+                </View>
+              ) : (
+                <View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.rewardsTabsRow}
+                    testID="reward-category-tabs"
+                  >
+                    <Pressable
+                      testID="reward-tab-all"
+                      style={({ pressed }) => [
+                        styles.rewardTab,
+                        selectedRewardCategory === "all" && styles.rewardTabSelected,
+                        pressed && styles.rewardTabPressed,
+                      ]}
+                      onPress={() => setSelectedRewardCategory("all")}
+                    >
+                      <Text
+                        style={[
+                          styles.rewardTabText,
+                          selectedRewardCategory === "all" && styles.rewardTabTextSelected,
+                        ]}
+                      >
+                        Összes
+                      </Text>
+                    </Pressable>
+                    {availableRewardCategories.map((cat) => {
+                      const labelMap: Record<RewardCategory, string> = {
+                        drink: "Ital",
+                        food: "Étel",
+                        discount: "Kedvezmény",
+                        vip: "VIP",
+                        experience: "Élmény",
+                        partner: "Partner",
+                      };
+                      return (
+                        <Pressable
+                          key={cat}
+                          testID={`reward-tab-${cat}`}
+                          style={({ pressed }) => [
+                            styles.rewardTab,
+                            selectedRewardCategory === cat && styles.rewardTabSelected,
+                            pressed && styles.rewardTabPressed,
+                          ]}
+                          onPress={() => setSelectedRewardCategory(cat)}
+                        >
+                          <Text
+                            style={[
+                              styles.rewardTabText,
+                              selectedRewardCategory === cat && styles.rewardTabTextSelected,
+                            ]}
+                          >
+                            {labelMap[cat]}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.rewardsList}
+                    testID="reward-cards-list"
+                  >
+                    {filteredRewards.map((reward: Reward) => (
+                      <RewardCard
+                        key={reward.id}
+                        reward={reward}
+                        canRedeem={points >= reward.points_required}
+                        onRedeem={(r) => {
+                          console.log("[VenueDetail] reward redeem pressed", {
+                            rewardId: r.id,
+                            points,
+                            points_required: r.points_required,
+                          });
+                          if (points < r.points_required) {
+                            Alert.alert(
+                              "Nincs elég pont",
+                              `Ehhez a jutalomhoz ${r.points_required} pontra van szükséged.`
+                            );
+                            return;
+                          }
+                          Alert.alert("Beváltás", "A redeem-reward endpointot a következő lépésben kötjük be.");
+                        }}
+                      />
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </View>
@@ -1001,6 +1178,115 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  rewardsSection: {
+    marginBottom: 20,
+  },
+  rewardsHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  rewardsTitle: {
+    color: Colors.dark.text,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  rewardsPointsPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  rewardsPointsText: {
+    color: Colors.dark.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  rewardsTabsRow: {
+    paddingRight: 20,
+    gap: 8,
+    paddingBottom: 12,
+  },
+  rewardTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  rewardTabSelected: {
+    backgroundColor: Colors.dark.primary,
+    borderColor: Colors.dark.primary,
+  },
+  rewardTabPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
+  },
+  rewardTabText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  rewardTabTextSelected: {
+    color: "#0B0F0E",
+  },
+  rewardsList: {
+    paddingRight: 10,
+    paddingLeft: 0,
+  },
+  rewardsLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  rewardsLoadingText: {
+    color: Colors.dark.subtext,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  rewardsEmptyBox: {
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  rewardsEmptyText: {
+    color: Colors.dark.subtext,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  rewardsErrorBox: {
+    backgroundColor: "rgba(255, 80, 80, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 80, 80, 0.18)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  rewardsErrorText: {
+    color: Colors.dark.text,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
   mapSection: {
     marginBottom: 140,
     paddingBottom: 24,

@@ -6,11 +6,22 @@ import Colors from "@/constants/colors";
 import { rewards } from "@/data/rewards";
 import RewardCard from "@/components/RewardCard";
 import { router } from "expo-router";
+import { useAppContext } from "@/context/AppContext";
 
 export default function RewardsScreen() {
   const filteredEditorPicks = useMemo(() => {
-    return rewards.slice(0, 3);
+    return [...rewards]
+      .filter((r) => r.active && new Date(r.valid_until).getTime() >= Date.now())
+      .sort((a, b) => {
+        const ap = a.priority ?? 0;
+        const bp = b.priority ?? 0;
+        if (bp !== ap) return bp - ap;
+        return a.points_required - b.points_required;
+      })
+      .slice(0, 3);
   }, []);
+
+  const { points } = useAppContext();
 
   const goToCategory = (cat: string) => {
     console.log("[Rewards] Navigate to category:", cat);
@@ -23,7 +34,7 @@ export default function RewardsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Jutalmak</Text>
         <View style={styles.pointsContainer}>
-          <Text style={styles.pointsValue}>8 700 POINTS</Text>
+          <Text style={styles.pointsValue}>{points.toLocaleString("hu-HU")} POINTS</Text>
         </View>
       </View>
       
@@ -70,8 +81,17 @@ export default function RewardsScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
           >
-            {filteredEditorPicks.map(reward => (
-              <RewardCard key={reward.id} reward={reward} />
+            {filteredEditorPicks.map((reward) => (
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                canRedeem={points >= reward.points_required}
+                onRedeem={(r) => {
+                  console.log("[Rewards] redeem pressed", { rewardId: r.id });
+                  if (points < r.points_required) return;
+                  // redeem-reward endpoint next step
+                }}
+              />
             ))}
           </ScrollView>
         </View>
@@ -95,7 +115,7 @@ export default function RewardsScreen() {
           <View style={styles.categoriesGrid}>
             <TouchableOpacity 
               style={styles.categoryCard}
-              onPress={() => goToCategory('drinks')}
+              onPress={() => goToCategory('drink')}
               accessibilityRole="button"
               accessibilityLabel="Italok kategória"
               testID="cat-drinks"
@@ -129,10 +149,10 @@ export default function RewardsScreen() {
             
             <TouchableOpacity 
               style={styles.categoryCard}
-              onPress={() => goToCategory('lifestyle')}
+              onPress={() => goToCategory('experience')}
               accessibilityRole="button"
-              accessibilityLabel="Életmód kategória"
-              testID="cat-lifestyle"
+              accessibilityLabel="Élmény kategória"
+              testID="cat-experience"
               activeOpacity={0.8}
             >
               <Image 
@@ -140,7 +160,7 @@ export default function RewardsScreen() {
                 style={styles.categoryImage} 
               />
               <View style={styles.categoryOverlay} pointerEvents="none">
-                <Text style={styles.categoryTitle}>Életmód</Text>
+                <Text style={styles.categoryTitle}>Élmény</Text>
               </View>
             </TouchableOpacity>
             
