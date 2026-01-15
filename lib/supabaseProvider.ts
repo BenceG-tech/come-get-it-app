@@ -53,12 +53,27 @@ async function invokeEdgeFunction<TResponse>(name: string, body: unknown): Promi
 
 export async function fetchRewards(venueId: string): Promise<Reward[]> {
   console.info('[Provider] fetchRewards', { venueId });
-  const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
+  const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>("get-rewards", {
     venue_id: venueId,
   });
   const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
   console.info('[Provider] fetchRewards result', { count: rewards.length });
   return rewards;
+}
+
+export async function fetchAppRewards(): Promise<Reward[]> {
+  console.info("[Provider] fetchAppRewards");
+  try {
+    const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>("get-rewards", {
+      venue_id: "global",
+    });
+    const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
+    console.info("[Provider] fetchAppRewards result", { count: rewards.length });
+    return rewards;
+  } catch (e) {
+    console.error("[Provider] fetchAppRewards failed, fallback to fetchRewards(global)", e);
+    return fetchRewards("global");
+  }
 }
 
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {

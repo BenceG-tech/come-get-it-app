@@ -1,25 +1,56 @@
 import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { Lock } from "lucide-react-native";
+import { Lock, Send } from "lucide-react-native";
 import Colors from "@/constants/colors";
-import { rewards } from "@/data/rewards";
 import RewardCard from "@/components/RewardCard";
 import { router } from "expo-router";
 import { useAppContext } from "@/context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAppRewards } from "@/lib/supabaseProvider";
+import type { Reward } from "@/types/reward";
 
 export default function RewardsScreen() {
-  const filteredEditorPicks = useMemo(() => {
-    return [...rewards]
-      .filter((r) => r.active && new Date(r.valid_until).getTime() >= Date.now())
+  const rewardsQuery = useQuery({
+    queryKey: ["rewards", "app"],
+    queryFn: async () => {
+      const res = await fetchAppRewards();
+      return res;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const normalizedRewards = useMemo(() => {
+    const raw = (rewardsQuery.data ?? []) as Reward[];
+    const today = new Date();
+    const cleaned = raw
+      .filter((r) => {
+        if (!r) return false;
+        if (r.active === false) return false;
+        const until = new Date(r.valid_until);
+        if (!Number.isNaN(until.getTime()) && until.getTime() < today.getTime()) return false;
+        return true;
+      })
       .sort((a, b) => {
         const ap = a.priority ?? 0;
         const bp = b.priority ?? 0;
         if (bp !== ap) return bp - ap;
         return a.points_required - b.points_required;
-      })
-      .slice(0, 3);
-  }, []);
+      });
+
+    console.log("[Rewards] normalizedRewards", {
+      rawCount: raw.length,
+      cleanedCount: cleaned.length,
+      categories: Array.from(new Set(cleaned.map((r) => r.category ?? ""))),
+    });
+
+    return cleaned;
+  }, [rewardsQuery.data]);
+
+  const filteredEditorPicks = useMemo(() => {
+    return normalizedRewards.slice(0, 3);
+  }, [normalizedRewards]);
 
   const { points } = useAppContext();
 
@@ -81,26 +112,38 @@ export default function RewardsScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
           >
-            {filteredEditorPicks.map((reward) => (
-              <RewardCard
-                key={reward.id}
-                reward={reward}
-                canRedeem={points >= reward.points_required}
-                onRedeem={(r) => {
-                  console.log("[Rewards] redeem pressed", { rewardId: r.id });
-                  if (points < r.points_required) return;
-                  // redeem-reward endpoint next step
-                }}
-              />
-            ))}
+            {rewardsQuery.isLoading ? (
+              <View style={styles.inlineState} testID="rewards-loading">
+                <Text style={styles.inlineStateText}>Jutalmak betöltése...</Text>
+              </View>
+            ) : rewardsQuery.isError ? (
+              <View style={styles.inlineState} testID="rewards-error">
+                <Text style={styles.inlineStateText}>Nem sikerült betölteni a jutalmakat.</Text>
+              </View>
+            ) : filteredEditorPicks.length === 0 ? (
+              <View style={styles.inlineState} testID="rewards-empty">
+                <Text style={styles.inlineStateText}>Jelenleg nincsenek elérhető jutalmak.</Text>
+              </View>
+            ) : (
+              filteredEditorPicks.map((reward) => (
+                <RewardCard
+                  key={reward.id}
+                  reward={reward}
+                  canRedeem={points >= reward.points_required}
+                  onRedeem={(r) => {
+                    console.log("[Rewards] redeem pressed", { rewardId: r.id });
+                    if (points < r.points_required) return;
+                  }}
+                />
+              ))
+            )}
           </ScrollView>
         </View>
         
         <TouchableOpacity style={styles.referButton} testID="refer-friend">
-          <Image 
-            source={{ uri: "https://cdn-icons-png.flaticon.com/512/3682/3682321.png" }} 
-            style={styles.referIcon} 
-          />
+          <View style={styles.referIconWrap}>
+            <Send size={22} color="rgba(255,255,255,0.75)" />
+          </View>
           <View style={styles.referTextContainer}>
             <Text style={styles.referTitle}>Hívj meg egy barátot</Text>
             <Text style={styles.referSubtitle}>Szerezz 500 pontot, amikor meghívsz egy barátot a Come Get It-re.</Text>
@@ -315,10 +358,16 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
   },
-  referIcon: {
-    width: 30,
-    height: 30,
-    marginRight: 15,
+  referIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
   },
   referTextContainer: {
     flex: 1,
@@ -343,6 +392,17 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     paddingHorizontal: 20,
     gap: 15,
+  },
+  inlineState: {
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingVertical: 16,
+    justifyContent: "center",
+  },
+  inlineStateText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    fontWeight: "600",
   },
   categoryCard: {
     width: "47%",

@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    minHeight: 132,
   },
   category: {
     fontSize: 11,
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   redeemButton: {
-    marginTop: 12,
+    marginTop: "auto",
     height: 38,
     borderRadius: 12,
     backgroundColor: Colors.dark.primary,

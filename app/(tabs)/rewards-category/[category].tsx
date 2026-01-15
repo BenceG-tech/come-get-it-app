@@ -2,18 +2,52 @@ import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import Colors from "@/constants/colors";
-import { rewards } from "@/data/rewards";
 import RewardCard from "@/components/RewardCard";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAppRewards } from "@/lib/supabaseProvider";
+import type { Reward } from "@/types/reward";
 
 export default function RewardsCategoryScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
   const category = (params.category ?? "all") as string;
   const { width } = useWindowDimensions();
 
+  const rewardsQuery = useQuery({
+    queryKey: ["rewards", "app"],
+    queryFn: async () => {
+      const res = await fetchAppRewards();
+      return res;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const normalizedRewards = useMemo(() => {
+    const raw = (rewardsQuery.data ?? []) as Reward[];
+    const today = new Date();
+    const cleaned = raw
+      .filter((r) => {
+        if (!r) return false;
+        if (r.active === false) return false;
+        const until = new Date(r.valid_until);
+        if (!Number.isNaN(until.getTime()) && until.getTime() < today.getTime()) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const ap = a.priority ?? 0;
+        const bp = b.priority ?? 0;
+        if (bp !== ap) return bp - ap;
+        return a.points_required - b.points_required;
+      });
+
+    console.log("[RewardsCategory] normalizedRewards", { category, rawCount: raw.length, cleanedCount: cleaned.length });
+    return cleaned;
+  }, [rewardsQuery.data, category]);
+
   const filtered = useMemo(() => {
-    if (category === "all") return rewards;
-    return rewards.filter((r) => (r.category ?? "") === category);
-  }, [category]);
+    if (category === "all") return normalizedRewards;
+    return normalizedRewards.filter((r) => (r.category ?? "") === category);
+  }, [category, normalizedRewards]);
 
   const titleMap: Record<string, string> = {
     drink: "Italok",
@@ -39,7 +73,15 @@ export default function RewardsCategoryScreen() {
         }}
       />
 
-      {isPaged ? (
+      {rewardsQuery.isLoading ? (
+        <View style={styles.empty} testID="rewards-category-loading">
+          <Text style={styles.emptyText}>Jutalmak betöltése...</Text>
+        </View>
+      ) : rewardsQuery.isError ? (
+        <View style={styles.empty} testID="rewards-category-error">
+          <Text style={styles.emptyText}>Nem sikerült betölteni a jutalmakat.</Text>
+        </View>
+      ) : isPaged ? (
         <ScrollView
           horizontal
           pagingEnabled
@@ -49,20 +91,20 @@ export default function RewardsCategoryScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{}}
           testID="rewards-category-pager"
-       >
+        >
           {filtered.map((item) => (
             <View key={item.id} style={{ width }}>
               <RewardCard reward={item} variant="page" />
             </View>
           ))}
           {filtered.length === 0 && (
-            <View style={[styles.empty, { width }]}> 
+            <View style={[styles.empty, { width }]}>
               <Text style={styles.emptyText}>Nincs jutalom ebben a kategóriában.</Text>
             </View>
           )}
         </ScrollView>
       ) : (
-        <ScrollView 
+        <ScrollView
           pagingEnabled
           snapToInterval={width}
           decelerationRate="fast"
