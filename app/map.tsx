@@ -56,48 +56,103 @@ export default function MapScreen() {
         let venuesData: Venue[] = await venuesResponse.json();
         console.log('[Map] Fetched venues:', venuesData.length);
         
-        // Geocode venues that don't have coordinates
+        // Geocode venues that don't have coordinates.
+        // IMPORTANT: Some Supabase schemas do not have latitude/longitude columns.
+        // In that case, PATCH will return PGRST204. We treat this as non-fatal and
+        // keep coordinates in-memory for the map.
         const venuesWithCoords = await Promise.all(
           venuesData.map(async (venue) => {
-            if (venue.latitude && venue.longitude) {
-              return venue;
+            const latFromVenue = typeof (venue as any).latitude === 'number' ? (venue as any).latitude : null;
+            const lngFromVenue = typeof (venue as any).longitude === 'number' ? (venue as any).longitude : null;
+            const latFromCoords = typeof venue.coordinates?.lat === 'number' ? venue.coordinates.lat : null;
+            const lngFromCoords = typeof venue.coordinates?.lng === 'number' ? venue.coordinates.lng : null;
+
+            const existingLat = latFromVenue ?? latFromCoords;
+            const existingLng = lngFromVenue ?? lngFromCoords;
+
+            if (existingLat !== null && existingLng !== null) {
+              return { ...venue, latitude: existingLat, longitude: existingLng };
             }
-            
-            // Try to geocode the address
+
             if (venue.address) {
               try {
-                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(venue.address + ', Budapest, Hungary')}&limit=1`;
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+                  `${venue.address}, Budapest, Hungary`
+                )}&limit=1`;
+
                 const geocodeResponse = await fetch(geocodeUrl, {
                   headers: {
-                    'User-Agent': 'RorkApp/1.0'
-                  }
+                    'User-Agent': 'RorkApp/1.0',
+                  },
                 });
-                const geocodeData = await geocodeResponse.json();
-                
-                if (geocodeData && geocodeData.length > 0) {
-                  const lat = parseFloat(geocodeData[0].lat);
-                  const lon = parseFloat(geocodeData[0].lon);
-                  console.log(`[Map] Geocoded ${venue.name}: ${lat}, ${lon}`);
-                  
-                  // Update venue in database
-                  await rest(`/venues?id=eq.${venue.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ latitude: lat, longitude: lon })
-                  });
-                  
-                  return { ...venue, latitude: lat, longitude: lon };
+                const geocodeData = (await geocodeResponse.json()) as any[];
+
+                if (Array.isArray(geocodeData) && geocodeData.length > 0) {
+                  const lat = Number.parseFloat(String(geocodeData[0]?.lat ?? ''));
+                  const lon = Number.parseFloat(String(geocodeData[0]?.lon ?? ''));
+
+                  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                    console.log('[Map] Geocoded venue', { id: venue.id, name: venue.name, lat, lon });
+
+                    try {
+                      const patchRes = await rest(`/venues?id=eq.${venue.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude: lat, longitude: lon }),
+                      });
+
+                      if (!patchRes.ok) {
+                        let errPayload: unknown = null;
+                        try {
+                          errPayload = await patchRes.json();
+                        } catch {
+                          try {
+                            errPayload = await patchRes.text();
+                          } catch {
+                            errPayload = null;
+                          }
+                        }
+
+                        const payloadStr = typeof errPayload === 'string' ? errPayload : JSON.stringify(errPayload);
+                        if (payloadStr.includes('PGRST204') && payloadStr.includes('latitude')) {
+                          console.warn('[Map] Skipping coordinates PATCH due to missing DB columns', {
+                            venueId: venue.id,
+                            payload: errPayload,
+                          });
+                        } else {
+                          console.warn('[Map] Venue PATCH failed (non-fatal)', {
+                            venueId: venue.id,
+                            status: patchRes.status,
+                            payload: errPayload,
+                          });
+                        }
+                      } else {
+                        console.log('[Map] Venue coordinates PATCH ok', { venueId: venue.id });
+                      }
+                    } catch (e) {
+                      console.warn('[Map] Venue PATCH threw (non-fatal)', { venueId: venue.id, e });
+                    }
+
+                    return { ...venue, latitude: lat, longitude: lon };
+                  }
                 }
               } catch (geocodeError) {
-                console.error(`[Map] Failed to geocode ${venue.name}:`, geocodeError);
+                console.error('[Map] Failed to geocode venue', { id: venue.id, name: venue.name, geocodeError });
               }
             }
-            
+
             return venue;
           })
         );
-        
-        setVenues(venuesWithCoords.filter(v => v.latitude && v.longitude));
+
+        const filteredWithCoords = venuesWithCoords.filter(
+          (v) => typeof (v as any).latitude === 'number' && typeof (v as any).longitude === 'number'
+        );
+        console.log('[Map] venuesWithCoords after geocode', {
+          total: venuesWithCoords.length,
+          withCoords: filteredWithCoords.length,
+        });
+        setVenues(filteredWithCoords as Venue[]);
 
         if (Platform.OS !== 'web' && Location) {
           const locationStatus = await Location.requestForegroundPermissionsAsync();
@@ -214,7 +269,19 @@ export default function MapScreen() {
 
       <SafeAreaView edges={['top']} style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} testID="map-back">
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              const canGoBack = (router as any)?.canGoBack?.();
+              console.log('[Map] Back pressed', { canGoBack });
+              if (canGoBack) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
+            testID="map-back"
+          >
             <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
 

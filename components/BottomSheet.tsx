@@ -24,8 +24,6 @@ import { ChevronUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import React from "react";
 
-
-
 export type BottomSheetSnapPoints = readonly [string, string, string];
 export type BottomSheetIndex = 0 | 1 | 2;
 
