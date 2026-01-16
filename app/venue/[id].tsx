@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
+import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
@@ -551,41 +552,83 @@ export default function VenueModalScreen() {
                   <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
               ) : resolvedCoords.isValid ? (
-                <TouchableOpacity
-                  style={styles.mapContainer}
-                  activeOpacity={0.9}
-                  testID="venue-map"
-                  onPress={() => {
-                    const url = Platform.select({
-                      ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
-                      android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
-                      web: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
-                      default: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
-                    });
-                    if (url) {
-                      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                        window.open(url, '_blank');
-                      } else {
-                        Linking.openURL(url).catch(err => {
-                          console.error('[VenueDetail] Failed to open maps:', err);
-                        });
-                      }
-                    }
-                  }}
-                >
-                  <Image
-                    source={{ 
-                      uri: `https://maps.geoapify.com/v1/staticmap?style=dark-matter&width=800&height=400&center=lonlat:${resolvedCoords.lng},${resolvedCoords.lat}&zoom=15&marker=lonlat:${resolvedCoords.lng},${resolvedCoords.lat};color:%232BB7FF;size:large&apiKey=6dc7fb95a3b246cfa0f3bcef5ce9ed9a`
-                    }}
-                    style={styles.mapView}
-                    resizeMode="cover"
-                    onError={(e) => console.log('[VenueDetail] Map image failed to load:', e.nativeEvent.error)}
-                  />
-                  <View style={styles.mapOverlay}>
-                    <MapPin size={16} color="#fff" />
-                    <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
+                Platform.OS !== 'web' && MapView ? (
+                  <View style={styles.mapContainer} testID="venue-map">
+                    <MapView
+                      style={styles.mapView}
+                      provider={PROVIDER_GOOGLE}
+                      initialRegion={{
+                        latitude: resolvedCoords.lat,
+                        longitude: resolvedCoords.lng,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      }}
+                      scrollEnabled={false}
+                      zoomEnabled={false}
+                      rotateEnabled={false}
+                      pitchEnabled={false}
+                      toolbarEnabled={false}
+                      testID="venue-native-map"
+                    >
+                      <Marker
+                        coordinate={{ latitude: resolvedCoords.lat, longitude: resolvedCoords.lng }}
+                        title={venue.name}
+                        onPress={() => {
+                          const url = Platform.select({
+                            ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
+                            android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
+                            web: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                            default: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                          });
+                          if (!url) return;
+                          if (Platform.OS === 'web' && typeof window !== 'undefined') window.open(url, '_blank');
+                          else Linking.openURL(url).catch((err) => console.error('[VenueDetail] Failed to open maps:', err));
+                        }}
+                        testID="venue-native-marker"
+                      />
+                    </MapView>
+                    <View style={styles.mapOverlay} pointerEvents="none">
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.mapOverlayText}>Markerre bökve útvonal</Text>
+                    </View>
                   </View>
-                </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.mapContainer}
+                    activeOpacity={0.9}
+                    testID="venue-map"
+                    onPress={() => {
+                      const url = Platform.select({
+                        ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
+                        android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
+                        web: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                        default: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                      });
+                      if (url) {
+                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                          window.open(url, '_blank');
+                        } else {
+                          Linking.openURL(url).catch((err) => {
+                            console.error('[VenueDetail] Failed to open maps:', err);
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <Image
+                      source={{
+                        uri: `https://maps.geoapify.com/v1/staticmap?style=dark-matter&width=800&height=400&center=lonlat:${resolvedCoords.lng},${resolvedCoords.lat}&zoom=15&marker=lonlat:${resolvedCoords.lng},${resolvedCoords.lat};color:%232BB7FF;size:large&apiKey=6dc7fb95a3b246cfa0f3bcef5ce9ed9a`,
+                      }}
+                      style={styles.mapView}
+                      resizeMode="cover"
+                      onError={(e) => console.log('[VenueDetail] Map image failed to load:', e.nativeEvent.error)}
+                    />
+                    <View style={styles.mapOverlay}>
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
+                    </View>
+                  </TouchableOpacity>
+                )
               ) : (
                 <View style={styles.mapPlaceholder}>
                   <MapPin size={24} color={Colors.dark.text} />
