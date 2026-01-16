@@ -227,11 +227,7 @@ function BottomSheetImpl(
               style={({ pressed }) => [styles.chevronButton, pressed && { opacity: 0.7 }]}
               testID={testID ? `${testID}-toggle` : undefined}
             >
-              <ChevronUp
-                size={18}
-                color={Colors.text}
-                style={{ transform: [{ rotate: chevronRotation }] }}
-              />
+              <ChevronUp size={18} color={Colors.text} style={{ transform: [{ rotate: chevronRotation }] }} />
             </Pressable>
           </View>
 
