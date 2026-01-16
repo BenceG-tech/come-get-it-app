@@ -24,8 +24,10 @@ import { ChevronUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import React from "react";
 
-export type BottomSheetSnapPoints = readonly [string, string];
-export type BottomSheetIndex = 0 | 1;
+
+
+export type BottomSheetSnapPoints = readonly [string, string, string];
+export type BottomSheetIndex = 0 | 1 | 2;
 
 export type BottomSheetChangeEvent = {
   index: BottomSheetIndex;
@@ -39,8 +41,9 @@ export type BottomSheetRef = {
 };
 
 type SheetSnap = {
+  heights: [number, number, number];
   expandedHeight: number;
-  collapsedHeight: number;
+  translateYByIndex: [number, number, number];
   maxTranslateY: number;
 };
 
@@ -57,14 +60,23 @@ function parsePercentPoint(point: string): number {
 }
 
 function snapPointsToHeights(containerHeight: number, snapPoints: BottomSheetSnapPoints): SheetSnap {
-  const expandedPct = parsePercentPoint(snapPoints[1]);
   const collapsedPct = parsePercentPoint(snapPoints[0]);
+  const halfPct = parsePercentPoint(snapPoints[1]);
+  const expandedPct = parsePercentPoint(snapPoints[2]);
 
-  const expandedHeight = clamp(containerHeight * (Number.isFinite(expandedPct) ? expandedPct : 0.9), 260, containerHeight);
-  const collapsedHeight = clamp(containerHeight * (Number.isFinite(collapsedPct) ? collapsedPct : 0.25), 160, expandedHeight);
-  const maxTranslateY = expandedHeight - collapsedHeight;
+  const expandedHeight = clamp(containerHeight * (Number.isFinite(expandedPct) ? expandedPct : 0.92), 320, containerHeight);
+  const halfHeight = clamp(containerHeight * (Number.isFinite(halfPct) ? halfPct : 0.55), 260, expandedHeight);
+  const collapsedHeight = clamp(containerHeight * (Number.isFinite(collapsedPct) ? collapsedPct : 0.18), 120, halfHeight);
 
-  return { expandedHeight, collapsedHeight, maxTranslateY };
+  const heights: [number, number, number] = [collapsedHeight, halfHeight, expandedHeight];
+  const translateYByIndex: [number, number, number] = [
+    expandedHeight - collapsedHeight,
+    expandedHeight - halfHeight,
+    0,
+  ];
+  const maxTranslateY = translateYByIndex[0];
+
+  return { heights, expandedHeight, translateYByIndex, maxTranslateY };
 }
 
 export type BottomSheetProps = {
@@ -84,7 +96,7 @@ export type BottomSheetProps = {
 
 function BottomSheetImpl(
   {
-    snapPoints = ['25%', '90%'],
+    snapPoints = ['18%', '55%', '92%'],
     children,
     onChange,
     title,
@@ -117,7 +129,7 @@ function BottomSheetImpl(
       const snap = snapRef.current;
       if (!snap) return;
 
-      const toValue = nextIndex === 1 ? 0 : snap.maxTranslateY;
+      const toValue = snap.translateYByIndex[nextIndex];
       console.log('[BottomSheet] snapToIndex', { nextIndex, toValue });
 
       setIndex(nextIndex);
@@ -139,7 +151,7 @@ function BottomSheetImpl(
     () => ({
       snapToIndex,
       snapToCollapsed: () => snapToIndex(0),
-      snapToExpanded: () => snapToIndex(1),
+      snapToExpanded: () => snapToIndex(2),
       getIndex: () => index,
     }),
     [index, snapToIndex]
@@ -151,7 +163,7 @@ function BottomSheetImpl(
       const snap = snapPointsToHeights(h, snapPoints);
       snapRef.current = snap;
 
-      const initialTo = initialIndex === 1 ? 0 : snap.maxTranslateY;
+      const initialTo = snap.translateYByIndex[initialIndex];
       translateY.setValue(initialTo);
       translateYStart.current = initialTo;
       setIndex(initialIndex);
@@ -166,7 +178,7 @@ function BottomSheetImpl(
       snapToIndex(index);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapPoints[0], snapPoints[1]]);
+  }, [snapPoints[0], snapPoints[1], snapPoints[2]]);
 
   const panResponder: PanResponderInstance = useMemo(() => {
     return PanResponder.create({
@@ -187,17 +199,23 @@ function BottomSheetImpl(
         const snap = snapRef.current;
         if (!snap) return;
 
-        const shouldExpand = g.vy < -0.25 || g.dy < -snap.maxTranslateY * 0.2;
-        const shouldCollapse = g.vy > 0.25 || g.dy > snap.maxTranslateY * 0.2;
+        const current = clamp(translateYStart.current + g.dy, 0, snap.maxTranslateY);
+        const projected = clamp(current + g.vy * 120, 0, snap.maxTranslateY);
 
-        if (shouldExpand) snapToIndex(1);
-        else if (shouldCollapse) snapToIndex(0);
-        else snapToIndex(index);
+        const distances: [number, number, number] = [
+          Math.abs(projected - snap.translateYByIndex[0]),
+          Math.abs(projected - snap.translateYByIndex[1]),
+          Math.abs(projected - snap.translateYByIndex[2]),
+        ];
+
+        const min = Math.min(...distances);
+        const nextIndex: BottomSheetIndex = distances[0] === min ? 0 : distances[1] === min ? 1 : 2;
+        snapToIndex(nextIndex);
       },
     });
-  }, [index, snapToIndex, translateY]);
+  }, [snapToIndex, translateY]);
 
-  const chevronRotation = index === 1 ? '180deg' : '0deg';
+  const chevronRotation = index === 2 ? '180deg' : '0deg';
 
   return (
     <View
@@ -221,9 +239,9 @@ function BottomSheetImpl(
             <View style={styles.handle} />
             <View style={{ flex: 1 }} />
             <Pressable
-              onPress={() => snapToIndex(index === 1 ? 0 : 1)}
+              onPress={() => snapToIndex(index === 2 ? 0 : 2)}
               accessibilityRole="button"
-              accessibilityLabel={index === 1 ? 'Lista összecsukása' : 'Lista kibontása'}
+              accessibilityLabel={index === 2 ? 'Lista összecsukása' : 'Lista kibontása'}
               style={({ pressed }) => [styles.chevronButton, pressed && { opacity: 0.7 }]}
               testID={testID ? `${testID}-toggle` : undefined}
             >
