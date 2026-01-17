@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabaseClient';
 
@@ -99,10 +100,30 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      console.log('[Auth] signInWithGoogle start', { platform: Platform.OS });
+      const appOwnership = Constants.appOwnership ?? 'unknown';
+      console.log('[Auth] signInWithGoogle start', { platform: Platform.OS, appOwnership });
 
-      const redirectTo = AuthSession.makeRedirectUri({ scheme: 'myapp' });
-      console.log('[Auth] redirectTo', redirectTo);
+      if (Platform.OS === 'web') {
+        const redirectTo = AuthSession.makeRedirectUri();
+        console.log('[Auth] web redirectTo', redirectTo);
+
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo,
+            skipBrowserRedirect: false,
+          },
+        });
+
+        if (error) throw error;
+        console.log('[Auth] web signInWithOAuth started', { hasUrl: Boolean(data?.url) });
+        return;
+      }
+
+      const redirectTo = AuthSession.makeRedirectUri({
+        scheme: 'myapp',
+      });
+      console.log('[Auth] native redirectTo', { redirectTo, appOwnership });
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -117,15 +138,15 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       if (!authUrl) throw new Error('Missing OAuth url');
 
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
-      console.log('[Auth] openAuthSessionAsync result', result.type);
+      console.log('[Auth] openAuthSessionAsync result', { type: result.type });
 
       if (result.type !== 'success') {
-        if (result.type === 'cancel') return;
-        throw new Error('OAuth flow failed');
+        if (result.type === 'cancel' || result.type === 'dismiss') return;
+        throw new Error(`OAuth flow failed (${result.type})`);
       }
 
       const callbackUrl = result.url;
-      console.log('[Auth] OAuth callback url received');
+      console.log('[Auth] OAuth callback url received', { hasUrl: Boolean(callbackUrl) });
 
       const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(callbackUrl);
       if (exchangeError) throw exchangeError;
@@ -133,7 +154,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.log('[Auth] exchangeCodeForSession ok', { hasSession: Boolean(exchangeData?.session) });
     } catch (e) {
       console.error('[Auth] signInWithGoogle failed', e);
-      Alert.alert('Nem sikerült Google bejelentkezés', toUserMessage(e));
+      Alert.alert(
+        'Nem sikerült Google bejelentkezés',
+        `${toUserMessage(e)}\n\nTipp: a Supabase Auth → URL Configuration alatt add hozzá a redirect URL-t is.`
+      );
       throw e;
     }
   }, [supabase]);
