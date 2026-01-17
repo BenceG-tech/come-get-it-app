@@ -17,7 +17,6 @@ import VenueCard from "@/components/VenueCard";
 import { Venue } from "@/types/venue";
 import { rest } from "@/lib/supabaseRest";
 import { useAppContext } from "@/context/AppContext";
-import { venues as fallbackVenues } from "@/data/venues";
 
 export default function BarsScreen() {
   const router = useRouter();
@@ -26,8 +25,9 @@ export default function BarsScreen() {
   const { width } = useWindowDimensions();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const logoUri = useMemo(
-    () => "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/hyz5pz2ymzhnjwx3w67to",
+    () => "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/orb6kvp9n7wts6gddeitn",
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
@@ -91,13 +91,13 @@ export default function BarsScreen() {
 
           setVenues(venuesWithImages);
         } else {
-          console.log("[Home] Using fallback venues");
-          setVenues(fallbackVenues);
+          console.log("[Home] No venues returned");
+          setVenues([]);
         }
       } catch (error) {
         console.error("[Home] Error fetching venues:", error);
-        console.log("[Home] Using fallback venues data");
-        setVenues(fallbackVenues);
+        setErrorMsg("Nem sikerült betölteni a helyszíneket. Ellenőrizd a kapcsolatot vagy próbáld újra.");
+        setVenues([]);
       } finally {
         setLoading(false);
       }
@@ -205,6 +205,36 @@ export default function BarsScreen() {
         {loading ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>Betöltés...</Text>
+          </View>
+        ) : errorMsg ? (
+          <View style={styles.emptyState} testID="home-error">
+            <Text style={styles.emptyStateText}>{errorMsg}</Text>
+            <TouchableOpacity
+              testID="home-retry"
+              onPress={() => {
+                console.log('[Home] retry pressed');
+                setLoading(true);
+                setErrorMsg(null);
+                setVenues([]);
+                (async () => {
+                  try {
+                    const response = await rest('/venues?select=*');
+                    const json = (await response.json()) as unknown;
+                    const rows = Array.isArray(json) ? (json as Venue[]) : [];
+                    setVenues(rows);
+                  } catch (e) {
+                    console.error('[Home] retry failed', e);
+                    setErrorMsg('Nem sikerült betölteni a helyszíneket.');
+                  } finally {
+                    setLoading(false);
+                  }
+                })().catch((e) => console.error('[Home] retry crashed', e));
+              }}
+              style={styles.retryBtn}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.retryBtnText}>Újrapróbálás</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <>
@@ -337,5 +367,20 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
+  },
+  retryBtn: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0DD0FF",
+  },
+  retryBtnText: {
+    color: "#001014",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
 });

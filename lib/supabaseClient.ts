@@ -74,7 +74,14 @@ let client: SupabaseClient | null = null;
 export function getSupabase(): SupabaseClient {
   if (client) return client;
 
-  console.log('[SupabaseClient] Creating supabase client');
+  if (!SUPABASE_URL || !SUPABASE_ANON) {
+    throw new Error('Hiányzó Supabase env változó(k): EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  console.log('[SupabaseClient] Creating supabase client', {
+    hasUrl: Boolean(SUPABASE_URL),
+    hasAnon: Boolean(SUPABASE_ANON),
+  });
   client = createClient(SUPABASE_URL, SUPABASE_ANON, {
     auth: {
       persistSession: true,

@@ -3,19 +3,64 @@ import { useLocalSearchParams, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Copy, Smile } from "lucide-react-native";
+import { useQuery } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
-import { rewards } from "@/data/rewards";
 import { useAppContext } from "@/context/AppContext";
+import { rest } from "@/lib/supabaseRest";
+import type { Reward } from "@/types/reward";
 
 export default function RewardDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const rewardId = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const insets = useSafeAreaInsets();
-  const reward = rewards.find(r => r.id === id);
   const { points } = useAppContext();
+
+  const rewardQuery = useQuery({
+    queryKey: ["reward", rewardId],
+    enabled: rewardId.length > 0,
+    queryFn: async () => {
+      console.log("[RewardDetail] Fetch reward", { rewardId });
+      const res = await rest(`/rewards?id=eq.${encodeURIComponent(rewardId)}&select=*`);
+      const json = (await res.json()) as unknown;
+      const rows = Array.isArray(json) ? (json as Reward[]) : [];
+      return rows[0] ?? null;
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
+
+  const reward = rewardQuery.data;
+
+  if (!rewardId) {
+    return (
+      <View style={styles.container} testID="reward-detail-missing-id">
+        <Text style={styles.errorText}>Hiányzó jutalom azonosító</Text>
+      </View>
+    );
+  }
+
+  if (rewardQuery.isLoading) {
+    return (
+      <View style={styles.container} testID="reward-detail-loading">
+        <Text style={styles.loadingText}>Betöltés…</Text>
+      </View>
+    );
+  }
+
+  if (rewardQuery.isError) {
+    return (
+      <View style={styles.container} testID="reward-detail-error">
+        <Text style={styles.errorText}>Nem sikerült betölteni a jutalmat.</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={() => rewardQuery.refetch()} testID="reward-detail-retry">
+          <Text style={styles.retryBtnText}>Újrapróbálás</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (!reward) {
     return (
-      <View style={styles.container}>
+      <View style={styles.container} testID="reward-detail-not-found">
         <Text style={styles.errorText}>Jutalom nem található</Text>
       </View>
     );
@@ -222,6 +267,29 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 18,
     fontWeight: "bold",
+  },
+  loadingText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 100,
+    fontWeight: "600",
+  },
+  retryBtn: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0DD0FF",
+    alignSelf: "center",
+  },
+  retryBtnText: {
+    color: "#001014",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
   errorText: {
     color: Colors.text,

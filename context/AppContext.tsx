@@ -1,5 +1,8 @@
 import createContextHook from "@nkzw/create-context-hook";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Alert } from "react-native";
+import { useAuth } from "@/context/AuthContext";
+import { getSupabase } from "@/lib/supabaseClient";
 
 type AppContextType = {
   locationEnabled: boolean;
@@ -11,12 +14,55 @@ type AppContextType = {
 };
 
 export const [AppProvider, useAppContext] = createContextHook<AppContextType>(() => {
+  const { session, isAuthReady } = useAuth();
+  const supabase = useMemo(() => getSupabase(), []);
+
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const [points, setPoints] = useState<number>(934);
+  const [points, setPoints] = useState<number>(0);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const run = async () => {
+      if (!isAuthReady) return;
+
+      if (!session?.user?.id) {
+        console.log('[AppContext] No session -> reset points');
+        if (mounted) setPoints(0);
+        return;
+      }
+
+      try {
+        console.log('[AppContext] Fetching points from profiles', { userId: session.user.id });
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('points')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        const nextPoints = Number((data as { points?: unknown } | null)?.points ?? 0);
+        console.log('[AppContext] Points loaded', { points: Number.isFinite(nextPoints) ? nextPoints : 0 });
+        if (mounted) setPoints(Number.isFinite(nextPoints) ? nextPoints : 0);
+      } catch (e) {
+        console.error('[AppContext] Failed to load points', e);
+        Alert.alert('Hiba', 'Nem sikerült betölteni a pontjaidat.');
+        if (mounted) setPoints(0);
+      }
+    };
+
+    run().catch((e) => {
+      console.error('[AppContext] points effect crashed', e);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAuthReady, session?.user?.id, supabase]);
+
   const addPoints = (amount: number) => {
-    setPoints(current => current + amount);
+    setPoints((current) => current + amount);
   };
 
   return {
