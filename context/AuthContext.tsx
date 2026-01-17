@@ -101,7 +101,8 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const signInWithGoogle = useCallback(async () => {
     try {
       const appOwnership = Constants.appOwnership ?? 'unknown';
-      console.log('[Auth] signInWithGoogle start', { platform: Platform.OS, appOwnership });
+      const useProxy = appOwnership === 'expo';
+      console.log('[Auth] signInWithGoogle start', { platform: Platform.OS, appOwnership, useProxy });
 
       if (Platform.OS === 'web') {
         const redirectTo = AuthSession.makeRedirectUri();
@@ -120,10 +121,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         return;
       }
 
-      const redirectTo = AuthSession.makeRedirectUri({
-        scheme: 'myapp',
-      });
-      console.log('[Auth] native redirectTo', { redirectTo, appOwnership });
+      const redirectTo = AuthSession.makeRedirectUri();
+
+      console.log('[Auth] native redirectTo', { redirectTo, appOwnership, useProxy });
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -135,7 +135,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
       if (error) throw error;
       const authUrl = data?.url;
-      if (!authUrl) throw new Error('Missing OAuth url');
+      if (!authUrl) throw new Error('Hiányzó OAuth URL');
 
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
       console.log('[Auth] openAuthSessionAsync result', { type: result.type });
@@ -154,9 +154,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       console.log('[Auth] exchangeCodeForSession ok', { hasSession: Boolean(exchangeData?.session) });
     } catch (e) {
       console.error('[Auth] signInWithGoogle failed', e);
+
+      const redirectTo = AuthSession.makeRedirectUri();
+
       Alert.alert(
         'Nem sikerült Google bejelentkezés',
-        `${toUserMessage(e)}\n\nTipp: a Supabase Auth → URL Configuration alatt add hozzá a redirect URL-t is.`
+        `${toUserMessage(e)}\n\n1) Supabase → Authentication → Providers → Google: legyen Enabled.\n2) Supabase → Authentication → URL Configuration → Redirect URLs: add hozzá ezt: ${redirectTo}`
       );
       throw e;
     }

@@ -10,12 +10,15 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Chrome, Mail } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 
 type Mode = 'login' | 'signup';
+
+const LOGO_URL = 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/x3nt5e3v1reqdxq0py0kk';
 
 function AuthScreen() {
   const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
@@ -55,8 +58,10 @@ function AuthScreen() {
 
   return (
     <View style={styles.root} testID="auth-root">
-      <LinearGradient colors={['#031317', '#000000', '#000000']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#061114', '#030607', '#000000']} style={StyleSheet.absoluteFill} />
       <View pointerEvents="none" style={styles.overlay} />
+      <View pointerEvents="none" style={styles.glowA} />
+      <View pointerEvents="none" style={styles.glowB} />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
@@ -64,7 +69,9 @@ function AuthScreen() {
           style={styles.safe}
         >
           <View style={styles.header} testID="auth-header">
-            <Text style={styles.title}>Come Get It</Text>
+            <View style={styles.logoWrap} testID="auth-logo">
+              <Image source={{ uri: LOGO_URL }} style={styles.logo} contentFit="contain" />
+            </View>
             <Text style={styles.subtitle}>Jelentkezz be és gyűjts jutalmakat.</Text>
           </View>
 
@@ -177,7 +184,25 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#000000',
-    opacity: 0.35,
+    opacity: 0.25,
+  },
+  glowA: {
+    position: 'absolute',
+    top: -140,
+    left: -120,
+    width: 320,
+    height: 320,
+    borderRadius: 320,
+    backgroundColor: 'rgba(0,209,255,0.12)',
+  },
+  glowB: {
+    position: 'absolute',
+    bottom: -180,
+    right: -160,
+    width: 380,
+    height: 380,
+    borderRadius: 380,
+    backgroundColor: 'rgba(255,92,143,0.10)',
   },
   safe: {
     flex: 1,
@@ -186,25 +211,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 18,
     paddingBottom: 14,
+    alignItems: 'flex-start',
   },
-  title: {
-    color: Colors.text,
-    fontSize: 40,
-    letterSpacing: -0.8,
-    fontWeight: '900',
+  logoWrap: {
+    width: '100%',
+    alignItems: 'flex-start',
+  },
+  logo: {
+    width: 220,
+    height: 72,
   },
   subtitle: {
-    marginTop: 8,
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 15,
-    fontWeight: '600',
+    marginTop: 10,
+    color: 'rgba(255,255,255,0.74)',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   card: {
     marginHorizontal: 16,
-    backgroundColor: 'rgba(18,18,18,0.86)',
+    backgroundColor: 'rgba(14,14,16,0.74)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 16,
     gap: 12,
   },
@@ -274,6 +303,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
   primaryBtnDisabled: {
     opacity: 0.55,
