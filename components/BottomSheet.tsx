@@ -1,7 +1,8 @@
-import React, {
+import {
   forwardRef,
   memo,
   ReactNode,
+  Ref,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -23,6 +24,7 @@ import {
 import { ChevronUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import React from "react";
+
 
 export type BottomSheetSnapPoints = readonly [string, string, string];
 export type BottomSheetIndex = 0 | 1 | 2;
@@ -107,7 +109,7 @@ function BottomSheetImpl(
     accessibilityLabel,
     testID,
   }: BottomSheetProps,
-  ref: React.Ref<BottomSheetRef>
+  ref: Ref<BottomSheetRef>
 ) {
   const [index, setIndex] = useState<BottomSheetIndex>(initialIndex);
 

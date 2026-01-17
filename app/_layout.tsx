@@ -12,6 +12,7 @@ import { trpc, trpcClient } from "@/lib/trpc";
 function RootLayoutNav() {
   return (
     <Stack
+      initialRouteName="landing"
       screenOptions={{
         headerShown: false,
         headerStyle: { backgroundColor: Colors.background },
@@ -20,6 +21,7 @@ function RootLayoutNav() {
         contentStyle: { backgroundColor: Colors.background },
       }}
     >
+      <Stack.Screen name="landing" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="venue/[id]" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="filter" options={{ presentation: "modal", headerShown: false }} />
