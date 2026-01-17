@@ -6,13 +6,14 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@/context/AppContext";
+import { AuthProvider } from "@/context/AuthContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 function RootLayoutNav() {
   return (
     <Stack
-      initialRouteName="landing"
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         headerStyle: { backgroundColor: Colors.background },
@@ -21,6 +22,8 @@ function RootLayoutNav() {
         contentStyle: { backgroundColor: Colors.background },
       }}
     >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="landing" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="venue/[id]" options={{ presentation: "card", headerShown: false }} />
@@ -69,11 +72,13 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <SafeAreaProvider>
-          <AppProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <RootLayoutNav />
-            </GestureHandlerRootView>
-          </AppProvider>
+          <AuthProvider>
+            <AppProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <RootLayoutNav />
+              </GestureHandlerRootView>
+            </AppProvider>
+          </AuthProvider>
         </SafeAreaProvider>
       </trpc.Provider>
     </QueryClientProvider>

@@ -16,7 +16,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Vendéglátóhelyek",
           tabBarIcon: ({ color }) => <Wine size={24} color={color} />,

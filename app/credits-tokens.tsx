@@ -58,7 +58,7 @@ export default function CreditsTokensScreen() {
               <ArrowUpRight size={18} color={Colors.textSecondary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(tabs)')} testID="browse-rewards" activeOpacity={0.9}>
+            <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(tabs)/rewards')} testID="browse-rewards" activeOpacity={0.9}>
               <View style={styles.quickActionIcon}>
                 <Gift size={20} color={"rgba(0, 209, 255, 0.95)"} />
               </View>

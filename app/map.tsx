@@ -277,7 +277,7 @@ export default function MapScreen() {
               if (canGoBack) {
                 router.back();
               } else {
-                router.replace('/(tabs)');
+                router.replace('/(tabs)/home');
               }
             }}
             testID="map-back"

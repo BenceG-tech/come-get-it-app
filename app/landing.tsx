@@ -11,7 +11,7 @@ function LandingScreen() {
 
   const goToApp = useCallback(() => {
     console.log("[Landing] Navigate to main app");
-    router.replace("/(tabs)");
+    router.replace("/(tabs)/home");
   }, [router]);
 
   const overlayOpacity = 0.5;
