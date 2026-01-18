@@ -2,7 +2,7 @@ import * as React from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, Shield, Sparkles, Gift } from "lucide-react-native";
+import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, Sparkles, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
@@ -278,15 +278,6 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/addresses')}>
               <MapPin size={22} color={Colors.text} />
               <Text style={styles.menuTitle}>Címeim</Text>
-              <ChevronRight size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/admin')}
-            >
-              <Shield size={22} color={Colors.text} />
-              <Text style={styles.menuTitle}>Admin - Venue Tags</Text>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           </View>

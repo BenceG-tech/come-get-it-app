@@ -10,6 +10,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 
+const BACK_TITLE = "Vissza";
+
 function RootLayoutNav() {
   return (
     <Stack
@@ -32,17 +34,17 @@ function RootLayoutNav() {
       <Stack.Screen name="map" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="search" options={{ presentation: "card", headerShown: false }} />
 
-      <Stack.Screen name="visit-history" options={{ presentation: "card", headerShown: true, title: "Látogatási előzmények" }} />
-      <Stack.Screen name="credits-tokens" options={{ presentation: "card", headerShown: true, title: "Kreditek és Tokenek" }} />
-      <Stack.Screen name="invite-friends" options={{ presentation: "card", headerShown: true, title: "Barátok meghívása" }} />
-      <Stack.Screen name="favorites" options={{ presentation: "card", headerShown: true, title: "Kedvencek" }} />
-      <Stack.Screen name="redeem-coupon" options={{ presentation: "card", headerShown: true, title: "Kuponkód beváltása" }} />
-      <Stack.Screen name="help" options={{ presentation: "card", headerShown: true, title: "Segítség" }} />
-      <Stack.Screen name="order-history" options={{ presentation: "card", headerShown: true, title: "Rendelési előzmények" }} />
-      <Stack.Screen name="account" options={{ presentation: "card", headerShown: true, title: "Fiók" }} />
-      <Stack.Screen name="payment-methods" options={{ presentation: "card", headerShown: true, title: "Fizetési módok" }} />
-      <Stack.Screen name="addresses" options={{ presentation: "card", headerShown: true, title: "Címeim" }} />
-      <Stack.Screen name="admin" options={{ presentation: "card", headerShown: true, title: "Admin" }} />
+      <Stack.Screen name="visit-history" options={{ presentation: "card", headerShown: true, title: "Látogatási előzmények", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="credits-tokens" options={{ presentation: "card", headerShown: true, title: "Kreditek és Tokenek", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="invite-friends" options={{ presentation: "card", headerShown: true, title: "Barátok meghívása", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="favorites" options={{ presentation: "card", headerShown: true, title: "Kedvencek", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="redeem-coupon" options={{ presentation: "card", headerShown: true, title: "Kuponkód beváltása", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="help" options={{ presentation: "card", headerShown: true, title: "Segítség", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="order-history" options={{ presentation: "card", headerShown: true, title: "Rendelési előzmények", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="account" options={{ presentation: "card", headerShown: true, title: "Fiók", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="payment-methods" options={{ presentation: "card", headerShown: true, title: "Fizetési módok", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="addresses" options={{ presentation: "card", headerShown: true, title: "Címeim", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="admin" options={{ presentation: "card", headerShown: true, title: "Admin", headerBackTitle: BACK_TITLE }} />
     </Stack>
   );
 }
