@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,13 +15,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Chrome, Mail } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
 
 type Mode = 'login' | 'signup';
 
-const LOGO_URL = 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/x3nt5e3v1reqdxq0py0kk';
+const LOGO_SOURCE = require('../assets/images/splash-icon.png');
 
 function AuthScreen() {
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const router = useRouter();
+  const { session, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -30,6 +32,12 @@ function AuthScreen() {
   const canSubmit = useMemo(() => {
     return email.trim().length > 3 && password.length >= 6 && !loading;
   }, [email, loading, password]);
+
+  useEffect(() => {
+    if (!session) return;
+    console.log('[AuthScreen] session detected -> navigate to /(tabs)/home');
+    router.replace('/(tabs)/home');
+  }, [router, session]);
 
   const onSubmit = useCallback(async () => {
     if (!canSubmit) return;
@@ -68,14 +76,15 @@ function AuthScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.safe}
         >
-          <View style={styles.header} testID="auth-header">
-            <View style={styles.logoWrap} testID="auth-logo">
-              <Image source={{ uri: LOGO_URL }} style={styles.logo} contentFit="contain" />
+          <View style={styles.content} testID="auth-content">
+            <View style={styles.brand} testID="auth-header">
+              <View style={styles.logoWrap} testID="auth-logo">
+                <Image source={LOGO_SOURCE} style={styles.logo} contentFit="contain" />
+              </View>
+              <Text style={styles.subtitle}>Jelentkezz be és gyűjts jutalmakat.</Text>
             </View>
-            <Text style={styles.subtitle}>Jelentkezz be és gyűjts jutalmakat.</Text>
-          </View>
 
-          <View style={styles.card} testID="auth-card">
+            <View style={styles.card} testID="auth-card">
             <View style={styles.segment} testID="auth-segment">
               <Pressable
                 testID="auth-mode-login"
@@ -163,11 +172,12 @@ function AuthScreen() {
                 <Text style={styles.oauthText}>Folytatás Google-lel</Text>
               </View>
             </Pressable>
-          </View>
+            </View>
 
-          <Text style={styles.footnote} testID="auth-footnote">
-            Belépéssel elfogadod a feltételeket és az adatkezelési tájékoztatót.
-          </Text>
+            <Text style={styles.footnote} testID="auth-footnote">
+              Belépéssel elfogadod a feltételeket és az adatkezelési tájékoztatót.
+            </Text>
+          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -207,19 +217,28 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 22,
-    paddingTop: 18,
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 14,
-    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+  },
+  brand: {
+    paddingHorizontal: 6,
+    paddingBottom: 14,
   },
   logoWrap: {
     width: '100%',
     alignItems: 'flex-start',
   },
   logo: {
-    width: 220,
-    height: 72,
+    width: 120,
+    height: 120,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
   },
   subtitle: {
     marginTop: 10,
@@ -229,8 +248,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   card: {
-    marginHorizontal: 16,
-    backgroundColor: 'rgba(14,14,16,0.74)',
+    backgroundColor: 'rgba(14,14,16,0.78)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
     borderRadius: 24,
@@ -358,8 +376,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   footnote: {
-    marginTop: 14,
-    paddingHorizontal: 22,
+    marginTop: 12,
+    paddingHorizontal: 8,
     color: 'rgba(255,255,255,0.55)',
     fontSize: 12,
     lineHeight: 16,
