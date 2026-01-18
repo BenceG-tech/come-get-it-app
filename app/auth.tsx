@@ -82,7 +82,6 @@ function AuthScreen() {
               <View style={styles.logoWrap} testID="auth-logo">
                 <Image source={LOGO_SOURCE} style={styles.logo} contentFit="contain" />
               </View>
-              <Text style={styles.subtitle}>Jelentkezz be és gyűjts jutalmakat.</Text>
             </View>
 
             <View style={styles.card} testID="auth-card">
@@ -230,8 +229,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 280,
-    height: 120,
+    width: 560,
+    height: 240,
+    maxWidth: '92%',
   },
   subtitle: {
     marginTop: 14,
