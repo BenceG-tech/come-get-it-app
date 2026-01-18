@@ -19,7 +19,9 @@ import { useRouter } from 'expo-router';
 
 type Mode = 'login' | 'signup';
 
-const LOGO_SOURCE = require('../assets/images/splash-icon.png');
+const LOGO_SOURCE = {
+  uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/6o5hpbimnv4oml44hjmiv',
+};
 
 function AuthScreen() {
   const router = useRouter();
@@ -69,7 +71,6 @@ function AuthScreen() {
       <LinearGradient colors={['#061114', '#030607', '#000000']} style={StyleSheet.absoluteFill} />
       <View pointerEvents="none" style={styles.overlay} />
       <View pointerEvents="none" style={styles.glowA} />
-      <View pointerEvents="none" style={styles.glowB} />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
@@ -205,15 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 320,
     backgroundColor: 'rgba(0,209,255,0.12)',
   },
-  glowB: {
-    position: 'absolute',
-    bottom: -180,
-    right: -160,
-    width: 380,
-    height: 380,
-    borderRadius: 380,
-    backgroundColor: 'rgba(255,92,143,0.10)',
-  },
+
   safe: {
     flex: 1,
   },
@@ -222,30 +215,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 14,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
   },
   brand: {
+    flex: 1,
     paddingHorizontal: 6,
-    paddingBottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 10,
   },
   logoWrap: {
     width: '100%',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logo: {
-    width: 120,
+    width: 280,
     height: 120,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
   },
   subtitle: {
-    marginTop: 10,
+    marginTop: 14,
     color: 'rgba(255,255,255,0.74)',
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.2,
+    textAlign: 'center',
   },
   card: {
     backgroundColor: 'rgba(14,14,16,0.78)',
