@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from '@/lib/supabaseClient';
@@ -15,6 +16,7 @@ type AuthContextType = {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -98,14 +100,21 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     [supabase]
   );
 
+  const getRedirectTo = useCallback((): string => {
+    const redirectTo = AuthSession.makeRedirectUri({ scheme: 'myapp' });
+    console.log('[Auth] computed redirectTo', { redirectTo, platform: Platform.OS });
+    return redirectTo;
+  }, []);
+
   const signInWithGoogle = useCallback(async () => {
     try {
       const appOwnership = Constants.appOwnership ?? 'unknown';
       const useProxy = appOwnership === 'expo';
       console.log('[Auth] signInWithGoogle start', { platform: Platform.OS, appOwnership, useProxy });
 
+      const redirectTo = getRedirectTo();
+
       if (Platform.OS === 'web') {
-        const redirectTo = AuthSession.makeRedirectUri();
         console.log('[Auth] web redirectTo', redirectTo);
 
         const { data, error } = await supabase.auth.signInWithOAuth({
@@ -120,8 +129,6 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         console.log('[Auth] web signInWithOAuth started', { hasUrl: Boolean(data?.url) });
         return;
       }
-
-      const redirectTo = AuthSession.makeRedirectUri();
 
       console.log('[Auth] native redirectTo', { redirectTo, appOwnership, useProxy });
 
@@ -155,12 +162,66 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     } catch (e) {
       console.error('[Auth] signInWithGoogle failed', e);
 
-      const redirectTo = AuthSession.makeRedirectUri();
+      const redirectTo = getRedirectTo();
 
       Alert.alert(
         'Nem sikerült Google bejelentkezés',
         `${toUserMessage(e)}\n\n1) Supabase → Authentication → Providers → Google: legyen Enabled.\n2) Supabase → Authentication → URL Configuration → Redirect URLs: add hozzá ezt: ${redirectTo}`
       );
+      throw e;
+    }
+  }, [getRedirectTo, supabase]);
+
+  const signInWithApple = useCallback(async () => {
+    try {
+      console.log('[Auth] signInWithApple start', { platform: Platform.OS });
+
+      if (Platform.OS !== 'ios') {
+        Alert.alert('Apple bejelentkezés', 'Az Apple bejelentkezés csak iPhone-on elérhető.');
+        return;
+      }
+
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      console.log('[Auth] AppleAuthentication availability', { isAvailable });
+      if (!isAvailable) {
+        Alert.alert('Apple bejelentkezés', 'Az Apple bejelentkezés ezen az eszközön nem elérhető.');
+        return;
+      }
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const identityToken = credential.identityToken;
+      if (!identityToken) throw new Error('Hiányzó Apple identityToken');
+
+      console.log('[Auth] Apple credential received', {
+        hasIdentityToken: Boolean(identityToken),
+        hasEmail: Boolean(credential.email),
+      });
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: identityToken,
+      });
+
+      if (error) throw error;
+
+      console.log('[Auth] signInWithApple ok', { hasSession: Boolean(data?.session) });
+    } catch (e) {
+      if (e && typeof e === 'object' && 'code' in (e as Record<string, unknown>)) {
+        const code = (e as { code?: string }).code;
+        if (code === 'ERR_CANCELED') {
+          console.log('[Auth] Apple sign-in cancelled');
+          return;
+        }
+      }
+
+      console.error('[Auth] signInWithApple failed', e);
+      Alert.alert('Nem sikerült Apple bejelentkezés', toUserMessage(e));
       throw e;
     }
   }, [supabase]);
@@ -183,6 +244,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
+    signInWithApple,
     signOut,
   };
 });

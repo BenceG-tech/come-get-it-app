@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Chrome, Mail } from 'lucide-react-native';
+import { Apple, Chrome, Mail } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -25,7 +25,7 @@ const LOGO_SOURCE = {
 
 function AuthScreen() {
   const router = useRouter();
-  const { session, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { session, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -65,6 +65,16 @@ function AuthScreen() {
       setLoading(false);
     }
   }, [loading, signInWithGoogle]);
+
+  const onApple = useCallback(async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await signInWithApple();
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, signInWithApple]);
 
   return (
     <View style={styles.root} testID="auth-root">
@@ -160,6 +170,18 @@ function AuthScreen() {
               <Text style={styles.dividerText}>vagy</Text>
               <View style={styles.divider} />
             </View>
+
+            <Pressable
+              testID="auth-apple"
+              onPress={onApple}
+              style={({ pressed }) => [styles.oauthBtnLight, pressed && styles.pressed]}
+              disabled={loading}
+            >
+              <View style={styles.oauthRow}>
+                <Apple size={18} color="#000000" />
+                <Text style={styles.oauthTextDark}>Bejelentkezés Apple-lel</Text>
+              </View>
+            </Pressable>
 
             <Pressable
               testID="auth-google"
@@ -345,6 +367,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
+  oauthBtnLight: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.10)',
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   oauthBtn: {
     backgroundColor: 'rgba(0,0,0,0.35)',
     borderWidth: 1,
@@ -362,6 +393,11 @@ const styles = StyleSheet.create({
   },
   oauthText: {
     color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  oauthTextDark: {
+    color: '#000000',
     fontSize: 15,
     fontWeight: '900',
   },
