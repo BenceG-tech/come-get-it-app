@@ -36,6 +36,36 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
 
+  const ensureProfileRow = useCallback(
+    async (nextSession: Session | null) => {
+      const userId = nextSession?.user?.id;
+      if (!userId) return;
+
+      try {
+        console.log('[Auth] ensureProfileRow start', { userId });
+        const payload = {
+          id: userId,
+          points: 0,
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>;
+
+        const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+        if (error) {
+          console.warn('[Auth] ensureProfileRow failed', {
+            message: (error as { message?: unknown })?.message,
+            error,
+          });
+          return;
+        }
+
+        console.log('[Auth] ensureProfileRow ok');
+      } catch (e) {
+        console.warn('[Auth] ensureProfileRow threw', e);
+      }
+    },
+    [supabase]
+  );
+
   useEffect(() => {
     let mounted = true;
 
@@ -49,6 +79,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         }
         if (!mounted) return;
         setSession(data?.session ?? null);
+        ensureProfileRow(data?.session ?? null).catch((e) => {
+          console.warn('[Auth] ensureProfileRow after getSession failed', e);
+        });
       } catch (e) {
         console.error('[Auth] getSession threw', e);
         if (mounted) setSession(null);
@@ -69,13 +102,16 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       console.log('[Auth] onAuthStateChange', { event, hasSession: Boolean(nextSession) });
       setSession(nextSession ?? null);
+      ensureProfileRow(nextSession ?? null).catch((e) => {
+        console.warn('[Auth] ensureProfileRow in listener failed', e);
+      });
     });
 
     return () => {
       mounted = false;
       listener?.subscription?.unsubscribe();
     };
-  }, [supabase]);
+  }, [ensureProfileRow, supabase]);
 
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {

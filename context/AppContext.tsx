@@ -20,6 +20,7 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
   const [points, setPoints] = useState<number>(0);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [hasShownPointsError, setHasShownPointsError] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -29,7 +30,10 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
 
       if (!session?.user?.id) {
         console.log('[AppContext] No session -> reset points');
-        if (mounted) setPoints(0);
+        if (mounted) {
+          setPoints(0);
+          setHasShownPointsError(false);
+        }
         return;
       }
 
@@ -47,7 +51,13 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
         if (mounted) setPoints(Number.isFinite(nextPoints) ? nextPoints : 0);
       } catch (e) {
         console.error('[AppContext] Failed to load points', e);
-        Alert.alert('Hiba', 'Nem sikerült betölteni a pontjaidat.');
+        if (!hasShownPointsError) {
+          Alert.alert(
+            'Hiba',
+            'Nem sikerült betölteni a pontjaidat. Valószínűleg hiányzik a profilod a Supabase „profiles” táblában, vagy nincs megfelelő jogosultság (RLS policy).'
+          );
+          if (mounted) setHasShownPointsError(true);
+        }
         if (mounted) setPoints(0);
       }
     };
@@ -59,7 +69,7 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
     return () => {
       mounted = false;
     };
-  }, [isAuthReady, session?.user?.id, supabase]);
+  }, [hasShownPointsError, isAuthReady, session?.user?.id, supabase]);
 
   const addPoints = (amount: number) => {
     setPoints((current) => current + amount);
