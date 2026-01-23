@@ -41,21 +41,29 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
     const init = async () => {
       try {
-        console.log('[Auth] getSession init');
+        console.log('[Auth] getSession init starting...');
         const { data, error } = await supabase.auth.getSession();
+        console.log('[Auth] getSession completed', { hasSession: Boolean(data?.session), error: error?.message });
         if (error) {
           console.warn('[Auth] getSession error', error);
         }
         if (!mounted) return;
-        setSession(data.session ?? null);
+        setSession(data?.session ?? null);
+      } catch (e) {
+        console.error('[Auth] getSession threw', e);
+        if (mounted) setSession(null);
       } finally {
+        console.log('[Auth] Setting isAuthReady to true');
         if (mounted) setIsAuthReady(true);
       }
     };
 
     init().catch((e) => {
-      console.error('[Auth] init failed', e);
-      if (mounted) setIsAuthReady(true);
+      console.error('[Auth] init failed completely', e);
+      if (mounted) {
+        setSession(null);
+        setIsAuthReady(true);
+      }
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {

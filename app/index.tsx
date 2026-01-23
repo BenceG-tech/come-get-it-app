@@ -9,15 +9,23 @@ export default function EntryScreen() {
   const { session, isAuthReady } = useAuth();
 
   useEffect(() => {
-    if (!isAuthReady) return;
-
-    if (session) {
-      console.log('[Entry] session exists -> go /(tabs)');
-      router.replace('/(tabs)/home');
-    } else {
-      console.log('[Entry] no session -> go /auth');
-      router.replace('/auth');
+    console.log('[Entry] useEffect triggered', { isAuthReady, hasSession: Boolean(session) });
+    if (!isAuthReady) {
+      console.log('[Entry] Auth not ready yet, waiting...');
+      return;
     }
+
+    const timer = setTimeout(() => {
+      if (session) {
+        console.log('[Entry] session exists -> go /(tabs)/home');
+        router.replace('/(tabs)/home');
+      } else {
+        console.log('[Entry] no session -> go /auth');
+        router.replace('/auth');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [isAuthReady, router, session]);
 
   return (

@@ -138,7 +138,7 @@ export default function BarsScreen() {
           <Image
             source={{ uri: logoUri }}
             accessibilityLabel="Come Get It logo"
-            style={[styles.brandLogo, { height: width <= 375 ? 56 : 64 }]}
+            style={[styles.brandLogo, { height: width <= 375 ? 68 : 78 }]}
           />
         </View>
         <View style={styles.headerActions}>
