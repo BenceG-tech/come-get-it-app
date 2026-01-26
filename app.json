@@ -32,6 +32,11 @@
         "backgroundColor": "#ffffff"
       },
       "package": "app.rork.budapest-bar-explorer",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+        }
+      },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
