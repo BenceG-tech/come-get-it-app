@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { getSupabase } from '@/lib/supabaseClient';
 import { CSRImpactResponse } from '@/types/csr';
 
@@ -84,11 +85,14 @@ export async function getUserCSRImpact(): Promise<CSRImpactResult> {
     return { success: true, data };
   } catch (error) {
     console.error('[CSRService] Network error:', error);
+    const isWeb = Platform.OS === 'web';
     return {
       success: false,
       error: {
         code: 'NETWORK_ERROR',
-        message: 'A hatás adatok átmenetileg nem elérhetők. Próbáld újra később!',
+        message: isWeb 
+          ? 'A hatás adatok csak a mobil alkalmazásban érhetők el. Kérjük, használd az Expo Go appot!'
+          : 'A hatás adatok átmenetileg nem elérhetők. Próbáld újra később!',
       },
     };
   }

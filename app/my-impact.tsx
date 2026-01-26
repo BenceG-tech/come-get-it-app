@@ -23,7 +23,7 @@ export default function MyImpactScreen() {
   const { session } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery<any, Error>({
     queryKey: ['csr-impact'],
     queryFn: async () => {
       const result = await getUserCSRImpact();
@@ -34,6 +34,7 @@ export default function MyImpactScreen() {
     },
     enabled: !!session,
     staleTime: 60_000,
+    retry: false,
   });
 
   const handleRefresh = useCallback(async () => {
@@ -104,7 +105,7 @@ export default function MyImpactScreen() {
           <Text style={styles.emptyEmoji}>⚠️</Text>
           <Text style={styles.emptyTitle}>Hiba történt</Text>
           <Text style={styles.emptySubtitle}>
-            A hatás adatok átmenetileg nem elérhetők. Próbáld újra később!
+            {error?.message || 'A hatás adatok átmenetileg nem elérhetők. Próbáld újra később!'}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
             <Text style={styles.retryButtonText}>Újrapróbálás</Text>
