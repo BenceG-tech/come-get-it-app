@@ -16,7 +16,7 @@ const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 
 async function invokeEdgeFunction<TResponse>(name: string, body: unknown): Promise<TResponse> {
   const url = `${SUPABASE_URL}/functions/v1/${name}`;
-  console.info('[Provider] invokeEdgeFunction', { name, url });
+  console.info('[Provider] invokeEdgeFunction', { name, url, body });
 
   const res = await fetch(url, {
     method: 'POST',
@@ -103,7 +103,7 @@ export async function fetchAppRewards(): Promise<Reward[]> {
 
   try {
     const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
-      venue_id: 'global',
+      scope: 'global',
     });
     const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
     console.info('[Provider] fetchAppRewards edge result', { count: rewards.length });
