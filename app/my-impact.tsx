@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { getUserCSRImpact } from '@/lib/csrService';
 import { useAuth } from '@/context/AuthContext';
+import { RecentDonation } from '@/types/csr';
 
 export default function MyImpactScreen() {
   const router = useRouter();
@@ -244,7 +245,7 @@ export default function MyImpactScreen() {
               <Text style={styles.sectionTitle}>Legutóbbi adományok</Text>
             </View>
             
-            {recent_donations.slice(0, 10).map((donation, index) => (
+            {recent_donations.slice(0, 10).map((donation: RecentDonation, index: number) => (
               <View key={`${donation.date}-${index}`} style={styles.timelineItem}>
                 <View style={styles.timelineDot} />
                 <View style={styles.timelineContent}>
