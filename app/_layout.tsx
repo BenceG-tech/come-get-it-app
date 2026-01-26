@@ -45,6 +45,7 @@ function RootLayoutNav() {
       <Stack.Screen name="payment-methods" options={{ presentation: "card", headerShown: true, title: "Fizetési módok", headerBackTitle: BACK_TITLE }} />
       <Stack.Screen name="addresses" options={{ presentation: "card", headerShown: true, title: "Címeim", headerBackTitle: BACK_TITLE }} />
       <Stack.Screen name="admin" options={{ presentation: "card", headerShown: true, title: "Admin", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="my-impact" options={{ presentation: "card", headerShown: false }} />
     </Stack>
   );
 }

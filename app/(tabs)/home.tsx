@@ -9,23 +9,38 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { Search, MapPin, Filter } from "lucide-react-native";
+import { Search, MapPin, Filter, Heart, ChevronRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
 import { Venue } from "@/types/venue";
 import { rest } from "@/lib/supabaseRest";
 import { useAppContext } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
+import { getUserCSRImpact } from "@/lib/csrService";
 
 export default function BarsScreen() {
   const router = useRouter();
   const { selectedFilters, setSelectedFilters } = useAppContext();
+  const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const { data: csrData } = useQuery({
+    queryKey: ["csr-impact"],
+    queryFn: async () => {
+      const result = await getUserCSRImpact();
+      if (!result.success) return null;
+      return result.data;
+    },
+    enabled: !!session,
+    staleTime: 5 * 60 * 1000,
+  });
   const logoUri = useMemo(
     () => "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/orb6kvp9n7wts6gddeitn",
     []
@@ -150,6 +165,40 @@ export default function BarsScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {session && csrData && csrData.stats.total_impact_units > 0 && (
+        <TouchableOpacity
+          style={styles.impactWidget}
+          onPress={() => router.push("/my-impact")}
+          activeOpacity={0.85}
+          testID="impact-widget"
+        >
+          <View style={styles.impactWidgetContent}>
+            <View style={styles.impactWidgetHeader}>
+              <Heart size={16} color="#1fb1b7" />
+              <Text style={styles.impactWidgetTitle}>A Te Hatásod Ezen a Héten</Text>
+            </View>
+            <View style={styles.impactWidgetStats}>
+              <View style={styles.impactWidgetStat}>
+                <Text style={styles.impactWidgetEmoji}>🍽️</Text>
+                <Text style={styles.impactWidgetValue}>{csrData.stats.total_impact_units}</Text>
+                <Text style={styles.impactWidgetLabel}>adag</Text>
+              </View>
+              {csrData.stats.current_streak_days > 0 && (
+                <View style={styles.impactWidgetStat}>
+                  <Text style={styles.impactWidgetEmoji}>🔥</Text>
+                  <Text style={styles.impactWidgetValue}>{csrData.stats.current_streak_days}</Text>
+                  <Text style={styles.impactWidgetLabel}>napos</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          <View style={styles.impactWidgetArrow}>
+            <Text style={styles.impactWidgetLink}>Részletek</Text>
+            <ChevronRight size={16} color="#1fb1b7" />
+          </View>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.filtersContainer}>
         <View style={styles.filtersContent}>
@@ -382,5 +431,63 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     letterSpacing: 0.2,
+  },
+  impactWidget: {
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: "rgba(31, 177, 183, 0.1)",
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "rgba(31, 177, 183, 0.25)",
+  },
+  impactWidgetContent: {
+    flex: 1,
+  },
+  impactWidgetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  impactWidgetTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.8)",
+  },
+  impactWidgetStats: {
+    flexDirection: "row",
+    gap: 20,
+  },
+  impactWidgetStat: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  impactWidgetEmoji: {
+    fontSize: 16,
+  },
+  impactWidgetValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1fb1b7",
+  },
+  impactWidgetLabel: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.6)",
+  },
+  impactWidgetArrow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  impactWidgetLink: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1fb1b7",
   },
 });

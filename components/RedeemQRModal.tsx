@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { X, RefreshCw, Clock, AlertCircle, CheckCircle } from 'lucide-react-native';
+import { X, RefreshCw, Clock, AlertCircle, CheckCircle, Heart, ChevronRight } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { RedemptionToken, FreeDrinkWindow, VenueDrink } from '@/types/venue';
@@ -33,10 +35,13 @@ type RedeemQRModalProps = {
   userId?: string;
 };
 
+import { CharityImpact } from '@/types/csr';
+
 type ModalState = 
   | 'confirm_location'
   | 'loading'
   | 'qr_display'
+  | 'redemption_success'
   | 'not_eligible'
   | 'rate_limited'
   | 'error';
@@ -52,6 +57,8 @@ export default function RedeemQRModal({
   freeDrinkWindows,
   userId = 'anonymous_user',
 }: RedeemQRModalProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [state, setState] = useState<ModalState>('confirm_location');
   const [token, setToken] = useState<RedemptionToken | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(TOKEN_TTL_MS);
@@ -61,6 +68,7 @@ export default function RedeemQRModal({
   const [nextWindow, setNextWindow] = useState<{ day: number; start: string; end: string } | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [charityImpact, setCharityImpact] = useState<CharityImpact | null>(null);
   
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -81,6 +89,7 @@ export default function RedeemQRModal({
     setErrorMessage('');
     setNextWindow(null);
     setCooldownUntil(null);
+    setCharityImpact(null);
     setState('confirm_location');
   }, [clearTokenTimer]);
 
@@ -168,6 +177,10 @@ export default function RedeemQRModal({
         
         if (response.success) {
           setToken(response.data);
+          const responseData = response.data as RedemptionToken & { charity_impact?: CharityImpact };
+          if (responseData.charity_impact) {
+            setCharityImpact(responseData.charity_impact);
+          }
           setState('qr_display');
           startTokenTimer(response.data.expires_at);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -234,6 +247,18 @@ export default function RedeemQRModal({
     clearTokenTimer();
     onClose();
   }, [clearTokenTimer, onClose]);
+
+  const handleShowSuccess = useCallback(() => {
+    clearTokenTimer();
+    setState('redemption_success');
+    queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [clearTokenTimer, queryClient]);
+
+  const handleViewImpact = useCallback(() => {
+    onClose();
+    router.push('/my-impact');
+  }, [onClose, router]);
 
   const renderContent = () => {
     switch (state) {
@@ -338,14 +363,57 @@ export default function RedeemQRModal({
             
             <TouchableOpacity
               style={styles.closeBottomButton}
-              onPress={handleClose}
+              onPress={handleShowSuccess}
               activeOpacity={0.8}
             >
-              <Text style={styles.closeBottomButtonText}>Bezárás</Text>
+              <Text style={styles.closeBottomButtonText}>Kész</Text>
             </TouchableOpacity>
           </View>
         );
       }
+
+      case 'redemption_success':
+        return (
+          <View style={styles.contentContainer}>
+            <View style={styles.successIconContainer}>
+              <CheckCircle size={64} color="#22c55e" />
+            </View>
+            <Text style={styles.successTitle}>Élvezd az italod!</Text>
+            <Text style={styles.successDrinkName}>{drink?.drinkName}</Text>
+            <Text style={styles.successVenueName}>{venueName}</Text>
+
+            {charityImpact && (
+              <View style={styles.charitySection}>
+                <Text style={styles.charityEmoji}>🎉</Text>
+                <Text style={styles.charityText}>
+                  Adományoztál {charityImpact.impact_description}!
+                </Text>
+                <Text style={styles.charityName}>{charityImpact.charity_name}</Text>
+              </View>
+            )}
+
+            <View style={styles.successButtonsContainer}>
+              {charityImpact && (
+                <TouchableOpacity
+                  style={styles.viewImpactButton}
+                  onPress={handleViewImpact}
+                  activeOpacity={0.8}
+                >
+                  <Heart size={18} color="#1fb1b7" />
+                  <Text style={styles.viewImpactButtonText}>Nézd meg a hatásod</Text>
+                  <ChevronRight size={18} color="#1fb1b7" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.closeBottomButton}
+                onPress={handleClose}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.closeBottomButtonText}>Bezárás</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
       
       case 'not_eligible':
         return (
@@ -725,5 +793,70 @@ const styles = StyleSheet.create({
   errorButtonsContainer: {
     width: '100%',
     gap: 12,
+  },
+  successIconContainer: {
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.dark.text,
+    marginBottom: 8,
+  },
+  successDrinkName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.dark.primary,
+    marginBottom: 4,
+  },
+  successVenueName: {
+    fontSize: 16,
+    color: Colors.dark.subtext,
+    marginBottom: 24,
+  },
+  charitySection: {
+    backgroundColor: 'rgba(31, 177, 183, 0.15)',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(31, 177, 183, 0.3)',
+  },
+  charityEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  charityText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.dark.text,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  charityName: {
+    fontSize: 14,
+    color: '#1fb1b7',
+    fontWeight: '500',
+  },
+  successButtonsContainer: {
+    width: '100%',
+    gap: 12,
+  },
+  viewImpactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(31, 177, 183, 0.15)',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(31, 177, 183, 0.4)',
+  },
+  viewImpactButtonText: {
+    color: '#1fb1b7',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
