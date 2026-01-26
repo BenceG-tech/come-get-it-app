@@ -99,19 +99,8 @@ export async function fetchRewards(venueId: string): Promise<Reward[]> {
 }
 
 export async function fetchAppRewards(): Promise<Reward[]> {
-  console.info('[Provider] fetchAppRewards');
-
-  try {
-    const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
-      scope: 'global',
-    });
-    const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
-    console.info('[Provider] fetchAppRewards edge result', { count: rewards.length });
-    if (rewards.length > 0) return rewards;
-  } catch (e) {
-    console.error('[Provider] fetchAppRewards edge failed, falling back to REST', e);
-  }
-
+  console.info('[Provider] fetchAppRewards - using REST directly');
+  // Edge function doesn't support scope:'global', use REST directly
   return fetchRewardsRest({ scope: 'app' });
 }
 
