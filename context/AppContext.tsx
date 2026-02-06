@@ -50,7 +50,14 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
         console.log('[AppContext] Points loaded', { points: Number.isFinite(nextPoints) ? nextPoints : 0 });
         if (mounted) setPoints(Number.isFinite(nextPoints) ? nextPoints : 0);
       } catch (e: unknown) {
-        const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        let errMsg = 'Unknown error';
+        if (e instanceof Error) {
+          errMsg = e.message || e.name || 'Error with no message';
+        } else if (e && typeof e === 'object') {
+          errMsg = JSON.stringify(e, null, 2);
+        } else if (e) {
+          errMsg = String(e);
+        }
         console.error('[AppContext] Failed to load points:', errMsg);
         if (!hasShownPointsError) {
           Alert.alert(
