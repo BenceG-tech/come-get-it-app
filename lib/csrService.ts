@@ -16,6 +16,18 @@ export type CSRImpactResult =
 export async function getUserCSRImpact(): Promise<CSRImpactResult> {
   console.log('[CSRService] Fetching user CSR impact...');
 
+  // Check platform first - web will have CORS issues with edge functions
+  if (Platform.OS === 'web') {
+    console.log('[CSRService] Web platform detected - edge function not available due to CORS');
+    return {
+      success: false,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: 'A hatás adatok csak a mobil alkalmazásban érhetők el. Kérjük, használd az Expo Go appot!',
+      },
+    };
+  }
+
   try {
     const supabase = getSupabase();
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
