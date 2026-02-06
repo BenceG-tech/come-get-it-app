@@ -147,13 +147,25 @@ export async function issueRedemptionToken(
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('[RedemptionService] Server error:', response.status, errorData);
+      console.error('[RedemptionService] Server error:', response.status, JSON.stringify(errorData));
+      
+      const errorMessage = errorData.message || errorData.error || 'Ismeretlen hiba történt.';
+      
+      if (response.status === 400) {
+        return {
+          success: false,
+          error: {
+            error: errorMessage,
+            code: 'BAD_REQUEST',
+          },
+        };
+      }
       
       if (response.status === 403) {
         return {
           success: false,
           error: {
-            error: errorData.message || 'Nem vagy jogosult az ingyen italra most.',
+            error: errorMessage || 'Nem vagy jogosult az ingyen italra most.',
             code: 'NOT_ELIGIBLE',
             next_available_window: errorData.next_available_window,
           },
@@ -164,7 +176,7 @@ export async function issueRedemptionToken(
         return {
           success: false,
           error: {
-            error: errorData.message || 'Túl sok kérés. Kérjük, várj egy kicsit.',
+            error: errorMessage || 'Túl sok kérés. Kérjük, várj egy kicsit.',
             code: 'RATE_LIMITED',
             cooldown_until: errorData.cooldown_until,
           },
@@ -174,7 +186,7 @@ export async function issueRedemptionToken(
       return {
         success: false,
         error: {
-          error: errorData.message || 'Ismeretlen hiba történt.',
+          error: errorMessage,
           code: 'UNKNOWN',
         },
       };
