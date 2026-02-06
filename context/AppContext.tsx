@@ -49,8 +49,9 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
         const nextPoints = Number((data as { points?: unknown } | null)?.points ?? 0);
         console.log('[AppContext] Points loaded', { points: Number.isFinite(nextPoints) ? nextPoints : 0 });
         if (mounted) setPoints(Number.isFinite(nextPoints) ? nextPoints : 0);
-      } catch (e) {
-        console.error('[AppContext] Failed to load points', e);
+      } catch (e: unknown) {
+        const errMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        console.error('[AppContext] Failed to load points:', errMsg);
         if (!hasShownPointsError) {
           Alert.alert(
             'Hiba',
