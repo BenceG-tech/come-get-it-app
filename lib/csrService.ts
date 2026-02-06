@@ -17,7 +17,7 @@ export async function getUserCSRImpact(): Promise<CSRImpactResult> {
   console.log('[CSRService] Fetching user CSR impact...');
 
   // Check platform first - web will have CORS issues with edge functions
-  if (Platform.OS === 'web') {
+  if ((Platform.OS as string) === 'web') {
     console.log('[CSRService] Web platform detected - edge function not available due to CORS');
     return {
       success: false,
@@ -97,7 +97,7 @@ export async function getUserCSRImpact(): Promise<CSRImpactResult> {
     return { success: true, data };
   } catch (error) {
     console.error('[CSRService] Network error:', error);
-    const isWeb = Platform.OS === 'web';
+    const isWeb = (Platform.OS as string) === 'web';
     return {
       success: false,
       error: {
