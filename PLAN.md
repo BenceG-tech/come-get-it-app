@@ -1,15 +1,10 @@
-# Make home screen impact widget null-safe for new users
+# Fix Metro build error by reinstalling app dependencies
 
-**What's happening**
-
-The home screen tries to read impact stats (meals donated, streak days) before they exist for brand-new users, which can crash the screen.
+**What's wrong**
+The app failed to start because Metro couldn't find the core Expo script. This usually means the installed packages got out of sync with the project's lockfile.
 
 **Fix**
+- Reinstall the app's packages so Expo and Metro are properly available again.
+- Restart the preview so the simulator picks up the freshly installed dependencies.
 
-- Safely read every impact stat on the home screen so missing values default to 0 instead of crashing.
-- Only show the "Your Impact This Week" widget when there's actually a value greater than 0 to display.
-- Leave the rest of the home screen untouched.
-
-**Note on user defaults**
-
-The home screen reads its stats from the impact service (not directly from the user record), and that service already returns a stats object. The "initialize a default stats object on user creation" piece would belong in the server-side user-creation flow, which isn't part of this app's code. I'll flag this so you can address it on the backend if needed — happy to help if you point me to where new users are created.
+After this, the app should boot in the preview as before.
