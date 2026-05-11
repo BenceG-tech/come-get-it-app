@@ -166,7 +166,7 @@ export default function BarsScreen() {
         </View>
       </View>
 
-      {session && csrData && csrData.stats.total_impact_units > 0 && (
+      {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
         <TouchableOpacity
           style={styles.impactWidget}
           onPress={() => router.push("/my-impact")}
@@ -181,13 +181,13 @@ export default function BarsScreen() {
             <View style={styles.impactWidgetStats}>
               <View style={styles.impactWidgetStat}>
                 <Text style={styles.impactWidgetEmoji}>🍽️</Text>
-                <Text style={styles.impactWidgetValue}>{csrData.stats.total_impact_units}</Text>
+                <Text style={styles.impactWidgetValue}>{csrData?.stats?.total_impact_units ?? 0}</Text>
                 <Text style={styles.impactWidgetLabel}>adag</Text>
               </View>
-              {csrData.stats.current_streak_days > 0 && (
+              {(csrData?.stats?.current_streak_days ?? 0) > 0 && (
                 <View style={styles.impactWidgetStat}>
                   <Text style={styles.impactWidgetEmoji}>🔥</Text>
-                  <Text style={styles.impactWidgetValue}>{csrData.stats.current_streak_days}</Text>
+                  <Text style={styles.impactWidgetValue}>{csrData?.stats?.current_streak_days ?? 0}</Text>
                   <Text style={styles.impactWidgetLabel}>napos</Text>
                 </View>
               )}
