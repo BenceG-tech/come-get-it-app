@@ -1,20 +1,17 @@
-# Fix the "Script not found expo" preview error for good
+# Permanently fix the recurring "Script not found 'expo'" Metro startup error
 
-## What's happening
-The preview keeps failing with "Metro not ready — Script not found 'expo'". This happens when the app's installed packages get out of sync with the lockfile, so the start-up script can't find Expo even though it's listed in the project.
+**What's going wrong**
 
-## Root cause
-The packages folder ends up in a broken state between sessions. Nothing in your project files is actually wrong — it's an install/cache issue that comes back whenever the environment is rebuilt.
+Every time the preview boots, the underlying tool tries to invoke `expo` but the project's settings file doesn't list `expo` as a known shortcut, so it bails out with "Script not found 'expo'" and Metro never finishes starting. Previous fixes kept re-running installs, which only patched it for a moment — the project itself was never adjusted, so the error returns on the next cold start.
 
-## What I'll do
-- **Force a clean reinstall** of all app packages so the Expo start script is properly registered.
-- **Clear Metro's cache** so it doesn't keep loading the broken state.
-- **Verify** by running the project's type/build check and confirming Metro boots without the "Script not found" error.
-- **Add a small safety net** so that if the same situation happens again, the start script self-heals instead of throwing the cryptic error.
+**The permanent fix**
 
-## What you'll see after
-- The yellow "The app needs to be fixed" screen goes away.
-- The preview boots normally and you can scan the QR code or use the in-browser preview again.
-- No code/UI changes — your screens, data, and flows stay exactly the same.
+- Add the missing `expo` shortcut (and a couple of standard companions like `android`, `ios`, `web`) directly into the project's scripts, so the startup tool can always find it instead of failing.
+- Keep the existing Rork `start` shortcut exactly as it is so nothing else changes about how the preview launches.
+- Confirm the entry point (`expo-router/entry`) is still wired correctly and that nothing else in the config is interfering.
 
-Shall I go ahead and apply this fix?
+**Result**
+
+- The preview will boot cleanly every time without the "Script not found" error.
+- No visual or feature changes to the app itself — this is purely a configuration fix so the build stops crashing at the very first step.
+
