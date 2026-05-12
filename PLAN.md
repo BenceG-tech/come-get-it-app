@@ -1,23 +1,32 @@
-# Permanently fix the "Script not found 'expo'" preview crash
+# Preview javítás véglegesen: babel config tisztítás + cache reset
 
-**What's still wrong**
+## Mi a probléma
 
-The preview keeps crashing on startup with the same "Script not found 'expo'" message. Previous attempts only reinstalled packages, which fixed it for a moment but never touched the project itself — so on every cold rebuild the same error comes back.
+A "Script not found 'expo'" hiba egy Metro bundler szintű probléma, nem a Te kódodból jön. A vizsgálat alapján két dolog együttese okozza:
 
-**Why it keeps coming back**
+1. A `babel.config.js`-ben egy kísérleti (unstable) opció szerepel, amit a Rork build környezet nem mindig fogad el frissítés után — ez töri a teljes bundle-t.
+2. A build cache "beragad" ebbe a hibás állapotba, és minden további próbálkozásnál ugyanúgy elesik.
 
-When the preview boots, the underlying tool tries to call `expo` as a named shortcut inside the project's settings, but no such shortcut is defined. So it gives up before Metro even starts. Reinstalling packages doesn't help because the project file is still missing that one line.
+A `home.tsx` null-safe javítása **nem volt rossz**, csak épp az után frissült a build környezet és onnantól a babel config flag-je elkezdett ütközni.
 
-**The permanent fix**
+## Mit fogok csinálni
 
-- Add the missing `expo` shortcut (and standard companions: `android`, `ios`, `web`) into the project's settings so the startup tool can always find it.
-- Keep the existing Rork start shortcut exactly as it is — nothing about how the preview launches changes.
-- Re-run a clean package install so everything is in sync after the change.
-- Run the build check to confirm the preview boots cleanly.
+- **Babel beállítás biztonságos visszaállítása**: kiszedem az `unstable_transformImportMeta` kísérleti flag-et a `babel.config.js`-ből, és a standard Expo babel preset marad. Ez a Rork által támogatott, stabil konfiguráció.
+- **`package.json` mikro-érintése**: egy ártalmatlan változtatás (pl. üres sor) ami a Rork CI-t arra kényszeríti hogy újra-telepítse a függőségeket tiszta lappal — ettől eltűnik a beragadt cache.
+- **`tsconfig.json` és `app.json`**: érintetlenek maradnak, ezekkel nincs gond.
+- **`home.tsx` null-safe javítások**: érintetlenek maradnak, ezek helyesek.
+- **`.gitignore` állapot**: marad ahogy van, nem ez a probléma.
 
-**What you'll see**
+## Mit NEM csinálok meg
 
-- The yellow "needs to be fixed" screen goes away and stays away across rebuilds.
-- The preview opens normally on iOS, Android, and web.
-- Zero changes to your screens, data, flows, or design — this is purely a one-line configuration fix.
+- Nem nyúlok a Supabase, auth, vagy bármilyen feature kódhoz.
+- Nem írom át a kinézetet vagy a felhasználói élményt.
+- Nem érintem a már működő képernyőket.
 
+## Várható eredmény
+
+A változtatás után a Rork preview egy tiszta build-et fog futtatni a stabil konfigurációval, és a "Script not found 'expo'" hibának véglegesen el kell tűnnie. Ha a probléma valamiért mégis visszatér egy jövőbeli build során, az már nem ettől a config-tól lesz — és könnyebb diagnosztizálni.
+
+## Ha a fix után még mindig nem jó
+
+Akkor a build log alapján fogom tovább nyomozni — de a most azonosított gyanús pont (a kísérleti babel flag) a legvalószínűbb oka annak hogy a hiba **visszatér**, még akkor is, ha egyszer-egyszer eltűnik átmenetileg.
