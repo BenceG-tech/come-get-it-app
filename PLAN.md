@@ -1,32 +1,25 @@
-# Preview javítás véglegesen: babel config tisztítás + cache reset
+# Fix recurring "expo: command not found" preview crash
 
-## Mi a probléma
+**What's going wrong**
 
-A "Script not found 'expo'" hiba egy Metro bundler szintű probléma, nem a Te kódodból jön. A vizsgálat alapján két dolog együttese okozza:
+The preview keeps failing with `expo: command not found`. Looking at how the app starts:
 
-1. A `babel.config.js`-ben egy kísérleti (unstable) opció szerepel, amit a Rork build környezet nem mindig fogad el frissítés után — ez töri a teljes bundle-t.
-2. A build cache "beragad" ebbe a hibás állapotba, és minden további próbálkozásnál ugyanúgy elesik.
+- The project's start command is set to launch through Rork's bundler (`bunx rork start …`), which knows how to find Expo even on a fresh sandbox.
+- But the error log shows the system actually running `expo start --max-workers "6"` directly. That path only works if Expo's command-line tool is already installed and on the system PATH — and in a fresh preview sandbox it isn't, which is exactly why the error keeps coming back.
 
-A `home.tsx` null-safe javítása **nem volt rossz**, csak épp az után frissült a build környezet és onnantól a babel config flag-je elkezdett ütközni.
+So every time the preview sandbox is rebuilt from scratch, it tries the wrong launch command and crashes before the app ever gets a chance to load. Earlier attempts patched symptoms but didn't change the launch command itself, which is why it keeps returning.
 
-## Mit fogok csinálni
+**The permanent fix**
 
-- **Babel beállítás biztonságos visszaállítása**: kiszedem az `unstable_transformImportMeta` kísérleti flag-et a `babel.config.js`-ből, és a standard Expo babel preset marad. Ez a Rork által támogatott, stabil konfiguráció.
-- **`package.json` mikro-érintése**: egy ártalmatlan változtatás (pl. üres sor) ami a Rork CI-t arra kényszeríti hogy újra-telepítse a függőségeket tiszta lappal — ettől eltűnik a beragadt cache.
-- **`tsconfig.json` és `app.json`**: érintetlenek maradnak, ezekkel nincs gond.
-- **`home.tsx` null-safe javítások**: érintetlenek maradnak, ezek helyesek.
-- **`.gitignore` állapot**: marad ahogy van, nem ez a probléma.
+- Make the project's "expo" launch script route through the same Rork bundler the main start script already uses, so it works regardless of whether Expo's CLI is globally available.
+- Also expose `ios`, `android`, and `web` shortcuts via the Rork bundler so any auto-detected launch path lands on a command that actually exists in the sandbox.
+- Verify the preview boots cleanly after the change, with no other regressions.
 
-## Mit NEM csinálok meg
+**What you'll see**
 
-- Nem nyúlok a Supabase, auth, vagy bármilyen feature kódhoz.
-- Nem írom át a kinézetet vagy a felhasználói élményt.
-- Nem érintem a már működő képernyőket.
+- The preview starts up reliably on first try, no more "expo: command not found" or "Script not found 'expo'" errors.
+- No visual or behavioral changes to the app itself — this is purely a startup-reliability fix.
 
-## Várható eredmény
+**Not touching**
 
-A változtatás után a Rork preview egy tiszta build-et fog futtatni a stabil konfigurációval, és a "Script not found 'expo'" hibának véglegesen el kell tűnnie. Ha a probléma valamiért mégis visszatér egy jövőbeli build során, az már nem ettől a config-tól lesz — és könnyebb diagnosztizálni.
-
-## Ha a fix után még mindig nem jó
-
-Akkor a build log alapján fogom tovább nyomozni — de a most azonosított gyanús pont (a kísérleti babel flag) a legvalószínűbb oka annak hogy a hiba **visszatér**, még akkor is, ha egyszer-egyszer eltűnik átmenetileg.
+- App screens, home/impact widget logic, Supabase, redemption flow, and all other product code stay exactly as they are.
