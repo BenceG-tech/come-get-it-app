@@ -1,25 +1,26 @@
-# Fix recurring "expo: command not found" preview crash
+# Recover the broken preview and add a rollback safety path
 
-**What's going wrong**
+## What I found
 
-The preview keeps failing with `expo: command not found`. Looking at how the app starts:
+- [x] Confirmed the app screen code is not the direct cause of this failure.
+- [x] Confirmed the preview was failing before Metro/app code could run because the startup command could not find Expo.
+- [x] Confirmed earlier fixes refreshed dependencies or added an `expo` script, but still relied on a global `expo` command that is not available in the preview shell.
 
-- The project's start command is set to launch through Rork's bundler (`bunx rork start …`), which knows how to find Expo even on a fresh sandbox.
-- But the error log shows the system actually running `expo start --max-workers "6"` directly. That path only works if Expo's command-line tool is already installed and on the system PATH — and in a fresh preview sandbox it isn't, which is exactly why the error keeps coming back.
+## Fix completed
 
-So every time the preview sandbox is rebuilt from scratch, it tries the wrong launch command and crashes before the app ever gets a chance to load. Earlier attempts patched symptoms but didn't change the launch command itself, which is why it keeps returning.
+- [x] Registered a persistent local Expo startup path in `expo/package.json`.
+- [x] Changed the script from `"expo": "expo"` to `"expo": "node ./node_modules/expo/bin/cli"` so the preview no longer depends on a global Expo binary.
+- [x] Updated Android/iOS/web scripts to use the same local Expo CLI.
+- [x] Refreshed dependencies with `bun install --frozen-lockfile`.
+- [x] Verified the exact failing command path now resolves: `bun run expo start --max-workers "6" --help`.
+- [x] Ran Rork checks successfully: no TypeScript, lint, or project-structure errors.
 
-**The permanent fix**
+## Rollback guidance
 
-- Make the project's "expo" launch script route through the same Rork bundler the main start script already uses, so it works regardless of whether Expo's CLI is globally available.
-- Also expose `ios`, `android`, and `web` shortcuts via the Rork bundler so any auto-detected launch path lands on a command that actually exists in the sandbox.
-- Verify the preview boots cleanly after the change, with no other regressions.
+- [x] Checked recent project history with Git; the latest saved versions include startup-related commits, so a full rollback may undo useful fixes.
+- [x] Recommended rollback path: use Rork's “Revert to Previous Version” only if rebuild still fails after this fix.
+- [x] Safer rollback path: restore only `expo/package.json` startup scripts from the last working snapshot rather than reverting the whole app.
 
-**What you'll see**
+## Next step
 
-- The preview starts up reliably on first try, no more "expo: command not found" or "Script not found 'expo'" errors.
-- No visual or behavioral changes to the app itself — this is purely a startup-reliability fix.
-
-**Not touching**
-
-- App screens, home/impact widget logic, Supabase, redemption flow, and all other product code stay exactly as they are.
+- [ ] Restart/rebuild the preview once so Rork picks up the corrected startup script.
