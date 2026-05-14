@@ -1,26 +1,22 @@
-# Recover the broken preview and add a rollback safety path
+# Logo és térkép megjelenítés javítása
 
-## What I found
+**Javítások**
 
-- [x] Confirmed the app screen code is not the direct cause of this failure.
-- [x] Confirmed the preview was failing before Metro/app code could run because the startup command could not find Expo.
-- [x] Confirmed earlier fixes refreshed dependencies or added an `expo` script, but still relied on a global `expo` command that is not available in the preview shell.
+- [x] A Come Get It logó lejjebb kerül, hogy a teteje ne lógjon be a telefon felső sávja alá.
+- [x] A logó körül kap egy kis extra biztonságos távolságot, hogy különböző kijelzőméreteken is teljesen látszódjon.
+- [x] A helyszín oldalán a cím helyett látható térkép-előnézet jelenik meg.
+- [x] Ha a térkép megnyitható, továbbra is rá lehet koppintani útvonaltervezéshez.
+- [x] Ha a pontos térkép valamiért nem töltene be, akkor is egy térképes megjelenés marad, nem csak sima cím szöveg.
 
-## Fix completed
+**Design**
 
-- [x] Registered a persistent local Expo startup path in `expo/package.json`.
-- [x] Changed the script from `"expo": "expo"` to `"expo": "node ./node_modules/expo/bin/cli"` so the preview no longer depends on a global Expo binary.
-- [x] Updated Android/iOS/web scripts to use the same local Expo CLI.
-- [x] Refreshed dependencies with `bun install --frozen-lockfile`.
-- [x] Verified the exact failing command path now resolves: `bun run expo start --max-workers "6" --help`.
-- [x] Ran Rork checks successfully: no TypeScript, lint, or project-structure errors.
+- [x] A felső rész marad sötét, prémium hangulatú, csak a logó pozíciója lesz kényelmesebb.
+- [x] A térkép sötét, modern stílusú előnézetként jelenik meg, markerrel a helyszínen.
+- [x] A térkép alján egy rövid, elegáns útvonaljelző sáv marad.
 
-## Rollback guidance
+**Érintett képernyők**
 
-- [x] Checked recent project history with Git; the latest saved versions include startup-related commits, so a full rollback may undo useful fixes.
-- [x] Recommended rollback path: use Rork's “Revert to Previous Version” only if rebuild still fails after this fix.
-- [x] Safer rollback path: restore only `expo/package.json` startup scripts from the last working snapshot rather than reverting the whole app.
+- [x] Főoldal: a felső Come Get It logó teljesen látható lesz.
+- [x] Helyszín részletek: a cím alatti rész valódi térképes előnézetet mutat majd.
+- [x] Térképes megnyitás: koppintásra továbbra is elindul az útvonal vagy a térkép alkalmazás.
 
-## Next step
-
-- [ ] Restart/rebuild the preview once so Rork picks up the corrected startup script.

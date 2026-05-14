@@ -10,6 +10,7 @@ import { VenueWithDetails, VenueDrink } from '@/types/venue';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
+import { geocodeVenueAddress } from '@/utils/geocoding';
 import RedeemQRModal from '@/components/RedeemQRModal';
 
 
@@ -95,29 +96,21 @@ export default function VenueModalScreen() {
         }
         console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
         
-        // Geocode if no coordinates
-        const hasCoords = (v.latitude && v.longitude) || (v.coordinates?.lat && v.coordinates?.lng);
+        const latRaw = v.coordinates?.lat ?? v.latitude;
+        const lngRaw = v.coordinates?.lng ?? v.longitude;
+        const lat = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN;
+        const lng = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? Number(lngRaw) : NaN;
+        const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+
         if (!hasCoords && v.address) {
           setGeocoding(true);
           try {
-            const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(v.address + ', Budapest, Hungary')}&limit=1`;
-            const geocodeResponse = await fetch(geocodeUrl, {
-              headers: {
-                'User-Agent': 'RorkApp/1.0'
-              }
-            });
-            const geocodeData = await geocodeResponse.json();
-            
-            if (geocodeData && geocodeData.length > 0) {
-              const lat = parseFloat(geocodeData[0].lat);
-              const lon = parseFloat(geocodeData[0].lon);
-              console.log(`[VenueDetail] Geocoded ${v.name}: ${lat}, ${lon}`);
-              
-              // Use coordinates locally only (DB schema doesn't have lat/lng columns)
-              v = { ...v, coordinates: { lat, lng: lon } };
+            const coordinates = await geocodeVenueAddress(v.name, v.address);
+            if (coordinates) {
+              v = { ...v, coordinates };
             }
           } catch (geocodeError) {
-            console.error(`[VenueDetail] Failed to geocode:`, geocodeError);
+            console.error('[VenueDetail] Failed to geocode venue address:', geocodeError);
           } finally {
             setGeocoding(false);
           }
@@ -611,7 +604,7 @@ export default function VenueModalScreen() {
                   >
                     <Image
                       source={{
-                        uri: `https://maps.geoapify.com/v1/staticmap?style=dark-matter&width=800&height=400&center=lonlat:${resolvedCoords.lng},${resolvedCoords.lat}&zoom=15&marker=lonlat:${resolvedCoords.lng},${resolvedCoords.lat};color:%232BB7FF;size:large&apiKey=6dc7fb95a3b246cfa0f3bcef5ce9ed9a`,
+                        uri: `https://staticmap.openstreetmap.de/staticmap.php?center=${resolvedCoords.lat},${resolvedCoords.lng}&zoom=16&size=900x420&maptype=mapnik&markers=${resolvedCoords.lat},${resolvedCoords.lng},lightblue1`,
                       }}
                       style={styles.mapView}
                       resizeMode="cover"
@@ -624,11 +617,34 @@ export default function VenueModalScreen() {
                   </TouchableOpacity>
                 )
               ) : (
-                <View style={styles.mapPlaceholder}>
-                  <MapPin size={24} color={Colors.dark.text} />
-                  <Text style={styles.mapText}>Térkép</Text>
-                  <Text style={styles.mapSubtext}>{venue.address}</Text>
-                </View>
+                <TouchableOpacity
+                  style={[styles.mapContainer, styles.mapFallbackArtwork]}
+                  activeOpacity={0.9}
+                  testID="venue-map-address-fallback"
+                  onPress={() => {
+                    const query = encodeURIComponent(`${venue.name} ${venue.address ?? ''}`.trim());
+                    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                      window.open(url, '_blank');
+                    } else {
+                      Linking.openURL(url).catch((err) => console.error('[VenueDetail] Failed to open address search:', err));
+                    }
+                  }}
+                >
+                  <View style={[styles.mapGridLine, styles.mapGridLineVerticalOne]} />
+                  <View style={[styles.mapGridLine, styles.mapGridLineVerticalTwo]} />
+                  <View style={[styles.mapGridLine, styles.mapGridLineHorizontalOne]} />
+                  <View style={[styles.mapGridLine, styles.mapGridLineHorizontalTwo]} />
+                  <View style={[styles.mapRoad, styles.mapRoadPrimary]} />
+                  <View style={[styles.mapRoad, styles.mapRoadSecondary]} />
+                  <View style={styles.mapPinBubble}>
+                    <MapPin size={34} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.mapOverlay}>
+                    <MapPin size={16} color="#fff" />
+                    <Text style={styles.mapOverlayText}>Cím keresése térképen</Text>
+                  </View>
+                </TouchableOpacity>
               )}
               <TouchableOpacity 
                 style={styles.directionsButton} 
@@ -1092,6 +1108,75 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  mapFallbackArtwork: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#171C1F',
+  },
+  mapGridLine: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  mapGridLineVerticalOne: {
+    top: -20,
+    bottom: -20,
+    left: '28%',
+    width: 2,
+    transform: [{ rotate: '12deg' }],
+  },
+  mapGridLineVerticalTwo: {
+    top: -24,
+    bottom: -24,
+    right: '24%',
+    width: 2,
+    transform: [{ rotate: '-9deg' }],
+  },
+  mapGridLineHorizontalOne: {
+    left: -20,
+    right: -20,
+    top: '34%',
+    height: 2,
+    transform: [{ rotate: '-5deg' }],
+  },
+  mapGridLineHorizontalTwo: {
+    left: -20,
+    right: -20,
+    bottom: '26%',
+    height: 2,
+    transform: [{ rotate: '8deg' }],
+  },
+  mapRoad: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  mapRoadPrimary: {
+    width: '118%',
+    height: 22,
+    transform: [{ rotate: '-18deg' }],
+  },
+  mapRoadSecondary: {
+    width: '82%',
+    height: 14,
+    transform: [{ rotate: '34deg' }],
+    backgroundColor: 'rgba(43,183,255,0.20)',
+  },
+  mapPinBubble: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.dark.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.92)',
+    shadowColor: '#2BB7FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 6,
   },
   mapText: {
     color: Colors.dark.text,

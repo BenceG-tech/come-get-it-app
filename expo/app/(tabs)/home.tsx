@@ -46,7 +46,8 @@ export default function BarsScreen() {
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
-  const headerHeight = Math.max(56, 44 + insets.top);
+  const logoHeight = width <= 375 ? 62 : 72;
+  const headerHeight = insets.top + (width <= 375 ? 90 : 102);
 
   useEffect(() => {
     const fetchVenues = async () => {
@@ -149,11 +150,11 @@ export default function BarsScreen() {
     <View style={styles.container} testID="home-root">
       <StatusBar style="light" />
       <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>
-        <View style={styles.headerCenter}>
+        <View style={[styles.headerCenter, { top: insets.top + 6, bottom: 10 }]}>
           <Image
             source={{ uri: logoUri }}
             accessibilityLabel="Come Get It logo"
-            style={[styles.brandLogo, { height: width <= 375 ? 68 : 78 }]}
+            style={[styles.brandLogo, { height: logoHeight }]}
           />
         </View>
         <View style={styles.headerActions}>
@@ -332,7 +333,6 @@ const styles = StyleSheet.create({
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: "contain",
-    marginTop: 37,
   },
   headerActions: {
     marginLeft: "auto",

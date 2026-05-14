@@ -21,6 +21,7 @@ import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
+import { geocodeVenueAddress } from '@/utils/geocoding';
 
 let Location: any = null;
 
@@ -76,65 +77,51 @@ export default function MapScreen() {
 
             if (venue.address) {
               try {
-                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-                  `${venue.address}, Budapest, Hungary`
-                )}&limit=1`;
+                const coordinates = await geocodeVenueAddress(venue.name, venue.address);
 
-                const geocodeResponse = await fetch(geocodeUrl, {
-                  headers: {
-                    'User-Agent': 'RorkApp/1.0',
-                  },
-                });
-                const geocodeData = (await geocodeResponse.json()) as any[];
+                if (coordinates) {
+                  console.log('[Map] Geocoded venue', { id: venue.id, name: venue.name, coordinates });
 
-                if (Array.isArray(geocodeData) && geocodeData.length > 0) {
-                  const lat = Number.parseFloat(String(geocodeData[0]?.lat ?? ''));
-                  const lon = Number.parseFloat(String(geocodeData[0]?.lon ?? ''));
+                  try {
+                    const patchRes = await rest(`/venues?id=eq.${venue.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ latitude: coordinates.lat, longitude: coordinates.lng }),
+                    });
 
-                  if (Number.isFinite(lat) && Number.isFinite(lon)) {
-                    console.log('[Map] Geocoded venue', { id: venue.id, name: venue.name, lat, lon });
-
-                    try {
-                      const patchRes = await rest(`/venues?id=eq.${venue.id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ latitude: lat, longitude: lon }),
-                      });
-
-                      if (!patchRes.ok) {
-                        let errPayload: unknown = null;
+                    if (!patchRes.ok) {
+                      let errPayload: unknown = null;
+                      try {
+                        errPayload = await patchRes.json();
+                      } catch {
                         try {
-                          errPayload = await patchRes.json();
+                          errPayload = await patchRes.text();
                         } catch {
-                          try {
-                            errPayload = await patchRes.text();
-                          } catch {
-                            errPayload = null;
-                          }
+                          errPayload = null;
                         }
-
-                        const payloadStr = typeof errPayload === 'string' ? errPayload : JSON.stringify(errPayload);
-                        if (payloadStr.includes('PGRST204') && payloadStr.includes('latitude')) {
-                          console.warn('[Map] Skipping coordinates PATCH due to missing DB columns', {
-                            venueId: venue.id,
-                            payload: errPayload,
-                          });
-                        } else {
-                          console.warn('[Map] Venue PATCH failed (non-fatal)', {
-                            venueId: venue.id,
-                            status: patchRes.status,
-                            payload: errPayload,
-                          });
-                        }
-                      } else {
-                        console.log('[Map] Venue coordinates PATCH ok', { venueId: venue.id });
                       }
-                    } catch (e) {
-                      console.warn('[Map] Venue PATCH threw (non-fatal)', { venueId: venue.id, e });
-                    }
 
-                    return { ...venue, latitude: lat, longitude: lon };
+                      const payloadStr = typeof errPayload === 'string' ? errPayload : JSON.stringify(errPayload);
+                      if (payloadStr.includes('PGRST204') && payloadStr.includes('latitude')) {
+                        console.warn('[Map] Skipping coordinates PATCH due to missing DB columns', {
+                          venueId: venue.id,
+                          payload: errPayload,
+                        });
+                      } else {
+                        console.warn('[Map] Venue PATCH failed (non-fatal)', {
+                          venueId: venue.id,
+                          status: patchRes.status,
+                          payload: errPayload,
+                        });
+                      }
+                    } else {
+                      console.log('[Map] Venue coordinates PATCH ok', { venueId: venue.id });
+                    }
+                  } catch (e) {
+                    console.warn('[Map] Venue PATCH threw (non-fatal)', { venueId: venue.id, e });
                   }
+
+                  return { ...venue, latitude: coordinates.lat, longitude: coordinates.lng };
                 }
               } catch (geocodeError) {
                 console.error('[Map] Failed to geocode venue', { id: venue.id, name: venue.name, geocodeError });
