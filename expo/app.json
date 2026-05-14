@@ -3,6 +3,10 @@
     "name": "Come Get it",
     "slug": "come-get-it-app",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
