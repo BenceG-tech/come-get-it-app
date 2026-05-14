@@ -1,6 +1,5 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useEffect, useMemo, useState } from "react";
-import { Alert } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { getSupabase } from "@/lib/supabaseClient";
 
@@ -20,7 +19,6 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
   const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
   const [points, setPoints] = useState<number>(0);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [hasShownPointsError, setHasShownPointsError] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -32,7 +30,6 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
         console.log('[AppContext] No session -> reset points');
         if (mounted) {
           setPoints(0);
-          setHasShownPointsError(false);
         }
         return;
       }
@@ -58,14 +55,7 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
         } else if (e) {
           errMsg = String(e);
         }
-        console.error('[AppContext] Failed to load points:', errMsg);
-        if (!hasShownPointsError) {
-          Alert.alert(
-            'Hiba',
-            'Nem sikerült betölteni a pontjaidat. Valószínűleg hiányzik a profilod a Supabase „profiles” táblában, vagy nincs megfelelő jogosultság (RLS policy).'
-          );
-          if (mounted) setHasShownPointsError(true);
-        }
+        console.warn('[AppContext] Failed to load points, defaulting to 0:', errMsg);
         if (mounted) setPoints(0);
       }
     };
@@ -77,7 +67,7 @@ export const [AppProvider, useAppContext] = createContextHook<AppContextType>(()
     return () => {
       mounted = false;
     };
-  }, [hasShownPointsError, isAuthReady, session?.user?.id, supabase]);
+  }, [isAuthReady, session?.user?.id, supabase]);
 
   const addPoints = (amount: number) => {
     setPoints((current) => current + amount);

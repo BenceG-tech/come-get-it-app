@@ -1,19 +1,26 @@
-# Nagyobb felső logó és szorosabb elrendezés
+# Vendéglátóhelyek lista visszaállítása
 
-**Változtatások**
+**Mit találtam**
 
-- [x] A Come Get It logó kicsit nagyobb lesz, hogy hangsúlyosabbnak tűnjön.
-- [x] A logó továbbra sem lesz levágva a képernyő tetején.
-- [x] A logó alatti üres hely kisebb lesz, így közelebb kerülnek hozzá az alsó fülek.
-- [x] A keresés és térkép ikonok igazodnak az új logómérethez, hogy ne takarjanak bele.
+- [x] A lista nem lett eltávolítva, hanem a helyszínek betöltése hibára fut, ezért csak hibaüzenet látszik.
+- [x] Egy külön pontszám-hiba felugró ablak is eltakarja a kezdőképernyőt.
+- [x] A felső logó és szűrősáv most sok helyet foglal, ezért a tartalom később kezdődik.
 
-**Kinézet**
+**Javítás**
 
-- [x] A fejléc kompaktabb marad, de a logó látványosabb lesz.
-- [x] Az összkép kevésbé szellős, feszesebb és professzionálisabb lesz.
-- [x] A sötét háttér és a jelenlegi stílus változatlan marad.
+- [x] Visszaállítom, hogy a vendéglátóhelyek listája újra megjelenjen a főoldalon.
+- [x] Ha a pontszám vagy profiladat nem érhető el, az ne takarja el és ne blokkolja a helyszínek listáját.
+- [x] A betöltési hibánál barátságos újrapróbálási állapot marad, de nem tünteti el indokolatlanul az egész oldalt.
+- [x] A felső logó kicsit nagyobb marad, de kevesebb üres tér lesz a logó és a szűrők között.
 
-**Érintett képernyő**
+**Képernyők**
 
-- [x] A főoldalon módosul a felső logó mérete és a logó alatti távolság.
+- [x] **Vendéglátóhelyek**: logó, keresés, térkép ikon, szűrők, majd azonnal a helyszínkártyák listája.
+- [x] **Térkép**: változatlanul megmarad, hogy a térkép nézet is használható legyen.
+
+**Ellenőrzés**
+
+- [x] Megnézem, hogy a főoldal hiba nélkül betölt-e.
+- [x] Ellenőrzöm, hogy a lista újra látszik-e, és a pontszám-hiba nem jelenik-e meg felugró ablakként.
+- [x] Lefuttatom az app ellenőrzését, hogy ne hozzak vissza új build hibát.
 

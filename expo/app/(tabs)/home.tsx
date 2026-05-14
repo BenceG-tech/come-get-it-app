@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
 import { Venue } from "@/types/venue";
-import { rest } from "@/lib/supabaseRest";
+import { fetchVenueCoverUrl, fetchVenues } from "@/lib/venueService";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { getUserCSRImpact } from "@/lib/csrService";
@@ -46,81 +46,42 @@ export default function BarsScreen() {
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
-  const logoHeight = width <= 375 ? 70 : 84;
-  const headerHeight = insets.top + (width <= 375 ? 86 : 96);
+  const logoHeight = width <= 375 ? 76 : 90;
+  const headerHeight = insets.top + (width <= 375 ? 82 : 92);
+
+  const loadVenues = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      console.log("[Home] Fetching venues...");
+      const rows = await fetchVenues({ orderByCreated: true });
+      console.log("[Home] Venues fetched:", rows.length);
+
+      const venuesWithImages = await Promise.all(
+        rows.map(async (venue: Venue) => {
+          if (venue.image_url || venue.hero_image_url) return venue;
+
+          const coverUrl = await fetchVenueCoverUrl(venue.id);
+          return coverUrl ? { ...venue, image_url: coverUrl } : venue;
+        })
+      );
+
+      setVenues(venuesWithImages);
+    } catch (error) {
+      console.error("[Home] Error fetching venues:", error);
+      setErrorMsg("Nem sikerült betölteni a helyszíneket. Próbáld újra pár másodperc múlva.");
+      setVenues([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchVenues = async () => {
-      try {
-        console.log("[Home] Fetching venues from Supabase...");
-        const response = await rest("/venues?select=*");
-
-        if (!response.ok) {
-          console.error("[Home] Response not ok:", response.status, response.statusText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const responseText = await response.text();
-        console.log("[Home] Raw response text:", responseText.substring(0, 200));
-
-        let data: unknown;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("[Home] JSON parse error:", parseError);
-          console.error("[Home] Response text that failed to parse:", responseText.substring(0, 500));
-          throw new Error("Failed to parse response as JSON");
-        }
-
-        const rows = Array.isArray(data) ? (data as Venue[]) : [];
-        console.log("[Home] Venues fetched:", rows.length);
-
-        if (rows.length > 0) {
-          const venuesWithImages = await Promise.all(
-            rows.map(async (venue: Venue) => {
-              try {
-                if (venue.image_url || venue.hero_image_url) {
-                  return venue;
-                }
-
-                const imagesResponse = await rest(
-                  `/venue_images?venue_id=eq.${venue.id}&select=url,image_url,is_cover&order=is_cover.desc,created_at.asc&limit=1`
-                );
-                const imagesText = await imagesResponse.text();
-                const images = JSON.parse(imagesText) as unknown;
-
-                if (Array.isArray(images) && images.length > 0) {
-                  const r = images[0] as { url?: string | null; image_url?: string | null };
-                  const imageUrl = r?.url ?? r?.image_url ?? null;
-                  if (typeof imageUrl === "string" && imageUrl.length > 0) {
-                    return { ...venue, image_url: imageUrl };
-                  }
-                }
-
-                return venue;
-              } catch (imgError) {
-                console.error(`[Home] Error fetching images for venue ${venue.id}:`, imgError);
-                return venue;
-              }
-            })
-          );
-
-          setVenues(venuesWithImages);
-        } else {
-          console.log("[Home] No venues returned");
-          setVenues([]);
-        }
-      } catch (error) {
-        console.error("[Home] Error fetching venues:", error);
-        setErrorMsg("Nem sikerült betölteni a helyszíneket. Ellenőrizd a kapcsolatot vagy próbáld újra.");
-        setVenues([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVenues();
-  }, []);
+    loadVenues().catch((error) => {
+      console.error("[Home] loadVenues crashed:", error);
+    });
+  }, [loadVenues]);
 
   const filteredVenues = venues.filter((venue) => {
     if (selectedFilters.length === 0) return true;
@@ -263,22 +224,7 @@ export default function BarsScreen() {
               testID="home-retry"
               onPress={() => {
                 console.log('[Home] retry pressed');
-                setLoading(true);
-                setErrorMsg(null);
-                setVenues([]);
-                (async () => {
-                  try {
-                    const response = await rest('/venues?select=*');
-                    const json = (await response.json()) as unknown;
-                    const rows = Array.isArray(json) ? (json as Venue[]) : [];
-                    setVenues(rows);
-                  } catch (e) {
-                    console.error('[Home] retry failed', e);
-                    setErrorMsg('Nem sikerült betölteni a helyszíneket.');
-                  } finally {
-                    setLoading(false);
-                  }
-                })().catch((e) => console.error('[Home] retry crashed', e));
+                loadVenues().catch((e) => console.error('[Home] retry crashed', e));
               }}
               style={styles.retryBtn}
               activeOpacity={0.85}
@@ -348,8 +294,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   filtersContainer: {
-    paddingTop: 4,
-    paddingBottom: 8,
+    paddingTop: 0,
+    paddingBottom: 6,
     borderBottomWidth: 0,
     backgroundColor: Colors.background,
   },
@@ -397,7 +343,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   venuesContent: {
-    paddingTop: 12,
+    paddingTop: 8,
     paddingBottom: 100,
   },
   emptyState: {
