@@ -1,23 +1,19 @@
-# Restore phone preview compatibility
+# Nagyobb felső logó és szorosabb elrendezés
 
-## What I found
+**Változtatások**
 
-- [x] Confirmed the phone error is not from the recent UI changes.
-- [x] Confirmed the project dependencies are Expo SDK 54 (`expo` 54.x).
-- [x] Confirmed the latest Metro failure is caused by the preview runner invoking the `expo` package script, which hard-coded `node ./node_modules/expo/bin/cli`.
-- [x] Confirmed that hard-coded `node_modules` path is fragile in the preview environment and can fail even when the dependency is declared correctly.
+- [x] A Come Get It logó kicsit nagyobb lesz, hogy hangsúlyosabbnak tűnjön.
+- [x] A logó továbbra sem lesz levágva a képernyő tetején.
+- [x] A logó alatti üres hely kisebb lesz, így közelebb kerülnek hozzá az alsó fülek.
+- [x] A keresés és térkép ikonok igazodnak az új logómérethez, hogy ne takarjanak bele.
 
-## Fix completed
+**Kinézet**
 
-- [x] Kept explicit `sdkVersion: "54.0.0"` in `expo/app.json` so Expo Go receives the correct compatibility hint.
-- [x] Kept `runtimeVersion: { policy: "sdkVersion" }` so runtime metadata stays tied to the SDK and does not drift.
-- [x] Changed the `expo`, `ios`, `android`, and `web` scripts to use `bunx expo` instead of a hard-coded `node_modules` CLI path.
-- [x] Kept the recent logo/map UI changes untouched.
+- [x] A fejléc kompaktabb marad, de a logó látványosabb lesz.
+- [x] Az összkép kevésbé szellős, feszesebb és professzionálisabb lesz.
+- [x] A sötét háttér és a jelenlegi stílus változatlan marad.
 
-## Validation
+**Érintett képernyő**
 
-- [x] Verified `bun run expo --version` resolves Expo CLI successfully.
-- [x] Verified `bun run expo config --json` loads the Expo config successfully.
-- [x] Ran project checks after the startup-script fix.
-- [ ] Rebuild/restart the preview so the phone gets a fresh server process.
-- [ ] If Expo Go still shows an old/cached error after rebuild, open a fresh preview URL instead of reusing the old cached session.
+- [x] A főoldalon módosul a felső logó mérete és a logó alatti távolság.
+
