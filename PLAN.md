@@ -2,18 +2,22 @@
 
 ## What I found
 
-- [x] Confirmed the phone error is not from the last UI changes.
-- [x] Confirmed Expo Go is rejecting the preview because the served manifest reports SDK 52 while the installed Expo Go supports SDK 54.
-- [x] Confirmed the project dependencies are already SDK 54 (`expo` 54.x), so the issue is stale or missing manifest compatibility metadata.
+- [x] Confirmed the phone error is not from the recent UI changes.
+- [x] Confirmed the project dependencies are Expo SDK 54 (`expo` 54.x).
+- [x] Confirmed the latest Metro failure is caused by the preview runner invoking the `expo` package script, which hard-coded `node ./node_modules/expo/bin/cli`.
+- [x] Confirmed that hard-coded `node_modules` path is fragile in the preview environment and can fail even when the dependency is declared correctly.
 
 ## Fix completed
 
-- [x] Added explicit `sdkVersion: "54.0.0"` to `expo/app.json` so Expo Go receives the correct compatibility hint.
-- [x] Added `runtimeVersion: { policy: "sdkVersion" }` so runtime metadata stays tied to the SDK and does not drift.
+- [x] Kept explicit `sdkVersion: "54.0.0"` in `expo/app.json` so Expo Go receives the correct compatibility hint.
+- [x] Kept `runtimeVersion: { policy: "sdkVersion" }` so runtime metadata stays tied to the SDK and does not drift.
+- [x] Changed the `expo`, `ios`, `android`, and `web` scripts to use `bunx expo` instead of a hard-coded `node_modules` CLI path.
 - [x] Kept the recent logo/map UI changes untouched.
 
 ## Validation
 
-- [x] Run the project checks after the manifest fix.
-- [ ] Rebuild/restart the preview so the phone gets a fresh manifest instead of the cached SDK 52 one.
-- [ ] If Expo Go still shows SDK 52 after rebuild, force a fresh preview URL because the old preview link is cached outside the app code.
+- [x] Verified `bun run expo --version` resolves Expo CLI successfully.
+- [x] Verified `bun run expo config --json` loads the Expo config successfully.
+- [x] Ran project checks after the startup-script fix.
+- [ ] Rebuild/restart the preview so the phone gets a fresh server process.
+- [ ] If Expo Go still shows an old/cached error after rebuild, open a fresh preview URL instead of reusing the old cached session.
