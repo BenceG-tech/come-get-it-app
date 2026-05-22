@@ -1,4 +1,5 @@
 import { rest } from '@/lib/supabaseRest';
+import { getSupabase } from '@/lib/supabaseClient';
 import { Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
 import { Reward } from '@/types/reward';
 
@@ -105,24 +106,79 @@ export async function fetchAppRewards(): Promise<Reward[]> {
 }
 
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {
-  console.info('[Provider] getVenueWithDetails', id);
-  const [venueRes, imagesRes, drinksRes, windowsRes] = await Promise.all([
-    rest(`/venues?id=eq.${id}&select=*`),
-    rest(`/venue_images?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-    rest(`/venue_drinks?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-    rest(`/free_drink_windows?venue_id=eq.${id}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-  ]);
+  const normalizedId = decodeURIComponent(String(id)).trim();
+  if (!normalizedId) return null;
 
-  let venueList: Venue[];
-  let responseText: string = '';
+  console.info('[Provider] getVenueWithDetails', normalizedId);
+
+  type ImageRow = { id: string; venue_id: string; image_url?: string | null; url?: string | null; label?: string | null; is_cover?: boolean | null };
+  type DrinkRow = { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null };
+  type WindowRow = {
+    id: string;
+    venue_id: string;
+    drink_id: string;
+    day_of_week?: number | null;
+    days?: number[] | null;
+    start_time: string;
+    end_time: string;
+  };
+
+  let venueList: Venue[] = [];
+  let imagesRows: ImageRow[] = [];
+  let drinksRows: DrinkRow[] = [];
+  let windowsRows: WindowRow[] = [];
+
   try {
-    responseText = await venueRes.text();
-    console.info('[Provider] Raw venue response:', responseText.substring(0, 500));
-    venueList = JSON.parse(responseText);
-  } catch (parseError) {
-    console.error('[Provider] Failed to parse venue response as JSON:', parseError);
-    console.error('[Provider] Response text:', responseText.substring(0, 500));
-    return null;
+    const supabase = getSupabase();
+    const [{ data: venuesData, error: venueError }, imagesResult, drinksResult, windowsResult] = await Promise.all([
+      supabase.from('venues').select('*').eq('id', normalizedId).limit(1),
+      supabase.from('venue_images').select('*').eq('venue_id', normalizedId).then((result) => result).catch((error: unknown) => ({ data: [], error })),
+      supabase.from('venue_drinks').select('*').eq('venue_id', normalizedId).then((result) => result).catch((error: unknown) => ({ data: [], error })),
+      supabase.from('free_drink_windows').select('*').eq('venue_id', normalizedId).then((result) => result).catch((error: unknown) => ({ data: [], error })),
+    ]);
+
+    if (venueError) throw venueError;
+
+    venueList = Array.isArray(venuesData) ? (venuesData as Venue[]) : [];
+    imagesRows = Array.isArray(imagesResult.data) ? (imagesResult.data as ImageRow[]) : [];
+    drinksRows = Array.isArray(drinksResult.data) ? (drinksResult.data as DrinkRow[]) : [];
+    windowsRows = Array.isArray(windowsResult.data) ? (windowsResult.data as WindowRow[]) : [];
+
+    if (imagesResult.error) console.warn('[Provider] venue_images Supabase fetch failed', imagesResult.error);
+    if (drinksResult.error) console.warn('[Provider] venue_drinks Supabase fetch failed', drinksResult.error);
+    if (windowsResult.error) console.warn('[Provider] free_drink_windows Supabase fetch failed', windowsResult.error);
+  } catch (supabaseError) {
+    console.warn('[Provider] Supabase detail fetch failed, falling back to REST', supabaseError instanceof Error ? supabaseError.message : String(supabaseError));
+
+    const encodedId = encodeURIComponent(normalizedId);
+    const [venueRes, imagesRes, drinksRes, windowsRes] = await Promise.all([
+      rest(`/venues?id=eq.${encodedId}&select=*`),
+      rest(`/venue_images?venue_id=eq.${encodedId}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
+      rest(`/venue_drinks?venue_id=eq.${encodedId}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
+      rest(`/free_drink_windows?venue_id=eq.${encodedId}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
+    ]);
+
+    let responseText: string = '';
+    try {
+      responseText = await venueRes.text();
+      console.info('[Provider] Raw venue response:', responseText.substring(0, 500));
+      venueList = JSON.parse(responseText) as Venue[];
+    } catch (parseError) {
+      console.error('[Provider] Failed to parse venue response as JSON:', parseError);
+      console.error('[Provider] Response text:', responseText.substring(0, 500));
+      return null;
+    }
+
+    try {
+      imagesRows = (await imagesRes.json()) as ImageRow[];
+      drinksRows = (await drinksRes.json()) as DrinkRow[];
+      windowsRows = (await windowsRes.json()) as WindowRow[];
+    } catch (parseError) {
+      console.error('[Provider] Failed to parse related data as JSON:', parseError);
+      imagesRows = [];
+      drinksRows = [];
+      windowsRows = [];
+    }
   }
   
   if (!Array.isArray(venueList) || venueList.length === 0) return null;
@@ -141,30 +197,6 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   console.info('[Provider] Venue opening_hours from DB:', JSON.stringify(venue.opening_hours, null, 2));
   console.info('[Provider] Full venue object keys:', Object.keys(venue));
   console.info('[Provider] Venue object:', JSON.stringify(venue, null, 2));
-
-  type ImageRow = { id: string; venue_id: string; image_url?: string | null; url?: string | null; label?: string | null; is_cover?: boolean | null };
-  let imagesRows: ImageRow[];
-  let drinksRows: { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null }[];
-  let windowsRows: {
-    id: string;
-    venue_id: string;
-    drink_id: string;
-    day_of_week?: number | null;
-    days?: number[] | null;
-    start_time: string;
-    end_time: string;
-  }[];
-  
-  try {
-    imagesRows = await imagesRes.json();
-    drinksRows = await drinksRes.json();
-    windowsRows = await windowsRes.json();
-  } catch (parseError) {
-    console.error('[Provider] Failed to parse related data as JSON:', parseError);
-    imagesRows = [];
-    drinksRows = [];
-    windowsRows = [];
-  }
 
   const drinks: VenueDrink[] = (drinksRows ?? []).map((d) => ({
     id: String(d.id),

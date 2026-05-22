@@ -1,12 +1,13 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, useWindowDimensions } from 'react-native';
-import { Star } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, useWindowDimensions, type GestureResponderEvent } from 'react-native';
+import { Heart, Star } from 'lucide-react-native';
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
 import { LinearGradient } from 'expo-linear-gradient';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours } from '@/utils/openingHours';
 import Colors from '@/constants/colors';
+import { useFavorites } from '@/context/FavoritesContext';
 
 type VenueCardProps = {
   venue: Venue;
@@ -17,12 +18,19 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const { width: screenWidth } = useWindowDimensions();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const cardWidth = screenWidth;
+  const favorite = isFavorite(String(venue.id));
   
   console.log(`[VenueCard] ${venue.name} opening_hours:`, JSON.stringify(venue.opening_hours, null, 2));
 
   const openVenueDetails = () => {
-    router.push(`/venue/${venue.id}`);
+    router.push(`/venue/${encodeURIComponent(String(venue.id))}`);
+  };
+
+  const handleFavoritePress = async (event: GestureResponderEvent) => {
+    event.stopPropagation();
+    await toggleFavorite(String(venue.id));
   };
 
   const handlePressIn = () => {
@@ -85,6 +93,17 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         <View style={styles.cityPill}>
           <Text style={styles.cityPillText}>Budapest</Text>
         </View>
+
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={handleFavoritePress}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={favorite ? `${venue.name} eltávolítása a kedvencekből` : `${venue.name} hozzáadása a kedvencekhez`}
+          testID={`favorite-toggle-${venue.id}`}
+        >
+          <Heart size={22} color="#00D1FF" fill={favorite ? "#00D1FF" : "transparent"} />
+        </TouchableOpacity>
         
         {/* Free drink badge - bottom right */}
         <View style={styles.freeDrinkBadge}>
@@ -183,6 +202,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500' as const,
     color: '#FFFFFF',
+  },
+  favoriteButton: {
+    position: 'absolute' as const,
+    top: 12,
+    right: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.62)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.26)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    shadowColor: '#00D1FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
   },
   freeDrinkBadge: {
     position: 'absolute' as const,

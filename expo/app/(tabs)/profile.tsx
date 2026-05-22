@@ -6,10 +6,14 @@ import { ChevronRight, UserPlus, History, CreditCard, User, MapPin, HelpCircle, 
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
+import { useFavorites } from "@/context/FavoritesContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { points } = useAppContext();
+  const { favoriteVenues, isLoading: favoritesLoading, syncError } = useFavorites();
+  const profileFavoriteVenues = favoriteVenues.slice(0, 5);
+  const fallbackImageUri = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600";
   
   return (
     <View style={styles.container}>
@@ -107,59 +111,45 @@ export default function ProfileScreen() {
               <Text style={styles.viewAllButton}>Összes megtekintése</Text>
             </TouchableOpacity>
           </View>
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.favoritesScroll}>
-            <TouchableOpacity onPress={() => router.push('/venue/1')} style={styles.favoriteCard}>
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" }}
-                style={styles.favoriteImage}
-              />
-              <View style={styles.favoriteLabel}>
-                <Text style={styles.favoriteLabelText}>Zárva</Text>
-              </View>
-              <View style={styles.favoriteContent}>
-                <Text style={styles.favoriteName}>Café Memories</Text>
-                <Text style={styles.favoriteDescription}>Café - Tasty and cool / Ízeletes és va...</Text>
-                <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoriteDistance}>0,3 km</Text>
-                </View>
-              </View>
+
+          {syncError ? <Text style={styles.favoriteErrorText}>{syncError}</Text> : null}
+          {favoritesLoading ? (
+            <View style={styles.favoriteEmptyCard}>
+              <Text style={styles.favoriteEmptyText}>Kedvencek betöltése...</Text>
+            </View>
+          ) : profileFavoriteVenues.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.favoritesScroll}>
+              {profileFavoriteVenues.map((venue) => {
+                const imageUri = venue.image_url ?? venue.hero_image_url ?? fallbackImageUri;
+                const category = venue.tags?.[0] ?? "Vendéglátóhely";
+                return (
+                  <TouchableOpacity
+                    key={venue.id}
+                    onPress={() => router.push(`/venue/${encodeURIComponent(String(venue.id))}`)}
+                    style={styles.favoriteCard}
+                    activeOpacity={0.85}
+                  >
+                    <Image source={{ uri: imageUri }} style={styles.favoriteImage} />
+                    <View style={styles.favoriteLabel}>
+                      <Text style={styles.favoriteLabelText}>Kedvenc</Text>
+                    </View>
+                    <View style={styles.favoriteContent}>
+                      <Text style={styles.favoriteName} numberOfLines={1}>{venue.name}</Text>
+                      <Text style={styles.favoriteDescription} numberOfLines={2}>{category} - {venue.description ?? "Mentett hely"}</Text>
+                      <View style={styles.favoriteInfo}>
+                        <Text style={styles.favoriteDistance}>{venue.distance ? `${(venue.distance / 1000).toFixed(1)} km` : "Részletek"}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <TouchableOpacity style={styles.favoriteEmptyCard} onPress={() => router.push('/(tabs)/home')} activeOpacity={0.85}>
+              <Heart size={22} color="#00D1FF" />
+              <Text style={styles.favoriteEmptyText}>Még nincs kedvenc helyed. Nyomj szívet egy vendéglátóhelynél.</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => router.push('/venue/2')} style={styles.favoriteCard}>
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" }}
-                style={styles.favoriteImage}
-              />
-              <View style={styles.favoriteLabel}>
-                <Text style={styles.favoriteLabelText}>Nyitva</Text>
-              </View>
-              <View style={styles.favoriteContent}>
-                <Text style={styles.favoriteName}>Essence Delicates</Text>
-                <Text style={styles.favoriteDescription}>Bistro - Fine Dining / Ízeletes és va...</Text>
-                <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoriteDistance}>0,5 km</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => router.push('/venue/8')} style={styles.favoriteCard}>
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80" }}
-                style={styles.favoriteImage}
-              />
-              <View style={styles.favoriteLabel}>
-                <Text style={styles.favoriteLabelText}>Nyitva</Text>
-              </View>
-              <View style={styles.favoriteContent}>
-                <Text style={styles.favoriteName}>Warmup Bar</Text>
-                <Text style={styles.favoriteDescription}>Pub - Student-friendly / Fiatalos és...</Text>
-                <View style={styles.favoriteInfo}>
-                  <Text style={styles.favoriteDistance}>0,9 km</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </ScrollView>
+          )}
         </View>
 
         {/* Quick Access Menu */}
@@ -541,6 +531,29 @@ const styles = StyleSheet.create({
   favoritesScroll: {
     marginHorizontal: -12,
     paddingHorizontal: 12,
+  },
+  favoriteEmptyCard: {
+    minHeight: 112,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0, 209, 255, 0.22)",
+    backgroundColor: "rgba(0, 209, 255, 0.06)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    gap: 8,
+  },
+  favoriteEmptyText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  favoriteErrorText: {
+    color: "#F6B17A",
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 10,
   },
   favoriteCard: {
     width: 200,

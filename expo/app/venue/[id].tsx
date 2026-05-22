@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Heart } from 'lucide-react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -12,6 +12,7 @@ import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
 import { geocodeVenueAddress } from '@/utils/geocoding';
 import RedeemQRModal from '@/components/RedeemQRModal';
+import { useFavorites } from '@/context/FavoritesContext';
 
 
 function getTodayISODay(): number {
@@ -35,6 +36,7 @@ export default function VenueModalScreen() {
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const { isFavorite, toggleFavorite } = useFavorites();
   
   const translateY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -197,6 +199,13 @@ export default function VenueModalScreen() {
 
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
+  const venueIsFavorite = venue ? isFavorite(String(venue.id)) : false;
+
+  const handleFavoritePress = useCallback(async () => {
+    if (!venue?.id) return;
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await toggleFavorite(String(venue.id));
+  }, [toggleFavorite, venue?.id]);
 
 
   // ISO 8601: 1=Monday, 2=Tuesday, ..., 7=Sunday
@@ -353,6 +362,16 @@ export default function VenueModalScreen() {
             <View style={styles.distanceBadge}>
               <Text style={styles.distanceTextBadge}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km</Text>
             </View>
+            <TouchableOpacity
+              style={styles.detailFavoriteButton}
+              onPress={handleFavoritePress}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={venueIsFavorite ? 'Eltávolítás a kedvencekből' : 'Hozzáadás a kedvencekhez'}
+              testID="venue-detail-favorite"
+            >
+              <Heart size={23} color="#00D1FF" fill={venueIsFavorite ? '#00D1FF' : 'transparent'} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
               <X size={24} color={Colors.dark.text} />
             </TouchableOpacity>
@@ -770,6 +789,24 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  detailFavoriteButton: {
+    position: 'absolute',
+    top: 16,
+    right: 64,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.58)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.26)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#00D1FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 7,
   },
   closeButton: {
     position: 'absolute',
