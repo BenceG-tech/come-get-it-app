@@ -4,6 +4,12 @@
       "name": "Expo",
       "path": "expo",
       "framework": "react-native"
+    },
+    {
+      "name": "Come Get It",
+      "path": "ios-come-get-it",
+      "framework": "swift"
     }
-  ]
+  ],
+  "$schema": "https://rork.com/schema/rork.json"
 }
