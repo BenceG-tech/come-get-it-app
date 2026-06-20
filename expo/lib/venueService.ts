@@ -74,7 +74,7 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
     const { data, error } = await query;
     if (error) throw error;
 
-    const rows = Array.isArray(data) ? (data as Venue[]) : [];
+    const rows = Array.isArray(data) ? (data as unknown as Venue[]) : [];
     console.log('[VenueService] Venues loaded via Supabase client', { count: rows.length });
     return rows.map(normalizeVenue);
   } catch (error) {

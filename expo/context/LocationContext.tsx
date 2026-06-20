@@ -21,6 +21,7 @@ type LocationContextType = {
   hasPermission: boolean;
   isTracking: boolean;
   requestPermission: () => Promise<boolean>;
+  getCurrentLocation: () => Promise<LocationObjectLike | null>;
   startTracking: () => Promise<void>;
   stopTracking: () => Promise<void>;
   checkProximityToVenues: (venues: Venue[]) => Venue[];
@@ -142,6 +143,36 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       return false;
     }
   }, []);
+
+  const getCurrentLocation = useCallback(async (): Promise<LocationObjectLike | null> => {
+    const granted = hasPermission || await requestPermission();
+    if (!granted) return null;
+
+    try {
+      if (Platform.OS === 'web') {
+        const current = await getWebLocationOnce();
+        setLocation(current);
+        return current;
+      }
+
+      const Location = await getExpoLocationModule();
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const nextLocation: LocationObjectLike = {
+        coords: {
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+        },
+        timestamp: currentLocation.timestamp,
+      };
+      setLocation(nextLocation);
+      return nextLocation;
+    } catch (error) {
+      console.error('[Location] Failed to get current location:', error);
+      return null;
+    }
+  }, [hasPermission, requestPermission]);
 
   const startTracking = useCallback(async () => {
     if (!hasPermission) {
@@ -297,6 +328,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       hasPermission,
       isTracking,
       requestPermission,
+      getCurrentLocation,
       startTracking,
       stopTracking,
       checkProximityToVenues,
@@ -306,6 +338,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       hasPermission,
       isTracking,
       requestPermission,
+      getCurrentLocation,
       startTracking,
       stopTracking,
       checkProximityToVenues,

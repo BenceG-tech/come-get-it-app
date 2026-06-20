@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { LocationProvider } from "@/context/LocationContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 
@@ -78,11 +79,13 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <AuthProvider>
             <FavoritesProvider>
-              <AppProvider>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <RootLayoutNav />
-                </GestureHandlerRootView>
-              </AppProvider>
+              <LocationProvider>
+                <AppProvider>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <RootLayoutNav />
+                  </GestureHandlerRootView>
+                </AppProvider>
+              </LocationProvider>
             </FavoritesProvider>
           </AuthProvider>
         </SafeAreaProvider>

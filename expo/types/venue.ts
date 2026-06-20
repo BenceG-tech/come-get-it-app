@@ -74,7 +74,7 @@ export type RedemptionToken = {
 
 export type RedemptionError = {
   error: string;
-  code: 'NOT_ELIGIBLE' | 'RATE_LIMITED' | 'NETWORK_ERROR' | 'UNKNOWN';
+  code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_ELIGIBLE' | 'RATE_LIMITED' | 'NETWORK_ERROR' | 'EXPIRED' | 'UNKNOWN';
   next_available_window?: {
     day: number; // ISO 1-7
     start: string;

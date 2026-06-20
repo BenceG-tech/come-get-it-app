@@ -59,6 +59,11 @@ function toYyyyMmDd(d: Date): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function isUuidLike(value: string | undefined): boolean {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 async function fetchRewardsRest(params: { venueId?: string; scope: 'app' | 'venue' }): Promise<Reward[]> {
   const today = toYyyyMmDd(new Date());
   const base = `/rewards?select=*`;
@@ -67,12 +72,14 @@ async function fetchRewardsRest(params: { venueId?: string; scope: 'app' | 'venu
   const order = `&order=${encodeURIComponent('priority.desc.nullslast,points_required.asc')}`;
 
   const venueId = params.venueId;
-  const or =
-    params.scope === 'venue' && venueId
-      ? `&or=${encodeURIComponent(`(venue_id.eq.${venueId},is_global.eq.true)`)}`
-      : '';
+  const hasValidVenueId = isUuidLike(venueId);
+  const globalOnly = params.scope === 'venue' && venueId && !hasValidVenueId;
+  const venueOrGlobal = params.scope === 'venue' && hasValidVenueId
+    ? `&or=${encodeURIComponent(`(venue_id.eq.${venueId},partner_id.eq.${venueId},is_global.eq.true)`)}`
+    : '';
+  const globalFilter = globalOnly ? '&is_global=eq.true' : '';
 
-  const url = `${base}${active}${valid}${or}${order}`;
+  const url = `${base}${active}${valid}${venueOrGlobal}${globalFilter}${order}`;
   console.info('[Provider] fetchRewardsRest', { scope: params.scope, venueId, url });
 
   const res = await rest(url);
@@ -83,11 +90,17 @@ async function fetchRewardsRest(params: { venueId?: string; scope: 'app' | 'venu
 }
 
 export async function fetchRewards(venueId: string): Promise<Reward[]> {
-  console.info('[Provider] fetchRewards', { venueId });
+  const normalizedVenueId = String(venueId ?? '').trim();
+  console.info('[Provider] fetchRewards', { venueId: normalizedVenueId });
+
+  if (!isUuidLike(normalizedVenueId)) {
+    console.warn('[Provider] fetchRewards received non-UUID venueId; using global rewards fallback', { venueId: normalizedVenueId });
+    return fetchRewardsRest({ venueId: normalizedVenueId, scope: 'venue' });
+  }
 
   try {
     const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
-      venue_id: venueId,
+      venue_id: normalizedVenueId,
     });
     const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
     console.info('[Provider] fetchRewards edge result', { count: rewards.length });
@@ -96,7 +109,7 @@ export async function fetchRewards(venueId: string): Promise<Reward[]> {
     console.error('[Provider] fetchRewards edge failed, falling back to REST', e);
   }
 
-  return fetchRewardsRest({ venueId, scope: 'venue' });
+  return fetchRewardsRest({ venueId: normalizedVenueId, scope: 'venue' });
 }
 
 export async function fetchAppRewards(): Promise<Reward[]> {
@@ -132,9 +145,27 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     const supabase = getSupabase();
     const [{ data: venuesData, error: venueError }, imagesResult, drinksResult, windowsResult] = await Promise.all([
       supabase.from('venues').select('*').eq('id', normalizedId).limit(1),
-      supabase.from('venue_images').select('*').eq('venue_id', normalizedId).then((result) => result).catch((error: unknown) => ({ data: [], error })),
-      supabase.from('venue_drinks').select('*').eq('venue_id', normalizedId).then((result) => result).catch((error: unknown) => ({ data: [], error })),
-      supabase.from('free_drink_windows').select('*').eq('venue_id', normalizedId).then((result) => result).catch((error: unknown) => ({ data: [], error })),
+      (async () => {
+        try {
+          return await supabase.from('venue_images').select('*').eq('venue_id', normalizedId);
+        } catch (error: unknown) {
+          return { data: [], error };
+        }
+      })(),
+      (async () => {
+        try {
+          return await supabase.from('venue_drinks').select('*').eq('venue_id', normalizedId);
+        } catch (error: unknown) {
+          return { data: [], error };
+        }
+      })(),
+      (async () => {
+        try {
+          return await supabase.from('free_drink_windows').select('*').eq('venue_id', normalizedId);
+        } catch (error: unknown) {
+          return { data: [], error };
+        }
+      })(),
     ]);
 
     if (venueError) throw venueError;

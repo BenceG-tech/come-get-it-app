@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday } from '@/utils/openingHours';
 import { geocodeVenueAddress } from '@/utils/geocoding';
-import RedeemQRModal from '@/components/RedeemQRModal';
+import RedemptionWindowModal from '@/components/RedemptionWindowModal';
 import { useFavorites } from '@/context/FavoritesContext';
 
 
@@ -727,11 +727,12 @@ export default function VenueModalScreen() {
         </View>
       </Animated.View>
 
-      <RedeemQRModal
+      <RedemptionWindowModal
         visible={showRedeemModal}
         onClose={() => setShowRedeemModal(false)}
         venueId={venue.id}
         venueName={venue.name}
+        venueCoordinates={resolvedCoords.isValid ? { latitude: resolvedCoords.lat, longitude: resolvedCoords.lng } : null}
         drink={freeDrinks[selectedDrinkIndex] ?? null}
         freeDrinkWindows={windowsNormalized}
       />
