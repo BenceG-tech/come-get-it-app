@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Apple, Chrome, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
@@ -23,6 +24,7 @@ import AuthDivider from '@/components/AuthDivider';
 import AuthLegalText from '@/components/AuthLegalText';
 
 const LOGO_SOURCE = require('@/assets/images/come-get-it-logo-white.png');
+const BACKGROUND_SOURCE = require('@/assets/images/auth-background.png');
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
@@ -96,8 +98,24 @@ function AuthScreen() {
 
   return (
     <View style={styles.root} testID="auth-root">
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <Image
+        source={BACKGROUND_SOURCE}
+        style={styles.backgroundImage}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={180}
+      />
+      <View pointerEvents="none" style={styles.blackWash} />
       <LinearGradient
-        colors={['#02080C', '#000000', '#000000']}
+        pointerEvents="none"
+        colors={[
+          'rgba(0,0,0,0.70)',
+          'rgba(0,0,0,0.48)',
+          'rgba(0,0,0,0.88)',
+          '#000000',
+        ]}
+        locations={[0, 0.36, 0.72, 1]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -247,6 +265,15 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  blackWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 30,
@@ -259,12 +286,12 @@ const styles = StyleSheet.create({
   logoWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 56,
-    marginBottom: 36,
+    marginTop: 42,
+    marginBottom: 30,
   },
   logo: {
-    width: 220,
-    height: 110,
+    width: 232,
+    height: 98,
   },
 
   // Welcome text
@@ -282,7 +309,7 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     textAlign: 'center',
     maxWidth: 320,
-    marginBottom: 40,
+    marginBottom: 36,
   },
 
   // Fields
