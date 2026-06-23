@@ -8,8 +8,8 @@ import {
 import type { ReactNode } from 'react';
 
 const CYAN = '#00C8E8' as const;
-const SURFACE_DARK = 'rgba(10, 16, 22, 0.72)' as const;
-const SURFACE_BORDER = 'rgba(255, 255, 255, 0.16)' as const;
+const SURFACE_DARK = 'rgba(10, 16, 22, 0.78)' as const;
+const SURFACE_BORDER = 'rgba(255, 255, 255, 0.14)' as const;
 const TEXT_WHITE = '#FFFFFF' as const;
 
 export interface TextInputFieldProps {
@@ -72,6 +72,7 @@ const TextInputField = forwardRef<RNTextInput, TextInputFieldProps>(
           onSubmitEditing={onSubmitEditing}
           onFocus={onFocus}
           onBlur={onBlur}
+          selectionColor={CYAN}
           style={styles.input}
         />
         {rightIcon ? (
@@ -99,23 +100,23 @@ const styles = StyleSheet.create({
     backgroundColor: SURFACE_DARK,
     borderWidth: 1,
     borderColor: SURFACE_BORDER,
-    paddingHorizontal: 20,
+    paddingHorizontal: 21,
   },
   wrapFocused: {
     borderColor: CYAN,
     shadowColor: CYAN,
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
     elevation: 0,
   },
   iconLeft: {
-    marginRight: 12,
+    marginRight: 13,
   },
   input: {
     flex: 1,
     color: TEXT_WHITE,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600' as const,
     padding: 0,
   },

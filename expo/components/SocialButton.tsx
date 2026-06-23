@@ -2,8 +2,8 @@ import React, { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-const SURFACE_DARK = 'rgba(10, 16, 22, 0.72)' as const;
-const SURFACE_BORDER = 'rgba(255, 255, 255, 0.16)' as const;
+const SURFACE_DARK = 'rgba(10, 16, 22, 0.78)' as const;
+const SURFACE_BORDER = 'rgba(255, 255, 255, 0.14)' as const;
 const TEXT_WHITE = '#FFFFFF' as const;
 
 export interface SocialButtonProps {
@@ -45,7 +45,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 60,
     borderRadius: 30,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: SURFACE_DARK,
@@ -53,12 +52,17 @@ const styles = StyleSheet.create({
     borderColor: SURFACE_BORDER,
   },
   icon: {
-    marginRight: 10,
+    position: 'absolute',
+    left: 22,
+    width: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     color: TEXT_WHITE,
     fontSize: 17,
     fontWeight: '600' as const,
+    letterSpacing: -0.1,
   },
   disabled: {
     opacity: 0.45,

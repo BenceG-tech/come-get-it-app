@@ -14,23 +14,24 @@ import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Apple, Chrome, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
-import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
-import TextInputField from '@/components/TextInputField';
+import AuthDivider from '@/components/AuthDivider';
+import AuthLegalText from '@/components/AuthLegalText';
 import PrimaryButton from '@/components/PrimaryButton';
 import SecondaryButton from '@/components/SecondaryButton';
 import SocialButton from '@/components/SocialButton';
-import AuthDivider from '@/components/AuthDivider';
-import AuthLegalText from '@/components/AuthLegalText';
+import TextInputField from '@/components/TextInputField';
+import { useAuth } from '@/context/AuthContext';
 
 const LOGO_SOURCE = require('@/assets/images/come-get-it-logo-white.png');
 const BACKGROUND_SOURCE = require('@/assets/images/auth-background.png');
 
 const CYAN = '#00C8E8' as const;
-const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
-const TEXT_SOFT = 'rgba(255, 255, 255, 0.45)' as const;
+const TEXT_MUTED = 'rgba(255, 255, 255, 0.72)' as const;
+const TEXT_SOFT = 'rgba(255, 255, 255, 0.48)' as const;
 
 type Mode = 'login' | 'signup';
+type FocusedField = 'email' | 'password' | null;
 
 function AuthScreen() {
   const router = useRouter();
@@ -40,12 +41,12 @@ function AuthScreen() {
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [focusedField, setFocusedField] = useState<FocusedField>(null);
 
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
-  const canSubmit = useMemo(() => {
+  const canSubmit = useMemo<boolean>(() => {
     return email.trim().length > 3 && password.length >= 6 && !loading;
   }, [email, loading, password]);
 
@@ -56,13 +57,15 @@ function AuthScreen() {
 
   const onSubmit = useCallback(async () => {
     if (!canSubmit) return;
+
     setLoading(true);
     try {
+      const normalizedEmail = email.trim();
       if (mode === 'login') {
-        await signInWithEmail(email.trim(), password);
+        await signInWithEmail(normalizedEmail, password);
       } else {
-        await signUpWithEmail(email.trim(), password);
-        await signInWithEmail(email.trim(), password);
+        await signUpWithEmail(normalizedEmail, password);
+        await signInWithEmail(normalizedEmail, password);
       }
     } finally {
       setLoading(false);
@@ -71,6 +74,7 @@ function AuthScreen() {
 
   const onGoogle = useCallback(async () => {
     if (loading) return;
+
     setLoading(true);
     try {
       await signInWithGoogle();
@@ -81,6 +85,7 @@ function AuthScreen() {
 
   const onApple = useCallback(async () => {
     if (loading) return;
+
     setLoading(true);
     try {
       await signInWithApple();
@@ -90,8 +95,13 @@ function AuthScreen() {
   }, [loading, signInWithApple]);
 
   const switchMode = useCallback(() => {
-    setMode((prev) => (prev === 'login' ? 'signup' : 'login'));
+    setMode((previousMode) => (previousMode === 'login' ? 'signup' : 'login'));
   }, []);
+
+  const focusEmail = useCallback(() => setFocusedField('email'), []);
+  const focusPassword = useCallback(() => setFocusedField('password'), []);
+  const clearFocus = useCallback(() => setFocusedField(null), []);
+  const togglePasswordVisibility = useCallback(() => setShowPassword((isVisible) => !isVisible), []);
 
   const primaryLabel = mode === 'login' ? 'Bejelentkezés' : 'Regisztráció';
   const secondaryLabel = mode === 'login' ? 'Regisztráció' : 'Bejelentkezés';
@@ -99,152 +109,143 @@ function AuthScreen() {
   return (
     <View style={styles.root} testID="auth-root">
       <StatusBar style="light" translucent backgroundColor="transparent" />
+
       <Image
         source={BACKGROUND_SOURCE}
         style={styles.backgroundImage}
         contentFit="cover"
         cachePolicy="memory-disk"
-        transition={180}
+        transition={160}
       />
-      <View pointerEvents="none" style={styles.blackWash} />
+      <View pointerEvents="none" style={styles.backgroundDim} />
       <LinearGradient
         pointerEvents="none"
         colors={[
-          'rgba(0,0,0,0.70)',
-          'rgba(0,0,0,0.48)',
-          'rgba(0,0,0,0.88)',
+          'rgba(0,0,0,0.76)',
+          'rgba(0,0,0,0.58)',
+          'rgba(0,0,0,0.78)',
           '#000000',
         ]}
-        locations={[0, 0.36, 0.72, 1]}
+        locations={[0, 0.34, 0.72, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
-            bounces={false}
           >
-            {/* Logo */}
-            <View style={styles.logoWrap}>
+            <View style={styles.content}>
               <Image
                 source={LOGO_SOURCE}
                 style={styles.logo}
                 contentFit="contain"
                 cachePolicy="memory-disk"
-              />
-            </View>
-
-            {/* Welcome text */}
-            <Text style={styles.heading}>Üdv újra!</Text>
-            <Text style={styles.subheading}>
-              Jelentkezz be, és fedezd fel partnereinket és a napi ingyen italokat.
-            </Text>
-
-            {/* Fields */}
-            <View style={styles.fieldGroup}>
-              <TextInputField
-                ref={emailRef}
-                testID="auth-email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="E-mail cím"
-                leftIcon={<Mail size={18} color={focusedField === 'email' ? CYAN : TEXT_SOFT} />}
-                focused={focusedField === 'email'}
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField(null)}
-                keyboardType="email-address"
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
+                accessibilityLabel="Come Get It"
               />
 
-              <TextInputField
-                ref={passwordRef}
-                testID="auth-password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Jelszó"
-                leftIcon={<LockKeyhole size={18} color={focusedField === 'password' ? CYAN : TEXT_SOFT} />}
-                rightIcon={
-                  showPassword ? (
-                    <EyeOff size={18} color={TEXT_SOFT} />
-                  ) : (
-                    <Eye size={18} color={TEXT_SOFT} />
-                  )
-                }
-                onRightIconPress={() => setShowPassword((prev) => !prev)}
-                focused={focusedField === 'password'}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField(null)}
-                secureTextEntry={!showPassword}
-                autoComplete="password"
-                textContentType="password"
-                returnKeyType="done"
-                onSubmitEditing={onSubmit}
-              />
+              <View style={styles.heroTextBlock}>
+                <Text style={styles.heading}>Üdv újra!</Text>
+                <Text style={styles.subheading}>
+                  Jelentkezz be, és fedezd fel partnereinket és a napi ingyen italokat.
+                </Text>
+              </View>
 
-              {/* Forgot password */}
-              <Pressable style={styles.forgotWrap}>
-                <Text style={styles.forgotText}>Elfelejtetted a jelszavad?</Text>
-              </Pressable>
+              <View style={styles.formBlock}>
+                <TextInputField
+                  ref={emailRef}
+                  testID="auth-email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="E-mail cím"
+                  leftIcon={<Mail size={19} color={focusedField === 'email' ? CYAN : TEXT_SOFT} />}
+                  focused={focusedField === 'email'}
+                  onFocus={focusEmail}
+                  onBlur={clearFocus}
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  textContentType="emailAddress"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+
+                <TextInputField
+                  ref={passwordRef}
+                  testID="auth-password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Jelszó"
+                  leftIcon={<LockKeyhole size={19} color={focusedField === 'password' ? CYAN : TEXT_SOFT} />}
+                  rightIcon={
+                    showPassword ? (
+                      <EyeOff size={19} color={TEXT_SOFT} />
+                    ) : (
+                      <Eye size={19} color={TEXT_SOFT} />
+                    )
+                  }
+                  onRightIconPress={togglePasswordVisibility}
+                  focused={focusedField === 'password'}
+                  onFocus={focusPassword}
+                  onBlur={clearFocus}
+                  secureTextEntry={!showPassword}
+                  autoComplete="password"
+                  textContentType="password"
+                  returnKeyType="done"
+                  onSubmitEditing={onSubmit}
+                />
+
+                <Pressable hitSlop={10} style={styles.forgotButton}>
+                  <Text style={styles.forgotText}>Elfelejtetted a jelszavad?</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.actionsBlock}>
+                <PrimaryButton
+                  testID="auth-submit"
+                  label={primaryLabel}
+                  onPress={onSubmit}
+                  disabled={!canSubmit}
+                  loading={loading}
+                />
+
+                <SecondaryButton
+                  testID="auth-switch-mode"
+                  label={secondaryLabel}
+                  onPress={switchMode}
+                  disabled={loading}
+                />
+              </View>
+
+              <View style={styles.dividerBlock}>
+                <AuthDivider />
+              </View>
+
+              <View style={styles.socialBlock}>
+                <SocialButton
+                  testID="auth-apple"
+                  icon={<Apple size={21} color="#FFFFFF" />}
+                  label="Folytatás az Apple-lel"
+                  onPress={onApple}
+                  disabled={loading}
+                />
+                <SocialButton
+                  testID="auth-google"
+                  icon={<Chrome size={21} color="#00C8E8" />}
+                  label="Folytatás a Google-lel"
+                  onPress={onGoogle}
+                  disabled={loading}
+                />
+              </View>
+
+              <View style={styles.legalBlock}>
+                <AuthLegalText />
+              </View>
             </View>
-
-            {/* Primary CTA */}
-            <PrimaryButton
-              testID="auth-submit"
-              label={primaryLabel}
-              onPress={onSubmit}
-              disabled={!canSubmit}
-              loading={loading}
-            />
-
-            {/* Secondary / register button */}
-            <View style={styles.secondarySpacer}>
-              <SecondaryButton
-                testID="auth-switch-mode"
-                label={secondaryLabel}
-                onPress={switchMode}
-                disabled={loading}
-              />
-            </View>
-
-            {/* Divider */}
-            <View style={styles.dividerSpacer}>
-              <AuthDivider />
-            </View>
-
-            {/* Social login buttons */}
-            <View style={styles.socialGroup}>
-              <SocialButton
-                testID="auth-apple"
-                icon={<Apple size={20} color="#FFFFFF" />}
-                label="Folytatás az Apple-lel"
-                onPress={onApple}
-                disabled={loading}
-              />
-              <SocialButton
-                testID="auth-google"
-                icon={<Chrome size={20} color="#FFFFFF" />}
-                label="Folytatás a Google-lel"
-                onPress={onGoogle}
-                disabled={loading}
-              />
-            </View>
-
-            {/* Legal text */}
-            <View style={styles.legalWrap}>
-              <AuthLegalText />
-            </View>
-
-            {/* Bottom spacer for safe area */}
-            <View style={styles.bottomSpacer} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  safe: {
+  safeArea: {
     flex: 1,
   },
   backgroundImage: {
@@ -270,90 +271,80 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  blackWash: {
+  backgroundDim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.38)',
+    backgroundColor: 'rgba(0,0,0,0.34)',
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 30,
-    alignItems: 'center',
+    paddingTop: 34,
+    paddingBottom: 24,
     justifyContent: 'center',
-    minHeight: '100%' as unknown as number,
+    alignItems: 'center',
   },
-
-  // Logo
-  logoWrap: {
+  content: {
+    width: '100%',
+    maxWidth: 420,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 42,
-    marginBottom: 30,
   },
   logo: {
-    width: 232,
-    height: 98,
+    width: 226,
+    height: 92,
+    marginBottom: 28,
   },
-
-  // Welcome text
+  heroTextBlock: {
+    alignItems: 'center',
+    marginBottom: 34,
+  },
   heading: {
     color: '#FFFFFF',
-    fontSize: 38,
+    fontSize: 40,
+    lineHeight: 46,
     fontWeight: '800' as const,
     textAlign: 'center',
+    letterSpacing: -0.7,
     marginBottom: 12,
-    letterSpacing: -0.5,
   },
   subheading: {
     color: TEXT_MUTED,
-    fontSize: 17,
+    fontSize: 18,
     lineHeight: 27,
     textAlign: 'center',
-    maxWidth: 320,
-    marginBottom: 36,
+    maxWidth: 326,
+    fontWeight: '500' as const,
   },
-
-  // Fields
-  fieldGroup: {
+  formBlock: {
     width: '100%',
-    gap: 14,
-    marginBottom: 4,
+    gap: 15,
   },
-  forgotWrap: {
-    alignItems: 'flex-end',
-    marginTop: 12,
-    marginBottom: 28,
+  forgotButton: {
+    alignSelf: 'flex-end',
+    marginTop: 1,
+    marginBottom: 12,
   },
   forgotText: {
     color: CYAN,
     fontSize: 15,
+    lineHeight: 20,
     fontWeight: '600' as const,
   },
-
-  // Buttons
-  secondarySpacer: {
+  actionsBlock: {
     width: '100%',
-    marginTop: 16,
+    gap: 16,
+    marginTop: 12,
   },
-  dividerSpacer: {
+  dividerBlock: {
     width: '100%',
-    marginTop: 32,
-    marginBottom: 22,
+    marginTop: 30,
+    marginBottom: 20,
   },
-
-  // Social
-  socialGroup: {
+  socialBlock: {
     width: '100%',
     gap: 12,
   },
-
-  // Legal
-  legalWrap: {
+  legalBlock: {
     marginTop: 28,
     alignItems: 'center',
-  },
-
-  // Bottom spacer
-  bottomSpacer: {
-    height: 24,
   },
 });

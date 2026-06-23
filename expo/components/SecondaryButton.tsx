@@ -38,18 +38,19 @@ export default memo(SecondaryButton);
 const styles = StyleSheet.create({
   btn: {
     width: '100%',
-    height: 60,
-    borderRadius: 30,
+    height: 62,
+    borderRadius: 31,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.20)',
+    backgroundColor: 'rgba(0, 8, 12, 0.34)',
     borderWidth: 1.5,
     borderColor: CYAN,
   },
   text: {
     color: TEXT_WHITE,
     fontSize: 19,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
+    letterSpacing: -0.1,
   },
   disabled: {
     opacity: 0.45,

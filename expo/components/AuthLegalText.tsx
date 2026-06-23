@@ -18,7 +18,7 @@ export default memo(AuthLegalText);
 
 const styles = StyleSheet.create({
   text: {
-    color: 'rgba(255,255,255,0.55)',
+    color: 'rgba(255,255,255,0.56)',
     fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
@@ -26,6 +26,6 @@ const styles = StyleSheet.create({
   },
   link: {
     color: CYAN,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
   },
 });

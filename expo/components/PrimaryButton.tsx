@@ -41,8 +41,8 @@ function PrimaryButton({
     >
       <LinearGradient
         colors={[CYAN, BLUE]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
         style={styles.gradient}
       >
         {loading ? (
@@ -51,7 +51,7 @@ function PrimaryButton({
           <Text style={styles.text}>{label}</Text>
         )}
       </LinearGradient>
-      {active ? <View pointerEvents="none" style={styles.glow} /> : null}
+      {active ? <View pointerEvents="none" style={styles.innerStroke} /> : null}
     </Pressable>
   );
 }
@@ -65,10 +65,10 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     overflow: 'hidden',
     shadowColor: CYAN,
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   gradient: {
     flex: 1,
@@ -78,21 +78,22 @@ const styles = StyleSheet.create({
   text: {
     color: '#001014',
     fontSize: 20,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
+    letterSpacing: -0.1,
   },
   disabled: {
-    opacity: 0.45,
+    opacity: 0.58,
     shadowOpacity: 0,
     elevation: 0,
   },
   pressed: {
-    opacity: 0.88,
+    opacity: 0.92,
     transform: [{ scale: 0.985 }],
   },
-  glow: {
+  innerStroke: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 32,
     borderWidth: 1,
-    borderColor: 'rgba(0,200,232,0.30)',
+    borderColor: 'rgba(255,255,255,0.22)',
   },
 });
