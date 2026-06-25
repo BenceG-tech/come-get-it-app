@@ -1,7 +1,20 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { Lock, Send } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  BadgePercent,
+  ChevronRight,
+  CreditCard,
+  Gift,
+  Martini,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  UtensilsCrossed,
+  type LucideIcon,
+} from "lucide-react-native";
 import Colors from "@/constants/colors";
 import RewardCard from "@/components/RewardCard";
 import { router } from "expo-router";
@@ -9,6 +22,45 @@ import { useAppContext } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
+
+type RewardCategoryItem = {
+  key: string;
+  title: string;
+  subtitle: string;
+  icon: LucideIcon;
+  accent: string;
+};
+
+const rewardCategories: RewardCategoryItem[] = [
+  {
+    key: "drink",
+    title: "Italok",
+    subtitle: "Koktélok, sörök, napi ajándékok",
+    icon: Martini,
+    accent: "#00C8E8",
+  },
+  {
+    key: "food",
+    title: "Étel",
+    subtitle: "Falak, vacsorák és partner ajánlatok",
+    icon: UtensilsCrossed,
+    accent: "#F6B17A",
+  },
+  {
+    key: "experience",
+    title: "Élmények",
+    subtitle: "VIP belépők és különleges esték",
+    icon: Sparkles,
+    accent: "#7DD3FC",
+  },
+  {
+    key: "all",
+    title: "Összes",
+    subtitle: "Minden elérhető jutalom egy helyen",
+    icon: BadgePercent,
+    accent: "#1D6DFF",
+  },
+];
 
 export default function RewardsScreen() {
   const rewardsQuery = useQuery({
@@ -55,6 +107,9 @@ export default function RewardsScreen() {
   }, [normalizedRewards]);
 
   const { points } = useAppContext();
+  const nextReward = normalizedRewards.find((reward: Reward) => reward.points_required > points);
+  const closestRewardCost = nextReward?.points_required ?? 2500;
+  const progress = Math.min(points / Math.max(closestRewardCost, 1), 1);
 
   const goToCategory = (cat: string) => {
     console.log("[Rewards] Navigate to category:", cat);
@@ -64,56 +119,67 @@ export default function RewardsScreen() {
   return (
     <View style={styles.container} testID="rewards-screen">
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <Text style={styles.title}>Jutalmak</Text>
-        <View style={styles.pointsContainer}>
-          <Text style={styles.pointsValue}>{points.toLocaleString("hu-HU")} POINTS</Text>
-        </View>
-      </View>
-      
-      <ScrollView showsVerticalScrollIndicator={false} accessibilityRole="scrollbar">
-        <View style={styles.cardSection}>
-          <View style={styles.addCardContainer}>
-            <Image 
-              source={{ uri: "https://cdn-icons-png.flaticon.com/512/6772/6772415.png" }} 
-              style={styles.cardIcon} 
-              accessibilityIgnoresInvertColors
-            />
-            <View style={styles.addCardTextContainer}>
-              <Text style={styles.addCardTitle}>ADJ HOZZÁ EGY KÁRTYÁT, HOGY JUTALOM PONTOKAT SZEREZZ MINDEN ALKALOMMAL, AMIKOR A BÁRJAINKBAN KÖLTESZ</Text>
-              <Text style={styles.addCardSubtitle}>Biztonságos és <Text style={styles.bold}>soha nem terhelünk meg</Text>.</Text>
-            </View>
-            <TouchableOpacity style={styles.addCardButton} accessibilityRole="button" testID="add-card-button">
-              <Lock size={16} color={Colors.text} />
-              <Text style={styles.addCardButtonText}>Kártya hozzáadása</Text>
-            </TouchableOpacity>
-            <View style={styles.cardBrands}>
-              <Image 
-                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/1200px-American_Express_logo_%282018%29.svg.png" }} 
-                style={styles.cardBrand} 
-              />
-              <Image 
-                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" }} 
-                style={styles.cardBrand} 
-              />
-              <Image 
-                source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" }} 
-                style={styles.cardBrand} 
-              />
-            </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <View style={styles.headerTextBlock}>
+            <Text style={styles.eyebrow}>COME GET IT CLUB</Text>
+            <Text style={styles.title}>Jutalmak</Text>
+            <Text style={styles.subtitle}>Gyűjts pontokat, válts be italokat, kedvezményeket és exkluzív élményeket.</Text>
+          </View>
+          <View style={styles.pointsPill}>
+            <Sparkles size={14} color="#001014" />
+            <Text style={styles.pointsPillText}>{points.toLocaleString("hu-HU")}</Text>
           </View>
         </View>
-        
+
+        <TouchableOpacity style={styles.heroCard} activeOpacity={0.9} accessibilityRole="button" testID="add-card-button">
+          <LinearGradient
+            colors={["rgba(0, 200, 232, 0.20)", "rgba(29, 109, 255, 0.10)", "rgba(10, 16, 22, 0.86)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
+          >
+            <View style={styles.heroTopRow}>
+              <View style={styles.heroIconWrap}>
+                <CreditCard size={21} color="#00C8E8" />
+              </View>
+              <View style={styles.secureBadge}>
+                <ShieldCheck size={13} color="rgba(255,255,255,0.76)" />
+                <Text style={styles.secureBadgeText}>Biztonságos</Text>
+              </View>
+            </View>
+            <Text style={styles.heroTitle}>Kapcsold hozzá a kártyád</Text>
+            <Text style={styles.heroSubtitle}>Automatikusan pontot kapsz, amikor partnerhelyeinken fizetsz. Nem terhelünk meg külön.</Text>
+            <View style={styles.heroActionRow}>
+              <Text style={styles.heroActionText}>Kártya hozzáadása</Text>
+              <ChevronRight size={17} color="#001014" />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <View>
+              <Text style={styles.progressLabel}>Következő jutalom</Text>
+              <Text style={styles.progressTitle}>{nextReward ? nextReward.name : "Új partner ajánlat"}</Text>
+            </View>
+            <Text style={styles.progressPoints}>{Math.max(closestRewardCost - points, 0).toLocaleString("hu-HU")} pont</Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          </View>
+        </View>
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>♥ Szerkesztők választása</Text>
+            <View>
+              <Text style={styles.sectionTitle}>Kiemelt ajánlatok</Text>
+              <Text style={styles.sectionSubtitle}>A legjobb beváltások ma estére</Text>
+            </View>
           </View>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-          >
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
             {rewardsQuery.isLoading ? (
               <View style={styles.inlineState} testID="rewards-loading">
                 <Text style={styles.inlineStateText}>Jutalmak betöltése...</Text>
@@ -141,91 +207,47 @@ export default function RewardsScreen() {
             )}
           </ScrollView>
         </View>
-        
-        <TouchableOpacity style={styles.referButton} testID="refer-friend" activeOpacity={0.86}>
-          <View style={styles.referGlow} pointerEvents="none" />
+
+        <TouchableOpacity style={styles.referButton} testID="refer-friend" activeOpacity={0.88} onPress={() => router.push("/invite-friends")}>
           <View style={styles.referIconWrap}>
-            <Send size={22} color={"rgba(0, 209, 255, 0.95)"} />
+            <Send size={19} color="#00C8E8" />
           </View>
           <View style={styles.referTextContainer}>
             <Text style={styles.referTitle}>Hívj meg egy barátot</Text>
-            <Text style={styles.referSubtitle}>Szerezz 500 pontot, amikor meghívsz egy barátot a Come Get It-re.</Text>
+            <Text style={styles.referSubtitle}>500 pont jár, amikor csatlakozik és használja az appot.</Text>
           </View>
+          <ChevronRight size={19} color="rgba(255,255,255,0.42)" />
         </TouchableOpacity>
-        
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📋 Kategóriák</Text>
+            <View>
+              <Text style={styles.sectionTitle}>Kategóriák</Text>
+              <Text style={styles.sectionSubtitle}>Gyors út a megfelelő ajánlathoz</Text>
+            </View>
           </View>
-          
+
           <View style={styles.categoriesGrid}>
-            <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => goToCategory('drink')}
-              accessibilityRole="button"
-              accessibilityLabel="Italok kategória"
-              testID="cat-drinks"
-              activeOpacity={0.8}
-            >
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1470&q=80" }} 
-                style={styles.categoryImage} 
-              />
-              <View style={styles.categoryOverlay} pointerEvents="none">
-                <Text style={styles.categoryTitle}>Italok</Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => goToCategory('food')}
-              accessibilityRole="button"
-              accessibilityLabel="Étel kategória"
-              testID="cat-food"
-              activeOpacity={0.8}
-            >
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1470&q=80" }} 
-                style={styles.categoryImage} 
-              />
-              <View style={styles.categoryOverlay} pointerEvents="none">
-                <Text style={styles.categoryTitle}>Étel</Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => goToCategory('experience')}
-              accessibilityRole="button"
-              accessibilityLabel="Élmény kategória"
-              testID="cat-experience"
-              activeOpacity={0.8}
-            >
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=1548&q=80" }} 
-                style={styles.categoryImage} 
-              />
-              <View style={styles.categoryOverlay} pointerEvents="none">
-                <Text style={styles.categoryTitle}>Élmény</Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.categoryCard}
-              onPress={() => goToCategory('all')}
-              accessibilityRole="button"
-              accessibilityLabel="Összes megtekintése"
-              testID="cat-all"
-              activeOpacity={0.8}
-            >
-              <Image 
-                source={{ uri: "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1548&q=80" }} 
-                style={styles.categoryImage} 
-              />
-              <View style={styles.categoryOverlay} pointerEvents="none">
-                <Text style={styles.categoryTitle}>Összes megtekintése</Text>
-              </View>
-            </TouchableOpacity>
+            {rewardCategories.map((category: RewardCategoryItem) => {
+              const Icon = category.icon;
+              return (
+                <TouchableOpacity
+                  key={category.key}
+                  style={styles.categoryCard}
+                  onPress={() => goToCategory(category.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${category.title} kategória`}
+                  testID={`cat-${category.key}`}
+                  activeOpacity={0.86}
+                >
+                  <View style={[styles.categoryIconWrap, { borderColor: `${category.accent}55`, backgroundColor: `${category.accent}16` }]}>
+                    <Icon size={21} color={category.accent} />
+                  </View>
+                  <Text style={styles.categoryTitle}>{category.title}</Text>
+                  <Text style={styles.categorySubtitle} numberOfLines={2}>{category.subtitle}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -238,212 +260,288 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  scrollContent: {
+    paddingTop: 58,
+    paddingBottom: 28,
+  },
   header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    marginBottom: 18,
+    gap: 14,
+  },
+  headerTextBlock: {
+    flex: 1,
+  },
+  eyebrow: {
+    color: "rgba(0, 200, 232, 0.86)",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    marginBottom: 7,
+  },
+  title: {
+    fontSize: 34,
+    lineHeight: 38,
+    fontWeight: "900",
+    color: Colors.text,
+    letterSpacing: -0.8,
+  },
+  subtitle: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 9,
+    maxWidth: 282,
+  },
+  pointsPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#00C8E8",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowColor: "#00C8E8",
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  pointsPillText: {
+    color: "#001014",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  heroCard: {
+    marginHorizontal: 18,
+    marginBottom: 12,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(10,16,22,0.78)",
+  },
+  heroGradient: {
+    padding: 18,
+  },
+  heroTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    marginBottom: 18,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: Colors.text,
-  },
-  pointsContainer: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  heroIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.28)",
+    justifyContent: "center",
     alignItems: "center",
   },
-  pointsValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: Colors.text,
-  },
-  pointsLabel: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    letterSpacing: 1,
-  },
-  cardSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  addCardContainer: {
-    backgroundColor: Colors.text,
-    borderRadius: 12,
-    padding: 16,
+  secureBadge: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
-  cardIcon: {
-    width: 40,
-    height: 24,
-    resizeMode: "contain",
+  secureBadgeText: {
+    color: "rgba(255,255,255,0.76)",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  heroTitle: {
+    color: Colors.text,
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+    marginBottom: 7,
+  },
+  heroSubtitle: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 17,
+  },
+  heroActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    gap: 5,
+    borderRadius: 999,
+    backgroundColor: "#00C8E8",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  heroActionText: {
+    color: "#001014",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  progressCard: {
+    marginHorizontal: 18,
+    marginBottom: 26,
+    borderRadius: 18,
+    padding: 15,
+    backgroundColor: "rgba(255,255,255,0.045)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+  },
+  progressHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
     marginBottom: 12,
   },
-  addCardTextContainer: {
-    alignItems: "center",
-    marginBottom: 16,
+  progressLabel: {
+    color: "rgba(255,255,255,0.44)",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+    marginBottom: 5,
   },
-  addCardTitle: {
+  progressTitle: {
+    color: "rgba(255,255,255,0.88)",
     fontSize: 14,
-    fontWeight: "bold",
-    color: Colors.background,
-    textAlign: "center",
-    marginBottom: 8,
+    fontWeight: "800",
+    maxWidth: 210,
   },
-  addCardSubtitle: {
-    fontSize: 12,
-    color: "#555",
-    textAlign: "center",
+  progressPoints: {
+    color: "#00C8E8",
+    fontSize: 13,
+    fontWeight: "900",
   },
-  bold: {
-    fontWeight: "bold",
+  progressTrack: {
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    overflow: "hidden",
   },
-  addCardButton: {
-    backgroundColor: Colors.background,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    width: "100%",
-    marginBottom: 16,
-    gap: 8,
-  },
-  addCardButtonText: {
-    color: Colors.text,
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  cardBrands: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 15,
-  },
-  cardBrand: {
-    width: 40,
-    height: 24,
-    resizeMode: "contain",
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#00C8E8",
   },
   section: {
-    marginBottom: 25,
+    marginBottom: 24,
   },
   sectionHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 15,
+    paddingHorizontal: 18,
+    marginBottom: 13,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
     color: Colors.text,
-    marginBottom: 5,
-    letterSpacing: 1,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    color: "rgba(255,255,255,0.48)",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
   },
   horizontalList: {
-    paddingLeft: 20,
-    paddingRight: 10,
+    paddingLeft: 18,
+    paddingRight: 6,
+  },
+  inlineState: {
+    width: 260,
+    minHeight: 112,
+    justifyContent: "center",
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.045)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+  },
+  inlineStateText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
   },
   referButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(13, 22, 24, 0.92)",
-    marginHorizontal: 20,
-    marginVertical: 10,
-    padding: 20,
-    borderRadius: 16,
+    marginHorizontal: 18,
+    marginBottom: 24,
+    padding: 15,
+    borderRadius: 20,
+    backgroundColor: "rgba(10, 16, 22, 0.82)",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.18)",
-    overflow: "hidden",
-  },
-  referGlow: {
-    position: "absolute",
-    top: -80,
-    right: -80,
-    width: 220,
-    height: 220,
-    borderRadius: 999,
-    backgroundColor: "rgba(0, 209, 255, 0.18)",
+    borderColor: "rgba(255,255,255,0.10)",
   },
   referIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: "rgba(0, 209, 255, 0.10)",
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.22)",
+    borderColor: "rgba(0, 200, 232, 0.20)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 14,
+    marginRight: 12,
   },
   referTextContainer: {
     flex: 1,
   },
   referTitle: {
     color: Colors.text,
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 3,
   },
   referSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-  },
-  rewardsGrid: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    gap: 15,
+    color: "rgba(255,255,255,0.54)",
+    fontSize: 13,
+    lineHeight: 18,
   },
   categoriesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: 20,
-    gap: 15,
-  },
-  inlineState: {
-    paddingLeft: 20,
-    paddingRight: 20,
-    paddingVertical: 16,
-    justifyContent: "center",
-  },
-  inlineStateText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: "600",
+    paddingHorizontal: 18,
+    gap: 12,
   },
   categoryCard: {
-    width: "47%",
-    height: 150,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 15,
+    width: "48%",
+    minHeight: 142,
+    borderRadius: 20,
+    padding: 14,
+    backgroundColor: "rgba(255,255,255,0.045)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.09)",
   },
-  categoryCardActive: {
-    borderColor: Colors.text,
-  },
-  categoryImage: {
-    width: "100%",
-    height: "100%",
-  },
-  categoryOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
+  categoryIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    marginBottom: 13,
   },
   categoryTitle: {
     color: Colors.text,
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+  categorySubtitle: {
+    color: "rgba(255,255,255,0.50)",
+    fontSize: 12,
+    lineHeight: 17,
   },
 });
