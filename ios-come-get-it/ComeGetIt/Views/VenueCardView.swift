@@ -25,7 +25,7 @@ struct VenueCardView: View {
                     }
                     .overlay(alignment: .bottomTrailing) {
                         Text("Ingyen Ital Elérhető")
-                            .font(.caption.weight(.800))
+                            .font(.caption.weight(.heavy))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -37,7 +37,7 @@ struct VenueCardView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(venue.name)
-                            .font(.title3.weight(.800))
+                            .font(.title3.weight(.heavy))
                             .foregroundStyle(ComeGetItTheme.text)
                             .lineLimit(1)
                         Spacer(minLength: 10)
@@ -54,11 +54,11 @@ struct VenueCardView: View {
                         Image(systemName: "star.circle.fill")
                             .foregroundStyle(ComeGetItTheme.cyan)
                         Text("Szerezz pontokat")
-                            .font(.subheadline.weight(.700))
+                            .font(.subheadline.weight(.bold))
                             .foregroundStyle(ComeGetItTheme.text)
                         Spacer()
                         Text("+\(venue.pointsPerVisit ?? 100)")
-                            .font(.caption.weight(.900))
+                            .font(.caption.weight(.black))
                             .foregroundStyle(ComeGetItTheme.cyan)
                     }
                     .padding(.horizontal, 12)
@@ -67,7 +67,7 @@ struct VenueCardView: View {
 
                     if !venue.tags.isEmpty {
                         Text(venue.tags.joined(separator: " • "))
-                            .font(.subheadline.weight(.600))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(ComeGetItTheme.textSecondary)
                             .lineLimit(1)
                     }
@@ -77,7 +77,7 @@ struct VenueCardView: View {
                             .font(.caption)
                             .foregroundStyle(ComeGetItTheme.cyan)
                         Text("Nyitva • ma 18:00-02:00")
-                            .font(.caption.weight(.700))
+                            .font(.caption.weight(.bold))
                             .foregroundStyle(ComeGetItTheme.textSecondary)
                         Spacer()
                     }

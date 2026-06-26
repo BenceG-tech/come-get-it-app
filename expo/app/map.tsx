@@ -259,13 +259,8 @@ export default function MapScreen() {
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => {
-              const canGoBack = (router as any)?.canGoBack?.();
-              console.log('[Map] Back pressed', { canGoBack });
-              if (canGoBack) {
-                router.back();
-              } else {
-                router.replace('/(tabs)/home');
-              }
+              console.log('[Map] Back pressed');
+              router.back();
             }}
             testID="map-back"
           >

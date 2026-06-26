@@ -12,7 +12,7 @@ struct StatusPillView: View {
                     .font(.system(size: 12, weight: .bold))
             }
             Text(title)
-                .font(.caption.weight(.800))
+                .font(.caption.weight(.heavy))
                 .lineLimit(1)
         }
         .foregroundStyle(isActive ? Color.black : ComeGetItTheme.text)

@@ -15,7 +15,7 @@ struct NativeTabBarView: View {
                         Image(systemName: tab.systemImage)
                             .font(.system(size: 17, weight: .bold))
                         Text(tab.title)
-                            .font(.caption2.weight(.800))
+                            .font(.caption2.weight(.heavy))
                     }
                     .foregroundStyle(selectedTab == tab ? Color.black : ComeGetItTheme.textSecondary)
                     .frame(maxWidth: .infinity)

@@ -35,7 +35,7 @@ struct VenueMapScreenView: View {
                                     .clipShape(.rect(cornerRadius: 14))
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(venue.name)
-                                        .font(.subheadline.weight(.900))
+                                        .font(.subheadline.weight(.black))
                                         .foregroundStyle(ComeGetItTheme.text)
                                         .lineLimit(1)
                                     Text(venue.address)
@@ -47,7 +47,7 @@ struct VenueMapScreenView: View {
                             .frame(width: 260, alignment: .leading)
                             .padding(10)
                             .background(Color.black.opacity(0.72), in: .rect(cornerRadius: 20))
-                            .overlay(.rect(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
                     }
@@ -99,7 +99,7 @@ struct VenueMiniMapView: View {
                                 .font(.system(size: 30, weight: .bold))
                                 .foregroundStyle(ComeGetItTheme.cyan)
                             Text(venue.address)
-                                .font(.subheadline.weight(.700))
+                                .font(.subheadline.weight(.bold))
                                 .foregroundStyle(ComeGetItTheme.text)
                                 .multilineTextAlignment(.center)
                         }
@@ -109,6 +109,6 @@ struct VenueMiniMapView: View {
                 }
             }
             .clipShape(.rect(cornerRadius: 22))
-            .overlay(.rect(cornerRadius: 22).stroke(ComeGetItTheme.border, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 22).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 }

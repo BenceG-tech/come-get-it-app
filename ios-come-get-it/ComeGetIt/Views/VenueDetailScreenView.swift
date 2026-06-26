@@ -90,7 +90,7 @@ struct VenueDetailScreenView: View {
                     .lineLimit(2)
                 if !venue.tags.isEmpty {
                     Text(venue.tags.prefix(4).joined(separator: " • "))
-                        .font(.subheadline.weight(.700))
+                        .font(.subheadline.weight(.bold))
                         .foregroundStyle(ComeGetItTheme.textSecondary)
                 }
             }
@@ -117,12 +117,12 @@ struct VenueDetailScreenView: View {
                         .foregroundStyle(Color(red: 1.0, green: 0.84, blue: 0.27))
                 }
                 Text("5.0")
-                    .font(.subheadline.weight(.800))
+                    .font(.subheadline.weight(.heavy))
                     .foregroundStyle(ComeGetItTheme.textSecondary)
             }
 
             Label(venue.address, systemImage: "mappin.and.ellipse")
-                .font(.subheadline.weight(.700))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(ComeGetItTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -132,7 +132,7 @@ struct VenueDetailScreenView: View {
         HStack(spacing: 12) {
             Button { showRedeemSheet = true } label: {
                 Label("Ingyen ital", systemImage: "qrcode")
-                    .font(.subheadline.weight(.900))
+                    .font(.subheadline.weight(.black))
                     .foregroundStyle(Color.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -154,7 +154,7 @@ struct VenueDetailScreenView: View {
     private func freeDrinkSection(details: VenueDetails) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Elérhető ajánlatok")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
 
             if details.freeDrinks.isEmpty {
@@ -169,17 +169,17 @@ struct VenueDetailScreenView: View {
                             .background(ComeGetItTheme.cyan.opacity(0.13), in: .rect(cornerRadius: 16))
                         VStack(alignment: .leading, spacing: 4) {
                             Text(drink.drinkName)
-                                .font(.headline.weight(.900))
+                                .font(.headline.weight(.black))
                                 .foregroundStyle(ComeGetItTheme.text)
                             Text("Csütörtök–szombat • 18:00–21:00")
-                                .font(.caption.weight(.700))
+                                .font(.caption.weight(.bold))
                                 .foregroundStyle(ComeGetItTheme.textSecondary)
                         }
                         Spacer()
                     }
                     .padding(14)
                     .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 18))
-                    .overlay(.rect(cornerRadius: 18).stroke(ComeGetItTheme.border, lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(ComeGetItTheme.border, lineWidth: 1))
                 }
             }
         }
@@ -188,7 +188,7 @@ struct VenueDetailScreenView: View {
     private func aboutSection(venue: Venue) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Részletek")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
             Text(venue.description ?? "Partner vendéglátóhely Come Get It pontgyűjtéssel, kedvenc mentéssel és térképes útvonaltervezéssel.")
                 .font(.body)
@@ -197,13 +197,13 @@ struct VenueDetailScreenView: View {
         }
         .padding(16)
         .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 20))
-        .overlay(.rect(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 
     private var openingHoursSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Nyitvatartás")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
             ForEach(["Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat", "Vasárnap"], id: \.self) { day in
                 HStack {
@@ -212,14 +212,14 @@ struct VenueDetailScreenView: View {
                     Spacer()
                     Text(day == "Vasárnap" ? "Zárva" : "18:00 – 02:00")
                         .foregroundStyle(ComeGetItTheme.text)
-                        .fontWeight(.700)
+                        .fontWeight(.bold)
                 }
                 .font(.subheadline)
             }
         }
         .padding(16)
         .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 20))
-        .overlay(.rect(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 
     private var redeemSheet: some View {
@@ -229,7 +229,7 @@ struct VenueDetailScreenView: View {
                 .foregroundStyle(ComeGetItTheme.cyan)
                 .frame(width: 120, height: 120)
                 .background(Color.black, in: .rect(cornerRadius: 24))
-                .overlay(.rect(cornerRadius: 24).stroke(ComeGetItTheme.cyan.opacity(0.4), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 24).stroke(ComeGetItTheme.cyan.opacity(0.4), lineWidth: 1))
             Text("Kupon beváltása")
                 .font(.title2.bold())
             Text("A teljes QR beváltási folyamat a natív appban elő van készítve. Mutasd meg a kódot a partnerhelyen.")

@@ -53,7 +53,7 @@ struct ContentView: View {
                     }
                     .environment(appModel)
                 case .map:
-                    VenueMapScreenView(venues: appModel.venues) { venue in
+                    VenueMapSheetView(venues: appModel.venues) { venue in
                         path.append(.venue(venue.id))
                     }
                 case .feature(let title):

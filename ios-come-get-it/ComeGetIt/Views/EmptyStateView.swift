@@ -13,7 +13,7 @@ struct EmptyStateView: View {
                 .frame(width: 74, height: 74)
                 .background(ComeGetItTheme.cyan.opacity(0.15), in: Circle())
             Text(title)
-                .font(.title3.weight(.900))
+                .font(.title3.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
             Text(subtitle)
                 .font(.subheadline)
@@ -24,6 +24,6 @@ struct EmptyStateView: View {
         .frame(maxWidth: .infinity)
         .padding(24)
         .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 22))
-        .overlay(.rect(cornerRadius: 22).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 }

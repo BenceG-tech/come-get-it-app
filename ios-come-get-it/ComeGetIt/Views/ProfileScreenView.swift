@@ -39,7 +39,7 @@ struct ProfileScreenView: View {
                     .font(.largeTitle.weight(.black))
                     .foregroundStyle(ComeGetItTheme.text)
                 Text("Kezeld a pontjaidat és kedvenceidet")
-                    .font(.subheadline.weight(.600))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(ComeGetItTheme.textSecondary)
             }
             Spacer()
@@ -57,7 +57,7 @@ struct ProfileScreenView: View {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
                     Label("Rewards", systemImage: "gift.fill")
-                        .font(.caption.weight(.900))
+                        .font(.caption.weight(.black))
                         .foregroundStyle(.white.opacity(0.88))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
@@ -73,7 +73,7 @@ struct ProfileScreenView: View {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 5) {
                         Label("Pontok", systemImage: "sparkles")
-                            .font(.caption.weight(.900))
+                            .font(.caption.weight(.black))
                             .foregroundStyle(ComeGetItTheme.cyan)
                         Text("\(appModel.points)")
                             .font(.system(size: 46, weight: .black, design: .rounded))
@@ -84,7 +84,7 @@ struct ProfileScreenView: View {
                         Text("Jutalmak")
                         Image(systemName: "chevron.right")
                     }
-                    .font(.caption.weight(.900))
+                    .font(.caption.weight(.black))
                     .foregroundStyle(Color.black)
                     .padding(.horizontal, 13)
                     .padding(.vertical, 10)
@@ -96,7 +96,7 @@ struct ProfileScreenView: View {
                 LinearGradient(colors: [Color(red: 0.02, green: 0.18, blue: 0.23), Color(red: 0.02, green: 0.09, blue: 0.11)], startPoint: .topLeading, endPoint: .bottomTrailing),
                 in: .rect(cornerRadius: 26)
             )
-            .overlay(.rect(cornerRadius: 26).stroke(ComeGetItTheme.cyan.opacity(0.18), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 26).stroke(ComeGetItTheme.cyan.opacity(0.18), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -104,29 +104,29 @@ struct ProfileScreenView: View {
     private var promoBanner: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Szeretnél kevesebbet fizetni a következő vendéglátóhelynél?")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
             Text("Hívd meg egy barátodat, és az első látogatásánál bezsebelheted a Come Get It krediteket!")
                 .font(.subheadline)
                 .foregroundStyle(ComeGetItTheme.textSecondary)
             Button("Barátok meghívása") { onOpenFeature("Barátok meghívása") }
-                .font(.subheadline.weight(.900))
+                .font(.subheadline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.cyan)
         }
         .padding(18)
         .background(Color.white.opacity(0.06), in: .rect(cornerRadius: 22))
-        .overlay(.rect(cornerRadius: 22).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 
     private var favouritesSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("Kedvenceid")
-                    .font(.headline.weight(.900))
+                    .font(.headline.weight(.black))
                     .foregroundStyle(ComeGetItTheme.text)
                 Spacer()
                 Button("Összes megtekintése", action: onOpenFavorites)
-                    .font(.caption.weight(.900))
+                    .font(.caption.weight(.black))
                     .foregroundStyle(ComeGetItTheme.cyan)
             }
 
@@ -161,11 +161,11 @@ struct ProfileScreenView: View {
             RemoteImageFillView(url: venue.displayImageURL ?? ComeGetItTheme.fallbackVenueImageURL, height: 118, fallbackSymbol: "wineglass.fill")
             VStack(alignment: .leading, spacing: 5) {
                 Text(venue.name)
-                    .font(.headline.weight(.900))
+                    .font(.headline.weight(.black))
                     .foregroundStyle(ComeGetItTheme.text)
                     .lineLimit(1)
                 Text(venue.tags.first ?? "Vendéglátóhely")
-                    .font(.caption.weight(.700))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(ComeGetItTheme.cyan)
                     .lineLimit(1)
                 Text(venue.description ?? "Mentett hely")
@@ -178,13 +178,13 @@ struct ProfileScreenView: View {
         .frame(width: 210)
         .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 18))
         .clipShape(.rect(cornerRadius: 18))
-        .overlay(.rect(cornerRadius: 18).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 
     private var menuSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Gyors elérés")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
             VStack(spacing: 0) {
                 ForEach(menuItems, id: \.0) { title, icon in
@@ -195,7 +195,7 @@ struct ProfileScreenView: View {
                                 .foregroundStyle(ComeGetItTheme.text)
                                 .frame(width: 30)
                             Text(title)
-                                .font(.subheadline.weight(.700))
+                                .font(.subheadline.weight(.bold))
                                 .foregroundStyle(ComeGetItTheme.text)
                             Spacer()
                             Image(systemName: "chevron.right")
@@ -211,7 +211,7 @@ struct ProfileScreenView: View {
                 }
             }
             .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 20))
-            .overlay(.rect(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
         }
     }
 }

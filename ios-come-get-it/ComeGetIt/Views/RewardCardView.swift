@@ -9,7 +9,7 @@ struct RewardCardView: View {
             RemoteImageFillView(url: reward.image, height: 128, fallbackSymbol: iconName)
                 .overlay(alignment: .topTrailing) {
                     Text("\(reward.pointsRequired) pont")
-                        .font(.caption2.weight(.900))
+                        .font(.caption2.weight(.black))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -27,25 +27,25 @@ struct RewardCardView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(categoryLabel)
-                    .font(.caption2.weight(.900))
+                    .font(.caption2.weight(.black))
                     .tracking(1.1)
                     .foregroundStyle(ComeGetItTheme.textSecondary)
                 Text(reward.name)
-                    .font(.headline.weight(.900))
+                    .font(.headline.weight(.black))
                     .foregroundStyle(ComeGetItTheme.text)
                     .lineLimit(2)
                     .frame(minHeight: 42, alignment: .topLeading)
                 if let partnerName = reward.partnerName, !partnerName.isEmpty {
                     Text("Partner: \(partnerName)")
-                        .font(.caption.weight(.600))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(ComeGetItTheme.textSecondary)
                         .lineLimit(1)
                 }
                 Text("Érvényes: \(formattedDate(reward.validUntil))")
-                    .font(.caption.weight(.600))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(ComeGetItTheme.textSecondary.opacity(0.86))
                 Text(canRedeem ? "Beváltás" : "Még gyűjts pontot")
-                    .font(.caption.weight(.900))
+                    .font(.caption.weight(.black))
                     .foregroundStyle(canRedeem ? Color.black : ComeGetItTheme.textSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -55,7 +55,7 @@ struct RewardCardView: View {
         }
         .frame(width: 196)
         .background(Color(red: 0.06, green: 0.095, blue: 0.085).opacity(0.96), in: .rect(cornerRadius: 18))
-        .overlay(.rect(cornerRadius: 18).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(ComeGetItTheme.border, lineWidth: 1))
         .clipShape(.rect(cornerRadius: 18))
         .shadow(color: .black.opacity(0.34), radius: 14, x: 0, y: 8)
     }

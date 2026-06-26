@@ -17,7 +17,7 @@ struct FavoritesScreenView: View {
                         .font(.title.bold())
                         .foregroundStyle(ComeGetItTheme.text)
                     Text("\(appModel.favouriteVenues.count) mentett helyszín")
-                        .font(.subheadline.weight(.600))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(ComeGetItTheme.textSecondary)
                 }
                 .padding(.top, 20)

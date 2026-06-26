@@ -34,7 +34,7 @@ struct RewardsScreenView: View {
                 .foregroundStyle(ComeGetItTheme.text)
             Spacer()
             Text("\(appModel.points.formatted()) POINTS")
-                .font(.caption.weight(.900))
+                .font(.caption.weight(.black))
                 .foregroundStyle(ComeGetItTheme.cyan)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
@@ -53,7 +53,7 @@ struct RewardsScreenView: View {
                     .background(ComeGetItTheme.cyan.opacity(0.16), in: .rect(cornerRadius: 16))
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Adj hozzá egy kártyát")
-                        .font(.headline.weight(.900))
+                        .font(.headline.weight(.black))
                         .foregroundStyle(ComeGetItTheme.text)
                     Text("Szerezz jutalompontokat minden alkalommal, amikor partnerhelyeinken költesz.")
                         .font(.subheadline)
@@ -64,7 +64,7 @@ struct RewardsScreenView: View {
 
             Button { onOpenFeature("Kártya hozzáadása") } label: {
                 Label("Kártya hozzáadása", systemImage: "lock.fill")
-                    .font(.subheadline.weight(.900))
+                    .font(.subheadline.weight(.black))
                     .foregroundStyle(Color.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
@@ -74,13 +74,13 @@ struct RewardsScreenView: View {
         }
         .padding(18)
         .background(ComeGetItTheme.heroGradient, in: .rect(cornerRadius: 24))
-        .overlay(.rect(cornerRadius: 24).stroke(ComeGetItTheme.border, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 24).stroke(ComeGetItTheme.border, lineWidth: 1))
     }
 
     private var editorPicks: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("♥ Szerkesztők választása")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
 
             if let message = appModel.rewardErrorMessage {
@@ -115,7 +115,7 @@ struct RewardsScreenView: View {
                     .background(ComeGetItTheme.cyan.opacity(0.12), in: Circle())
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Hívj meg egy barátot")
-                        .font(.headline.weight(.900))
+                        .font(.headline.weight(.black))
                         .foregroundStyle(ComeGetItTheme.text)
                     Text("Szerezz 500 pontot, amikor meghívsz egy barátot.")
                         .font(.subheadline)
@@ -125,7 +125,7 @@ struct RewardsScreenView: View {
             }
             .padding(18)
             .background(ComeGetItTheme.elevated, in: .rect(cornerRadius: 22))
-            .overlay(.rect(cornerRadius: 22).stroke(ComeGetItTheme.cyan.opacity(0.18), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 22).stroke(ComeGetItTheme.cyan.opacity(0.18), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -133,7 +133,7 @@ struct RewardsScreenView: View {
     private var categoriesGrid: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("📋 Kategóriák")
-                .font(.headline.weight(.900))
+                .font(.headline.weight(.black))
                 .foregroundStyle(ComeGetItTheme.text)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(categories, id: \.2) { title, icon, key in
@@ -143,12 +143,12 @@ struct RewardsScreenView: View {
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundStyle(ComeGetItTheme.cyan)
                             Text(title)
-                                .font(.headline.weight(.900))
+                                .font(.headline.weight(.black))
                                 .foregroundStyle(ComeGetItTheme.text)
                         }
                         .frame(maxWidth: .infinity, minHeight: 118)
                         .background(Color.white.opacity(0.065), in: .rect(cornerRadius: 20))
-                        .overlay(.rect(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(ComeGetItTheme.border, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                 }
