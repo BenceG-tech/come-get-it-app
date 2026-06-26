@@ -10,7 +10,6 @@ import {
   Heart,
   HelpCircle,
   History,
-  MapPin,
   ShieldCheck,
   Sparkles,
   Ticket,
@@ -60,7 +59,7 @@ const accountMenu: ShortcutItem[] = [
   },
   {
     title: "Hatásom",
-    subtitle: "A Come Get It aktivitásod",
+    subtitle: "Közösségi eredményeid",
     route: "/my-impact",
     icon: Heart,
   },
@@ -72,7 +71,7 @@ const accountMenu: ShortcutItem[] = [
   },
   {
     title: "Segítség",
-    subtitle: "Kérdések és ügyféltámogatás",
+    subtitle: "Gyors válaszok és támogatás",
     route: "/help",
     icon: HelpCircle,
   },
@@ -87,21 +86,9 @@ const settingsMenu: ShortcutItem[] = [
   },
   {
     title: "Fizetési módok",
-    subtitle: "Mentett kártyák kezelése",
+    subtitle: "Kártyák és fizetési beállítások",
     route: "/payment-methods",
     icon: CreditCard,
-  },
-  {
-    title: "Címeim",
-    subtitle: "Mentett helyek és adatok",
-    route: "/addresses",
-    icon: MapPin,
-  },
-  {
-    title: "Rendelési előzmények",
-    subtitle: "Korábbi rendelések",
-    route: "/order-history",
-    icon: History,
   },
 ];
 

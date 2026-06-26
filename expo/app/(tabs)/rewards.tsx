@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -22,6 +22,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
+import { mergeWithMockRewards } from "@/data/mockRewards";
 
 type RewardCategoryItem = {
   key: string;
@@ -29,6 +30,7 @@ type RewardCategoryItem = {
   subtitle: string;
   icon: LucideIcon;
   accent: string;
+  imageUri: string;
 };
 
 const rewardCategories: RewardCategoryItem[] = [
@@ -38,6 +40,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "Koktélok, sörök, napi ajándékok",
     icon: Martini,
     accent: "#00C8E8",
+    imageUri: "https://images.unsplash.com/photo-1536935338788-846bb9981813?w=900",
   },
   {
     key: "food",
@@ -45,6 +48,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "Falak, vacsorák és partner ajánlatok",
     icon: UtensilsCrossed,
     accent: "#F6B17A",
+    imageUri: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=900",
   },
   {
     key: "experience",
@@ -52,6 +56,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "VIP belépők és különleges esték",
     icon: Sparkles,
     accent: "#7DD3FC",
+    imageUri: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=900",
   },
   {
     key: "all",
@@ -59,6 +64,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "Minden elérhető jutalom egy helyen",
     icon: BadgePercent,
     accent: "#1D6DFF",
+    imageUri: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=900",
   },
 ];
 
@@ -76,7 +82,7 @@ export default function RewardsScreen() {
   });
 
   const normalizedRewards = useMemo(() => {
-    const raw = (rewardsQuery.data ?? []) as Reward[];
+    const raw = mergeWithMockRewards((rewardsQuery.data ?? []) as Reward[]);
     const today = new Date();
     const cleaned = raw
       .filter((r) => {
@@ -180,13 +186,9 @@ export default function RewardsScreen() {
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
-            {rewardsQuery.isLoading ? (
+            {rewardsQuery.isLoading && filteredEditorPicks.length === 0 ? (
               <View style={styles.inlineState} testID="rewards-loading">
                 <Text style={styles.inlineStateText}>Jutalmak betöltése...</Text>
-              </View>
-            ) : rewardsQuery.isError ? (
-              <View style={styles.inlineState} testID="rewards-error">
-                <Text style={styles.inlineStateText}>Nem sikerült betölteni a jutalmakat.</Text>
               </View>
             ) : filteredEditorPicks.length === 0 ? (
               <View style={styles.inlineState} testID="rewards-empty">
@@ -240,7 +242,13 @@ export default function RewardsScreen() {
                   testID={`cat-${category.key}`}
                   activeOpacity={0.86}
                 >
-                  <View style={[styles.categoryIconWrap, { borderColor: `${category.accent}55`, backgroundColor: `${category.accent}16` }]}>
+                  <Image source={{ uri: category.imageUri }} style={styles.categoryImage} resizeMode="cover" />
+                  <LinearGradient
+                    colors={["rgba(0,0,0,0.08)", "rgba(0,0,0,0.72)", "rgba(0,0,0,0.92)"]}
+                    locations={[0, 0.48, 1]}
+                    style={styles.categoryOverlay}
+                  />
+                  <View style={[styles.categoryIconWrap, { borderColor: `${category.accent}55`, backgroundColor: `${category.accent}26` }]}>
                     <Icon size={21} color={category.accent} />
                   </View>
                   <Text style={styles.categoryTitle}>{category.title}</Text>
@@ -517,12 +525,22 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     width: "48%",
-    minHeight: 142,
+    minHeight: 152,
     borderRadius: 20,
     padding: 14,
     backgroundColor: "rgba(255,255,255,0.045)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
+    borderColor: "rgba(255,255,255,0.11)",
+    overflow: "hidden",
+    justifyContent: "flex-end",
+  },
+  categoryImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+  categoryOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   categoryIconWrap: {
     width: 42,

@@ -21,6 +21,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const { isFavorite, toggleFavorite } = useFavorites();
   const cardWidth = screenWidth;
   const favorite = isFavorite(String(venue.id));
+  const priceLevel = getVenuePriceLevel(venue);
   
   console.log(`[VenueCard] ${venue.name} opening_hours:`, JSON.stringify(venue.opening_hours, null, 2));
 
@@ -51,6 +52,14 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
 
   const placeholderUri = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600';
   const imageSource = venue.image_url ? { uri: venue.image_url } : { uri: placeholderUri };
+
+  const renderPriceMarkers = () => {
+    return Array.from({ length: 4 }, (_, index) => (
+      <Text key={`price-${index}`} style={[styles.priceMarker, index >= priceLevel && styles.priceMarkerMuted]}>
+        $
+      </Text>
+    ));
+  };
 
   // Generate rating display - always show 5 stars for now
   const renderStars = () => {
@@ -122,6 +131,10 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
             {renderStars()}
           </View>
         </View>
+
+        <View style={styles.priceRow} accessibilityLabel={`Árkategória: ${priceLevel} / 4`}>
+          {renderPriceMarkers()}
+        </View>
         
         {/* Szerezz pontokat row */}
         <View style={styles.earnPointsRow}>
@@ -156,6 +169,20 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
 }
 
 
+
+function getVenuePriceLevel(venue: Venue): number {
+  const raw = venue.price_level ?? venue.priceLevel;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return Math.max(1, Math.min(4, Math.round(raw)));
+
+  if (venue.plan === 'premium') return 4;
+  if (venue.plan === 'standard') return 3;
+
+  const text = `${venue.name ?? ''} ${(venue.tags ?? []).join(' ')}`.toLowerCase();
+  if (text.includes('vip') || text.includes('rooftop') || text.includes('fine')) return 4;
+  if (text.includes('wine') || text.includes('cocktail') || text.includes('bar')) return 3;
+  if (text.includes('pub') || text.includes('bistro')) return 2;
+  return 2;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -285,6 +312,23 @@ const styles = StyleSheet.create({
   stars: {
     flexDirection: 'row' as const,
     gap: 2,
+  },
+  priceRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 1,
+    marginTop: -1,
+    marginBottom: 5,
+  },
+  priceMarker: {
+    color: '#2BB7FF',
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '800' as const,
+    letterSpacing: 0.4,
+  },
+  priceMarkerMuted: {
+    color: 'rgba(43, 183, 255, 0.22)',
   },
   metaRow: {
     flexDirection: 'row' as const,

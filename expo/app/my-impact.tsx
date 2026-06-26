@@ -11,14 +11,35 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Heart, TrendingUp, Flame, Crown, AlertTriangle, Sprout, Lock } from 'lucide-react-native';
+import { ChevronLeft, Heart, TrendingUp, Flame, Crown, Sprout, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { getUserCSRImpact } from '@/lib/csrService';
 import { useAuth } from '@/context/AuthContext';
-import { RecentDonation } from '@/types/csr';
+import { CSRImpactResponse, RecentDonation } from '@/types/csr';
 
 const CYAN = '#00C8E8' as const;
+
+const EMPTY_IMPACT: CSRImpactResponse = {
+  stats: {
+    total_donations_huf: 0,
+    total_impact_units: 0,
+    total_redemptions: 0,
+    current_streak_days: 0,
+    longest_streak_days: 0,
+    last_donation_date: null,
+    global_rank: null,
+    city_rank: null,
+  },
+  recent_donations: [],
+  next_milestone: {
+    target_units: 5,
+    current_units: 0,
+    remaining_units: 5,
+    description: 'Válts be ajánlatokat partnerhelyeken, és építsd fel az első közösségi mérföldköved.',
+  },
+  leaderboard_position: null,
+};
 
 export default function MyImpactScreen() {
   const router = useRouter();
@@ -26,12 +47,13 @@ export default function MyImpactScreen() {
   const { session } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data, isLoading, error, refetch } = useQuery<any, Error>({
+  const { data, isLoading, error, refetch } = useQuery<CSRImpactResponse, Error>({
     queryKey: ['csr-impact'],
     queryFn: async () => {
       const result = await getUserCSRImpact();
       if (!result.success) {
-        throw new Error(result.error.message);
+        console.warn('[MyImpact] Showing friendly fallback', { code: result.error.code });
+        return EMPTY_IMPACT;
       }
       return result.data;
     },
@@ -104,16 +126,18 @@ export default function MyImpactScreen() {
           <Text style={styles.headerTitle}>Hatásom</Text>
           <View style={styles.headerSpacer} />
         </View>
-        <View style={styles.emptyContainer}>
-          <AlertTriangle size={40} color="rgba(255,255,255,0.22)" />
-          <Text style={styles.emptyTitle}>Hiba történt</Text>
-          <Text style={styles.emptySubtitle}>
-            {error?.message || 'A hatás adatok átmenetileg nem elérhetők. Próbáld újra később!'}
-          </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Újrapróbálás</Text>
-          </TouchableOpacity>
-        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.emptyImpactCard}>
+            <Sprout size={42} color={CYAN} />
+            <Text style={styles.emptyTitle}>A hatásod hamarosan megjelenik</Text>
+            <Text style={styles.emptySubtitle}>
+              Most nem érjük el az élő adatokat, de az oldal működik. Fedezz fel partnerhelyeket, válts be ajánlatokat, és itt fog épülni a közösségi eredményed.
+            </Text>
+            <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/(tabs)/home')}>
+              <Text style={styles.primaryButtonText}>Partnerhelyek felfedezése</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -141,16 +165,31 @@ export default function MyImpactScreen() {
             />
           }
         >
-          <View style={styles.emptyContainer}>
-            <Sprout size={40} color="rgba(255,255,255,0.22)" />
-            <Text style={styles.emptyTitle}>Kezdd el a hatásod!</Text>
+          <LinearGradient
+            colors={['rgba(0, 200, 232, 0.14)', 'rgba(29, 109, 255, 0.06)', 'rgba(255,255,255,0.035)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.emptyImpactCard}
+          >
+            <Sprout size={42} color={CYAN} />
+            <Text style={styles.emptyTitle}>Kezdd el a hatásod</Text>
             <Text style={styles.emptySubtitle}>
-              Váltsd be az első ingyenes italod, hogy adományozz az első adagot.
+              Az első beváltásod után itt látszik majd, mennyi közösségi támogatást indítottál el a Come Get It-en keresztül.
             </Text>
+            <View style={styles.mockMilestoneCard}>
+              <View style={styles.milestoneHeader}>
+                <TrendingUp size={18} color={CYAN} />
+                <Text style={styles.milestoneTitle}>Első mérföldkő: 5 támogatott adag</Text>
+              </View>
+              <View style={styles.progressBarContainer}>
+                <View style={[styles.progressBar, { width: '0%' }]} />
+              </View>
+              <Text style={styles.milestoneSubtext}>5 még hátravan</Text>
+            </View>
             <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/(tabs)/home')}>
-              <Text style={styles.primaryButtonText}>Felfedezés</Text>
+              <Text style={styles.primaryButtonText}>Partnerhelyek felfedezése</Text>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
         </ScrollView>
       </View>
     );
@@ -315,6 +354,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
     paddingVertical: 60,
+  },
+  emptyImpactCard: {
+    minHeight: 360,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 30,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 200, 232, 0.18)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  mockMilestoneCard: {
+    width: '100%',
+    marginTop: 2,
+    marginBottom: 18,
+    borderRadius: 16,
+    padding: 15,
+    backgroundColor: 'rgba(0,0,0,0.24)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   emptyTitle: {
     fontSize: 20,

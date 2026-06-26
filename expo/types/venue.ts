@@ -20,6 +20,8 @@ export type Venue = {
   opening_hours?: OpeningHours | null;
   distance?: number | null; // in meters
   tags?: string[];
+  price_level?: 1 | 2 | 3 | 4 | number | null;
+  priceLevel?: 1 | 2 | 3 | 4 | number | null;
   latitude?: number | null;
   longitude?: number | null;
   coordinates?: VenueCoordinates | null;

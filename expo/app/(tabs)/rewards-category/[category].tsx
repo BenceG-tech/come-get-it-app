@@ -6,6 +6,7 @@ import RewardCard from "@/components/RewardCard";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
+import { mergeWithMockRewards } from "@/data/mockRewards";
 
 export default function RewardsCategoryScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
@@ -23,7 +24,7 @@ export default function RewardsCategoryScreen() {
   });
 
   const normalizedRewards = useMemo(() => {
-    const raw = (rewardsQuery.data ?? []) as Reward[];
+    const raw = mergeWithMockRewards((rewardsQuery.data ?? []) as Reward[]);
     const today = new Date();
     const cleaned = raw
       .filter((r) => {
@@ -73,13 +74,9 @@ export default function RewardsCategoryScreen() {
         }}
       />
 
-      {rewardsQuery.isLoading ? (
+      {rewardsQuery.isLoading && normalizedRewards.length === 0 ? (
         <View style={styles.empty} testID="rewards-category-loading">
           <Text style={styles.emptyText}>Jutalmak betöltése...</Text>
-        </View>
-      ) : rewardsQuery.isError ? (
-        <View style={styles.empty} testID="rewards-category-error">
-          <Text style={styles.emptyText}>Nem sikerült betölteni a jutalmakat.</Text>
         </View>
       ) : isPaged ? (
         <ScrollView

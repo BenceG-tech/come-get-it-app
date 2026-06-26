@@ -1,13 +1,36 @@
+import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, Copy, Smile } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { ArrowLeft, CalendarDays, CheckCircle2, MapPin, ShieldCheck, Sparkles } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 import { rest } from "@/lib/supabaseRest";
 import type { Reward } from "@/types/reward";
+import { getMockRewardById } from "@/data/mockRewards";
+
+const CYAN = "#00C8E8" as const;
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function getCategoryLabel(category?: string): string {
+  const labels: Record<string, string> = {
+    drink: "Ital ajánlat",
+    food: "Gasztro jutalom",
+    vip: "VIP élmény",
+    discount: "Kedvezmény",
+    experience: "Élmény",
+    partner: "Partner ajánlat",
+  };
+  return labels[category ?? ""] ?? "Jutalom";
+}
 
 export default function RewardDetailScreen() {
   const params = useLocalSearchParams();
@@ -19,6 +42,9 @@ export default function RewardDetailScreen() {
     queryKey: ["reward", rewardId],
     enabled: rewardId.length > 0,
     queryFn: async () => {
+      const mockReward = getMockRewardById(rewardId);
+      if (mockReward) return mockReward;
+
       console.log("[RewardDetail] Fetch reward", { rewardId });
       const res = await rest(`/rewards?id=eq.${encodeURIComponent(rewardId)}&select=*`);
       const json = (await res.json()) as unknown;
@@ -30,10 +56,21 @@ export default function RewardDetailScreen() {
   });
 
   const reward = rewardQuery.data;
+  const canRedeem = Boolean(reward && points >= reward.points_required);
+  const missingPoints = reward ? Math.max(reward.points_required - points, 0) : 0;
+
+  const steps = useMemo(
+    () => [
+      "Nyomd meg a beváltás gombot, amikor a partnerhelyen vagy.",
+      "Mutasd meg a képernyőt a pultnál vagy a felszolgálónak.",
+      "A pontok levonása után az ajánlat azonnal felhasználható.",
+    ],
+    []
+  );
 
   if (!rewardId) {
     return (
-      <View style={styles.container} testID="reward-detail-missing-id">
+      <View style={styles.centerContainer} testID="reward-detail-missing-id">
         <Text style={styles.errorText}>Hiányzó jutalom azonosító</Text>
       </View>
     );
@@ -41,16 +78,16 @@ export default function RewardDetailScreen() {
 
   if (rewardQuery.isLoading) {
     return (
-      <View style={styles.container} testID="reward-detail-loading">
-        <Text style={styles.loadingText}>Betöltés…</Text>
+      <View style={styles.centerContainer} testID="reward-detail-loading">
+        <Text style={styles.loadingText}>Jutalom betöltése…</Text>
       </View>
     );
   }
 
-  if (rewardQuery.isError) {
+  if (rewardQuery.isError || !reward) {
     return (
-      <View style={styles.container} testID="reward-detail-error">
-        <Text style={styles.errorText}>Nem sikerült betölteni a jutalmat.</Text>
+      <View style={styles.centerContainer} testID="reward-detail-error">
+        <Text style={styles.errorText}>Ezt a jutalmat most nem találjuk.</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => rewardQuery.refetch()} testID="reward-detail-retry">
           <Text style={styles.retryBtnText}>Újrapróbálás</Text>
         </TouchableOpacity>
@@ -58,103 +95,116 @@ export default function RewardDetailScreen() {
     );
   }
 
-  if (!reward) {
-    return (
-      <View style={styles.container} testID="reward-detail-not-found">
-        <Text style={styles.errorText}>Jutalom nem található</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      
-      {/* Header with back button */}
-      <View style={[styles.header, styles.headerWithInsets, { paddingTop: insets.top + 20 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero Image */}
-        <View style={styles.imageContainer}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={[styles.backButton, { top: insets.top + 12 }]}
+        accessibilityRole="button"
+        accessibilityLabel="Vissza"
+      >
+        <ArrowLeft size={21} color={Colors.text} />
+      </TouchableOpacity>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.hero}>
           {reward.image_url ? (
-            <Image source={{ uri: reward.image_url }} style={styles.heroImage} />
+            <Image source={{ uri: reward.image_url }} style={styles.heroImage} resizeMode="cover" />
           ) : (
-            <View style={[styles.heroImage, { backgroundColor: Colors.cardBackground }]} />
+            <View style={[styles.heroImage, styles.heroFallback]} />
           )}
-          <View style={styles.imageOverlay}>
-            <Text style={styles.categoryText}>{(reward.category ?? "jutalom").toUpperCase()}</Text>
-            <Text style={styles.discountText}>{reward.name}</Text>
-          </View>
-        </View>
-
-        {/* Unlocking Reward Section */}
-        <View style={styles.unlockingSection}>
-          <View style={styles.unlockingHeader}>
-            <Text style={styles.unlockingTitle}>✨ Jutalom feloldása</Text>
-          </View>
-
-          <View style={styles.stepContainer}>
-            <View style={styles.stepIcon}>
-              <TouchableOpacity style={styles.iconCircle}>
-                <Text style={styles.iconText}>👆</Text>
-              </TouchableOpacity>
+          <LinearGradient
+            colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.28)", "#000000"]}
+            locations={[0, 0.45, 1]}
+            style={styles.heroOverlay}
+          />
+          <View style={styles.heroContent}>
+            <View style={styles.categoryPill}>
+              <Sparkles size={13} color={CYAN} />
+              <Text style={styles.categoryPillText}>{getCategoryLabel(reward.category)}</Text>
             </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Koppints a beváltáshoz</Text>
-              <Text style={styles.stepDescription}>Nyomd meg a jutalom beváltás gombot. A pontok levonásra kerülnek az egyenlegedből.</Text>
-            </View>
-          </View>
-
-          <View style={styles.stepContainer}>
-            <View style={styles.stepIcon}>
-              <TouchableOpacity style={styles.iconCircle}>
-                <Copy size={20} color={Colors.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Másold ki a kedvezmény kódot</Text>
-              <Text style={styles.stepDescription}>A következő képernyőn másold ki a kedvezmény kódot, hogy a pénztárnál alkalmazhasd.</Text>
-            </View>
-          </View>
-
-          <View style={styles.stepContainer}>
-            <View style={styles.stepIcon}>
-              <TouchableOpacity style={styles.iconCircle}>
-                <Smile size={20} color={Colors.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Élvezd</Text>
-              <Text style={styles.stepDescription}>Átirányítunk a kereskedő oldalára, ahol beválthatod a jutalmadat a pénztárnál. Egyszerű!</Text>
+            <Text style={styles.title}>{reward.name}</Text>
+            <View style={styles.partnerRow}>
+              <MapPin size={14} color="rgba(255,255,255,0.68)" />
+              <Text style={styles.partnerText}>{reward.partner_name ?? "Come Get It partner"}</Text>
             </View>
           </View>
         </View>
 
-        {/* Get Reward Button */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.getRewardButton}
-            onPress={() => {
-              const canRedeem = points >= reward.points_required;
-              console.log("[RewardDetail] redeem pressed", { rewardId: reward.id, canRedeem, points });
-              if (!canRedeem) {
-                Alert.alert("Nincs elég pont", `Ehhez a jutalomhoz ${reward.points_required} pontra van szükséged.`);
-                return;
-              }
-              Alert.alert("Beváltás", "A beváltás (redeem-reward) endpointot a következő lépésben kötjük be.");
-            }}
+        <View style={styles.content}>
+          <LinearGradient
+            colors={["rgba(0, 200, 232, 0.16)", "rgba(29, 109, 255, 0.08)", "rgba(255,255,255,0.035)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.pointsCard}
           >
-            <Text style={styles.getRewardButtonText}>
-              {points >= reward.points_required ? "Beváltás" : `Beváltás (${reward.points_required} pont)`}
-            </Text>
-            <ArrowLeft size={20} color={Colors.text} style={styles.arrowIcon} />
-          </TouchableOpacity>
+            <View>
+              <Text style={styles.pointsLabel}>Pontigény</Text>
+              <Text style={styles.pointsValue}>{reward.points_required.toLocaleString("hu-HU")}</Text>
+            </View>
+            <View style={styles.pointsStatus}>
+              <ShieldCheck size={15} color={canRedeem ? "#001014" : "rgba(255,255,255,0.72)"} />
+              <Text style={[styles.pointsStatusText, !canRedeem && styles.pointsStatusTextMuted]}>
+                {canRedeem ? "Elérhető" : `${missingPoints.toLocaleString("hu-HU")} pont hiányzik`}
+              </Text>
+            </View>
+          </LinearGradient>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>Mit kapsz?</Text>
+            <Text style={styles.description}>{reward.description ?? "Exkluzív Come Get It partner ajánlat."}</Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <View style={styles.infoRowHeader}>
+              <CalendarDays size={17} color={CYAN} />
+              <Text style={styles.sectionTitle}>Érvényesség</Text>
+            </View>
+            <Text style={styles.description}>Felhasználható eddig: {formatDate(reward.valid_until)}</Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>Beváltás menete</Text>
+            {steps.map((step, index) => (
+              <View key={step} style={styles.stepRow}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>{index + 1}</Text>
+                </View>
+                <Text style={styles.stepText}>{step}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.infoCard}>
+            <View style={styles.infoRowHeader}>
+              <CheckCircle2 size={17} color={CYAN} />
+              <Text style={styles.sectionTitle}>Feltételek</Text>
+            </View>
+            <Text style={styles.description}>{reward.terms_conditions ?? "A partnerhely aktuális elérhetősége és házirendje szerint használható fel."}</Text>
+          </View>
         </View>
       </ScrollView>
+
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 14) }]}> 
+        <TouchableOpacity
+          style={[styles.redeemButton, !canRedeem && styles.redeemButtonDisabled]}
+          activeOpacity={0.88}
+          onPress={() => {
+            console.log("[RewardDetail] redeem pressed", { rewardId: reward.id, canRedeem, points });
+            if (!canRedeem) {
+              Alert.alert("Nincs elég pont", `Ehhez még ${missingPoints.toLocaleString("hu-HU")} pont hiányzik.`);
+              return;
+            }
+            Alert.alert("Beváltás előkészítve", "Mutasd meg ezt az ajánlatot a partnerhelyen, és a személyzet aktiválja.");
+          }}
+        >
+          <Text style={[styles.redeemButtonText, !canRedeem && styles.redeemButtonTextDisabled]}>
+            {canRedeem ? "Jutalom beváltása" : `${reward.points_required.toLocaleString("hu-HU")} pont szükséges`}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -164,116 +214,229 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+  centerContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  scrollContent: {
+    paddingBottom: 118,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.cardBackground,
+    position: "absolute",
+    left: 14,
+    zIndex: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.62)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
     justifyContent: "center",
     alignItems: "center",
   },
-  imageContainer: {
-    height: 300,
-    position: "relative",
+  hero: {
+    height: 390,
+    backgroundColor: "#050709",
   },
   heroImage: {
     width: "100%",
     height: "100%",
   },
-  imageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 20,
+  heroFallback: {
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
   },
-  categoryText: {
-    color: Colors.primary,
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroContent: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    bottom: 24,
+  },
+  categoryPill: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.58)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.28)",
+    marginBottom: 12,
+  },
+  categoryPillText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  title: {
+    color: Colors.text,
+    fontSize: 31,
+    lineHeight: 36,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+  },
+  partnerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 10,
+  },
+  partnerText: {
+    color: "rgba(255,255,255,0.68)",
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 5,
+    fontWeight: "700",
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    gap: 12,
+  },
+  pointsCard: {
+    borderRadius: 22,
+    padding: 17,
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.18)",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  pointsLabel: {
+    color: "rgba(255,255,255,0.50)",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
     letterSpacing: 1,
   },
-  discountText: {
-    color: Colors.text,
-    fontSize: 24,
-    fontWeight: "bold",
+  pointsValue: {
+    color: CYAN,
+    fontSize: 29,
+    lineHeight: 34,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+    marginTop: 2,
   },
-  unlockingSection: {
-    padding: 20,
-  },
-  unlockingHeader: {
-    marginBottom: 20,
-  },
-  unlockingTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.text,
-  },
-  stepContainer: {
+  pointsStatus: {
     flexDirection: "row",
-    marginBottom: 25,
-    alignItems: "flex-start",
-  },
-  stepIcon: {
-    marginRight: 15,
-  },
-  iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: Colors.primary,
-    justifyContent: "center",
     alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    backgroundColor: CYAN,
   },
-  iconText: {
-    fontSize: 20,
+  pointsStatusText: {
+    color: "#001014",
+    fontSize: 12,
+    fontWeight: "900",
   },
-  stepContent: {
-    flex: 1,
-    paddingTop: 5,
+  pointsStatusTextMuted: {
+    color: "rgba(255,255,255,0.72)",
   },
-  stepTitle: {
+  infoCard: {
+    borderRadius: 19,
+    padding: 16,
+    backgroundColor: "rgba(255,255,255,0.045)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+  },
+  infoRowHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    color: Colors.text,
     fontSize: 16,
-    fontWeight: "600",
-    color: Colors.text,
-    marginBottom: 5,
+    fontWeight: "900",
+    letterSpacing: -0.2,
+    marginBottom: 8,
   },
-  stepDescription: {
+  description: {
+    color: "rgba(255,255,255,0.62)",
     fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 21,
+    fontWeight: "500",
   },
-  buttonContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  getRewardButton: {
-    backgroundColor: Colors.primary,
+  stepRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 11,
+    marginTop: 10,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.26)",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 18,
-    borderRadius: 12,
-    gap: 10,
   },
-  getRewardButtonText: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: "bold",
+  stepNumberText: {
+    color: CYAN,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  stepText: {
+    flex: 1,
+    color: "rgba(255,255,255,0.64)",
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "600",
+  },
+  bottomBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(0,0,0,0.90)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
+  },
+  redeemButton: {
+    height: 52,
+    borderRadius: 17,
+    backgroundColor: CYAN,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: CYAN,
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  redeemButtonDisabled: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.11)",
+    shadowOpacity: 0,
+  },
+  redeemButtonText: {
+    color: "#001014",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  redeemButtonTextDisabled: {
+    color: "rgba(255,255,255,0.62)",
   },
   loadingText: {
     color: Colors.textSecondary,
     fontSize: 14,
     textAlign: "center",
-    marginTop: 100,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   retryBtn: {
     marginTop: 14,
@@ -282,25 +445,17 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0DD0FF",
-    alignSelf: "center",
+    backgroundColor: CYAN,
   },
   retryBtnText: {
     color: "#001014",
     fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0.2,
+    fontWeight: "900",
   },
   errorText: {
     color: Colors.text,
     fontSize: 16,
     textAlign: "center",
-    marginTop: 100,
-  },
-  headerWithInsets: {
-    // Dynamic padding handled inline
-  },
-  arrowIcon: {
-    transform: [{ rotate: '180deg' }],
+    fontWeight: "700",
   },
 });

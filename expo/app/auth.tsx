@@ -23,8 +23,7 @@ import SocialButton from '@/components/SocialButton';
 import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
-const LOGO_SOURCE = require('@/assets/images/come-get-it-logo-white.png');
-const BACKGROUND_SOURCE = require('@/assets/images/auth-background.png');
+const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
@@ -108,25 +107,19 @@ function AuthScreen() {
     <View style={styles.root} testID="auth-root">
       <StatusBar style="light" translucent backgroundColor="transparent" />
 
-      <Image
-        source={BACKGROUND_SOURCE}
-        style={styles.backgroundImage}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        transition={160}
-      />
-      <View pointerEvents="none" style={styles.backgroundDim} />
       <LinearGradient
         pointerEvents="none"
         colors={[
-          'rgba(0,0,0,0.76)',
-          'rgba(0,0,0,0.58)',
-          'rgba(0,0,0,0.78)',
+          '#000000',
+          'rgba(0, 21, 28, 0.98)',
+          'rgba(0, 0, 0, 0.96)',
           '#000000',
         ]}
         locations={[0, 0.34, 0.72, 1]}
         style={StyleSheet.absoluteFill}
       />
+      <View pointerEvents="none" style={styles.cyanGlow} />
+      <View pointerEvents="none" style={styles.blueGlow} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
@@ -264,14 +257,23 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
+  cyanGlow: {
+    position: 'absolute',
+    top: -90,
+    right: -110,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(0, 200, 232, 0.14)',
   },
-  backgroundDim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.34)',
+  blueGlow: {
+    position: 'absolute',
+    bottom: 90,
+    left: -120,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(29, 109, 255, 0.10)',
   },
   scrollContent: {
     flexGrow: 1,
@@ -287,9 +289,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 150,
-    height: 61,
-    marginBottom: 20,
+    width: 154,
+    height: 72,
+    marginBottom: 18,
   },
   heroTextBlock: {
     alignItems: 'center',
