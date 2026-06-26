@@ -8,8 +8,8 @@ import {
 import type { ReactNode } from 'react';
 
 const CYAN = '#00C8E8' as const;
-const SURFACE_DARK = 'rgba(10, 16, 22, 0.78)' as const;
-const SURFACE_BORDER = 'rgba(255, 255, 255, 0.14)' as const;
+const SURFACE_DARK = 'rgba(10, 16, 22, 0.72)' as const;
+const SURFACE_BORDER = 'rgba(255, 255, 255, 0.12)' as const;
 const TEXT_WHITE = '#FFFFFF' as const;
 
 export interface TextInputFieldProps {
@@ -62,7 +62,7 @@ const TextInputField = forwardRef<RNTextInput, TextInputFieldProps>(
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="rgba(255,255,255,0.48)"
+          placeholderTextColor="rgba(255,255,255,0.44)"
           autoCapitalize="none"
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
@@ -95,33 +95,33 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 64,
-    borderRadius: 22,
+    height: 52,
+    borderRadius: 16,
     backgroundColor: SURFACE_DARK,
     borderWidth: 1,
     borderColor: SURFACE_BORDER,
-    paddingHorizontal: 21,
+    paddingHorizontal: 16,
   },
   wrapFocused: {
     borderColor: CYAN,
     shadowColor: CYAN,
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 0 },
     elevation: 0,
   },
   iconLeft: {
-    marginRight: 13,
+    marginRight: 11,
   },
   input: {
     flex: 1,
     color: TEXT_WHITE,
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600' as const,
     padding: 0,
   },
   iconRight: {
-    marginLeft: 10,
+    marginLeft: 8,
     padding: 4,
   },
 });

@@ -61,14 +61,14 @@ export default memo(PrimaryButton);
 const styles = StyleSheet.create({
   outer: {
     width: '100%',
-    height: 64,
-    borderRadius: 32,
+    height: 50,
+    borderRadius: 25,
     overflow: 'hidden',
     shadowColor: CYAN,
-    shadowOpacity: 0.34,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   gradient: {
     flex: 1,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#001014',
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '800' as const,
     letterSpacing: -0.1,
   },
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
   },
   innerStroke: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 32,
+    borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderColor: 'rgba(255,255,255,0.20)',
   },
 });

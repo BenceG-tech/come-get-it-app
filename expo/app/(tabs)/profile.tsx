@@ -36,15 +36,6 @@ type ProfileStat = {
   icon: LucideIcon;
 };
 
-type RecentVenue = {
-  id: string;
-  name: string;
-  description: string;
-  distance: string;
-  status: "Nyitva" | "Zárva";
-  imageUri: string;
-};
-
 const quickActions: ShortcutItem[] = [
   {
     title: "Látogatási előzmények",
@@ -114,33 +105,6 @@ const settingsMenu: ShortcutItem[] = [
   },
 ];
 
-const recentVenues: RecentVenue[] = [
-  {
-    id: "4",
-    name: "Doblo Wine Bar",
-    description: "Borok, tapasok és esti jazz hangulat a belvárosban.",
-    distance: "0,4 km",
-    status: "Zárva",
-    imageUri: "https://images.unsplash.com/photo-1560624052-449f5ddf0c31?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "5",
-    name: "Boutiq Bar",
-    description: "Signature koktélok és prémium bárélmény.",
-    distance: "0,6 km",
-    status: "Nyitva",
-    imageUri: "https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "6",
-    name: "Élesztő Craft Beer Garden",
-    description: "Craft sörök, laza udvarhangulat és baráti esték.",
-    distance: "1,2 km",
-    status: "Nyitva",
-    imageUri: "https://images.unsplash.com/photo-1555658636-6e4a36218be7?auto=format&fit=crop&w=900&q=80",
-  },
-];
-
 function formatDistance(value?: number | null): string {
   if (!value) return "Részletek";
   return `${(value / 1000).toFixed(1).replace(".", ",")} km`;
@@ -161,7 +125,7 @@ const FavoriteVenueCard: React.FC<FavoriteVenueCardProps> = ({ venue, fallbackIm
       <Image source={{ uri: imageUri }} style={styles.favoriteImage} accessibilityIgnoresInvertColors />
       <LinearGradient colors={["transparent", "rgba(0,0,0,0.82)"]} style={styles.favoriteOverlay}>
         <View style={styles.favoriteBadge}>
-          <Heart size={11} color="#FFFFFF" fill="#FFFFFF" />
+          <Heart size={10} color="#FFFFFF" fill="#FFFFFF" />
           <Text style={styles.favoriteBadgeText}>Kedvenc</Text>
         </View>
         <View>
@@ -184,13 +148,13 @@ const MenuRow: React.FC<MenuRowProps> = ({ item, onPress }: MenuRowProps) => {
   return (
     <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.82}>
       <View style={styles.menuIconWrap}>
-        <Icon size={18} color="#00C8E8" />
+        <Icon size={16} color="#00C8E8" />
       </View>
       <View style={styles.menuTextBlock}>
         <Text style={styles.menuTitle}>{item.title}</Text>
         {item.subtitle ? <Text style={styles.menuSubtitle}>{item.subtitle}</Text> : null}
       </View>
-      <ChevronRight size={18} color="rgba(255,255,255,0.36)" />
+      <ChevronRight size={16} color="rgba(255,255,255,0.30)" />
     </TouchableOpacity>
   );
 };
@@ -220,23 +184,23 @@ export default function ProfileScreen() {
             <Text style={styles.headerSubtitle}>Kezeld a pontjaidat, kedvenceidet és Come Get It aktivitásodat.</Text>
           </View>
           <TouchableOpacity style={styles.avatar} testID="profile-avatar" activeOpacity={0.82} onPress={() => router.push("/account")}>
-            <User size={21} color={Colors.text} />
+            <User size={19} color={Colors.text} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push("/rewards-missions")} activeOpacity={0.9} testID="open-rewards-card" style={styles.memberCardTouch}>
           <LinearGradient
-            colors={["rgba(0, 200, 232, 0.22)", "rgba(29, 109, 255, 0.13)", "rgba(10, 16, 22, 0.90)"]}
+            colors={["rgba(0, 200, 232, 0.18)", "rgba(29, 109, 255, 0.10)", "rgba(10, 16, 22, 0.88)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.memberCard}
           >
             <View style={styles.memberTopRow}>
               <View style={styles.memberBadge}>
-                <Gift size={14} color="rgba(255,255,255,0.82)" />
+                <Gift size={13} color="rgba(255,255,255,0.78)" />
                 <Text style={styles.memberBadgeText}>Come Get It Club</Text>
               </View>
-              <ShieldCheck size={20} color="rgba(0, 200, 232, 0.96)" />
+              <ShieldCheck size={18} color="rgba(0, 200, 232, 0.94)" />
             </View>
 
             <View style={styles.memberContent}>
@@ -247,7 +211,7 @@ export default function ProfileScreen() {
 
             <View style={styles.memberCta}>
               <Text style={styles.memberCtaText}>Jutalmak megnyitása</Text>
-              <ChevronRight size={18} color="#001014" />
+              <ChevronRight size={16} color="#001014" />
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -257,7 +221,7 @@ export default function ProfileScreen() {
             const Icon = stat.icon;
             return (
               <View key={stat.label} style={styles.statCard}>
-                <Icon size={17} color="#00C8E8" />
+                <Icon size={15} color="#00C8E8" />
                 <Text style={styles.statValue}>{stat.value}</Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
               </View>
@@ -271,7 +235,7 @@ export default function ProfileScreen() {
             return (
               <TouchableOpacity key={item.title} style={styles.quickActionCard} onPress={() => router.push(item.route)} activeOpacity={0.84}>
                 <View style={styles.quickIconWrap}>
-                  <Icon size={19} color="#00C8E8" />
+                  <Icon size={17} color="#00C8E8" />
                 </View>
                 <Text style={styles.quickTitle}>{item.title}</Text>
                 {item.subtitle ? <Text style={styles.quickSubtitle}>{item.subtitle}</Text> : null}
@@ -282,13 +246,13 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.inviteCard} onPress={() => router.push("/invite-friends")} activeOpacity={0.88}>
           <View style={styles.inviteIconWrap}>
-            <UserPlus size={19} color="#00C8E8" />
+            <UserPlus size={17} color="#00C8E8" />
           </View>
           <View style={styles.inviteTextBlock}>
             <Text style={styles.inviteTitle}>Hívj meg egy barátot</Text>
             <Text style={styles.inviteSubtitle}>Szerezz extra pontokat, ha csatlakozik és kipróbálja a partnereket.</Text>
           </View>
-          <ChevronRight size={19} color="rgba(255,255,255,0.38)" />
+          <ChevronRight size={17} color="rgba(255,255,255,0.32)" />
         </TouchableOpacity>
 
         <View style={styles.section}>
@@ -320,7 +284,7 @@ export default function ProfileScreen() {
             </ScrollView>
           ) : (
             <TouchableOpacity style={styles.emptyCard} onPress={() => router.push("/(tabs)/home")} activeOpacity={0.85}>
-              <Heart size={21} color="#00C8E8" />
+              <Heart size={18} color="#00C8E8" />
               <Text style={styles.emptyText}>Még nincs kedvenc helyed. Ments el pár helyet a gyorsabb visszatéréshez.</Text>
             </TouchableOpacity>
           )}
@@ -333,27 +297,6 @@ export default function ProfileScreen() {
           <View style={styles.menuContainer}>
             {accountMenu.map((item: ShortcutItem) => (
               <MenuRow key={item.title} item={item} onPress={() => router.push(item.route)} />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeaderCompact}>
-            <Text style={styles.sectionTitle}>Látogasd meg újra</Text>
-          </View>
-          <View style={styles.recentList}>
-            {recentVenues.map((venue: RecentVenue) => (
-              <TouchableOpacity key={venue.id} onPress={() => router.push(`/venue/${venue.id}` as Href)} style={styles.recentItem} activeOpacity={0.84}>
-                <Image source={{ uri: venue.imageUri }} style={styles.recentImage} accessibilityIgnoresInvertColors />
-                <View style={styles.recentInfo}>
-                  <View style={styles.recentTitleRow}>
-                    <Text style={styles.recentName} numberOfLines={1}>{venue.name}</Text>
-                    <Text style={[styles.statusBadge, venue.status === "Nyitva" ? styles.statusOpen : styles.statusClosed]}>{venue.status}</Text>
-                  </View>
-                  <Text style={styles.recentDescription} numberOfLines={2}>{venue.description}</Text>
-                  <Text style={styles.recentDistance}>{venue.distance}</Text>
-                </View>
-              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -379,285 +322,285 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingTop: 58,
+    paddingTop: 52,
     paddingBottom: 32,
   },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    paddingHorizontal: 18,
-    marginBottom: 18,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     gap: 16,
   },
   eyebrow: {
-    color: "rgba(0, 200, 232, 0.86)",
-    fontSize: 11,
+    color: "rgba(0, 200, 232, 0.84)",
+    fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1.5,
-    marginBottom: 7,
+    letterSpacing: 1.3,
+    marginBottom: 5,
   },
   greeting: {
-    fontSize: 32,
-    lineHeight: 36,
+    fontSize: 22,
+    lineHeight: 26,
     fontWeight: "900",
     color: Colors.text,
-    letterSpacing: -0.8,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 9,
-    maxWidth: 278,
+    color: "rgba(255,255,255,0.52)",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 6,
+    maxWidth: 260,
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 16,
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.13)",
+    borderColor: "rgba(255,255,255,0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
   memberCardTouch: {
-    marginHorizontal: 18,
-    marginBottom: 13,
-    borderRadius: 24,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(10,16,22,0.80)",
+    borderColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "rgba(10,16,22,0.76)",
   },
   memberCard: {
-    padding: 18,
-    minHeight: 204,
+    padding: 16,
+    minHeight: 160,
   },
   memberTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 14,
   },
   memberBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    paddingVertical: 7,
-    paddingHorizontal: 11,
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.065)",
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.11)",
+    borderColor: "rgba(255,255,255,0.10)",
   },
   memberBadgeText: {
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 12,
+    color: "rgba(255,255,255,0.74)",
+    fontSize: 11,
     fontWeight: "800",
   },
   memberContent: {
     flex: 1,
   },
   memberLabel: {
-    color: "rgba(255,255,255,0.48)",
-    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
+    fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.1,
+    letterSpacing: 1,
     textTransform: "uppercase",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   memberPoints: {
     color: "#00C8E8",
-    fontSize: 44,
-    lineHeight: 48,
+    fontSize: 34,
+    lineHeight: 38,
     fontWeight: "900",
-    letterSpacing: -1.2,
+    letterSpacing: -1,
   },
   memberHint: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 6,
-    maxWidth: 260,
+    color: "rgba(255,255,255,0.52)",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+    maxWidth: 240,
   },
   memberCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "flex-start",
-    gap: 5,
+    gap: 4,
     borderRadius: 999,
     backgroundColor: "#00C8E8",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 12,
   },
   memberCtaText: {
     color: "#001014",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "900",
   },
   statsRow: {
     flexDirection: "row",
-    paddingHorizontal: 18,
-    gap: 10,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 14,
   },
   statCard: {
     flex: 1,
-    borderRadius: 18,
-    padding: 13,
-    backgroundColor: "rgba(255,255,255,0.045)",
+    borderRadius: 16,
+    padding: 11,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   statValue: {
     color: Colors.text,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "900",
-    marginTop: 10,
+    marginTop: 8,
   },
   statLabel: {
-    color: "rgba(255,255,255,0.47)",
-    fontSize: 11,
+    color: "rgba(255,255,255,0.44)",
+    fontSize: 10,
     fontWeight: "700",
     marginTop: 2,
   },
   quickGrid: {
     flexDirection: "row",
-    paddingHorizontal: 18,
-    gap: 12,
-    marginBottom: 14,
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 12,
   },
   quickActionCard: {
     flex: 1,
-    minHeight: 130,
-    borderRadius: 20,
-    padding: 15,
-    backgroundColor: "rgba(255,255,255,0.045)",
+    minHeight: 100,
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   quickIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 15,
-    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    width: 36,
+    height: 36,
+    borderRadius: 13,
+    backgroundColor: "rgba(0, 200, 232, 0.09)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.20)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 13,
+    marginBottom: 10,
   },
   quickTitle: {
     color: Colors.text,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "900",
-    lineHeight: 19,
+    lineHeight: 17,
   },
   quickSubtitle: {
-    color: "rgba(255,255,255,0.48)",
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 5,
+    color: "rgba(255,255,255,0.44)",
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 4,
   },
   inviteCard: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 18,
-    marginBottom: 24,
-    padding: 15,
-    borderRadius: 20,
-    backgroundColor: "rgba(10, 16, 22, 0.82)",
+    marginHorizontal: 16,
+    marginBottom: 20,
+    padding: 13,
+    borderRadius: 16,
+    backgroundColor: "rgba(10, 16, 22, 0.78)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   inviteIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
-    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    backgroundColor: "rgba(0, 200, 232, 0.09)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.20)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 11,
   },
   inviteTextBlock: {
     flex: 1,
   },
   inviteTitle: {
     color: Colors.text,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "900",
-    marginBottom: 3,
+    marginBottom: 2,
   },
   inviteSubtitle: {
-    color: "rgba(255,255,255,0.54)",
-    fontSize: 13,
-    lineHeight: 18,
+    color: "rgba(255,255,255,0.48)",
+    fontSize: 12,
+    lineHeight: 16,
   },
   section: {
-    marginBottom: 25,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingHorizontal: 18,
-    marginBottom: 13,
+    paddingHorizontal: 16,
+    marginBottom: 11,
     gap: 16,
   },
   sectionHeaderCompact: {
-    paddingHorizontal: 18,
-    marginBottom: 13,
+    paddingHorizontal: 16,
+    marginBottom: 11,
   },
   sectionTitle: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "900",
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   sectionSubtitle: {
-    color: "rgba(255,255,255,0.48)",
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 4,
+    color: "rgba(255,255,255,0.44)",
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 3,
   },
   viewAllButtonContainer: {
     borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    backgroundColor: "rgba(0, 200, 232, 0.09)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.18)",
+    borderColor: "rgba(0, 200, 232, 0.16)",
   },
   viewAllButton: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#00C8E8",
     fontWeight: "900",
   },
   favoriteErrorText: {
-    marginHorizontal: 18,
+    marginHorizontal: 16,
     color: "#F6B17A",
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 10,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 8,
   },
   favoritesList: {
-    paddingLeft: 18,
+    paddingLeft: 16,
     paddingRight: 6,
   },
   favoriteCard: {
-    width: 204,
-    height: 154,
-    borderRadius: 20,
+    width: 180,
+    height: 136,
+    borderRadius: 16,
     overflow: "hidden",
-    marginRight: 12,
-    backgroundColor: "rgba(255,255,255,0.045)",
+    marginRight: 10,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   favoriteImage: {
     width: "100%",
@@ -666,158 +609,94 @@ const styles = StyleSheet.create({
   favoriteOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "space-between",
-    padding: 12,
+    padding: 10,
   },
   favoriteBadge: {
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 7,
     borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.48)",
+    backgroundColor: "rgba(0,0,0,0.44)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.13)",
+    borderColor: "rgba(255,255,255,0.10)",
   },
   favoriteBadgeText: {
     color: Colors.text,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
   },
   favoriteName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "900",
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   favoriteMeta: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.70)",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.66)",
     fontWeight: "700",
   },
   emptyCard: {
-    marginHorizontal: 18,
-    minHeight: 108,
-    borderRadius: 20,
+    marginHorizontal: 16,
+    minHeight: 90,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-    backgroundColor: "rgba(255,255,255,0.045)",
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.04)",
     alignItems: "center",
     justifyContent: "center",
-    padding: 18,
-    gap: 9,
+    padding: 16,
+    gap: 8,
   },
   emptyText: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 14,
+    color: "rgba(255,255,255,0.52)",
+    fontSize: 13,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
   },
   menuContainer: {
-    marginHorizontal: 18,
-    borderRadius: 22,
+    marginHorizontal: 16,
+    borderRadius: 18,
     overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.045)",
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   menuItem: {
-    minHeight: 66,
+    minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.07)",
+    borderBottomColor: "rgba(255,255,255,0.06)",
   },
   menuIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    backgroundColor: "rgba(0, 200, 232, 0.09)",
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.08)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.16)",
+    borderColor: "rgba(0, 200, 232, 0.14)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 11,
   },
   menuTextBlock: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
     color: Colors.text,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   menuSubtitle: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.46)",
-    lineHeight: 16,
-  },
-  recentList: {
-    marginHorizontal: 18,
-    borderRadius: 22,
-    overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.045)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
-  },
-  recentItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.07)",
-  },
-  recentImage: {
-    width: 66,
-    height: 66,
-    borderRadius: 17,
-    marginRight: 12,
-  },
-  recentInfo: {
-    flex: 1,
-  },
-  recentTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    marginBottom: 4,
-  },
-  recentName: {
-    flex: 1,
-    color: Colors.text,
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  statusBadge: {
-    overflow: "hidden",
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-    fontSize: 10,
-    fontWeight: "900",
-  },
-  statusOpen: {
-    color: "#001014",
-    backgroundColor: "#00C8E8",
-  },
-  statusClosed: {
-    color: "rgba(255,255,255,0.68)",
-    backgroundColor: "rgba(255,255,255,0.10)",
-  },
-  recentDescription: {
-    color: "rgba(255,255,255,0.50)",
-    fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 5,
-  },
-  recentDistance: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.42)",
+    lineHeight: 15,
   },
 });

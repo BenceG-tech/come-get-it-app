@@ -1,8 +1,10 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
-import { Mail, Phone, MessageCircle, ChevronRight, HelpCircle } from "lucide-react-native";
+import { Mail, Phone, MessageCircle, HelpCircle } from "lucide-react-native";
 import Colors from "@/constants/colors";
+
+const CYAN = "#00C8E8" as const;
 
 export default function HelpScreen() {
   const handleContact = (method: string) => {
@@ -54,9 +56,6 @@ export default function HelpScreen() {
       
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <HelpCircle size={64} color="#00D1FF" />
-          </View>
           <Text style={styles.headerTitle}>Segíthetünk?</Text>
           <Text style={styles.headerDescription}>
             Válaszd ki, hogyan szeretnél kapcsolatba lépni velünk
@@ -66,47 +65,37 @@ export default function HelpScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Kapcsolatfelvétel</Text>
           
-          <TouchableOpacity 
-            style={styles.contactItem}
-            onPress={() => handleContact("email")}
-          >
-            <View style={styles.contactIcon}>
-              <Mail size={24} color="#00D1FF" />
-            </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Email</Text>
-              <Text style={styles.contactSubtitle}>support@comegetit.hu</Text>
-            </View>
-            <ChevronRight size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
+          <View style={styles.menuCard}>
+            <TouchableOpacity style={styles.contactRow} onPress={() => handleContact("email")}>
+              <View style={styles.contactIcon}>
+                <Mail size={18} color={CYAN} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactTitle}>Email</Text>
+                <Text style={styles.contactSubtitle}>support@comegetit.hu</Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.contactItem}
-            onPress={() => handleContact("phone")}
-          >
-            <View style={styles.contactIcon}>
-              <Phone size={24} color="#00D1FF" />
-            </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Telefon</Text>
-              <Text style={styles.contactSubtitle}>+36 30 123 4567</Text>
-            </View>
-            <ChevronRight size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.contactRow} onPress={() => handleContact("phone")}>
+              <View style={styles.contactIcon}>
+                <Phone size={18} color={CYAN} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactTitle}>Telefon</Text>
+                <Text style={styles.contactSubtitle}>+36 30 123 4567</Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.contactItem}
-            onPress={() => handleContact("chat")}
-          >
-            <View style={styles.contactIcon}>
-              <MessageCircle size={24} color="#00D1FF" />
-            </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Chat</Text>
-              <Text style={styles.contactSubtitle}>Azonnal elérhető</Text>
-            </View>
-            <ChevronRight size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.contactRow, styles.contactRowLast]} onPress={() => handleContact("chat")}>
+              <View style={styles.contactIcon}>
+                <MessageCircle size={18} color={CYAN} />
+              </View>
+              <View style={styles.contactInfo}>
+                <Text style={styles.contactTitle}>Chat</Text>
+                <Text style={styles.contactSubtitle}>Azonnal elérhető</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -114,16 +103,22 @@ export default function HelpScreen() {
           
           {faqItems.map((item) => (
             <View key={item.id} style={styles.faqItem}>
-              <Text style={styles.faqQuestion}>{item.question}</Text>
-              <Text style={styles.faqAnswer}>{item.answer}</Text>
+              <View style={styles.faqDot} />
+              <View style={styles.faqContent}>
+                <Text style={styles.faqQuestion}>{item.question}</Text>
+                <Text style={styles.faqAnswer}>{item.answer}</Text>
+              </View>
             </View>
           ))}
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>Nyitvatartás</Text>
-          <Text style={styles.infoText}>Hétfő - Péntek: 9:00 - 18:00</Text>
-          <Text style={styles.infoText}>Hétvégén: 10:00 - 16:00</Text>
+          <HelpCircle size={18} color={CYAN} />
+          <View style={styles.infoTextBlock}>
+            <Text style={styles.infoTitle}>Nyitvatartás</Text>
+            <Text style={styles.infoText}>Hétfő - Péntek: 9:00 - 18:00</Text>
+            <Text style={styles.infoText}>Hétvégén: 10:00 - 16:00</Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -136,55 +131,57 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 24,
-    alignItems: "center",
-  },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "900",
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 4,
+    letterSpacing: -0.3,
   },
   headerDescription: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 22,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.48)",
+    lineHeight: 18,
   },
   section: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
-  },
-  contactItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 16,
     marginBottom: 12,
   },
+  menuCard: {
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.06)",
+  },
+  contactRowLast: {
+    borderBottomWidth: 0,
+  },
   contactIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.16)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -193,48 +190,69 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contactTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: Colors.text,
     marginBottom: 2,
   },
   contactSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.46)",
   },
   faqItem: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 16,
-    marginBottom: 12,
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  faqDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: CYAN,
+    marginTop: 6,
+    marginRight: 12,
+  },
+  faqContent: {
+    flex: 1,
   },
   faqQuestion: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  faqAnswer: {
     fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-  },
-  infoBox: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 20,
-    marginHorizontal: 20,
-    marginBottom: 40,
-  },
-  infoTitle: {
-    fontSize: 18,
     fontWeight: "700",
     color: Colors.text,
-    marginBottom: 12,
+    marginBottom: 6,
+  },
+  faqAnswer: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.50)",
+    lineHeight: 18,
+  },
+  infoBox: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 40,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  infoTextBlock: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: Colors.text,
+    marginBottom: 6,
   },
   infoText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    marginBottom: 4,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.48)",
+    marginBottom: 2,
   },
 });

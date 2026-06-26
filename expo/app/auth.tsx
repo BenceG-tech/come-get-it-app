@@ -27,8 +27,8 @@ const LOGO_SOURCE = require('@/assets/images/come-get-it-logo-white.png');
 const BACKGROUND_SOURCE = require('@/assets/images/auth-background.png');
 
 const CYAN = '#00C8E8' as const;
-const TEXT_MUTED = 'rgba(255, 255, 255, 0.72)' as const;
-const TEXT_SOFT = 'rgba(255, 255, 255, 0.48)' as const;
+const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
+const TEXT_SOFT = 'rgba(255, 255, 255, 0.44)' as const;
 
 type Mode = 'login' | 'signup';
 type FocusedField = 'email' | 'password' | null;
@@ -74,7 +74,6 @@ function AuthScreen() {
 
   const onGoogle = useCallback(async () => {
     if (loading) return;
-
     setLoading(true);
     try {
       await signInWithGoogle();
@@ -85,7 +84,6 @@ function AuthScreen() {
 
   const onApple = useCallback(async () => {
     if (loading) return;
-
     setLoading(true);
     try {
       await signInWithApple();
@@ -163,7 +161,7 @@ function AuthScreen() {
                   value={email}
                   onChangeText={setEmail}
                   placeholder="E-mail cím"
-                  leftIcon={<Mail size={19} color={focusedField === 'email' ? CYAN : TEXT_SOFT} />}
+                  leftIcon={<Mail size={17} color={focusedField === 'email' ? CYAN : TEXT_SOFT} />}
                   focused={focusedField === 'email'}
                   onFocus={focusEmail}
                   onBlur={clearFocus}
@@ -180,12 +178,12 @@ function AuthScreen() {
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Jelszó"
-                  leftIcon={<LockKeyhole size={19} color={focusedField === 'password' ? CYAN : TEXT_SOFT} />}
+                  leftIcon={<LockKeyhole size={17} color={focusedField === 'password' ? CYAN : TEXT_SOFT} />}
                   rightIcon={
                     showPassword ? (
-                      <EyeOff size={19} color={TEXT_SOFT} />
+                      <EyeOff size={17} color={TEXT_SOFT} />
                     ) : (
-                      <Eye size={19} color={TEXT_SOFT} />
+                      <Eye size={17} color={TEXT_SOFT} />
                     )
                   }
                   onRightIconPress={togglePasswordVisibility}
@@ -228,14 +226,14 @@ function AuthScreen() {
               <View style={styles.socialBlock}>
                 <SocialButton
                   testID="auth-apple"
-                  icon={<Apple size={21} color="#FFFFFF" />}
+                  icon={<Apple size={19} color="#FFFFFF" />}
                   label="Folytatás az Apple-lel"
                   onPress={onApple}
                   disabled={loading}
                 />
                 <SocialButton
                   testID="auth-google"
-                  icon={<Chrome size={21} color="#00C8E8" />}
+                  icon={<Chrome size={19} color="#00C8E8" />}
                   label="Folytatás a Google-lel"
                   onPress={onGoogle}
                   disabled={loading}
@@ -277,74 +275,74 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 30,
-    paddingTop: 34,
-    paddingBottom: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     alignItems: 'center',
   },
   logo: {
-    width: 226,
-    height: 92,
-    marginBottom: 28,
+    width: 150,
+    height: 61,
+    marginBottom: 20,
   },
   heroTextBlock: {
     alignItems: 'center',
-    marginBottom: 34,
+    marginBottom: 22,
   },
   heading: {
     color: '#FFFFFF',
-    fontSize: 40,
-    lineHeight: 46,
+    fontSize: 26,
+    lineHeight: 32,
     fontWeight: '800' as const,
     textAlign: 'center',
-    letterSpacing: -0.7,
-    marginBottom: 12,
+    letterSpacing: -0.5,
+    marginBottom: 6,
   },
   subheading: {
     color: TEXT_MUTED,
-    fontSize: 18,
-    lineHeight: 27,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
-    maxWidth: 326,
+    maxWidth: 290,
     fontWeight: '500' as const,
   },
   formBlock: {
     width: '100%',
-    gap: 15,
+    gap: 12,
   },
   forgotButton: {
     alignSelf: 'flex-end',
     marginTop: 1,
-    marginBottom: 12,
+    marginBottom: 6,
   },
   forgotText: {
     color: CYAN,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '600' as const,
   },
   actionsBlock: {
     width: '100%',
-    gap: 16,
-    marginTop: 12,
+    gap: 12,
+    marginTop: 10,
   },
   dividerBlock: {
     width: '100%',
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 14,
   },
   socialBlock: {
     width: '100%',
-    gap: 12,
+    gap: 10,
   },
   legalBlock: {
-    marginTop: 28,
+    marginTop: 20,
     alignItems: 'center',
   },
 });

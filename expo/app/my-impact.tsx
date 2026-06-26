@@ -11,12 +11,14 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Heart, TrendingUp } from 'lucide-react-native';
+import { ChevronLeft, Heart, TrendingUp, Flame, Crown, AlertTriangle, Sprout, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { getUserCSRImpact } from '@/lib/csrService';
 import { useAuth } from '@/context/AuthContext';
 import { RecentDonation } from '@/types/csr';
+
+const CYAN = '#00C8E8' as const;
 
 export default function MyImpactScreen() {
   const router = useRouter();
@@ -57,13 +59,13 @@ export default function MyImpactScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color={Colors.text} />
+            <ChevronLeft size={22} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Hatásom</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>🔒</Text>
+          <Lock size={40} color="rgba(255,255,255,0.22)" />
           <Text style={styles.emptyTitle}>Jelentkezz be</Text>
           <Text style={styles.emptySubtitle}>Jelentkezz be a hatásod megtekintéséhez</Text>
           <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/auth')}>
@@ -79,13 +81,13 @@ export default function MyImpactScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color={Colors.text} />
+            <ChevronLeft size={22} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Hatásom</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={CYAN} />
           <Text style={styles.loadingText}>Betöltés...</Text>
         </View>
       </View>
@@ -97,13 +99,13 @@ export default function MyImpactScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color={Colors.text} />
+            <ChevronLeft size={22} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Hatásom</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>⚠️</Text>
+          <AlertTriangle size={40} color="rgba(255,255,255,0.22)" />
           <Text style={styles.emptyTitle}>Hiba történt</Text>
           <Text style={styles.emptySubtitle}>
             {error?.message || 'A hatás adatok átmenetileg nem elérhetők. Próbáld újra később!'}
@@ -124,7 +126,7 @@ export default function MyImpactScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color={Colors.text} />
+            <ChevronLeft size={22} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Hatásom</Text>
           <View style={styles.headerSpacer} />
@@ -135,12 +137,12 @@ export default function MyImpactScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor={Colors.primary}
+              tintColor={CYAN}
             />
           }
         >
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>🌱</Text>
+            <Sprout size={40} color="rgba(255,255,255,0.22)" />
             <Text style={styles.emptyTitle}>Kezdd el a hatásod!</Text>
             <Text style={styles.emptySubtitle}>
               Váltsd be az első ingyenes italod, hogy adományozz az első adagot.
@@ -162,7 +164,7 @@ export default function MyImpactScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ChevronLeft size={24} color={Colors.text} />
+          <ChevronLeft size={22} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hatásom</Text>
         <View style={styles.headerSpacer} />
@@ -175,17 +177,16 @@ export default function MyImpactScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor={Colors.primary}
+            tintColor={CYAN}
           />
         }
       >
         <LinearGradient
-          colors={['rgba(31, 177, 183, 0.15)', 'rgba(6, 182, 212, 0.08)']}
+          colors={['rgba(0, 200, 232, 0.10)', 'rgba(0, 200, 232, 0.04)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
-          <Text style={styles.heroEmoji}>🎉</Text>
           <Text style={styles.heroTitle}>Te egy hős vagy!</Text>
           
           <View style={styles.statsRow}>
@@ -205,13 +206,13 @@ export default function MyImpactScreen() {
           <View style={styles.badgesRow}>
             {stats.current_streak_days > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeEmoji}>🔥</Text>
+                <Flame size={14} color="#F6B17A" />
                 <Text style={styles.badgeText}>{stats.current_streak_days} napos sorozat</Text>
               </View>
             )}
             {leaderboard_position && leaderboard_position.percentile <= 20 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeEmoji}>👑</Text>
+                <Crown size={14} color="#F6B17A" />
                 <Text style={styles.badgeText}>Top {Math.round(leaderboard_position.percentile)}%</Text>
               </View>
             )}
@@ -221,7 +222,7 @@ export default function MyImpactScreen() {
         {next_milestone && (
           <View style={styles.milestoneCard}>
             <View style={styles.milestoneHeader}>
-              <TrendingUp size={20} color={Colors.primary} />
+              <TrendingUp size={18} color={CYAN} />
               <Text style={styles.milestoneTitle}>
                 Következő mérföldkő: {next_milestone.target_units} adag
               </Text>
@@ -241,7 +242,7 @@ export default function MyImpactScreen() {
         {recent_donations.length > 0 && (
           <View style={styles.timelineSection}>
             <View style={styles.sectionHeader}>
-              <Heart size={18} color={Colors.primary} />
+              <Heart size={16} color={CYAN} />
               <Text style={styles.sectionTitle}>Legutóbbi adományok</Text>
             </View>
             
@@ -275,38 +276,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
     color: Colors.text,
   },
   headerSpacer: {
-    width: 40,
+    width: 38,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 14,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   loadingText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.44)',
   },
   emptyContainer: {
     flex: 1,
@@ -315,220 +316,210 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 60,
   },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.44)',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
+    lineHeight: 20,
+    marginBottom: 20,
   },
   loginButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    backgroundColor: CYAN,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 25,
   },
   loginButtonText: {
-    color: '#000',
-    fontSize: 16,
+    color: '#001014',
+    fontSize: 15,
     fontWeight: '700',
   },
   retryButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.14)',
   },
   retryButtonText: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   primaryButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    backgroundColor: CYAN,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 25,
   },
   primaryButtonText: {
-    color: '#000',
-    fontSize: 16,
+    color: '#001014',
+    fontSize: 15,
     fontWeight: '700',
   },
   heroCard: {
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 16,
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: 'rgba(31, 177, 183, 0.3)',
+    borderColor: 'rgba(0, 200, 232, 0.18)',
     alignItems: 'center',
   },
-  heroEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
   heroTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: Colors.text,
-    marginBottom: 20,
+    marginBottom: 16,
+    letterSpacing: -0.3,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '900',
-    color: '#1fb1b7',
-    letterSpacing: -1,
+    color: CYAN,
+    letterSpacing: -0.8,
   },
   statValueSecondary: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#06b6d4',
-    letterSpacing: -0.5,
+    color: '#00B8D8',
+    letterSpacing: -0.4,
   },
   statLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 4,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.44)',
+    marginTop: 3,
   },
   statDivider: {
     width: 1,
-    height: 50,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    marginHorizontal: 16,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    marginHorizontal: 14,
   },
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
     justifyContent: 'center',
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 20,
-    gap: 6,
-  },
-  badgeEmoji: {
-    fontSize: 16,
+    gap: 5,
   },
   badgeText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: Colors.text,
   },
   milestoneCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    padding: 18,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   milestoneHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 14,
   },
   milestoneTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: Colors.text,
   },
   progressBarContainer: {
-    height: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 5,
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#1fb1b7',
-    borderRadius: 5,
+    backgroundColor: CYAN,
+    borderRadius: 4,
   },
   milestoneSubtext: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.44)',
   },
   milestoneDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 8,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.38)',
+    marginTop: 6,
     fontStyle: 'italic',
   },
   timelineSection: {
-    marginTop: 8,
+    marginTop: 6,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: 7,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: Colors.text,
   },
   timelineItem: {
     flexDirection: 'row',
-    marginBottom: 20,
-    paddingLeft: 4,
+    marginBottom: 16,
+    paddingLeft: 3,
   },
   timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#1fb1b7',
-    marginTop: 6,
-    marginRight: 14,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: CYAN,
+    marginTop: 5,
+    marginRight: 12,
   },
   timelineContent: {
     flex: 1,
   },
   timelineDate: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 4,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.38)',
+    marginBottom: 3,
   },
   timelineVenue: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   timelineImpact: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.44)',
+    lineHeight: 18,
   },
   bottomSpacer: {
     height: 40,

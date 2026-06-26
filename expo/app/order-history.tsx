@@ -4,6 +4,8 @@ import { useRouter, Stack } from "expo-router";
 import { Clock, CheckCircle } from "lucide-react-native";
 import Colors from "@/constants/colors";
 
+const CYAN = "#00C8E8" as const;
+
 export default function OrderHistoryScreen() {
   const router = useRouter();
 
@@ -52,6 +54,7 @@ export default function OrderHistoryScreen() {
               <Text style={styles.statValue}>48</Text>
               <Text style={styles.statLabel}>Rendelés</Text>
             </View>
+            <View style={styles.statDivider} />
             <View style={styles.statBox}>
               <Text style={styles.statValue}>156,800</Text>
               <Text style={styles.statLabel}>Összes Ft</Text>
@@ -77,18 +80,18 @@ export default function OrderHistoryScreen() {
                   <Text style={styles.orderName}>{order.venueName}</Text>
                   {order.status === "completed" && (
                     <View style={styles.statusBadge}>
-                      <CheckCircle size={14} color="#00D1FF" />
+                      <CheckCircle size={12} color={CYAN} />
                       <Text style={styles.statusText}>Teljesítve</Text>
                     </View>
                   )}
                 </View>
                 <View style={styles.orderDetails}>
-                  <Clock size={14} color={Colors.textSecondary} />
-                  <Text style={styles.orderDate}>{order.date} • {order.time}</Text>
+                  <Clock size={12} color="rgba(255,255,255,0.44)" />
+                  <Text style={styles.orderDate}>{order.date} · {order.time}</Text>
                 </View>
                 <View style={styles.orderItems}>
                   {order.items.map((item, index) => (
-                    <Text key={index} style={styles.itemText}>• {item}</Text>
+                    <Text key={index} style={styles.itemText}>· {item}</Text>
                   ))}
                 </View>
                 <Text style={styles.orderTotal}>Összesen: {order.total}</Text>
@@ -107,53 +110,64 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 14,
   },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 20,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   statBox: {
     alignItems: "center",
   },
   statValue: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#00D1FF",
-    marginBottom: 4,
+    fontSize: 22,
+    fontWeight: "800",
+    color: CYAN,
+    marginBottom: 3,
+    letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
     fontWeight: "500",
   },
+  statDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignSelf: "center",
+  },
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 40,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   orderItem: {
     flexDirection: "row",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 11,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   orderImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 4,
-    marginRight: 12,
+    width: 66,
+    height: 66,
+    borderRadius: 14,
+    marginRight: 11,
   },
   orderInfo: {
     flex: 1,
@@ -162,48 +176,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
   orderName: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
     color: Colors.text,
     flex: 1,
   },
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    gap: 3,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   statusText: {
-    fontSize: 11,
-    color: "#00D1FF",
+    fontSize: 10,
+    color: CYAN,
     fontWeight: "600",
   },
   orderDetails: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
+    gap: 5,
+    marginBottom: 6,
   },
   orderDate: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
   },
   orderItems: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   itemText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginBottom: 2,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
+    marginBottom: 1,
   },
   orderTotal: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: Colors.text,
   },

@@ -98,11 +98,11 @@ export default function VisitHistoryScreen() {
               <View style={styles.visitInfo}>
                 <Text style={styles.visitName}>{visit.venueName}</Text>
                 <View style={styles.visitDetails}>
-                  <Calendar size={14} color={Colors.textSecondary} />
-                  <Text style={styles.visitDate}>{visit.date} • {visit.time}</Text>
+                  <Calendar size={13} color="rgba(255,255,255,0.44)" />
+                  <Text style={styles.visitDate}>{visit.date} · {visit.time}</Text>
                 </View>
                 <View style={styles.visitDetails}>
-                  <MapPin size={14} color={Colors.textSecondary} />
+                  <MapPin size={13} color="rgba(255,255,255,0.44)" />
                   <Text style={styles.visitDistance}>{visit.distance}</Text>
                 </View>
                 <View style={styles.pointsBadge}>
@@ -124,39 +124,39 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   statsContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 13,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   statDivider: {
     width: 1,
-    height: 36,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    marginHorizontal: 12,
+    height: 32,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    marginHorizontal: 10,
   },
   statBox: {
     flex: 1,
     alignItems: "center",
   },
   statValue: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "900",
-    color: "rgba(0, 209, 255, 0.95)",
-    marginBottom: 4,
-    letterSpacing: -0.4,
+    color: "#00C8E8",
+    marginBottom: 3,
+    letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
     fontWeight: "600",
   },
   section: {
@@ -164,63 +164,63 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   visitItem: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 16,
-    padding: 12,
-    marginBottom: 10,
+    padding: 11,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   visitImage: {
-    width: 78,
-    height: 78,
+    width: 66,
+    height: 66,
     borderRadius: 14,
-    marginRight: 12,
+    marginRight: 11,
   },
   visitInfo: {
     flex: 1,
     justifyContent: "space-between",
   },
   visitName: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
     color: Colors.text,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   visitDetails: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
+    gap: 5,
+    marginBottom: 3,
   },
   visitDate: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
   },
   visitDistance: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
   },
   pointsBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(0, 209, 255, 0.12)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 999,
-    marginTop: 6,
+    marginTop: 4,
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.18)",
+    borderColor: "rgba(0, 200, 232, 0.16)",
   },
   pointsText: {
-    fontSize: 12,
-    color: "rgba(0, 209, 255, 0.95)",
+    fontSize: 11,
+    color: "#00C8E8",
     fontWeight: "800",
   },
 });

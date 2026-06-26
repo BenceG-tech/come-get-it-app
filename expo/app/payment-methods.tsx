@@ -4,6 +4,8 @@ import { Stack } from "expo-router";
 import { CreditCard, Plus, Trash2 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 
+const CYAN = "#00C8E8" as const;
+
 export default function PaymentMethodsScreen() {
   const paymentMethods = [
     {
@@ -29,19 +31,14 @@ export default function PaymentMethodsScreen() {
       
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <CreditCard size={64} color="#00D1FF" />
-          </View>
           <Text style={styles.headerTitle}>Fizetési módok</Text>
-          <Text style={styles.headerDescription}>
-            Kezeld a mentett bankkártyáidat
-          </Text>
+          <Text style={styles.headerSub}>Kezeld a mentett bankkártyáidat</Text>
         </View>
 
         <View style={styles.section}>
           <TouchableOpacity style={styles.addButton}>
             <View style={styles.addIcon}>
-              <Plus size={24} color="#00D1FF" />
+              <Plus size={20} color={CYAN} />
             </View>
             <Text style={styles.addButtonText}>Új kártya hozzáadása</Text>
           </TouchableOpacity>
@@ -53,7 +50,7 @@ export default function PaymentMethodsScreen() {
           {paymentMethods.map((method) => (
             <View key={method.id} style={styles.cardItem}>
               <View style={styles.cardIcon}>
-                <CreditCard size={24} color="#00D1FF" />
+                <CreditCard size={20} color={CYAN} />
               </View>
               <View style={styles.cardInfo}>
                 <View style={styles.cardHeader}>
@@ -62,15 +59,15 @@ export default function PaymentMethodsScreen() {
                   </Text>
                   {method.isDefault && (
                     <View style={styles.defaultBadge}>
-                      <Text style={styles.defaultText}>Alapértelmezett</Text>
+                      <Text style={styles.defaultText}>Alapért.</Text>
                     </View>
                   )}
                 </View>
-                <Text style={styles.cardNumber}>•••• {method.last4}</Text>
+                <Text style={styles.cardNumber}>···· {method.last4}</Text>
                 <Text style={styles.cardExpiry}>Lejár: {method.expiry}</Text>
               </View>
               <TouchableOpacity style={styles.deleteButton}>
-                <Trash2 size={20} color="#FF6B6B" />
+                <Trash2 size={18} color="#FF6B6B" />
               </TouchableOpacity>
             </View>
           ))}
@@ -92,78 +89,73 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 24,
-    alignItems: "center",
-  },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "900",
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 4,
+    letterSpacing: -0.3,
   },
-  headerDescription: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: "center",
+  headerSub: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.48)",
   },
   section: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: "rgba(0, 209, 255, 0.3)",
-    borderStyle: "dashed",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.22)",
   },
   addIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.18)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   addButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#00D1FF",
+    fontSize: 15,
+    fontWeight: "700",
+    color: CYAN,
   },
   cardItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   cardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.16)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -174,48 +166,48 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   cardType: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: Colors.text,
     marginRight: 8,
   },
   defaultBadge: {
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    paddingHorizontal: 8,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   defaultText: {
-    fontSize: 11,
-    color: "#00D1FF",
+    fontSize: 10,
+    color: CYAN,
     fontWeight: "600",
   },
   cardNumber: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.text,
     marginBottom: 2,
   },
   cardExpiry: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
   },
   deleteButton: {
     padding: 8,
   },
   infoBox: {
-    backgroundColor: "rgba(0, 209, 255, 0.1)",
-    borderRadius: 4,
-    padding: 16,
-    marginHorizontal: 20,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 14,
+    marginHorizontal: 16,
     marginBottom: 40,
   },
   infoText: {
-    fontSize: 13,
-    color: Colors.text,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
     textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 17,
   },
 });

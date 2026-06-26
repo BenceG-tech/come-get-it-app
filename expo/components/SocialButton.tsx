@@ -2,8 +2,8 @@ import React, { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-const SURFACE_DARK = 'rgba(10, 16, 22, 0.78)' as const;
-const SURFACE_BORDER = 'rgba(255, 255, 255, 0.14)' as const;
+const SURFACE_DARK = 'rgba(10, 16, 22, 0.72)' as const;
+const SURFACE_BORDER = 'rgba(255, 255, 255, 0.12)' as const;
 const TEXT_WHITE = '#FFFFFF' as const;
 
 export interface SocialButtonProps {
@@ -43,8 +43,8 @@ export default memo(SocialButton);
 const styles = StyleSheet.create({
   btn: {
     width: '100%',
-    height: 60,
-    borderRadius: 30,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: SURFACE_DARK,
@@ -53,14 +53,14 @@ const styles = StyleSheet.create({
   },
   icon: {
     position: 'absolute',
-    left: 22,
-    width: 24,
+    left: 18,
+    width: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
     color: TEXT_WHITE,
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '600' as const,
     letterSpacing: -0.1,
   },

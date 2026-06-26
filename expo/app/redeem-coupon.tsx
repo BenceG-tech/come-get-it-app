@@ -5,6 +5,8 @@ import { Ticket, CheckCircle } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useState } from "react";
 
+const CYAN = "#00C8E8" as const;
+
 export default function RedeemCouponScreen() {
   const [couponCode, setCouponCode] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -42,11 +44,8 @@ export default function RedeemCouponScreen() {
       
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ticket size={64} color="#00D1FF" />
-          </View>
           <Text style={styles.headerTitle}>Beváltható kuponkód</Text>
-          <Text style={styles.headerDescription}>
+          <Text style={styles.headerSub}>
             Add meg a kuponkódot és szerezz extra pontokat!
           </Text>
         </View>
@@ -58,7 +57,7 @@ export default function RedeemCouponScreen() {
             <TextInput
               style={styles.input}
               placeholder="Írd be a kódot"
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor="rgba(255,255,255,0.40)"
               value={couponCode}
               onChangeText={setCouponCode}
               autoCapitalize="characters"
@@ -84,8 +83,8 @@ export default function RedeemCouponScreen() {
 
           {redeemSuccess ? (
             <View style={styles.successBox}>
-              <CheckCircle size={20} color="#00D1FF" />
-              <Text style={styles.successText}>Sikeresen beváltva! +{Math.floor(Math.random() * 100) + 50} pont</Text>
+              <CheckCircle size={18} color={CYAN} />
+              <Text style={styles.successText}>Sikeresen beváltva!</Text>
             </View>
           ) : null}
         </View>
@@ -96,7 +95,7 @@ export default function RedeemCouponScreen() {
           {activeCoupons.map((coupon) => (
             <View key={coupon.id} style={styles.couponCard}>
               <View style={styles.couponIcon}>
-                <Ticket size={24} color="#00D1FF" />
+                <Ticket size={20} color={CYAN} />
               </View>
               <View style={styles.couponInfo}>
                 <Text style={styles.couponCode}>{coupon.code}</Text>
@@ -113,19 +112,19 @@ export default function RedeemCouponScreen() {
         <View style={styles.infoSection}>
           <Text style={styles.infoTitle}>Hol találsz kuponokat?</Text>
           <View style={styles.infoItem}>
-            <Text style={styles.infoBullet}>•</Text>
+            <View style={styles.infoDot} />
             <Text style={styles.infoText}>Emailben vagy SMS-ben</Text>
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoBullet}>•</Text>
+            <View style={styles.infoDot} />
             <Text style={styles.infoText}>Közösségi média oldalainkon</Text>
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoBullet}>•</Text>
+            <View style={styles.infoDot} />
             <Text style={styles.infoText}>Partner helyszíneken</Text>
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoBullet}>•</Text>
+            <View style={styles.infoDot} />
             <Text style={styles.infoText}>Barátok meghívásával</Text>
           </View>
         </View>
@@ -140,79 +139,75 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 24,
-    alignItems: "center",
-  },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "900",
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 4,
+    letterSpacing: -0.3,
   },
-  headerDescription: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 22,
+  headerSub: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.48)",
+    lineHeight: 18,
   },
   section: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   inputCard: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 16,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   input: {
-    backgroundColor: Colors.background,
-    borderRadius: 4,
-    padding: 16,
-    fontSize: 18,
+    backgroundColor: "rgba(0,0,0,0.28)",
+    borderRadius: 14,
+    padding: 14,
+    fontSize: 16,
     color: Colors.text,
     fontWeight: "600",
-    marginBottom: 12,
+    marginBottom: 10,
     letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   redeemButton: {
-    backgroundColor: "#00D1FF",
-    borderRadius: 4,
-    padding: 16,
+    backgroundColor: CYAN,
+    borderRadius: 25,
+    padding: 14,
     alignItems: "center",
   },
   redeemButtonDisabled: {
     opacity: 0.5,
   },
   redeemButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: Colors.background,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#001014",
   },
   errorBox: {
-    backgroundColor: "rgba(255, 107, 107, 0.2)",
-    borderRadius: 4,
-    padding: 12,
-    marginTop: 12,
+    backgroundColor: "rgba(255, 107, 107, 0.10)",
+    borderRadius: 14,
+    padding: 11,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.18)",
   },
   errorText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#FF6B6B",
     textAlign: "center",
   },
@@ -220,30 +215,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    borderRadius: 4,
-    padding: 12,
-    marginTop: 12,
-    gap: 8,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderRadius: 14,
+    padding: 11,
+    marginTop: 10,
+    gap: 7,
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.16)",
   },
   successText: {
-    fontSize: 14,
-    color: "#00D1FF",
+    fontSize: 13,
+    color: CYAN,
     fontWeight: "600",
   },
   couponCard: {
     flexDirection: "row",
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 4,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 8,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   couponIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.16)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -252,58 +253,62 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   couponCode: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
     color: Colors.text,
     marginBottom: 2,
   },
   couponDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
     marginBottom: 2,
   },
   couponExpiry: {
-    fontSize: 12,
-    color: Colors.textSecondary,
+    fontSize: 11,
+    color: "rgba(255,255,255,0.36)",
   },
   couponValue: {
-    backgroundColor: "rgba(0, 209, 255, 0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
   couponValueText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
-    color: "#00D1FF",
+    color: CYAN,
   },
   infoSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    backgroundColor: Colors.cardBackground,
-    marginHorizontal: 20,
-    borderRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    marginHorizontal: 16,
+    borderRadius: 16,
     marginBottom: 40,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   infoItem: {
     flexDirection: "row",
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 10,
   },
-  infoBullet: {
-    fontSize: 16,
-    color: "#00D1FF",
-    marginRight: 12,
-    fontWeight: "700",
+  infoDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: CYAN,
   },
   infoText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
+    fontSize: 14,
+    color: "rgba(255,255,255,0.46)",
     flex: 1,
   },
 });

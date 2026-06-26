@@ -35,19 +35,18 @@ export default function InviteFriendsScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <LinearGradient
-            colors={["rgba(6, 35, 47, 0.94)", "rgba(10, 56, 68, 0.86)"]}
+            colors={["rgba(6, 35, 47, 0.88)", "rgba(10, 56, 68, 0.76)"]}
             start={{ x: 0.12, y: 0.06 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroCard}
           >
             <View style={styles.heroIconWrap}>
-              <Gift size={36} color={"rgba(0, 209, 255, 0.98)"} />
+              <Gift size={28} color="rgba(0, 200, 232, 0.96)" />
             </View>
             <Text style={styles.heroTitle}>Hívd meg barátaidat!</Text>
             <Text style={styles.heroDescription}>
               Mindketten kaptok 100 pontot, amikor barátod elkészíti első rendelését
             </Text>
-            <View style={styles.heroGlow} pointerEvents="none" />
           </LinearGradient>
         </View>
 
@@ -65,10 +64,10 @@ export default function InviteFriendsScreen() {
                 activeOpacity={0.9}
               >
                 {copied ? (
-                  <Text style={styles.copyButtonText}>✓ Másolva</Text>
+                  <Text style={styles.copyButtonText}>Másolva</Text>
                 ) : (
                   <>
-                    <Copy size={16} color={"rgba(0, 209, 255, 0.95)"} />
+                    <Copy size={14} color="rgba(0, 200, 232, 0.94)" />
                     <Text style={styles.copyButtonText}>Másolás</Text>
                   </>
                 )}
@@ -79,26 +78,26 @@ export default function InviteFriendsScreen() {
           <View style={styles.shareOptions}>
             <TouchableOpacity style={styles.shareButton} onPress={handleShare} testID="share-referral" activeOpacity={0.9}>
               <View style={styles.shareIcon}>
-                <Share2 size={20} color={"rgba(0, 209, 255, 0.95)"} />
+                <Share2 size={18} color="rgba(0, 200, 232, 0.94)" />
               </View>
               <Text style={styles.shareText}>Megosztás</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
+              <ChevronRight size={16} color="rgba(255,255,255,0.40)" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareButton} testID="share-sms" activeOpacity={0.9}>
               <View style={styles.shareIcon}>
-                <MessageCircle size={20} color={"rgba(0, 209, 255, 0.95)"} />
+                <MessageCircle size={18} color="rgba(0, 200, 232, 0.94)" />
               </View>
               <Text style={styles.shareText}>SMS</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
+              <ChevronRight size={16} color="rgba(255,255,255,0.40)" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareButton} testID="share-email" activeOpacity={0.9}>
               <View style={styles.shareIcon}>
-                <Mail size={20} color={"rgba(0, 209, 255, 0.95)"} />
+                <Mail size={18} color="rgba(0, 200, 232, 0.94)" />
               </View>
               <Text style={styles.shareText}>Email</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
+              <ChevronRight size={16} color="rgba(255,255,255,0.40)" />
             </TouchableOpacity>
           </View>
         </View>
@@ -175,75 +174,67 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   heroCard: {
     borderRadius: 18,
-    paddingVertical: 20,
-    paddingHorizontal: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     alignItems: "flex-start",
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.16)",
+    borderColor: "rgba(0, 200, 232, 0.14)",
   },
   heroIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: "rgba(0, 209, 255, 0.14)",
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.22)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   heroTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "900",
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
+    letterSpacing: -0.3,
   },
   heroDescription: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.74)",
-    lineHeight: 20,
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.68)",
+    lineHeight: 18,
     fontWeight: "600",
-  },
-  heroGlow: {
-    position: "absolute",
-    top: -90,
-    right: -90,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: "rgba(0, 209, 255, 0.12)",
   },
   section: {
     paddingHorizontal: 16,
-    paddingBottom: 18,
+    paddingBottom: 14,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
     color: Colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   codeCard: {
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   codeLabel: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.68)",
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.62)",
     fontWeight: "800",
-    letterSpacing: 1.1,
+    letterSpacing: 1,
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   codeContainer: {
     flexDirection: "row",
@@ -251,55 +242,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   codeValue: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "900",
-    color: "rgba(0, 209, 255, 0.98)",
-    letterSpacing: 2,
+    color: "#00C8E8",
+    letterSpacing: 1.5,
   },
   copyButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0, 209, 255, 0.14)",
+    gap: 5,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.22)",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: "rgba(0, 200, 232, 0.20)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 999,
   },
   copyButtonText: {
-    fontSize: 14,
-    color: "rgba(0, 209, 255, 0.95)",
+    fontSize: 12,
+    color: "rgba(0, 200, 232, 0.94)",
     fontWeight: "800",
   },
   shareOptions: {
     flexDirection: "column",
-    gap: 10,
+    gap: 8,
   },
   shareButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 13,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   shareIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0, 209, 255, 0.14)",
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.22)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 11,
   },
   shareText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.text,
     fontWeight: "800",
   },
@@ -307,70 +298,71 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    marginBottom: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 13,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   stepNumber: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(0, 209, 255, 0.12)",
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.22)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 11,
   },
   stepNumberText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "900",
-    color: "rgba(0, 209, 255, 0.95)",
+    color: "#00C8E8",
   },
   stepContent: {
     flex: 1,
   },
   stepTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   stepDescription: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.46)",
+    lineHeight: 17,
   },
   statsCard: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 13,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   statItem: {
     flex: 1,
     alignItems: "center",
   },
   statValue: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#00D1FF",
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#00C8E8",
+    marginBottom: 3,
+    letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.44)",
   },
   statDivider: {
     width: 1,
-    height: 36,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    marginHorizontal: 12,
+    height: 32,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    marginHorizontal: 10,
   },
 });
