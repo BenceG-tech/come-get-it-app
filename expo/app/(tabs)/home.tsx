@@ -9,34 +9,19 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { Search, MapPin, Filter, Heart, ChevronRight, Navigation } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Search, MapPin, Filter, Heart, ChevronRight, Maximize2 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
+import DarkMapPreview from "@/components/DarkMapPreview";
 import { Venue } from "@/types/venue";
 import { fetchVenueCoverUrl, fetchVenues } from "@/lib/venueService";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { getUserCSRImpact } from "@/lib/csrService";
-
-function getVenueCoordinate(venue: Venue): { latitude: number; longitude: number } | null {
-  const latRaw = venue.coordinates?.lat ?? venue.latitude;
-  const lngRaw = venue.coordinates?.lng ?? venue.longitude;
-  const latitude = typeof latRaw === "number" ? latRaw : typeof latRaw === "string" ? Number(latRaw) : NaN;
-  const longitude = typeof lngRaw === "number" ? lngRaw : typeof lngRaw === "string" ? Number(lngRaw) : NaN;
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || (latitude === 0 && longitude === 0)) return null;
-  return { latitude, longitude };
-}
-
-function buildStaticMapUrl(venues: Venue[]): string {
-  const coordinates = venues.map(getVenueCoordinate).filter((item): item is { latitude: number; longitude: number } => Boolean(item));
-  const center = coordinates[0] ?? { latitude: 47.4979, longitude: 19.0402 };
-  const markers = coordinates.slice(0, 8).map((coordinate) => `${coordinate.latitude},${coordinate.longitude},lightblue1`).join("|");
-  const markerQuery = markers.length > 0 ? `&markers=${encodeURIComponent(markers)}` : `&markers=${encodeURIComponent(`${center.latitude},${center.longitude},lightblue1`)}`;
-  return `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(`${center.latitude},${center.longitude}`)}&zoom=13&size=900x420&maptype=mapnik${markerQuery}`;
-}
 
 export default function BarsScreen() {
   const router = useRouter();
@@ -114,7 +99,8 @@ export default function BarsScreen() {
     });
   }, [selectedFilters, venues]);
 
-  const mapPreviewUrl = useMemo(() => buildStaticMapUrl(filteredVenues.length > 0 ? filteredVenues : venues), [filteredVenues, venues]);
+  const mapVenues = useMemo(() => (filteredVenues.length > 0 ? filteredVenues : venues), [filteredVenues, venues]);
+  const mapHeight = width <= 375 ? 230 : 260;
 
   const openFilter = () => {
     router.push("/filter");
@@ -234,21 +220,27 @@ export default function BarsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.venuesContent}
       >
-        <TouchableOpacity style={styles.mapPreviewCard} activeOpacity={0.88} onPress={openMap} testID="home-map-preview">
-          <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreviewImage} resizeMode="cover" />
-          <View style={styles.mapPreviewScrim} />
-          <View style={styles.mapPreviewTopRow}>
-            <View style={styles.mapPreviewPill}>
-              <MapPin size={14} color="#001014" />
-              <Text style={styles.mapPreviewPillText}>{filteredVenues.length || venues.length} hely a közeledben</Text>
+        <TouchableOpacity
+          style={[styles.mapHeader, { height: mapHeight }]}
+          activeOpacity={0.92}
+          onPress={openMap}
+          testID="home-map-preview"
+        >
+          <DarkMapPreview venues={mapVenues} zoom={12} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.35)", "transparent", "transparent", "#000000"]}
+            locations={[0, 0.25, 0.68, 1]}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+          />
+          <View style={styles.mapHeaderTopRow} pointerEvents="none">
+            <View style={styles.mapCountPill}>
+              <MapPin size={13} color="#00D1FF" />
+              <Text style={styles.mapCountPillText}>{mapVenues.length} hely a közeledben</Text>
             </View>
-            <View style={styles.mapPreviewIconButton}>
-              <Navigation size={16} color="#001014" />
+            <View style={styles.mapExpandButton}>
+              <Maximize2 size={15} color="#FFFFFF" />
             </View>
-          </View>
-          <View style={styles.mapPreviewBottomBlock}>
-            <Text style={styles.mapPreviewTitle}>Térképes felfedezés</Text>
-            <Text style={styles.mapPreviewSubtitle}>A lista tetején látható, lefelé görgetve természetesen eltűnik.</Text>
           </View>
         </TouchableOpacity>
 
@@ -382,28 +374,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   venuesContent: {
-    paddingTop: 8,
+    paddingTop: 0,
     paddingBottom: 100,
   },
-  mapPreviewCard: {
-    height: 204,
-    marginHorizontal: 12,
-    marginBottom: 14,
-    borderRadius: 24,
-    overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.16)",
-  },
-  mapPreviewImage: {
+  mapHeader: {
     width: "100%",
-    height: "100%",
+    marginBottom: 12,
+    backgroundColor: "#0B0F14",
+    overflow: "hidden",
   },
-  mapPreviewScrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.22)",
-  },
-  mapPreviewTopRow: {
+  mapHeaderTopRow: {
     position: "absolute",
     top: 12,
     left: 12,
@@ -412,51 +392,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  mapPreviewPill: {
+  mapCountPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 11,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
     borderRadius: 999,
-    backgroundColor: "#00C8E8",
+    backgroundColor: "rgba(0,0,0,0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 209, 255, 0.35)",
   },
-  mapPreviewPillText: {
-    color: "#001014",
+  mapCountPillText: {
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "700",
   },
-  mapPreviewIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 14,
-    backgroundColor: "#00C8E8",
+  mapExpandButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(0,0,0,0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  mapPreviewBottomBlock: {
-    position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 14,
-    padding: 14,
-    borderRadius: 18,
-    backgroundColor: "rgba(0,0,0,0.68)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-  mapPreviewTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: "900",
-    letterSpacing: -0.3,
-  },
-  mapPreviewSubtitle: {
-    color: "rgba(255,255,255,0.62)",
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-    fontWeight: "600",
   },
   emptyState: {
     flex: 1,

@@ -7,7 +7,6 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  Image,
   Animated,
   PanResponder,
   FlatList,
@@ -21,6 +20,7 @@ import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
+import DarkMapPreview from '@/components/DarkMapPreview';
 import { geocodeVenueAddress } from '@/utils/geocoding';
 
 let Location: any = null;
@@ -132,14 +132,13 @@ export default function MapScreen() {
           })
         );
 
-        const filteredWithCoords = venuesWithCoords.filter(
-          (v) => typeof (v as any).latitude === 'number' && typeof (v as any).longitude === 'number'
-        );
-        console.log('[Map] venuesWithCoords after geocode', {
+        console.log('[Map] venues after geocode', {
           total: venuesWithCoords.length,
-          withCoords: filteredWithCoords.length,
+          withCoords: venuesWithCoords.filter(
+            (v) => typeof (v as any).latitude === 'number' && typeof (v as any).longitude === 'number'
+          ).length,
         });
-        setVenues(filteredWithCoords as Venue[]);
+        setVenues(venuesWithCoords as Venue[]);
 
         if (Platform.OS !== 'web' && Location) {
           const locationStatus = await Location.requestForegroundPermissionsAsync();
@@ -390,7 +389,7 @@ export default function MapScreen() {
           </Animated.View>
         </View>
       ) : (
-        <WebMapView venues={venues} initialRegion={initialRegion} router={router} />
+        <WebMapView venues={venues} router={router} />
       )}
     </View>
   );
@@ -508,6 +507,23 @@ const styles = StyleSheet.create({
   webMapContainer: {
     flex: 1,
     position: 'relative',
+    backgroundColor: Colors.background,
+  },
+  webMapCanvas: {
+    flex: 1,
+  },
+  webSheet: {
+    height: '42%',
+    backgroundColor: 'rgba(12, 12, 14, 0.98)',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  webSheetHandleRow: {
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nativeMapContainer: {
     flex: 1,
@@ -622,45 +638,66 @@ const styles = StyleSheet.create({
   },
 });
 
-function WebMapView({ venues, initialRegion, router }: { venues: Venue[]; initialRegion: any; router: any }) {
-  const center = `${initialRegion.latitude},${initialRegion.longitude}`;
-  const staticUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(center)}&zoom=13&size=900x500&maptype=mapnik&markers=${encodeURIComponent(center)},lightblue1`;
-
+function WebMapView({ venues, router }: { venues: Venue[]; router: ReturnType<typeof useRouter> }) {
   return (
-    <View style={styles.webMapContainer}>
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => {
-          const url = `https://www.openstreetmap.org/?mlat=${initialRegion.latitude}&mlon=${initialRegion.longitude}#map=13/${initialRegion.latitude}/${initialRegion.longitude}`;
-          if (Platform.OS === 'web' && typeof window !== 'undefined') {
-            window.open(url, '_blank');
-          } else {
-            Alert.alert('Térkép', 'A térkép megnyitása nem sikerült.');
-          }
+    <View style={styles.webMapContainer} testID="web-map">
+      <DarkMapPreview
+        venues={venues}
+        zoom={13}
+        style={styles.webMapCanvas}
+        onMarkerPress={(venue) => {
+          console.log('[Map] Web marker pressed:', venue.id);
+          router.push(`/venue/${venue.id}`);
         }}
-        style={{ flex: 1 }}
-        testID="web-map-open"
-      >
-        <Image
-          source={{ uri: staticUrl }}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-          accessibilityLabel="Térkép"
-        />
-      </TouchableOpacity>
-      <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, paddingHorizontal: 16 }}>
-        <Text
-          style={{
-            color: Colors.text,
-            fontSize: 12,
-            textAlign: 'center',
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            padding: 8,
-            borderRadius: 8,
+      />
+
+      <View style={styles.webSheet}>
+        <View style={styles.webSheetHandleRow}>
+          <View style={styles.sheetHandle} />
+        </View>
+        <View style={styles.sheetHeader}>
+          <Text style={styles.sheetTitle}>Helyszínek</Text>
+          <Text style={styles.sheetSubtitle}>{venues.length} találat</Text>
+        </View>
+        <FlatList
+          data={venues}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => {
+            const tags = Array.isArray(item.tags) ? item.tags : [];
+            return (
+              <Pressable
+                onPress={() => {
+                  console.log('[Map] Venue row pressed:', item.id);
+                  router.push(`/venue/${item.id}`);
+                }}
+                style={({ pressed }) => [styles.venueRow, pressed && styles.venueRowPressed]}
+                testID={`venue-row-${item.id}`}
+              >
+                <View style={styles.venueRowLeft}>
+                  <View style={styles.venueRowIcon}>
+                    <MapPin size={16} color={Colors.dark.primary} />
+                  </View>
+                </View>
+                <View style={styles.venueRowBody}>
+                  <Text style={styles.venueRowTitle} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.venueRowAddress} numberOfLines={1}>
+                    {item.address ?? ''}
+                  </Text>
+                  {tags.length > 0 ? (
+                    <Text style={styles.venueRowTags} numberOfLines={1}>
+                      {tags.slice(0, 4).join(' • ')}
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+            );
           }}
-        >
-          {venues.length} helyszín • Kattints a térképre a böngészőben
-        </Text>
+          contentContainerStyle={styles.sheetListContent}
+          showsVerticalScrollIndicator={false}
+          testID="venue-list"
+        />
       </View>
     </View>
   );

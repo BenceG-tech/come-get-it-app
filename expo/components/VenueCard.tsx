@@ -22,8 +22,6 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const cardWidth = screenWidth;
   const favorite = isFavorite(String(venue.id));
   const priceLevel = getVenuePriceLevel(venue);
-  
-  console.log(`[VenueCard] ${venue.name} opening_hours:`, JSON.stringify(venue.opening_hours, null, 2));
 
   const openVenueDetails = () => {
     router.push(`/venue/${encodeURIComponent(String(venue.id))}`);
@@ -122,18 +120,19 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
       
       {/* Content section below image */}
       <View style={styles.contentContainer}>
-        {/* Title row with rating */}
+        {/* Title row with rating + price under the stars, right-aligned */}
         <View style={styles.titleRow}>
           <Text style={styles.venueName} numberOfLines={1}>
             {venue.name}
           </Text>
-          <View style={styles.stars}>
-            {renderStars()}
+          <View style={styles.ratingBlock}>
+            <View style={styles.stars}>
+              {renderStars()}
+            </View>
+            <View style={styles.priceRow} accessibilityLabel={`Árkategória: ${priceLevel} / 4`}>
+              {renderPriceMarkers()}
+            </View>
           </View>
-        </View>
-
-        <View style={styles.priceRow} accessibilityLabel={`Árkategória: ${priceLevel} / 4`}>
-          {renderPriceMarkers()}
         </View>
         
         {/* Szerezz pontokat row */}
@@ -276,8 +275,11 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row' as const,
     justifyContent: 'space-between',
-    alignItems: 'center' as const,
+    alignItems: 'flex-start' as const,
     marginBottom: 4, // More compact
+  },
+  ratingBlock: {
+    alignItems: 'flex-end' as const,
   },
   venueName: {
     fontSize: 22,
@@ -316,9 +318,9 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
+    justifyContent: 'flex-end' as const,
     gap: 1,
-    marginTop: -1,
-    marginBottom: 5,
+    marginTop: 2,
   },
   priceMarker: {
     color: '#2BB7FF',
