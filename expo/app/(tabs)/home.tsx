@@ -11,6 +11,7 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { Pressable } from "react-native";
 import { Search, MapPin, Filter, Heart, ChevronRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +25,9 @@ import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { getUserCSRImpact } from "@/lib/csrService";
 
-const COLLAPSED_VISIBLE_HEIGHT = 108 as const;
+const COLLAPSED_VISIBLE_HEIGHT = 96 as const;
+
+type SnapState = "expanded" | "half" | "collapsed";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -40,7 +43,7 @@ export default function BarsScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [snapState, setSnapState] = useState<SnapState>("half");
 
   const { data: csrData } = useQuery({
     queryKey: ["csr-impact"],
@@ -61,64 +64,85 @@ export default function BarsScreen() {
   const logoHeight = width <= 375 ? 58 : 66;
 
   const expandedTop = insets.top + 8;
+  const halfOffset = Math.max(0, Math.round(containerHeight * 0.5) - expandedTop);
   const collapsedOffset = Math.max(0, containerHeight - expandedTop - COLLAPSED_VISIBLE_HEIGHT);
 
   const translateY = useRef(new Animated.Value(0)).current;
   const offsetRef = useRef<number>(0);
-  const collapsedOffsetRef = useRef<number>(0);
-  const isCollapsedRef = useRef<boolean>(false);
+  const snapPointsRef = useRef<{ half: number; collapsed: number }>({ half: 0, collapsed: 0 });
+  const snapStateRef = useRef<SnapState>("half");
+  const scrollOffsetRef = useRef<number>(0);
 
   useEffect(() => {
-    collapsedOffsetRef.current = collapsedOffset;
-    if (isCollapsedRef.current) {
-      offsetRef.current = collapsedOffset;
-      translateY.setValue(collapsedOffset);
-    }
-  }, [collapsedOffset, translateY]);
+    snapPointsRef.current = { half: halfOffset, collapsed: collapsedOffset };
+    const current = snapStateRef.current;
+    const to = current === "expanded" ? 0 : current === "half" ? halfOffset : collapsedOffset;
+    offsetRef.current = to;
+    translateY.setValue(to);
+  }, [halfOffset, collapsedOffset, translateY]);
 
   const snapTo = useCallback(
-    (collapse: boolean) => {
-      const to = collapse ? collapsedOffsetRef.current : 0;
+    (state: SnapState) => {
+      const points = snapPointsRef.current;
+      const to = state === "expanded" ? 0 : state === "half" ? points.half : points.collapsed;
       offsetRef.current = to;
-      isCollapsedRef.current = collapse;
-      setIsCollapsed(collapse);
+      snapStateRef.current = state;
+      setSnapState(state);
       Animated.spring(translateY, {
         toValue: to,
         useNativeDriver: true,
         stiffness: 170,
-        damping: 20,
+        damping: 22,
         mass: 0.7,
       }).start();
     },
     [translateY]
   );
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: (_evt, gesture) => Math.abs(gesture.dy) > 4,
-        onPanResponderMove: (_evt, gesture) => {
-          const next = clamp(offsetRef.current + gesture.dy, 0, collapsedOffsetRef.current);
-          translateY.setValue(next);
-        },
-        onPanResponderRelease: (_evt, gesture) => {
-          const isTap = Math.abs(gesture.dy) < 6 && Math.abs(gesture.dx) < 6;
-          if (isTap) {
-            if (isCollapsedRef.current) snapTo(false);
-            return;
-          }
-          const current = clamp(offsetRef.current + gesture.dy, 0, collapsedOffsetRef.current);
-          const half = collapsedOffsetRef.current / 2;
-          const shouldCollapse = gesture.vy > 0.4 ? true : gesture.vy < -0.4 ? false : current > half;
-          snapTo(shouldCollapse);
-        },
-        onPanResponderTerminate: () => {
-          snapTo(isCollapsedRef.current);
-        },
-      }),
-    [snapTo, translateY]
-  );
+  const panResponder = useMemo(() => {
+    const shouldTake = (dy: number, dx: number): boolean => {
+      if (Math.abs(dy) < 6 || Math.abs(dy) <= Math.abs(dx)) return false;
+      if (snapStateRef.current !== "expanded") return true;
+      return dy > 0 && scrollOffsetRef.current <= 1;
+    };
+
+    const release = (dy: number, vy: number) => {
+      const points = snapPointsRef.current;
+      const current = clamp(offsetRef.current + dy, 0, points.collapsed);
+      let target: SnapState;
+      if (vy > 0.5) {
+        target = snapStateRef.current === "expanded" ? "half" : "collapsed";
+      } else if (vy < -0.5) {
+        target = snapStateRef.current === "collapsed" ? "half" : "expanded";
+      } else {
+        const candidates: { state: SnapState; value: number }[] = [
+          { state: "expanded", value: 0 },
+          { state: "half", value: points.half },
+          { state: "collapsed", value: points.collapsed },
+        ];
+        target = candidates.reduce((best, c) =>
+          Math.abs(c.value - current) < Math.abs(best.value - current) ? c : best
+        ).state;
+      }
+      snapTo(target);
+    };
+
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_evt, g) => shouldTake(g.dy, g.dx),
+      onMoveShouldSetPanResponderCapture: (_evt, g) => shouldTake(g.dy, g.dx),
+      onPanResponderMove: (_evt, g) => {
+        const next = clamp(offsetRef.current + g.dy, 0, snapPointsRef.current.collapsed);
+        translateY.setValue(next);
+      },
+      onPanResponderRelease: (_evt, g) => {
+        release(g.dy, g.vy);
+      },
+      onPanResponderTerminate: () => {
+        snapTo(snapStateRef.current);
+      },
+    });
+  }, [snapTo, translateY]);
 
   const onContainerLayout = useCallback((event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout;
@@ -228,6 +252,7 @@ export default function BarsScreen() {
 
       {containerHeight > 0 && (
         <Animated.View
+          {...panResponder.panHandlers}
           style={[
             styles.sheet,
             {
@@ -238,34 +263,40 @@ export default function BarsScreen() {
           ]}
           testID="home-sheet"
         >
-          <View {...panResponder.panHandlers} style={styles.dragZone} testID="home-sheet-drag">
-            <View style={styles.handleWrap}>
-              <View style={styles.handle} />
+          <Pressable
+            onPress={() => {
+              if (snapStateRef.current === "collapsed") snapTo("half");
+            }}
+            style={styles.headerRow}
+            testID="home-sheet-header"
+          >
+            <Image
+              source={{ uri: logoUri }}
+              accessibilityLabel="Come Get It logo"
+              style={[styles.brandLogo, { height: logoHeight }]}
+            />
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                testID="home-search"
+                onPress={openSearch}
+                style={styles.headerButton}
+                activeOpacity={0.7}
+              >
+                <Search size={iconSize} color="#EAEAEA" />
+              </TouchableOpacity>
             </View>
-            <View style={styles.headerRow}>
-              <Image
-                source={{ uri: logoUri }}
-                accessibilityLabel="Come Get It logo"
-                style={[styles.brandLogo, { height: logoHeight }]}
-              />
-              <View style={styles.headerActions}>
-                <TouchableOpacity
-                  testID="home-search"
-                  onPress={openSearch}
-                  style={styles.headerButton}
-                  activeOpacity={0.7}
-                >
-                  <Search size={iconSize} color="#EAEAEA" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+          </Pressable>
 
           <Animated.ScrollView
             style={styles.venuesList}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.venuesContent}
-            scrollEnabled={!isCollapsed}
+            scrollEnabled={snapState === "expanded"}
+            scrollEventThrottle={16}
+            onScroll={(event) => {
+              scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+            }}
+            bounces={false}
           >
             {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
               <TouchableOpacity
@@ -458,39 +489,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
-    borderWidth: 1,
-    borderBottomWidth: 0,
+    borderTopWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     overflow: "hidden",
     zIndex: 2,
   },
-  dragZone: {
-    backgroundColor: "#000000",
-  },
-  handleWrap: {
-    alignItems: "center",
-    paddingTop: 8,
-    paddingBottom: 2,
-  },
-  handle: {
-    width: 42,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "rgba(255,255,255,0.25)",
-  },
   headerRow: {
+    backgroundColor: "#000000",
+    paddingTop: 6,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingLeft: 0,
     paddingRight: 4,
-    paddingVertical: 2,
+    paddingBottom: 2,
   },
   brandLogo: {
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: "contain",
-    marginLeft: -18,
+    marginLeft: -34,
   },
   headerActions: {
     flexDirection: "row",
