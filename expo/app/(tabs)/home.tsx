@@ -7,10 +7,11 @@ import {
   Image,
   useWindowDimensions,
   Animated,
+  PanResponder,
+  type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { LinearGradient } from "expo-linear-gradient";
-import { Search, MapPin, Filter, Heart, ChevronRight, Maximize2 } from "lucide-react-native";
+import { Search, MapPin, Filter, Heart, ChevronRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +24,12 @@ import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { getUserCSRImpact } from "@/lib/csrService";
 
+const COLLAPSED_VISIBLE_HEIGHT = 108 as const;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 export default function BarsScreen() {
   const router = useRouter();
   const { selectedFilters, setSelectedFilters } = useAppContext();
@@ -32,6 +39,8 @@ export default function BarsScreen() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [containerHeight, setContainerHeight] = useState<number>(0);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   const { data: csrData } = useQuery({
     queryKey: ["csr-impact"],
@@ -43,13 +52,78 @@ export default function BarsScreen() {
     enabled: !!session,
     staleTime: 5 * 60 * 1000,
   });
+
   const logoUri = useMemo(
     () => "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/orb6kvp9n7wts6gddeitn",
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
-  const logoHeight = width <= 375 ? 62 : 72;
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const logoHeight = width <= 375 ? 58 : 66;
+
+  const expandedTop = insets.top + 8;
+  const collapsedOffset = Math.max(0, containerHeight - expandedTop - COLLAPSED_VISIBLE_HEIGHT);
+
+  const translateY = useRef(new Animated.Value(0)).current;
+  const offsetRef = useRef<number>(0);
+  const collapsedOffsetRef = useRef<number>(0);
+  const isCollapsedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    collapsedOffsetRef.current = collapsedOffset;
+    if (isCollapsedRef.current) {
+      offsetRef.current = collapsedOffset;
+      translateY.setValue(collapsedOffset);
+    }
+  }, [collapsedOffset, translateY]);
+
+  const snapTo = useCallback(
+    (collapse: boolean) => {
+      const to = collapse ? collapsedOffsetRef.current : 0;
+      offsetRef.current = to;
+      isCollapsedRef.current = collapse;
+      setIsCollapsed(collapse);
+      Animated.spring(translateY, {
+        toValue: to,
+        useNativeDriver: true,
+        stiffness: 170,
+        damping: 20,
+        mass: 0.7,
+      }).start();
+    },
+    [translateY]
+  );
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_evt, gesture) => Math.abs(gesture.dy) > 4,
+        onPanResponderMove: (_evt, gesture) => {
+          const next = clamp(offsetRef.current + gesture.dy, 0, collapsedOffsetRef.current);
+          translateY.setValue(next);
+        },
+        onPanResponderRelease: (_evt, gesture) => {
+          const isTap = Math.abs(gesture.dy) < 6 && Math.abs(gesture.dx) < 6;
+          if (isTap) {
+            if (isCollapsedRef.current) snapTo(false);
+            return;
+          }
+          const current = clamp(offsetRef.current + gesture.dy, 0, collapsedOffsetRef.current);
+          const half = collapsedOffsetRef.current / 2;
+          const shouldCollapse = gesture.vy > 0.4 ? true : gesture.vy < -0.4 ? false : current > half;
+          snapTo(shouldCollapse);
+        },
+        onPanResponderTerminate: () => {
+          snapTo(isCollapsedRef.current);
+        },
+      }),
+    [snapTo, translateY]
+  );
+
+  const onContainerLayout = useCallback((event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    setContainerHeight((prev) => (prev === height ? prev : height));
+  }, []);
 
   const loadVenues = useCallback(async () => {
     setLoading(true);
@@ -99,17 +173,9 @@ export default function BarsScreen() {
     });
   }, [selectedFilters, venues]);
 
-  const mapVenues = useMemo(() => (filteredVenues.length > 0 ? filteredVenues : venues), [filteredVenues, venues]);
-  const mapHeight = width <= 375 ? 230 : 260;
-
-  const stickyPaddingTop = useMemo(
-    () =>
-      scrollY.interpolate({
-        inputRange: [Math.max(0, mapHeight - insets.top - 24), mapHeight],
-        outputRange: [0, insets.top],
-        extrapolate: "clamp",
-      }),
-    [scrollY, mapHeight, insets.top]
+  const mapVenues = useMemo(
+    () => (filteredVenues.length > 0 ? filteredVenues : venues),
+    [filteredVenues, venues]
   );
 
   const openFilter = () => {
@@ -124,186 +190,221 @@ export default function BarsScreen() {
     router.push("/search");
   };
 
+  const onMarkerPress = useCallback(
+    (venue: Venue) => {
+      router.push(`/venue/${venue.id}` as never);
+    },
+    [router]
+  );
+
+  const panelHeight = Math.max(0, containerHeight - expandedTop);
+
   return (
-    <View style={styles.container} testID="home-root">
+    <View style={styles.container} testID="home-root" onLayout={onContainerLayout}>
       <StatusBar style="light" />
-      <Animated.ScrollView
-        style={styles.venuesList}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.venuesContent}
-        stickyHeaderIndices={[1]}
-        snapToOffsets={[0, mapHeight]}
-        snapToEnd={false}
-        decelerationRate="fast"
-        scrollEventThrottle={16}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: false,
-        })}
-      >
-        <TouchableOpacity
-          style={[styles.mapHeader, { height: mapHeight }]}
-          activeOpacity={0.92}
-          onPress={openMap}
-          testID="home-map-preview"
-        >
-          <DarkMapPreview venues={mapVenues} zoom={12} style={StyleSheet.absoluteFillObject} />
-          <LinearGradient
-            colors={["rgba(0,0,0,0.35)", "transparent", "transparent", "#000000"]}
-            locations={[0, 0.25, 0.68, 1]}
-            style={StyleSheet.absoluteFillObject}
-            pointerEvents="none"
-          />
-          <View style={[styles.mapHeaderTopRow, { top: insets.top + 8 }]} pointerEvents="none">
-            <View style={styles.mapCountPill}>
-              <MapPin size={13} color="#00D1FF" />
-              <Text style={styles.mapCountPillText}>{mapVenues.length} hely a közeledben</Text>
-            </View>
-            <View style={styles.mapExpandButton}>
-              <Maximize2 size={15} color="#FFFFFF" />
-            </View>
-          </View>
-        </TouchableOpacity>
 
-        <Animated.View style={[styles.header, { paddingTop: stickyPaddingTop }]}>
-          <View style={styles.headerRow}>
-            <Image
-              source={{ uri: logoUri }}
-              accessibilityLabel="Come Get It logo"
-              style={[styles.brandLogo, { height: logoHeight }]}
-            />
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                testID="home-search"
-                onPress={openSearch}
-                style={styles.headerButton}
-                activeOpacity={0.7}
-              >
-                <Search size={iconSize} color="#EAEAEA" />
-              </TouchableOpacity>
-              <TouchableOpacity testID="home-map" onPress={openMap} style={styles.headerButton} activeOpacity={0.7}>
-                <MapPin size={iconSize} color="#EAEAEA" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Animated.View>
+      <DarkMapPreview
+        venues={mapVenues}
+        zoom={13}
+        style={StyleSheet.absoluteFillObject}
+        onMarkerPress={onMarkerPress}
+        testID="home-fullscreen-map"
+      />
 
-        <View>
-        {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
-        <TouchableOpacity
-          style={styles.impactWidget}
-          onPress={() => router.push("/my-impact")}
-          activeOpacity={0.85}
-          testID="impact-widget"
-        >
-          <View style={styles.impactWidgetContent}>
-            <View style={styles.impactWidgetHeader}>
-              <Heart size={16} color="#1fb1b7" />
-              <Text style={styles.impactWidgetTitle}>A Te Hatásod Ezen a Héten</Text>
-            </View>
-            <View style={styles.impactWidgetStats}>
-              <View style={styles.impactWidgetStat}>
-                <Text style={styles.impactWidgetEmoji}>🍽️</Text>
-                <Text style={styles.impactWidgetValue}>{csrData?.stats?.total_impact_units ?? 0}</Text>
-                <Text style={styles.impactWidgetLabel}>adag</Text>
-              </View>
-              {(csrData?.stats?.current_streak_days ?? 0) > 0 && (
-                <View style={styles.impactWidgetStat}>
-                  <Text style={styles.impactWidgetEmoji}>🔥</Text>
-                  <Text style={styles.impactWidgetValue}>{csrData?.stats?.current_streak_days ?? 0}</Text>
-                  <Text style={styles.impactWidgetLabel}>napos</Text>
-                </View>
-              )}
-            </View>
-          </View>
-          <View style={styles.impactWidgetArrow}>
-            <Text style={styles.impactWidgetLink}>Részletek</Text>
-            <ChevronRight size={16} color="#1fb1b7" />
-          </View>
-        </TouchableOpacity>
-      )}
-
-      <View style={styles.filtersContainer}>
-        <View style={styles.filtersContent}>
-          {/* filters stay scrollable under the sticky header */}
-          <TouchableOpacity
-            testID="chip-nyitva"
-            style={[styles.filterPill, selectedFilters.includes("nyitva") && styles.filterPillActive]}
-            onPress={() => {
-              const newFilters = selectedFilters.includes("nyitva")
-                ? selectedFilters.filter((f) => f !== "nyitva")
-                : [...selectedFilters, "nyitva"];
-              setSelectedFilters(newFilters);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.filterPillText, selectedFilters.includes("nyitva") && styles.filterPillTextActive]}>
-              NYITVA
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="chip-free"
-            style={[styles.filterPill, selectedFilters.includes("ingyen-ital") && styles.filterPillActive]}
-            onPress={() => {
-              const newFilters = selectedFilters.includes("ingyen-ital")
-                ? selectedFilters.filter((f) => f !== "ingyen-ital")
-                : [...selectedFilters, "ingyen-ital"];
-              setSelectedFilters(newFilters);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.filterPillText,
-                selectedFilters.includes("ingyen-ital") && styles.filterPillTextActive,
-              ]}
-            >
-              Ingyen ital elérhető
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity testID="chip-filters" style={styles.filterButton} onPress={openFilter} activeOpacity={0.7}>
-            <Filter size={width <= 375 ? 16 : 18} color="rgba(234,234,234,0.7)" />
-            <Text style={styles.filterButtonText}>Szűrők</Text>
-          </TouchableOpacity>
+      <View style={[styles.mapTopRow, { top: insets.top + 10 }]} pointerEvents="box-none">
+        <View style={styles.mapCountPill}>
+          <MapPin size={13} color="#00D1FF" />
+          <Text style={styles.mapCountPillText}>{mapVenues.length} hely a közeledben</Text>
         </View>
+        <TouchableOpacity
+          testID="home-map"
+          onPress={openMap}
+          style={styles.mapExpandButton}
+          activeOpacity={0.8}
+        >
+          <MapPin size={16} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
-        {loading ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>Betöltés...</Text>
-          </View>
-        ) : errorMsg ? (
-          <View style={styles.emptyState} testID="home-error">
-            <Text style={styles.emptyStateText}>{errorMsg}</Text>
-            <TouchableOpacity
-              testID="home-retry"
-              onPress={() => {
-                console.log('[Home] retry pressed');
-                loadVenues().catch((e) => console.error('[Home] retry crashed', e));
-              }}
-              style={styles.retryBtn}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.retryBtnText}>Újrapróbálás</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            {filteredVenues.map((venue) => (
-              <VenueCard key={venue.id} venue={venue} />
-            ))}
-
-            {filteredVenues.length === 0 && !loading && (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Nincs találat</Text>
-                <Text style={styles.emptyStateSubtext}>Próbálj meg más szűrőket vagy keresési kifejezést</Text>
+      {containerHeight > 0 && (
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              top: expandedTop,
+              height: panelHeight,
+              transform: [{ translateY }],
+            },
+          ]}
+          testID="home-sheet"
+        >
+          <View {...panResponder.panHandlers} style={styles.dragZone} testID="home-sheet-drag">
+            <View style={styles.handleWrap}>
+              <View style={styles.handle} />
+            </View>
+            <View style={styles.headerRow}>
+              <Image
+                source={{ uri: logoUri }}
+                accessibilityLabel="Come Get It logo"
+                style={[styles.brandLogo, { height: logoHeight }]}
+              />
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  testID="home-search"
+                  onPress={openSearch}
+                  style={styles.headerButton}
+                  activeOpacity={0.7}
+                >
+                  <Search size={iconSize} color="#EAEAEA" />
+                </TouchableOpacity>
               </View>
+            </View>
+          </View>
+
+          <Animated.ScrollView
+            style={styles.venuesList}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.venuesContent}
+            scrollEnabled={!isCollapsed}
+          >
+            {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
+              <TouchableOpacity
+                style={styles.impactWidget}
+                onPress={() => router.push("/my-impact")}
+                activeOpacity={0.85}
+                testID="impact-widget"
+              >
+                <View style={styles.impactWidgetContent}>
+                  <View style={styles.impactWidgetHeader}>
+                    <Heart size={16} color="#1fb1b7" />
+                    <Text style={styles.impactWidgetTitle}>A Te Hatásod Ezen a Héten</Text>
+                  </View>
+                  <View style={styles.impactWidgetStats}>
+                    <View style={styles.impactWidgetStat}>
+                      <Text style={styles.impactWidgetEmoji}>🍽️</Text>
+                      <Text style={styles.impactWidgetValue}>
+                        {csrData?.stats?.total_impact_units ?? 0}
+                      </Text>
+                      <Text style={styles.impactWidgetLabel}>adag</Text>
+                    </View>
+                    {(csrData?.stats?.current_streak_days ?? 0) > 0 && (
+                      <View style={styles.impactWidgetStat}>
+                        <Text style={styles.impactWidgetEmoji}>🔥</Text>
+                        <Text style={styles.impactWidgetValue}>
+                          {csrData?.stats?.current_streak_days ?? 0}
+                        </Text>
+                        <Text style={styles.impactWidgetLabel}>napos</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.impactWidgetArrow}>
+                  <Text style={styles.impactWidgetLink}>Részletek</Text>
+                  <ChevronRight size={16} color="#1fb1b7" />
+                </View>
+              </TouchableOpacity>
             )}
-          </>
-        )}
-        </View>
-      </Animated.ScrollView>
+
+            <View style={styles.filtersContainer}>
+              <View style={styles.filtersContent}>
+                <TouchableOpacity
+                  testID="chip-nyitva"
+                  style={[
+                    styles.filterPill,
+                    selectedFilters.includes("nyitva") && styles.filterPillActive,
+                  ]}
+                  onPress={() => {
+                    const newFilters = selectedFilters.includes("nyitva")
+                      ? selectedFilters.filter((f) => f !== "nyitva")
+                      : [...selectedFilters, "nyitva"];
+                    setSelectedFilters(newFilters);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      selectedFilters.includes("nyitva") && styles.filterPillTextActive,
+                    ]}
+                  >
+                    NYITVA
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  testID="chip-free"
+                  style={[
+                    styles.filterPill,
+                    selectedFilters.includes("ingyen-ital") && styles.filterPillActive,
+                  ]}
+                  onPress={() => {
+                    const newFilters = selectedFilters.includes("ingyen-ital")
+                      ? selectedFilters.filter((f) => f !== "ingyen-ital")
+                      : [...selectedFilters, "ingyen-ital"];
+                    setSelectedFilters(newFilters);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      selectedFilters.includes("ingyen-ital") && styles.filterPillTextActive,
+                    ]}
+                  >
+                    Ingyen ital elérhető
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  testID="chip-filters"
+                  style={styles.filterButton}
+                  onPress={openFilter}
+                  activeOpacity={0.7}
+                >
+                  <Filter size={width <= 375 ? 16 : 18} color="rgba(234,234,234,0.7)" />
+                  <Text style={styles.filterButtonText}>Szűrők</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {loading ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>Betöltés...</Text>
+              </View>
+            ) : errorMsg ? (
+              <View style={styles.emptyState} testID="home-error">
+                <Text style={styles.emptyStateText}>{errorMsg}</Text>
+                <TouchableOpacity
+                  testID="home-retry"
+                  onPress={() => {
+                    console.log("[Home] retry pressed");
+                    loadVenues().catch((e) => console.error("[Home] retry crashed", e));
+                  }}
+                  style={styles.retryBtn}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.retryBtnText}>Újrapróbálás</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {filteredVenues.map((venue) => (
+                  <VenueCard key={venue.id} venue={venue} />
+                ))}
+
+                {filteredVenues.length === 0 && !loading && (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>Nincs találat</Text>
+                    <Text style={styles.emptyStateSubtext}>
+                      Próbálj meg más szűrőket vagy keresési kifejezést
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </Animated.ScrollView>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -313,24 +414,83 @@ const pillRadius = 9999 as const;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "#0B0F14",
   },
-  header: {
+  mapTopRow: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 1,
+  },
+  mapCountPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 209, 255, 0.35)",
+  },
+  mapCountPillText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  mapExpandButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     backgroundColor: "#000000",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: "rgba(255,255,255,0.08)",
+    overflow: "hidden",
+    zIndex: 2,
+  },
+  dragZone: {
+    backgroundColor: "#000000",
+  },
+  handleWrap: {
+    alignItems: "center",
+    paddingTop: 8,
+    paddingBottom: 2,
+  },
+  handle: {
+    width: 42,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingLeft: 12,
+    paddingLeft: 0,
     paddingRight: 4,
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   brandLogo: {
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: "contain",
-    marginLeft: -14,
+    marginLeft: -18,
   },
   headerActions: {
     flexDirection: "row",
@@ -343,7 +503,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   filtersContainer: {
-    paddingTop: 0,
+    paddingTop: 2,
     paddingBottom: 6,
     borderBottomWidth: 0,
     backgroundColor: Colors.background,
@@ -393,48 +553,7 @@ const styles = StyleSheet.create({
   },
   venuesContent: {
     paddingTop: 0,
-    paddingBottom: 100,
-  },
-  mapHeader: {
-    width: "100%",
-    marginBottom: 12,
-    backgroundColor: "#0B0F14",
-    overflow: "hidden",
-  },
-  mapHeaderTopRow: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    right: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  mapCountPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 209, 255, 0.35)",
-  },
-  mapCountPillText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  mapExpandButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(0,0,0,0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    alignItems: "center",
-    justifyContent: "center",
+    paddingBottom: 40,
   },
   emptyState: {
     flex: 1,
@@ -472,7 +591,7 @@ const styles = StyleSheet.create({
   },
   impactWidget: {
     marginHorizontal: 12,
-    marginTop: 8,
+    marginTop: 4,
     marginBottom: 4,
     backgroundColor: "rgba(31, 177, 183, 0.1)",
     borderRadius: 14,
