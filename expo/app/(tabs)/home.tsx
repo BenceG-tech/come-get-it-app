@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   StyleSheet,
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   Image,
   useWindowDimensions,
+  Animated,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
@@ -48,8 +48,8 @@ export default function BarsScreen() {
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
-  const logoHeight = width <= 375 ? 76 : 90;
-  const headerHeight = insets.top + (width <= 375 ? 82 : 92);
+  const logoHeight = width <= 375 ? 62 : 72;
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const loadVenues = useCallback(async () => {
     setLoading(true);
@@ -102,6 +102,16 @@ export default function BarsScreen() {
   const mapVenues = useMemo(() => (filteredVenues.length > 0 ? filteredVenues : venues), [filteredVenues, venues]);
   const mapHeight = width <= 375 ? 230 : 260;
 
+  const stickyPaddingTop = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [Math.max(0, mapHeight - insets.top - 24), mapHeight],
+        outputRange: [0, insets.top],
+        extrapolate: "clamp",
+      }),
+    [scrollY, mapHeight, insets.top]
+  );
+
   const openFilter = () => {
     router.push("/filter");
   };
@@ -117,25 +127,68 @@ export default function BarsScreen() {
   return (
     <View style={styles.container} testID="home-root">
       <StatusBar style="light" />
-      <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>
-        <View style={[styles.headerCenter, { top: insets.top + 2, bottom: 2 }]}>
-          <Image
-            source={{ uri: logoUri }}
-            accessibilityLabel="Come Get It logo"
-            style={[styles.brandLogo, { height: logoHeight }]}
+      <Animated.ScrollView
+        style={styles.venuesList}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.venuesContent}
+        stickyHeaderIndices={[1]}
+        snapToOffsets={[0, mapHeight]}
+        snapToEnd={false}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: false,
+        })}
+      >
+        <TouchableOpacity
+          style={[styles.mapHeader, { height: mapHeight }]}
+          activeOpacity={0.92}
+          onPress={openMap}
+          testID="home-map-preview"
+        >
+          <DarkMapPreview venues={mapVenues} zoom={12} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.35)", "transparent", "transparent", "#000000"]}
+            locations={[0, 0.25, 0.68, 1]}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
           />
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity testID="home-search" onPress={openSearch} style={styles.headerButton} activeOpacity={0.7}>
-            <Search size={iconSize} color="#EAEAEA" />
-          </TouchableOpacity>
-          <TouchableOpacity testID="home-map" onPress={openMap} style={styles.headerButton} activeOpacity={0.7}>
-            <MapPin size={iconSize} color="#EAEAEA" />
-          </TouchableOpacity>
-        </View>
-      </View>
+          <View style={[styles.mapHeaderTopRow, { top: insets.top + 8 }]} pointerEvents="none">
+            <View style={styles.mapCountPill}>
+              <MapPin size={13} color="#00D1FF" />
+              <Text style={styles.mapCountPillText}>{mapVenues.length} hely a közeledben</Text>
+            </View>
+            <View style={styles.mapExpandButton}>
+              <Maximize2 size={15} color="#FFFFFF" />
+            </View>
+          </View>
+        </TouchableOpacity>
 
-      {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
+        <Animated.View style={[styles.header, { paddingTop: stickyPaddingTop }]}>
+          <View style={styles.headerRow}>
+            <Image
+              source={{ uri: logoUri }}
+              accessibilityLabel="Come Get It logo"
+              style={[styles.brandLogo, { height: logoHeight }]}
+            />
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                testID="home-search"
+                onPress={openSearch}
+                style={styles.headerButton}
+                activeOpacity={0.7}
+              >
+                <Search size={iconSize} color="#EAEAEA" />
+              </TouchableOpacity>
+              <TouchableOpacity testID="home-map" onPress={openMap} style={styles.headerButton} activeOpacity={0.7}>
+                <MapPin size={iconSize} color="#EAEAEA" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Animated.View>
+
+        <View>
+        {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
         <TouchableOpacity
           style={styles.impactWidget}
           onPress={() => router.push("/my-impact")}
@@ -171,6 +224,7 @@ export default function BarsScreen() {
 
       <View style={styles.filtersContainer}>
         <View style={styles.filtersContent}>
+          {/* filters stay scrollable under the sticky header */}
           <TouchableOpacity
             testID="chip-nyitva"
             style={[styles.filterPill, selectedFilters.includes("nyitva") && styles.filterPillActive]}
@@ -215,35 +269,6 @@ export default function BarsScreen() {
         </View>
       </View>
 
-      <ScrollView
-        style={styles.venuesList}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.venuesContent}
-      >
-        <TouchableOpacity
-          style={[styles.mapHeader, { height: mapHeight }]}
-          activeOpacity={0.92}
-          onPress={openMap}
-          testID="home-map-preview"
-        >
-          <DarkMapPreview venues={mapVenues} zoom={12} style={StyleSheet.absoluteFillObject} />
-          <LinearGradient
-            colors={["rgba(0,0,0,0.35)", "transparent", "transparent", "#000000"]}
-            locations={[0, 0.25, 0.68, 1]}
-            style={StyleSheet.absoluteFillObject}
-            pointerEvents="none"
-          />
-          <View style={styles.mapHeaderTopRow} pointerEvents="none">
-            <View style={styles.mapCountPill}>
-              <MapPin size={13} color="#00D1FF" />
-              <Text style={styles.mapCountPillText}>{mapVenues.length} hely a közeledben</Text>
-            </View>
-            <View style={styles.mapExpandButton}>
-              <Maximize2 size={15} color="#FFFFFF" />
-            </View>
-          </View>
-        </TouchableOpacity>
-
         {loading ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>Betöltés...</Text>
@@ -277,7 +302,8 @@ export default function BarsScreen() {
             )}
           </>
         )}
-      </ScrollView>
+        </View>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -290,33 +316,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    position: "relative",
+    backgroundColor: "#000000",
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#000000",
-    borderBottomWidth: 0,
-    paddingHorizontal: 12,
-  },
-  headerCenter: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "space-between",
+    paddingLeft: 12,
+    paddingRight: 4,
+    paddingVertical: 4,
   },
   brandLogo: {
     width: undefined as unknown as number,
     aspectRatio: 3.5,
     resizeMode: "contain",
+    marginLeft: -14,
   },
   headerActions: {
-    marginLeft: "auto",
     flexDirection: "row",
-    gap: 8,
-    paddingRight: 12,
-    paddingTop: 8,
+    gap: 4,
   },
   headerButton: {
     width: 40,
