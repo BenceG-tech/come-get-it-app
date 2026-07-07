@@ -242,12 +242,21 @@ export function findNextAvailableWindow(
   return null;
 }
 
+/** True when a drink has no configured time windows — redeemable anytime. */
+export function isDrinkAlwaysAvailable(windows: FreeDrinkWindow[], drinkId: string): boolean {
+  return windows.filter(w => String(w.drinkId) === String(drinkId)).length === 0;
+}
+
 export function checkLocalEligibility(
   windows: FreeDrinkWindow[],
   drinkId: string
-): { eligible: boolean; nextWindow?: { day: number; start: string; end: string } } {
-  const drinkWindows = windows.filter(w => w.drinkId === drinkId);
-  
+): { eligible: boolean; alwaysAvailable?: boolean; nextWindow?: { day: number; start: string; end: string } } {
+  const drinkWindows = windows.filter(w => String(w.drinkId) === String(drinkId));
+
+  if (drinkWindows.length === 0) {
+    return { eligible: true, alwaysAvailable: true };
+  }
+
   for (const window of drinkWindows) {
     if (isCurrentlyInWindow(window)) {
       return { eligible: true };

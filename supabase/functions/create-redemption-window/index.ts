@@ -162,13 +162,18 @@ Deno.serve(async (req: Request) => {
       .eq('drink_id', drink.id)
       .returns<WindowRow[]>();
     if (windowError) return json({ error: 'Window lookup failed', detail: windowError.message }, 500);
-    const today = todayIsoDayInBudapest();
-    const nowTime = currentTimeInBudapest();
-    const active = (windows ?? []).some((window) => {
-      const days = Array.isArray(window.days) ? window.days : [];
-      return days.includes(today) && window.start_time <= nowTime && window.end_time >= nowTime;
-    });
-    if (!active) return json({ error: 'NO_ACTIVE_WINDOW' }, 400);
+    // Drinks without configured windows are redeemable anytime — only enforce
+    // the time check when at least one window exists.
+    const windowList = windows ?? [];
+    if (windowList.length > 0) {
+      const today = todayIsoDayInBudapest();
+      const nowTime = currentTimeInBudapest();
+      const active = windowList.some((window) => {
+        const days = Array.isArray(window.days) ? window.days : [];
+        return days.includes(today) && window.start_time <= nowTime && window.end_time >= nowTime;
+      });
+      if (!active) return json({ error: 'NO_ACTIVE_WINDOW' }, 400);
+    }
   }
 
   const token = randomToken();
