@@ -63,7 +63,7 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
   const renderStars = () => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
-      stars.push(<Star key={i} size={16} color="#FFD646" fill="#FFD646" />);
+      stars.push(<Star key={i} size={14} color="#FFD646" fill="#FFD646" />);
     }
     return stars;
   };
@@ -83,18 +83,20 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         testID={`venue-card-${venue.id}`}
       >
       {/* Image section with overlays */}
-      <View style={[styles.imageContainer, { height: Math.round(cardWidth * 9 / 16) }]}>
-        <Image
-          source={imageSource}
-          style={styles.image}
-          resizeMode="cover"
-        />
-        
-        {/* Gradient overlay at bottom of image */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.4)']}
-          style={styles.imageGradient}
-        />
+      <View style={[styles.imageContainer, { height: Math.round(cardWidth * 0.42) }]}>
+        <View style={styles.imageClip}>
+          <Image
+            source={imageSource}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          
+          {/* Gradient overlay at bottom of image */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.4)']}
+            style={styles.imageGradient}
+          />
+        </View>
         
         {/* City chip - top left */}
         <View style={styles.cityPill}>
@@ -109,10 +111,10 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
           accessibilityLabel={favorite ? `${venue.name} eltávolítása a kedvencekből` : `${venue.name} hozzáadása a kedvencekhez`}
           testID={`favorite-toggle-${venue.id}`}
         >
-          <Heart size={22} color="#00D1FF" fill={favorite ? "#00D1FF" : "transparent"} />
+          <Heart size={20} color="#00D1FF" fill={favorite ? "#00D1FF" : "transparent"} />
         </TouchableOpacity>
         
-        {/* Free drink badge - bottom right */}
+        {/* Free drink badge - overhangs the bottom edge of the image */}
         <View style={styles.freeDrinkBadge}>
           <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
         </View>
@@ -120,26 +122,24 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
       
       {/* Content section below image */}
       <View style={styles.contentContainer}>
-        {/* Title row with rating + price under the stars, right-aligned */}
+        {/* Title row with rating stars right-aligned */}
         <View style={styles.titleRow}>
           <Text style={styles.venueName} numberOfLines={1}>
             {venue.name}
           </Text>
-          <View style={styles.ratingBlock}>
-            <View style={styles.stars}>
-              {renderStars()}
-            </View>
-            <View style={styles.priceRow} accessibilityLabel={`Árkategória: ${priceLevel} / 4`}>
-              {renderPriceMarkers()}
-            </View>
+          <View style={styles.stars}>
+            {renderStars()}
           </View>
         </View>
         
-        {/* Szerezz pontokat row */}
+        {/* Szerezz pontokat row with price markers right-aligned */}
         <View style={styles.earnPointsRow}>
           <View style={styles.earnPointsContent}>
             <Star size={14} color="#2BB7FF" fill="#2BB7FF" />
             <Text style={styles.earnPointsText}>Szerezz pontokat</Text>
+          </View>
+          <View style={styles.priceRow} accessibilityLabel={`Árkategória: ${priceLevel} / 4`}>
+            {renderPriceMarkers()}
           </View>
         </View>
         
@@ -187,9 +187,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#0E0E10',
     marginHorizontal: 0, // Edge-to-edge
-    marginBottom: 16,
+    marginBottom: 10,
     borderRadius: 0, // No border radius for edge-to-edge
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
@@ -199,6 +198,10 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     position: 'relative' as const,
+  },
+  imageClip: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden' as const,
   },
   image: {
     width: '100%',
@@ -215,7 +218,7 @@ const styles = StyleSheet.create({
   },
   cityPill: {
     position: 'absolute' as const,
-    top: 12,
+    top: 10,
     left: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 8,
@@ -231,11 +234,11 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     position: 'absolute' as const,
-    top: 12,
-    right: 12,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    top: 8,
+    right: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.62)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.26)',
@@ -249,11 +252,12 @@ const styles = StyleSheet.create({
   },
   freeDrinkBadge: {
     position: 'absolute' as const,
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    bottom: -14,
+    right: 14,
+    zIndex: 2,
+    backgroundColor: '#000000',
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.9)',
@@ -264,25 +268,23 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   freeDrinkText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: '#FFFFFF',
   },
   contentContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 10, // More compact
+    paddingTop: 18, // Space so the overhanging badge doesn't cover the venue name
+    paddingBottom: 8,
   },
   titleRow: {
     flexDirection: 'row' as const,
     justifyContent: 'space-between',
-    alignItems: 'flex-start' as const,
-    marginBottom: 4, // More compact
-  },
-  ratingBlock: {
-    alignItems: 'flex-end' as const,
+    alignItems: 'center' as const,
+    marginBottom: 3,
   },
   venueName: {
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: '800' as const,
     color: '#FFFFFF',
     letterSpacing: -0.3,
@@ -292,7 +294,8 @@ const styles = StyleSheet.create({
   earnPointsRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    marginBottom: 3,
   },
   earnPointsContent: {
     flexDirection: 'row' as const,
@@ -300,15 +303,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   earnPointsText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500' as const,
     color: '#2BB7FF',
   },
   tagsRow: {
-    marginBottom: 4,
+    marginBottom: 3,
   },
   tagsText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#A6A6AD',
   },
   stars: {
@@ -319,15 +322,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'flex-end' as const,
-    gap: 1,
-    marginTop: 2,
+    gap: 2,
   },
   priceMarker: {
     color: '#2BB7FF',
-    fontSize: 14,
-    lineHeight: 17,
+    fontSize: 17,
+    lineHeight: 20,
     fontWeight: '800' as const,
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
   priceMarkerMuted: {
     color: 'rgba(43, 183, 255, 0.22)',
