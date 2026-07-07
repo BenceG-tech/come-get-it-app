@@ -298,7 +298,7 @@ export default function DarkMapPreview({
         const subdomain = subdomains[(Math.abs(tx) + Math.abs(ty)) % subdomains.length];
         tileList.push({
           key: `${tileZoom}-${tx}-${ty}`,
-          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
+          uri: `https://${subdomain}.basemaps.cartocdn.com/light_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
           left: tx * scaledTile - originX,
           top: ty * scaledTile - originY,
         });
@@ -334,6 +334,8 @@ export default function DarkMapPreview({
           resizeMode="cover"
         />
       ))}
+
+      <View style={styles.darkVeil} pointerEvents="none" />
 
       {markers.map((marker) => {
         const dot = (
@@ -410,10 +412,14 @@ export default function DarkMapPreview({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#0B0F14',
+    backgroundColor: '#DDE1E4',
   },
   tile: {
     position: 'absolute',
+  },
+  darkVeil: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(6, 12, 18, 0.34)',
   },
   markerHitBox: {
     position: 'absolute',
@@ -423,20 +429,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   markerOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(0, 209, 255, 0.28)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 209, 255, 0.30)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#00D1FF',
+    shadowOpacity: 0.65,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 5,
   },
   markerInner: {
-    width: 11,
-    height: 11,
+    width: 12,
+    height: 12,
     borderRadius: 6,
     backgroundColor: '#00D1FF',
-    borderWidth: 2,
-    borderColor: '#001014',
+    borderWidth: 2.5,
+    borderColor: '#04121A',
   },
   controls: {
     position: 'absolute',
@@ -447,17 +458,22 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.78)',
+    backgroundColor: 'rgba(0, 6, 10, 0.88)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   attribution: {
     position: 'absolute',
     right: 6,
     bottom: 4,
     fontSize: 8,
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.65)',
   },
 });

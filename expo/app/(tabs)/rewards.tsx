@@ -39,7 +39,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "Koktélok, sörök, napi ajándékok",
     icon: Martini,
     accent: "#00C8E8",
-    imageUri: "https://images.unsplash.com/photo-1536935338788-846bb9981813?w=900",
+    imageUri: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=900&q=80",
   },
   {
     key: "food",
@@ -47,7 +47,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "Falak, vacsorák és partner ajánlatok",
     icon: UtensilsCrossed,
     accent: "#F6B17A",
-    imageUri: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=900",
+    imageUri: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80",
   },
   {
     key: "experience",
@@ -55,7 +55,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "VIP belépők és különleges esték",
     icon: Sparkles,
     accent: "#7DD3FC",
-    imageUri: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=900",
+    imageUri: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=900&q=80",
   },
   {
     key: "all",
@@ -63,7 +63,7 @@ const rewardCategories: RewardCategoryItem[] = [
     subtitle: "Minden elérhető jutalom egy helyen",
     icon: BadgePercent,
     accent: "#1D6DFF",
-    imageUri: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=900",
+    imageUri: "https://images.unsplash.com/photo-1541849546-216549ae216d?w=900&q=80",
   },
 ];
 
@@ -273,17 +273,23 @@ export default function RewardsScreen() {
                   testID={`cat-${category.key}`}
                   activeOpacity={0.86}
                 >
-                  <Image source={{ uri: category.imageUri }} style={styles.categoryImage} resizeMode="cover" />
-                  <LinearGradient
-                    colors={["rgba(0,0,0,0.08)", "rgba(0,0,0,0.72)", "rgba(0,0,0,0.92)"]}
-                    locations={[0, 0.48, 1]}
-                    style={styles.categoryOverlay}
-                  />
-                  <View style={[styles.categoryIconWrap, { borderColor: `${category.accent}55`, backgroundColor: `${category.accent}26` }]}>
-                    <Icon size={21} color={category.accent} />
+                  <View style={styles.categoryImageWrap}>
+                    <Image source={{ uri: category.imageUri }} style={styles.categoryImage} resizeMode="cover" />
+                    <LinearGradient
+                      colors={["rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(6,9,12,0.9)"]}
+                      locations={[0, 0.62, 1]}
+                      style={styles.categoryImageFade}
+                    />
                   </View>
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
-                  <Text style={styles.categorySubtitle} numberOfLines={2}>{category.subtitle}</Text>
+                  <View style={styles.categoryBottomBar}>
+                    <View style={styles.categoryTextBlock}>
+                      <Text style={styles.categoryTitle}>{category.title}</Text>
+                      <Text style={styles.categorySubtitle} numberOfLines={2}>{category.subtitle}</Text>
+                    </View>
+                    <View style={[styles.categoryIconWrap, { borderColor: `${category.accent}55`, backgroundColor: `${category.accent}22` }]}>
+                      <Icon size={17} color={category.accent} />
+                    </View>
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -485,42 +491,55 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     width: "48%",
-    minHeight: 152,
     borderRadius: 20,
-    padding: 14,
-    backgroundColor: "rgba(255,255,255,0.045)",
+    backgroundColor: "#06090C",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.11)",
     overflow: "hidden",
-    justifyContent: "flex-end",
+  },
+  categoryImageWrap: {
+    width: "100%",
+    height: 108,
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   categoryImage: {
-    ...StyleSheet.absoluteFillObject,
     width: "100%",
     height: "100%",
   },
-  categoryOverlay: {
+  categoryImageFade: {
     ...StyleSheet.absoluteFillObject,
   },
+  categoryBottomBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    minHeight: 68,
+    backgroundColor: "#06090C",
+  },
+  categoryTextBlock: {
+    flex: 1,
+  },
   categoryIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    marginBottom: 13,
   },
   categoryTitle: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
-    marginBottom: 6,
+    marginBottom: 3,
   },
   categorySubtitle: {
     color: "rgba(255,255,255,0.50)",
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 11,
+    lineHeight: 15,
   },
   linkCardTouch: {
     marginHorizontal: 18,

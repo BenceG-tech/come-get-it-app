@@ -27,7 +27,7 @@ import { getUserCSRImpact } from "@/lib/csrService";
 
 const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
 const LOGO_ASPECT_RATIO = 3.5 as const;
-const LOGO_CROP_LEFT_FRACTION = 0.24 as const;
+const LOGO_CROP_LEFT_FRACTION = 0.315 as const;
 const LOGO_CROP_VERTICAL_FRACTION = 0.3 as const;
 const LOGO_SCALE = 1.22 as const; // ~22% nagyobb logó
 
