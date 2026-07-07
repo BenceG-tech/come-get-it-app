@@ -1,12 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ImageBackground } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Info, Gift, Sparkles, ChevronRight } from "lucide-react-native";
+import {
+  ArrowLeft,
+  CalendarClock,
+  Camera,
+  Flame,
+  Gift,
+  Landmark,
+  MapPin,
+  Martini,
+  Moon,
+  PartyPopper,
+  Smartphone,
+  Sparkles,
+  Star,
+  Sunrise,
+  Users,
+  Wine,
+  type LucideIcon,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 
+const CYAN = "#00C8E8" as const;
+
+type MissionCategory = "visits" | "redeems" | "social" | "app";
 
 type Mission = {
   id: string;
@@ -15,807 +36,416 @@ type Mission = {
   points: number;
   progress: number;
   total: number;
-  icon: string;
+  icon: LucideIcon;
+  category: MissionCategory;
   isCompleted: boolean;
   expiryDate?: string;
 };
 
-const missions: Mission[] = [
-  // Visiting Missions
-  {
-    id: "1",
-    title: "7 napos sorozat",
-    description: "Látogass meg 7 egymást követő napon különböző vendéglátóhelyeket!",
-    points: 800,
-    progress: 3,
-    total: 7,
-    icon: "🔥",
-    isCompleted: false
-  },
-  {
-    id: "2",
-    title: "Ruin Bar Felfedező",
-    description: "Látogass meg 5 különböző ruin bart!",
-    points: 600,
-    progress: 2,
-    total: 5,
-    icon: "🏛️",
-    isCompleted: false
-  },
-  {
-    id: "3",
-    title: "Craft Beer Rajongó",
-    description: "Látogass meg 10 craft beer helyet!",
-    points: 700,
-    progress: 4,
-    total: 10,
-    icon: "🍻",
-    isCompleted: false,
-    expiryDate: "2025. 11. 30."
-  },
-  {
-    id: "4",
-    title: "Rooftop Vadász",
-    description: "Látogass meg 3 különböző rooftop bart!",
-    points: 500,
-    progress: 1,
-    total: 3,
-    icon: "🏙️",
-    isCompleted: false
-  },
-  {
-    id: "5",
-    title: "Wine Bar Szakértő",
-    description: "Látogass meg 5 wine bart!",
-    points: 550,
-    progress: 0,
-    total: 5,
-    icon: "🍷",
-    isCompleted: false
-  },
-  {
-    id: "6",
-    title: "Cocktail Bar Mester",
-    description: "Látogass meg 8 cocktail bart!",
-    points: 650,
-    progress: 3,
-    total: 8,
-    icon: "🍸",
-    isCompleted: false
-  },
-  {
-    id: "7",
-    title: "Pub Crawler",
-    description: "Látogass meg 12 különböző pubot!",
-    points: 800,
-    progress: 5,
-    total: 12,
-    icon: "🍺",
-    isCompleted: false
-  },
-  {
-    id: "8",
-    title: "Visszatérő Vendég",
-    description: "Látogass meg ugyanazt a helyet 3 egymást követő héten!",
-    points: 600,
-    progress: 1,
-    total: 3,
-    icon: "🔄",
-    isCompleted: false
-  },
-  {
-    id: "9",
-    title: "Éjszakai Bagoly",
-    description: "Látogass meg egy helyet éjfél után!",
-    points: 300,
-    progress: 0,
-    total: 1,
-    icon: "🦉",
-    isCompleted: false
-  },
-  {
-    id: "10",
-    title: "Early Bird",
-    description: "Látogass meg egy helyet délelőtt 11-ig!",
-    points: 300,
-    progress: 0,
-    total: 1,
-    icon: "🌅",
-    isCompleted: false
-  },
-  {
-    id: "11",
-    title: "Hétvégi Harcos",
-    description: "Látogass meg 5 helyet hétvégén!",
-    points: 450,
-    progress: 2,
-    total: 5,
-    icon: "🎉",
-    isCompleted: false
-  },
-  {
-    id: "12",
-    title: "Hétköznapi Felfedező",
-    description: "Látogass meg 10 helyet hétköznapokon!",
-    points: 600,
-    progress: 6,
-    total: 10,
-    icon: "📅",
-    isCompleted: false
-  },
-  
-  // Drink Redeeming Missions
-  {
-    id: "13",
-    title: "Sör Mester",
-    description: "Válts be 10 ingyen sört!",
-    points: 500,
-    progress: 3,
-    total: 10,
-    icon: "🍺",
-    isCompleted: false,
-    expiryDate: "2025. 10. 31."
-  },
-  {
-    id: "14",
-    title: "Koktél Guru",
-    description: "Válts be 5 ingyen koktélt!",
-    points: 400,
-    progress: 1,
-    total: 5,
-    icon: "🍸",
-    isCompleted: false,
-    expiryDate: "2025. 10. 31."
-  },
-  {
-    id: "15",
-    title: "Wine Connoisseur",
-    description: "Válts be 8 ingyen bort!",
-    points: 600,
-    progress: 2,
-    total: 8,
-    icon: "🍷",
-    isCompleted: false,
-    expiryDate: "2025. 12. 31."
-  },
-  {
-    id: "16",
-    title: "Shot Master",
-    description: "Válts be 15 ingyen shotot!",
-    points: 450,
-    progress: 7,
-    total: 15,
-    icon: "🥃",
-    isCompleted: false,
-    expiryDate: "2025. 11. 15."
-  },
-  {
-    id: "17",
-    title: "Whiskey Lover",
-    description: "Válts be 6 ingyen whiskyt!",
-    points: 550,
-    progress: 0,
-    total: 6,
-    icon: "🥃",
-    isCompleted: false,
-    expiryDate: "2025. 12. 31."
-  },
-  {
-    id: "18",
-    title: "Gin & Tonic Fan",
-    description: "Válts be 7 ingyen gin tonicot!",
-    points: 420,
-    progress: 3,
-    total: 7,
-    icon: "🍸",
-    isCompleted: false,
-    expiryDate: "2025. 10. 31."
-  },
-  {
-    id: "19",
-    title: "Prosecco Party",
-    description: "Válts be 4 ingyen proseccot!",
-    points: 480,
-    progress: 1,
-    total: 4,
-    icon: "🥂",
-    isCompleted: false,
-    expiryDate: "2025. 11. 30."
-  },
-  {
-    id: "20",
-    title: "Craft Beer Explorer",
-    description: "Válts be 12 különböző craft sört!",
-    points: 700,
-    progress: 4,
-    total: 12,
-    icon: "🍻",
-    isCompleted: false,
-    expiryDate: "2025. 12. 31."
-  },
-  
-  // Friend & Social Missions
-  {
-    id: "21",
-    title: "Barát Meghívó",
-    description: "Hívd meg egy barátodat, aki először használja a Come Get It appot!",
-    points: 400,
-    progress: 0,
-    total: 1,
-    icon: "👥",
-    isCompleted: false
-  },
-  {
-    id: "22",
-    title: "Társaság Szervező",
-    description: "Látogass meg 5 helyet barátokkal együtt!",
-    points: 600,
-    progress: 2,
-    total: 5,
-    icon: "👫",
-    isCompleted: false
-  },
-  {
-    id: "23",
-    title: "Dupla Dátum",
-    description: "Látogass meg 3 helyet párban!",
-    points: 450,
-    progress: 1,
-    total: 3,
-    icon: "💑",
-    isCompleted: false
-  },
-  {
-    id: "24",
-    title: "Csapat Kapitány",
-    description: "Hívj meg 3 barátot, akik mind használják az appot!",
-    points: 900,
-    progress: 1,
-    total: 3,
-    icon: "👨‍👩‍👧‍👦",
-    isCompleted: false
-  },
-  {
-    id: "25",
-    title: "Születésnapi Buli",
-    description: "Ünnepelj egy születésnapot 5+ fővel egy helyen!",
-    points: 500,
-    progress: 0,
-    total: 1,
-    icon: "🎂",
-    isCompleted: false
-  },
-  {
-    id: "26",
-    title: "Lánybúcsú/Legénybúcsú",
-    description: "Szervezz vagy vegyél részt egy búcsúbulin!",
-    points: 800,
-    progress: 0,
-    total: 1,
-    icon: "🎊",
-    isCompleted: false
-  },
-  {
-    id: "27",
-    title: "Munkahelyi Csapat",
-    description: "Látogass meg 3 helyet munkatársakkal!",
-    points: 550,
-    progress: 0,
-    total: 3,
-    icon: "💼",
-    isCompleted: false
-  },
-  
-  // App Usage Missions
-  {
-    id: "28",
-    title: "App Használó - Kezdő",
-    description: "Használd az appot 5 napon keresztül!",
-    points: 200,
-    progress: 5,
-    total: 5,
-    icon: "📱",
-    isCompleted: true
-  },
-  {
-    id: "29",
-    title: "App Használó - Haladó",
-    description: "Használd az appot 10 napon keresztül!",
-    points: 400,
-    progress: 8,
-    total: 10,
-    icon: "📱",
-    isCompleted: false
-  },
-  {
-    id: "30",
-    title: "App Használó - Mester",
-    description: "Használd az appot 20 napon keresztül!",
-    points: 800,
-    progress: 8,
-    total: 20,
-    icon: "📱",
-    isCompleted: false
-  },
-  {
-    id: "31",
-    title: "App Használó - Legenda",
-    description: "Használd az appot 30 napon keresztül!",
-    points: 1200,
-    progress: 8,
-    total: 30,
-    icon: "📱",
-    isCompleted: false
-  },
-  {
-    id: "32",
-    title: "Értékelő",
-    description: "Értékelj 10 helyet az appban!",
-    points: 300,
-    progress: 3,
-    total: 10,
-    icon: "⭐",
-    isCompleted: false
-  },
-  {
-    id: "33",
-    title: "Fotós",
-    description: "Tölts fel 15 fotót helyekről!",
-    points: 450,
-    progress: 6,
-    total: 15,
-    icon: "📸",
-    isCompleted: false
-  },
-  {
-    id: "34",
-    title: "Check-in Bajnok",
-    description: "Végezz 25 check-int különböző helyeken!",
-    points: 750,
-    progress: 12,
-    total: 25,
-    icon: "📍",
-    isCompleted: false
-  }
+type CategoryTab = {
+  key: MissionCategory;
+  label: string;
+  icon: LucideIcon;
+};
+
+const categoryTabs: CategoryTab[] = [
+  { key: "visits", label: "Látogatások", icon: MapPin },
+  { key: "redeems", label: "Beváltások", icon: Martini },
+  { key: "social", label: "Közösség", icon: Users },
+  { key: "app", label: "App használat", icon: Smartphone },
 ];
+
+const missions: Mission[] = [
+  { id: "1", title: "7 napos sorozat", description: "Látogass meg 7 egymást követő napon különböző vendéglátóhelyeket!", points: 800, progress: 3, total: 7, icon: Flame, category: "visits", isCompleted: false },
+  { id: "2", title: "Ruin Bar Felfedező", description: "Látogass meg 5 különböző ruin bart!", points: 600, progress: 2, total: 5, icon: Landmark, category: "visits", isCompleted: false },
+  { id: "3", title: "Craft Beer Rajongó", description: "Látogass meg 10 craft beer helyet!", points: 700, progress: 4, total: 10, icon: Martini, category: "visits", isCompleted: false, expiryDate: "2026. 11. 30." },
+  { id: "4", title: "Rooftop Vadász", description: "Látogass meg 3 különböző rooftop bart!", points: 500, progress: 1, total: 3, icon: Sparkles, category: "visits", isCompleted: false },
+  { id: "5", title: "Wine Bar Szakértő", description: "Látogass meg 5 wine bart!", points: 550, progress: 0, total: 5, icon: Wine, category: "visits", isCompleted: false },
+  { id: "6", title: "Cocktail Bar Mester", description: "Látogass meg 8 cocktail bart!", points: 650, progress: 3, total: 8, icon: Martini, category: "visits", isCompleted: false },
+  { id: "7", title: "Éjszakai Bagoly", description: "Látogass meg egy helyet éjfél után!", points: 300, progress: 0, total: 1, icon: Moon, category: "visits", isCompleted: false },
+  { id: "8", title: "Early Bird", description: "Látogass meg egy helyet délelőtt 11-ig!", points: 300, progress: 0, total: 1, icon: Sunrise, category: "visits", isCompleted: false },
+  { id: "9", title: "Hétvégi Harcos", description: "Látogass meg 5 helyet hétvégén!", points: 450, progress: 2, total: 5, icon: PartyPopper, category: "visits", isCompleted: false },
+  { id: "10", title: "Visszatérő Vendég", description: "Látogass meg ugyanazt a helyet 3 egymást követő héten!", points: 600, progress: 1, total: 3, icon: CalendarClock, category: "visits", isCompleted: false },
+
+  { id: "13", title: "Sör Mester", description: "Válts be 10 ingyen sört!", points: 500, progress: 3, total: 10, icon: Martini, category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
+  { id: "14", title: "Koktél Guru", description: "Válts be 5 ingyen koktélt!", points: 400, progress: 1, total: 5, icon: Martini, category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
+  { id: "15", title: "Wine Connoisseur", description: "Válts be 8 ingyen bort!", points: 600, progress: 2, total: 8, icon: Wine, category: "redeems", isCompleted: false, expiryDate: "2026. 12. 31." },
+  { id: "16", title: "Shot Master", description: "Válts be 15 ingyen shotot!", points: 450, progress: 7, total: 15, icon: Sparkles, category: "redeems", isCompleted: false, expiryDate: "2026. 11. 15." },
+  { id: "18", title: "Gin & Tonic Fan", description: "Válts be 7 ingyen gin tonicot!", points: 420, progress: 3, total: 7, icon: Martini, category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
+  { id: "19", title: "Prosecco Party", description: "Válts be 4 ingyen proseccot!", points: 480, progress: 1, total: 4, icon: PartyPopper, category: "redeems", isCompleted: false, expiryDate: "2026. 11. 30." },
+
+  { id: "21", title: "Barát Meghívó", description: "Hívd meg egy barátodat, aki először használja a Come Get It appot!", points: 400, progress: 0, total: 1, icon: Users, category: "social", isCompleted: false },
+  { id: "22", title: "Társaság Szervező", description: "Látogass meg 5 helyet barátokkal együtt!", points: 600, progress: 2, total: 5, icon: Users, category: "social", isCompleted: false },
+  { id: "24", title: "Csapat Kapitány", description: "Hívj meg 3 barátot, akik mind használják az appot!", points: 900, progress: 1, total: 3, icon: Users, category: "social", isCompleted: false },
+  { id: "25", title: "Születésnapi Buli", description: "Ünnepelj egy születésnapot 5+ fővel egy helyen!", points: 500, progress: 0, total: 1, icon: PartyPopper, category: "social", isCompleted: false },
+
+  { id: "28", title: "App Használó - Kezdő", description: "Használd az appot 5 napon keresztül!", points: 200, progress: 5, total: 5, icon: Smartphone, category: "app", isCompleted: true },
+  { id: "29", title: "App Használó - Haladó", description: "Használd az appot 10 napon keresztül!", points: 400, progress: 8, total: 10, icon: Smartphone, category: "app", isCompleted: false },
+  { id: "30", title: "App Használó - Mester", description: "Használd az appot 20 napon keresztül!", points: 800, progress: 8, total: 20, icon: Smartphone, category: "app", isCompleted: false },
+  { id: "32", title: "Értékelő", description: "Értékelj 10 helyet az appban!", points: 300, progress: 3, total: 10, icon: Star, category: "app", isCompleted: false },
+  { id: "33", title: "Fotós", description: "Tölts fel 15 fotót helyekről!", points: 450, progress: 6, total: 15, icon: Camera, category: "app", isCompleted: false },
+  { id: "34", title: "Check-in Bajnok", description: "Végezz 25 check-int különböző helyeken!", points: 750, progress: 12, total: 25, icon: MapPin, category: "app", isCompleted: false },
+];
+
+const BG_URI = "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787";
 
 export default function RewardsMissionsScreen() {
   const router = useRouter();
   const { points } = useAppContext();
-  const [bgUri, setBgUri] = useState<string>('https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787');
+  const [activeCategory, setActiveCategory] = useState<MissionCategory>("visits");
 
-  const renderProgressBar = (progress: number, total: number) => {
-    const percentage = (progress / total) * 100;
-    const progressBarFillStyle = {
-      ...styles.progressBarFill,
-      width: `${percentage}%` as const,
-    };
+  const filteredMissions = useMemo(() => {
+    return missions
+      .filter((m) => m.category === activeCategory)
+      .sort((a, b) => {
+        if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+        return b.progress / b.total - a.progress / a.total;
+      });
+  }, [activeCategory]);
+
+  const renderMissionCard = (mission: Mission) => {
+    const Icon = mission.icon;
+    const ratio = mission.total > 0 ? mission.progress / mission.total : 0;
+    const isAlmostDone = !mission.isCompleted && ratio >= 0.6;
+
     return (
-      <View style={styles.progressBarContainer}>
-        <View style={styles.progressBarBackground}>
-          <View style={progressBarFillStyle} />
+      <View
+        key={mission.id}
+        style={[styles.missionCard, isAlmostDone && styles.missionCardHighlight, mission.isCompleted && styles.missionCardDone]}
+        testID={`mission-${mission.id}`}
+      >
+        <View style={styles.missionTopRow}>
+          <View style={[styles.missionIconWrap, isAlmostDone && styles.missionIconWrapHighlight]}>
+            <Icon size={19} color={CYAN} strokeWidth={1.9} />
+          </View>
+          <View style={styles.missionTextBlock}>
+            <Text style={styles.missionTitle} numberOfLines={1}>{mission.title}</Text>
+            <Text style={styles.missionDescription} numberOfLines={2}>{mission.description}</Text>
+          </View>
+          <View style={[styles.pointsBadge, mission.isCompleted && styles.pointsBadgeDone]}>
+            <Text style={[styles.pointsBadgeText, mission.isCompleted && styles.pointsBadgeTextDone]}>
+              {mission.isCompleted ? "Kész" : `+${mission.points}`}
+            </Text>
+          </View>
         </View>
-        <Text style={styles.progressText}>{progress} / {total}</Text>
+
+        <View style={styles.missionBottomRow}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${Math.min(ratio * 100, 100)}%` }]} />
+          </View>
+          <Text style={styles.progressCount}>{mission.progress}/{mission.total}</Text>
+        </View>
+
+        {mission.expiryDate ? (
+          <View style={styles.expiryRow}>
+            <CalendarClock size={11} color="rgba(255,255,255,0.42)" />
+            <Text style={styles.expiryText}>{mission.expiryDate}-ig érvényes</Text>
+          </View>
+        ) : null}
       </View>
     );
   };
 
-  const renderMissionCard = (mission: Mission) => (
-    <View key={mission.id} style={styles.missionCard}>
-      <View style={styles.missionIcon}>
-        <Text style={styles.missionIconText}>{mission.icon}</Text>
-      </View>
-      
-      <View style={styles.missionContent}>
-        <Text style={styles.missionTitle}>{mission.title}</Text>
-        <Text style={styles.missionDescription}>{mission.description}</Text>
-        
-        {mission.expiryDate && (
-          <View style={styles.expiryContainer}>
-            <Text style={styles.expiryText}>⏰ {mission.expiryDate}-ig érvényes</Text>
-          </View>
-        )}
-        
-        {renderProgressBar(mission.progress, mission.total)}
-      </View>
-      
-      <View style={styles.pointsContainer}>
-        <Text style={styles.pointsText}>+{mission.points}</Text>
-      </View>
-    </View>
-  );
-
   return (
-    <ImageBackground 
-      source={{ uri: bgUri }}
-      onError={() => setBgUri('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2060&auto=format&fit=crop')}
-      style={styles.backgroundImage}
-      imageStyle={styles.backgroundImageStyle}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <StatusBar style="light" />
-          
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={24} color={Colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Come Get It Rewards</Text>
-            <TouchableOpacity style={styles.infoButton}>
-              <Info size={24} color={Colors.text} />
-            </TouchableOpacity>
-          </View>
-
-      {/* Rewards Card */}
+    <View style={styles.root}>
+      <StatusBar style="light" />
+      <ImageBackground source={{ uri: BG_URI }} style={StyleSheet.absoluteFillObject as object} resizeMode="cover" imageStyle={styles.bgImage} />
       <LinearGradient
-        colors={["rgba(6, 35, 47, 0.92)", "rgba(11, 45, 59, 0.88)"]}
-        start={{ x: 0.12, y: 0.06 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.rewardsCard}
-        testID="rewards-missions-rewards-card"
-      >
-        <View style={styles.rewardsHeader}>
-          <View style={styles.rewardsTitleRow}>
-            <View style={styles.rewardsBadge}>
-              <Gift size={14} color={"rgba(255,255,255,0.86)"} />
-              <Text style={styles.rewardsBadgeText}>Rewards</Text>
-            </View>
-            <Text style={styles.rewardsTitle}>Come Get It</Text>
-          </View>
-          <View style={styles.accentDot} />
-        </View>
+        colors={["rgba(0,0,0,0.72)", "rgba(0,0,0,0.88)", "#000000"]}
+        locations={[0, 0.4, 0.85]}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
 
-        <View style={styles.rewardsContent}>
-          <View style={styles.pointsBlock}>
-            <View style={styles.pointsLabelRow}>
-              <Sparkles size={14} color={"rgba(0, 209, 255, 0.95)"} />
-              <Text style={styles.pointsLabel}>Elkölthető pontok</Text>
-            </View>
-            <Text style={styles.pointsValue} testID="rewards-missions-points">
-              {points}
-            </Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Vissza">
+            <ArrowLeft size={21} color={Colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerEyebrow}>COME GET IT CLUB</Text>
+            <Text style={styles.headerTitle}>Küldetések</Text>
           </View>
-
-          <View style={styles.rewardsCtaRow}>
-            <View style={styles.rewardsCtaPill}>
-              <Text style={styles.rewardsCtaText}>Jutalmak</Text>
-              <ChevronRight size={18} color={"rgba(0,0,0,0.9)"} />
-            </View>
+          <View style={styles.pointsPill} testID="rewards-missions-points">
+            <Sparkles size={13} color="#001014" />
+            <Text style={styles.pointsPillText}>{points.toLocaleString("hu-HU")}</Text>
           </View>
         </View>
 
-        <View style={styles.shineOverlay} pointerEvents="none" />
-      </LinearGradient>
-
-      {/* Level Progress */}
-      <View style={styles.levelProgressSection}>
-        <Text style={styles.levelProgressTitle}>Előrehaladás a szinten</Text>
-        
-        <View style={styles.levelProgressBar}>
-          <View style={styles.levelProgressFill} />
-          <View style={styles.levelProgressRemaining} />
-        </View>
-        
-        <Text style={styles.levelProgressText}>
-          A szinted megtartásához gyűjts: 336 pont, eddig: 2025. 10. 31.
+        <Text style={styles.headerSubtitle}>
+          Teljesíts küldetéseket és gyűjts extra pontokat italokra és élményekre.
         </Text>
-        
-        <TouchableOpacity>
-          <Text style={styles.howToEarnLink}>Hogyan gyűjthetek pontokat?</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Missions Section */}
-      <View style={styles.missionsSection}>
-        <Text style={styles.sectionTitle}>Kihívások</Text>
-        
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.missionsList}
+        <TouchableOpacity
+          style={styles.rewardsShortcut}
+          activeOpacity={0.88}
+          onPress={() => router.push("/(tabs)/rewards")}
+          testID="rewards-missions-open-rewards"
         >
-          {missions.map(renderMissionCard)}
+          <View style={styles.rewardsShortcutIcon}>
+            <Gift size={16} color={CYAN} />
+          </View>
+          <Text style={styles.rewardsShortcutText}>Pontjaid beváltása a Jutalmak fülön</Text>
+        </TouchableOpacity>
+
+        <View style={styles.tabsWrap}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+            {categoryTabs.map((tab: CategoryTab) => {
+              const Icon = tab.icon;
+              const active = activeCategory === tab.key;
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[styles.tab, active && styles.tabActive]}
+                  onPress={() => setActiveCategory(tab.key)}
+                  activeOpacity={0.85}
+                  testID={`mission-tab-${tab.key}`}
+                >
+                  <Icon size={14} color={active ? "#001014" : "rgba(255,255,255,0.62)"} />
+                  <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.missionsList}>
+          {filteredMissions.map(renderMissionCard)}
         </ScrollView>
       </View>
-        </View>
-      </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
+  root: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "#000000",
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  bgImage: {
+    opacity: 0.55,
   },
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 54,
-    paddingHorizontal: 20,
-    paddingBottom: 14,
+    paddingTop: 56,
+    paddingHorizontal: 16,
+    gap: 12,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  headerCenter: {
+    flex: 1,
+  },
+  headerEyebrow: {
+    color: "rgba(0, 200, 232, 0.86)",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    marginBottom: 2,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
     color: Colors.text,
-    fontStyle: "italic",
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: -0.5,
   },
-  infoButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  pointsPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: CYAN,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+  },
+  pointsPillText: {
+    color: "#001014",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  headerSubtitle: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 13,
+    lineHeight: 18,
+    paddingHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 12,
+  },
+  rewardsShortcut: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 200, 232, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.22)",
+  },
+  rewardsShortcutIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 11,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
-  rewardsCard: {
-    marginHorizontal: 20,
-    marginBottom: 14,
-    borderRadius: 18,
-    padding: 18,
-    position: "relative",
-    overflow: "hidden",
-    minHeight: 156,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    shadowColor: "#00D1FF",
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    elevation: 10,
+  rewardsShortcutText: {
+    flex: 1,
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 13,
+    fontWeight: "700",
   },
-  rewardsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
+  tabsWrap: {
+    marginBottom: 12,
   },
-  rewardsTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  tabsContent: {
+    paddingHorizontal: 16,
+    gap: 8,
   },
-  rewardsBadge: {
+  tab: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    marginRight: 10,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
-  rewardsBadgeText: {
-    color: "rgba(255,255,255,0.86)",
-    fontSize: 12,
-    fontWeight: "600",
+  tabActive: {
+    backgroundColor: CYAN,
+    borderColor: CYAN,
   },
-  rewardsTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  accentDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 6,
-    backgroundColor: "rgba(0, 209, 255, 0.95)",
-    shadowColor: "#00D1FF",
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  rewardsContent: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  pointsBlock: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  pointsLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 6,
-  },
-  pointsLabel: {
-    color: "rgba(255,255,255,0.78)",
+  tabText: {
+    color: "rgba(255,255,255,0.62)",
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "800",
   },
-  pointsValue: {
-    fontSize: 44,
-    fontWeight: "900",
-    color: Colors.text,
-    letterSpacing: -0.6,
-    lineHeight: 46,
-  },
-  rewardsCtaRow: {
-    justifyContent: "flex-end",
-  },
-  rewardsCtaPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0, 209, 255, 0.95)",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    minWidth: 120,
-  },
-  rewardsCtaText: {
-    color: "rgba(0,0,0,0.92)",
-    fontSize: 13,
-    fontWeight: "700",
-    marginRight: 6,
-  },
-  shineOverlay: {
-    position: "absolute",
-    top: -40,
-    right: -60,
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    transform: [{ rotate: "18deg" }],
-  },
-  levelProgressSection: {
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  levelProgressTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  levelProgressBar: {
-    flexDirection: "row",
-    height: 8,
-    borderRadius: 4,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  levelProgressFill: {
-    flex: 164,
-    backgroundColor: "#FF9500",
-    borderRadius: 4,
-  },
-  levelProgressRemaining: {
-    flex: 172,
-    backgroundColor: "#333333",
-    borderRadius: 4,
-  },
-  levelProgressText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  howToEarnLink: {
-    fontSize: 16,
-    color: Colors.primary,
-    fontWeight: "600",
-  },
-  missionsSection: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.text,
-    marginBottom: 16,
+  tabTextActive: {
+    color: "#001014",
   },
   missionsList: {
-    paddingBottom: 44,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+    gap: 10,
   },
   missionCard: {
-    flexDirection: "row",
-    backgroundColor: "transparent",
-    borderRadius: 4,
-    padding: 16,
-    marginBottom: 1,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.primary,
-    alignItems: "flex-start",
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: "rgba(10, 16, 22, 0.82)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
   },
-  missionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  missionCardHighlight: {
+    borderColor: "rgba(0, 200, 232, 0.38)",
+    backgroundColor: "rgba(8, 28, 34, 0.86)",
+  },
+  missionCardDone: {
+    opacity: 0.62,
+  },
+  missionTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 11,
+    marginBottom: 12,
+  },
+  missionIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.22)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
   },
-  missionIconText: {
-    fontSize: 24,
+  missionIconWrapHighlight: {
+    backgroundColor: "rgba(0, 200, 232, 0.18)",
+    borderColor: "rgba(0, 200, 232, 0.45)",
   },
-  missionContent: {
+  missionTextBlock: {
     flex: 1,
-    paddingRight: 16,
   },
   missionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
     color: Colors.text,
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 3,
   },
   missionDescription: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  expiryContainer: {
-    marginBottom: 8,
-  },
-  expiryText: {
+    color: "rgba(255,255,255,0.54)",
     fontSize: 12,
-    color: "#FF9500",
-    fontWeight: "500",
+    lineHeight: 16,
   },
-  progressBarContainer: {
+  pointsBadge: {
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 999,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.28)",
+  },
+  pointsBadgeDone: {
+    backgroundColor: "rgba(76, 175, 80, 0.14)",
+    borderColor: "rgba(76, 175, 80, 0.32)",
+  },
+  pointsBadgeText: {
+    color: CYAN,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  pointsBadgeTextDone: {
+    color: "#4CAF50",
+  },
+  missionBottomRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 10,
   },
-  progressBarBackground: {
+  progressTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: "#333333",
-    borderRadius: 3,
-    marginRight: 12,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.08)",
     overflow: "hidden",
   },
-  progressBarFill: {
+  progressFill: {
     height: "100%",
-    backgroundColor: "#00FF00",
-    borderRadius: 3,
+    borderRadius: 999,
+    backgroundColor: CYAN,
   },
-  progressText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: "600",
-    minWidth: 40,
+  progressCount: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 12,
+    fontWeight: "800",
+    minWidth: 36,
     textAlign: "right",
   },
-  pointsContainer: {
-    justifyContent: "center",
+  expiryRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 5,
+    marginTop: 9,
   },
-  pointsText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FF9500",
-  },
-  backgroundImageStyle: {
-    opacity: 0.65,
+  expiryText: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 11,
+    fontWeight: "600",
   },
 });

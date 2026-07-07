@@ -24,6 +24,7 @@ import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
 const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
+const BG_SOURCE = { uri: 'https://r2-pub.rork.com/projects/d5gcr740rcssgvx3ot5z5/assets/6caed7fd-7a07-465a-9688-a7d61abc6ddd.png' } as const;
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
@@ -107,19 +108,26 @@ function AuthScreen() {
     <View style={styles.root} testID="auth-root">
       <StatusBar style="light" translucent backgroundColor="transparent" />
 
+      <Image
+        source={BG_SOURCE}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        transition={300}
+        accessibilityIgnoresInvertColors
+      />
       <LinearGradient
         pointerEvents="none"
         colors={[
-          '#000000',
-          'rgba(0, 21, 28, 0.98)',
-          'rgba(0, 0, 0, 0.96)',
+          'rgba(0, 0, 0, 0.42)',
+          'rgba(0, 0, 0, 0.20)',
+          'rgba(0, 0, 0, 0.78)',
+          'rgba(0, 0, 0, 0.97)',
           '#000000',
         ]}
-        locations={[0, 0.34, 0.72, 1]}
+        locations={[0, 0.28, 0.52, 0.74, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <View pointerEvents="none" style={styles.cyanGlow} />
-      <View pointerEvents="none" style={styles.blueGlow} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <KeyboardAvoidingView
@@ -257,30 +265,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  cyanGlow: {
-    position: 'absolute',
-    top: -90,
-    right: -110,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(0, 200, 232, 0.14)',
-  },
-  blueGlow: {
-    position: 'absolute',
-    bottom: 90,
-    left: -120,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(29, 109, 255, 0.10)',
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
-    justifyContent: 'center',
+    paddingTop: 24,
+    paddingBottom: 14,
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   content: {
@@ -289,13 +279,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 154,
-    height: 72,
-    marginBottom: 18,
+    width: 168,
+    height: 78,
+    marginBottom: 12,
   },
   heroTextBlock: {
     alignItems: 'center',
-    marginBottom: 22,
+    marginBottom: 20,
   },
   heading: {
     color: '#FFFFFF',
@@ -336,15 +326,15 @@ const styles = StyleSheet.create({
   },
   dividerBlock: {
     width: '100%',
-    marginTop: 20,
-    marginBottom: 14,
+    marginTop: 16,
+    marginBottom: 12,
   },
   socialBlock: {
     width: '100%',
-    gap: 10,
+    gap: 8,
   },
   legalBlock: {
-    marginTop: 20,
+    marginTop: 14,
     alignItems: 'center',
   },
 });

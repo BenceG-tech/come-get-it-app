@@ -153,8 +153,8 @@ export default function RewardDetailScreen() {
             <View style={[styles.heroImage, styles.heroFallback]} />
           )}
           <LinearGradient
-            colors={["rgba(0,0,0,0.04)", "rgba(0,0,0,0.3)", "#000000"]}
-            locations={[0, 0.5, 1]}
+            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.66)", "#000000"]}
+            locations={[0, 0.42, 0.74, 1]}
             style={styles.heroOverlay}
           />
           <View style={styles.heroContent}>
@@ -349,8 +349,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    gap: 12,
+    paddingTop: 18,
+    gap: 14,
   },
   pointsRow: {
     flexDirection: "row",
@@ -497,18 +497,18 @@ const styles = StyleSheet.create({
     borderTopColor: "rgba(255,255,255,0.08)",
   },
   redeemButton: {
-    height: 54,
-    borderRadius: 17,
+    height: 56,
+    borderRadius: 18,
     backgroundColor: CYAN,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
     shadowColor: CYAN,
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 9 },
+    elevation: 10,
   },
   redeemButtonDisabled: {
     backgroundColor: "rgba(255,255,255,0.06)",

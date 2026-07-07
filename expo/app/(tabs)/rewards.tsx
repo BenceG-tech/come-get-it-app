@@ -6,12 +6,10 @@ import {
   BadgePercent,
   ChevronRight,
   CreditCard,
-  Gift,
   Martini,
   Send,
   ShieldCheck,
   Sparkles,
-  Star,
   UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react-native";
@@ -139,6 +137,44 @@ export default function RewardsScreen() {
           </View>
         </View>
 
+        <TouchableOpacity style={styles.linkCardTouch} activeOpacity={0.92} accessibilityRole="button" testID="add-card-button">
+          <LinearGradient
+            colors={["#0B1B22", "#07242E", "#041318"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bankCard}
+          >
+            <View style={styles.bankShine} pointerEvents="none" />
+            <View style={styles.bankTopRow}>
+              <View style={styles.bankChip}>
+                <View style={styles.bankChipLine} />
+                <View style={styles.bankChipLineVertical} />
+              </View>
+              <View style={styles.bankCardIconWrap}>
+                <CreditCard size={26} color="#00C8E8" />
+              </View>
+            </View>
+            <Text style={styles.bankNumber}>••••  ••••  ••••  4412</Text>
+            <View style={styles.bankBottomRow}>
+              <View>
+                <Text style={styles.bankLabel}>KÁRTYABIRTOKOS</Text>
+                <Text style={styles.bankBrand}>COME GET IT</Text>
+              </View>
+              <View style={styles.secureBadge}>
+                <ShieldCheck size={13} color="rgba(255,255,255,0.76)" />
+                <Text style={styles.secureBadgeText}>Biztonságos</Text>
+              </View>
+            </View>
+          </LinearGradient>
+          <View style={styles.linkCardFooter}>
+            <Text style={styles.linkCardHint}>Automatikusan pontot kapsz, amikor partnerhelyen fizetsz.</Text>
+            <View style={styles.linkCardCta}>
+              <Text style={styles.linkCardCtaText}>Kártya hozzáadása</Text>
+              <ChevronRight size={16} color="#001014" />
+            </View>
+          </View>
+        </TouchableOpacity>
+
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <View>
@@ -253,30 +289,6 @@ export default function RewardsScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.heroCard} activeOpacity={0.9} accessibilityRole="button" testID="add-card-button">
-          <LinearGradient
-            colors={["rgba(0, 200, 232, 0.20)", "rgba(29, 109, 255, 0.10)", "rgba(10, 16, 22, 0.86)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroGradient}
-          >
-            <View style={styles.heroTopRow}>
-              <View style={styles.heroIconWrap}>
-                <CreditCard size={21} color="#00C8E8" />
-              </View>
-              <View style={styles.secureBadge}>
-                <ShieldCheck size={13} color="rgba(255,255,255,0.76)" />
-                <Text style={styles.secureBadgeText}>Biztonságos</Text>
-              </View>
-            </View>
-            <Text style={styles.heroTitle}>Kapcsold hozzá a kártyád</Text>
-            <Text style={styles.heroSubtitle}>Automatikusan pontot kapsz, amikor partnerhelyeinken fizetsz. Nem terhelünk meg külön.</Text>
-            <View style={styles.heroActionRow}>
-              <Text style={styles.heroActionText}>Kártya hozzáadása</Text>
-              <ChevronRight size={17} color="#001014" />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -509,33 +521,129 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
-  heroCard: {
+  linkCardTouch: {
     marginHorizontal: 18,
-    marginBottom: 12,
+    marginBottom: 22,
     borderRadius: 24,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(10,16,22,0.78)",
+    borderColor: "rgba(0, 200, 232, 0.30)",
+    backgroundColor: "rgba(10,16,22,0.9)",
+    shadowColor: "#00C8E8",
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
-  heroGradient: {
-    padding: 18,
-  },
-  heroTopRow: {
-    flexDirection: "row",
+  bankCard: {
+    padding: 20,
+    minHeight: 168,
     justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  bankShine: {
+    position: "absolute",
+    top: -70,
+    right: -30,
+    width: 130,
+    height: 320,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    transform: [{ rotate: "24deg" }],
+  },
+  bankTopRow: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 18,
   },
-  heroIconWrap: {
+  bankChip: {
     width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    height: 31,
+    borderRadius: 7,
+    backgroundColor: "rgba(0, 200, 232, 0.22)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.28)",
+    borderColor: "rgba(0, 200, 232, 0.45)",
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
+  },
+  bankChipLine: {
+    position: "absolute",
+    width: "100%",
+    height: 1,
+    backgroundColor: "rgba(0, 200, 232, 0.55)",
+  },
+  bankChipLineVertical: {
+    position: "absolute",
+    width: 1,
+    height: "100%",
+    backgroundColor: "rgba(0, 200, 232, 0.55)",
+  },
+  bankCardIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 17,
+    backgroundColor: "rgba(0, 200, 232, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.42)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bankNumber: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 2.4,
+    marginBottom: 18,
+  },
+  bankBottomRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  bankLabel: {
+    color: "rgba(255,255,255,0.40)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    marginBottom: 3,
+  },
+  bankBrand: {
+    color: "#00C8E8",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+  },
+  linkCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    backgroundColor: "rgba(0, 200, 232, 0.06)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 200, 232, 0.16)",
+  },
+  linkCardHint: {
+    flex: 1,
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  linkCardCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 999,
+    backgroundColor: "#00C8E8",
+    paddingVertical: 9,
+    paddingHorizontal: 13,
+  },
+  linkCardCtaText: {
+    color: "#001014",
+    fontSize: 13,
+    fontWeight: "900",
   },
   secureBadge: {
     flexDirection: "row",
@@ -552,34 +660,5 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.76)",
     fontSize: 12,
     fontWeight: "700",
-  },
-  heroTitle: {
-    color: Colors.text,
-    fontSize: 21,
-    fontWeight: "900",
-    letterSpacing: -0.3,
-    marginBottom: 7,
-  },
-  heroSubtitle: {
-    color: "rgba(255,255,255,0.62)",
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 17,
-  },
-  heroActionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "flex-start",
-    gap: 5,
-    borderRadius: 999,
-    backgroundColor: "#00C8E8",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  heroActionText: {
-    color: "#001014",
-    fontSize: 14,
-    fontWeight: "900",
   },
 });

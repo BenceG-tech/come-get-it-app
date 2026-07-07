@@ -176,31 +176,32 @@ export default function ProfileScreen() {
         </View>
 
         <TouchableOpacity onPress={() => router.push("/rewards-missions")} activeOpacity={0.9} testID="open-rewards-card" style={styles.memberCardTouch}>
-          <LinearGradient
-            colors={["rgba(0, 200, 232, 0.18)", "rgba(29, 109, 255, 0.10)", "rgba(10, 16, 22, 0.88)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.memberCard}
-          >
-            <View style={styles.memberTopRow}>
-              <View style={styles.memberBadge}>
-                <Gift size={13} color="rgba(255,255,255,0.78)" />
-                <Text style={styles.memberBadgeText}>Come Get It Club</Text>
-              </View>
-              <ShieldCheck size={18} color="rgba(0, 200, 232, 0.94)" />
+          <View style={styles.memberCard}>
+            <View style={styles.memberBadge}>
+              <ShieldCheck size={11} color="rgba(0, 200, 232, 0.9)" />
+              <Text style={styles.memberBadgeText}>Come Get It Club</Text>
             </View>
 
-            <View style={styles.memberContent}>
-              <Text style={styles.memberLabel}>Aktuális egyenleg</Text>
-              <Text style={styles.memberPoints} testID="profile-points">{points.toLocaleString("hu-HU")}</Text>
-              <Text style={styles.memberHint}>Pontjaid beválthatók italokra, kedvezményekre és élményekre.</Text>
+            <View style={styles.memberMainRow}>
+              <View style={styles.memberContent}>
+                <Text style={styles.memberLabel}>Aktuális egyenleg</Text>
+                <View style={styles.memberPointsRow}>
+                  <Text style={styles.memberPoints} testID="profile-points">{points.toLocaleString("hu-HU")}</Text>
+                  <Text style={styles.memberPointsUnit}>pont</Text>
+                </View>
+              </View>
+              <View style={styles.memberGiftRing}>
+                <View style={styles.memberGiftRingInner}>
+                  <Gift size={22} color="#00C8E8" strokeWidth={1.9} />
+                </View>
+              </View>
             </View>
 
             <View style={styles.memberCta}>
               <Text style={styles.memberCtaText}>Jutalmak megnyitása</Text>
-              <ChevronRight size={16} color="#001014" />
+              <ChevronRight size={17} color="#001014" />
             </View>
-          </LinearGradient>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.statsRow}>
@@ -357,34 +358,41 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-    backgroundColor: "rgba(10,16,22,0.76)",
+    borderColor: "rgba(0, 200, 232, 0.24)",
+    backgroundColor: "rgba(8, 22, 28, 0.92)",
+    shadowColor: "#00C8E8",
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   memberCard: {
-    padding: 16,
-    minHeight: 160,
-  },
-  memberTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
+    padding: 15,
   },
   memberBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    alignSelf: "flex-start",
+    gap: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(0, 200, 232, 0.08)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
+    marginBottom: 12,
   },
   memberBadgeText: {
-    color: "rgba(255,255,255,0.74)",
-    fontSize: 11,
+    color: "rgba(255,255,255,0.66)",
+    fontSize: 10,
     fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  memberMainRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
   },
   memberContent: {
     flex: 1,
@@ -397,31 +405,48 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     marginBottom: 3,
   },
+  memberPointsRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 7,
+  },
   memberPoints: {
     color: "#00C8E8",
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 40,
+    lineHeight: 44,
     fontWeight: "900",
-    letterSpacing: -1,
+    letterSpacing: -1.2,
   },
-  memberHint: {
-    color: "rgba(255,255,255,0.52)",
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-    maxWidth: 240,
+  memberPointsUnit: {
+    color: "rgba(255,255,255,0.56)",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  memberGiftRing: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 2,
+    borderColor: "rgba(0, 200, 232, 0.34)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  memberGiftRingInner: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   memberCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    alignSelf: "flex-start",
-    gap: 4,
-    borderRadius: 999,
+    gap: 5,
+    borderRadius: 15,
     backgroundColor: "#00C8E8",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 12,
+    paddingVertical: 13,
   },
   memberCtaText: {
     color: "#001014",
