@@ -198,7 +198,7 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.memberCta}>
-              <Text style={styles.memberCtaText}>Jutalmak megnyitása</Text>
+              <Text style={styles.memberCtaText}>Küldetések megnyitása</Text>
               <ChevronRight size={17} color="#001014" />
             </View>
           </View>

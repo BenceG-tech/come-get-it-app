@@ -1,17 +1,18 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, useWindowDimensions } from "react-native";
+import { StyleSheet, View, Text, ScrollView } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import Colors from "@/constants/colors";
-import RewardCard from "@/components/RewardCard";
+import RewardListCard from "@/components/RewardListCard";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
 import { mergeWithMockRewards } from "@/data/mockRewards";
+import { useAppContext } from "@/context/AppContext";
 
 export default function RewardsCategoryScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
   const category = (params.category ?? "all") as string;
-  const { width } = useWindowDimensions();
+  const { points } = useAppContext();
 
   const rewardsQuery = useQuery({
     queryKey: ["rewards", "app"],
@@ -61,7 +62,6 @@ export default function RewardsCategoryScreen() {
   };
 
   const title = titleMap[category] ?? category;
-  const isPaged = category !== "all";
 
   return (
     <View style={styles.container} testID="rewards-category-screen">
@@ -78,42 +78,14 @@ export default function RewardsCategoryScreen() {
         <View style={styles.empty} testID="rewards-category-loading">
           <Text style={styles.emptyText}>Jutalmak betöltése...</Text>
         </View>
-      ) : isPaged ? (
-        <ScrollView
-          horizontal
-          pagingEnabled
-          snapToInterval={width}
-          decelerationRate="fast"
-          snapToAlignment="center"
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{}}
-          testID="rewards-category-pager"
-        >
-          {filtered.map((item) => (
-            <View key={item.id} style={{ width }}>
-              <RewardCard reward={item} variant="page" />
-            </View>
-          ))}
-          {filtered.length === 0 && (
-            <View style={[styles.empty, { width }]}>
-              <Text style={styles.emptyText}>Nincs jutalom ebben a kategóriában.</Text>
-            </View>
-          )}
-        </ScrollView>
       ) : (
         <ScrollView
-          pagingEnabled
-          snapToInterval={width}
-          decelerationRate="fast"
-          snapToAlignment="start"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.verticalList}
-          testID="rewards-all-list"
+          testID="rewards-category-list"
         >
           {filtered.map((item) => (
-            <View key={item.id} style={{ width }}>
-              <RewardCard reward={item} variant="page" />
-            </View>
+            <RewardListCard key={item.id} reward={item} points={points} />
           ))}
           {filtered.length === 0 && (
             <View style={styles.empty}>
@@ -131,15 +103,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  grid: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 15,
-  },
   verticalList: {
+    paddingTop: 12,
     paddingBottom: 40,
   },
   empty: {

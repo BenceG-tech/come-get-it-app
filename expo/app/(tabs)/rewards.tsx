@@ -5,10 +5,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   BadgePercent,
   ChevronRight,
-  CreditCard,
   Martini,
+  Nfc,
   Send,
-  ShieldCheck,
   Sparkles,
   UtensilsCrossed,
   type LucideIcon,
@@ -118,7 +117,7 @@ export default function RewardsScreen() {
     router.push({ pathname: "/(tabs)/rewards-category/[category]", params: { category: cat } });
   };
 
-  const cardWidth = 260;
+  const cardWidth = 240;
 
   return (
     <View style={styles.container} testID="rewards-screen">
@@ -138,34 +137,36 @@ export default function RewardsScreen() {
         </View>
 
         <TouchableOpacity style={styles.linkCardTouch} activeOpacity={0.92} accessibilityRole="button" testID="add-card-button">
-          <LinearGradient
-            colors={["#0B1B22", "#07242E", "#041318"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.bankCard}
-          >
-            <View style={styles.bankShine} pointerEvents="none" />
-            <View style={styles.bankTopRow}>
-              <View style={styles.bankChip}>
-                <View style={styles.bankChipLine} />
-                <View style={styles.bankChipLineVertical} />
+          <View style={styles.bankCard}>
+            <LinearGradient
+              colors={["#00C8E8", "#00A6C4"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.bankBand}
+            >
+              <Text style={styles.bankBandText}>COME GET IT</Text>
+              <Nfc size={17} color="#001014" />
+            </LinearGradient>
+            <View style={styles.bankBody}>
+              <View style={styles.bankMidRow}>
+                <View style={styles.bankChip}>
+                  <View style={styles.bankChipLine} />
+                  <View style={styles.bankChipLineVertical} />
+                </View>
+                <Text style={styles.bankNumber}>••••  4412</Text>
               </View>
-              <View style={styles.bankCardIconWrap}>
-                <CreditCard size={26} color="#00C8E8" />
+              <View style={styles.bankBottomRow}>
+                <View>
+                  <Text style={styles.bankLabel}>KÁRTYABIRTOKOS</Text>
+                  <Text style={styles.bankName}>CLUB TAG</Text>
+                </View>
+                <View style={styles.bankCircles}>
+                  <View style={styles.bankCircleLeft} />
+                  <View style={styles.bankCircleRight} />
+                </View>
               </View>
             </View>
-            <Text style={styles.bankNumber}>••••  ••••  ••••  4412</Text>
-            <View style={styles.bankBottomRow}>
-              <View>
-                <Text style={styles.bankLabel}>KÁRTYABIRTOKOS</Text>
-                <Text style={styles.bankBrand}>COME GET IT</Text>
-              </View>
-              <View style={styles.secureBadge}>
-                <ShieldCheck size={13} color="rgba(255,255,255,0.76)" />
-                <Text style={styles.secureBadgeText}>Biztonságos</Text>
-              </View>
-            </View>
-          </LinearGradient>
+          </View>
           <View style={styles.linkCardFooter}>
             <Text style={styles.linkCardHint}>Automatikusan pontot kapsz, amikor partnerhelyen fizetsz.</Text>
             <View style={styles.linkCardCta}>
@@ -536,33 +537,40 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   bankCard: {
-    padding: 20,
-    minHeight: 168,
-    justifyContent: "space-between",
+    backgroundColor: "#06090C",
     overflow: "hidden",
   },
-  bankShine: {
-    position: "absolute",
-    top: -70,
-    right: -30,
-    width: 130,
-    height: 320,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    transform: [{ rotate: "24deg" }],
-  },
-  bankTopRow: {
+  bankBand: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  bankBandText: {
+    color: "#001014",
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 2.2,
+  },
+  bankBody: {
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 14,
+  },
+  bankMidRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 16,
   },
   bankChip: {
-    width: 42,
-    height: 31,
-    borderRadius: 7,
-    backgroundColor: "rgba(0, 200, 232, 0.22)",
+    width: 38,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "rgba(246, 200, 100, 0.28)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.45)",
+    borderColor: "rgba(246, 200, 100, 0.6)",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -571,30 +579,19 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "100%",
     height: 1,
-    backgroundColor: "rgba(0, 200, 232, 0.55)",
+    backgroundColor: "rgba(246, 200, 100, 0.65)",
   },
   bankChipLineVertical: {
     position: "absolute",
     width: 1,
     height: "100%",
-    backgroundColor: "rgba(0, 200, 232, 0.55)",
-  },
-  bankCardIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 17,
-    backgroundColor: "rgba(0, 200, 232, 0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.42)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "rgba(246, 200, 100, 0.65)",
   },
   bankNumber: {
-    color: "rgba(255,255,255,0.88)",
-    fontSize: 19,
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 18,
     fontWeight: "800",
-    letterSpacing: 2.4,
-    marginBottom: 18,
+    letterSpacing: 2.6,
   },
   bankBottomRow: {
     flexDirection: "row",
@@ -608,11 +605,28 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     marginBottom: 3,
   },
-  bankBrand: {
-    color: "#00C8E8",
-    fontSize: 15,
-    fontWeight: "900",
+  bankName: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 13,
+    fontWeight: "800",
     letterSpacing: 1.2,
+  },
+  bankCircles: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  bankCircleLeft: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(0, 200, 232, 0.85)",
+  },
+  bankCircleRight: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(0, 120, 150, 0.75)",
+    marginLeft: -10,
   },
   linkCardFooter: {
     flexDirection: "row",
@@ -644,21 +658,5 @@ const styles = StyleSheet.create({
     color: "#001014",
     fontSize: 13,
     fontWeight: "900",
-  },
-  secureBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-  },
-  secureBadgeText: {
-    color: "rgba(255,255,255,0.76)",
-    fontSize: 12,
-    fontWeight: "700",
   },
 });

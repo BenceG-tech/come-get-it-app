@@ -42,7 +42,7 @@ function categoryMeta(category?: string): { label: string; color: string; icon: 
   }
 }
 
-function BigRewardCardInner({ reward, width = 260, canRedeem, testID }: BigRewardCardProps) {
+function BigRewardCardInner({ reward, width = 240, canRedeem, testID }: BigRewardCardProps) {
   const meta = useMemo(() => categoryMeta(reward.category), [reward.category]);
   const Icon = meta.icon;
 
@@ -66,14 +66,20 @@ function BigRewardCardInner({ reward, width = 260, canRedeem, testID }: BigRewar
         locations={[0, 0.4, 1]}
         style={styles.overlay}
       />
+      <LinearGradient
+        colors={["rgba(0,0,0,0.72)", "rgba(0,0,0,0.0)"]}
+        style={styles.topOverlay}
+        pointerEvents="none"
+      />
 
-      <View style={styles.partnerBadge}>
-        <Icon size={13} color="#001014" />
-        <Text style={styles.partnerBadgeText}>{reward.partner_name ?? "Come Get It"}</Text>
-      </View>
-
-      <View style={styles.pointsChip}>
-        <Text style={styles.pointsChipText}>{reward.points_required.toLocaleString("hu-HU")} pont</Text>
+      <View style={styles.topRow} pointerEvents="none">
+        <View style={styles.partnerBadge}>
+          <Icon size={11} color={CYAN} />
+          <Text style={styles.partnerBadgeText} numberOfLines={1}>{reward.partner_name ?? "Come Get It"}</Text>
+        </View>
+        <View style={styles.pointsChip}>
+          <Text style={styles.pointsChipText}>{reward.points_required.toLocaleString("hu-HU")} p</Text>
+        </View>
       </View>
 
       <View style={styles.bottomContent}>
@@ -99,7 +105,7 @@ export default memo(BigRewardCardInner);
 
 const styles = StyleSheet.create({
   card: {
-    height: 320,
+    height: 290,
     borderRadius: 22,
     overflow: "hidden",
     marginRight: 14,
@@ -126,33 +132,45 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  partnerBadge: {
+  topOverlay: {
     position: "absolute",
-    top: 12,
-    left: 12,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 64,
+  },
+  topRow: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    right: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  partnerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.66)",
+    backgroundColor: "rgba(0,0,0,0.72)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.14)",
+    flexShrink: 1,
   },
   partnerBadgeText: {
     color: "#FFFFFF",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
     letterSpacing: 0.3,
   },
   pointsChip: {
-    position: "absolute",
-    top: 12,
-    right: 12,
     backgroundColor: CYAN,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
     borderRadius: 999,
     shadowColor: CYAN,
     shadowOpacity: 0.3,
@@ -162,14 +180,14 @@ const styles = StyleSheet.create({
   },
   pointsChipText: {
     color: "#001014",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "900",
   },
   bottomContent: {
     position: "absolute",
-    left: 14,
-    right: 14,
-    bottom: 14,
+    left: 13,
+    right: 13,
+    bottom: 13,
   },
   categoryRow: {
     flexDirection: "row",
@@ -196,9 +214,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "900",
-    lineHeight: 22,
+    lineHeight: 20,
     letterSpacing: -0.3,
   },
   statusRow: {

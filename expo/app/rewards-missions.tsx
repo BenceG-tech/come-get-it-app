@@ -4,8 +4,13 @@ import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import {
   ArrowLeft,
+  Beer,
+  Building2,
+  Cake,
   CalendarClock,
   Camera,
+  Crown,
+  CupSoda,
   Flame,
   Gift,
   Landmark,
@@ -13,12 +18,16 @@ import {
   Martini,
   Moon,
   PartyPopper,
+  Rocket,
   Smartphone,
   Sparkles,
   Star,
   Sunrise,
+  Trophy,
+  UserPlus,
   Users,
   Wine,
+  Zap,
   type LucideIcon,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -37,6 +46,7 @@ type Mission = {
   progress: number;
   total: number;
   icon: LucideIcon;
+  color: string;
   category: MissionCategory;
   isCompleted: boolean;
   expiryDate?: string;
@@ -56,35 +66,35 @@ const categoryTabs: CategoryTab[] = [
 ];
 
 const missions: Mission[] = [
-  { id: "1", title: "7 napos sorozat", description: "Látogass meg 7 egymást követő napon különböző vendéglátóhelyeket!", points: 800, progress: 3, total: 7, icon: Flame, category: "visits", isCompleted: false },
-  { id: "2", title: "Ruin Bar Felfedező", description: "Látogass meg 5 különböző ruin bart!", points: 600, progress: 2, total: 5, icon: Landmark, category: "visits", isCompleted: false },
-  { id: "3", title: "Craft Beer Rajongó", description: "Látogass meg 10 craft beer helyet!", points: 700, progress: 4, total: 10, icon: Martini, category: "visits", isCompleted: false, expiryDate: "2026. 11. 30." },
-  { id: "4", title: "Rooftop Vadász", description: "Látogass meg 3 különböző rooftop bart!", points: 500, progress: 1, total: 3, icon: Sparkles, category: "visits", isCompleted: false },
-  { id: "5", title: "Wine Bar Szakértő", description: "Látogass meg 5 wine bart!", points: 550, progress: 0, total: 5, icon: Wine, category: "visits", isCompleted: false },
-  { id: "6", title: "Cocktail Bar Mester", description: "Látogass meg 8 cocktail bart!", points: 650, progress: 3, total: 8, icon: Martini, category: "visits", isCompleted: false },
-  { id: "7", title: "Éjszakai Bagoly", description: "Látogass meg egy helyet éjfél után!", points: 300, progress: 0, total: 1, icon: Moon, category: "visits", isCompleted: false },
-  { id: "8", title: "Early Bird", description: "Látogass meg egy helyet délelőtt 11-ig!", points: 300, progress: 0, total: 1, icon: Sunrise, category: "visits", isCompleted: false },
-  { id: "9", title: "Hétvégi Harcos", description: "Látogass meg 5 helyet hétvégén!", points: 450, progress: 2, total: 5, icon: PartyPopper, category: "visits", isCompleted: false },
-  { id: "10", title: "Visszatérő Vendég", description: "Látogass meg ugyanazt a helyet 3 egymást követő héten!", points: 600, progress: 1, total: 3, icon: CalendarClock, category: "visits", isCompleted: false },
+  { id: "1", title: "7 napos sorozat", description: "Látogass meg 7 egymást követő napon különböző vendéglátóhelyeket!", points: 800, progress: 3, total: 7, icon: Flame, color: "#FF8A3D", category: "visits", isCompleted: false },
+  { id: "2", title: "Ruin Bar Felfedező", description: "Látogass meg 5 különböző ruin bart!", points: 600, progress: 2, total: 5, icon: Landmark, color: "#A78BFA", category: "visits", isCompleted: false },
+  { id: "3", title: "Craft Beer Rajongó", description: "Látogass meg 10 craft beer helyet!", points: 700, progress: 4, total: 10, icon: Beer, color: "#F6B93B", category: "visits", isCompleted: false, expiryDate: "2026. 11. 30." },
+  { id: "4", title: "Rooftop Vadász", description: "Látogass meg 3 különböző rooftop bart!", points: 500, progress: 1, total: 3, icon: Building2, color: "#7DD3FC", category: "visits", isCompleted: false },
+  { id: "5", title: "Wine Bar Szakértő", description: "Látogass meg 5 wine bart!", points: 550, progress: 0, total: 5, icon: Wine, color: "#E85D75", category: "visits", isCompleted: false },
+  { id: "6", title: "Cocktail Bar Mester", description: "Látogass meg 8 cocktail bart!", points: 650, progress: 3, total: 8, icon: Martini, color: "#00C8E8", category: "visits", isCompleted: false },
+  { id: "7", title: "Éjszakai Bagoly", description: "Látogass meg egy helyet éjfél után!", points: 300, progress: 0, total: 1, icon: Moon, color: "#9B8CFF", category: "visits", isCompleted: false },
+  { id: "8", title: "Early Bird", description: "Látogass meg egy helyet délelőtt 11-ig!", points: 300, progress: 0, total: 1, icon: Sunrise, color: "#FFD646", category: "visits", isCompleted: false },
+  { id: "9", title: "Hétvégi Harcos", description: "Látogass meg 5 helyet hétvégén!", points: 450, progress: 2, total: 5, icon: PartyPopper, color: "#FB7185", category: "visits", isCompleted: false },
+  { id: "10", title: "Visszatérő Vendég", description: "Látogass meg ugyanazt a helyet 3 egymást követő héten!", points: 600, progress: 1, total: 3, icon: CalendarClock, color: "#34D399", category: "visits", isCompleted: false },
 
-  { id: "13", title: "Sör Mester", description: "Válts be 10 ingyen sört!", points: 500, progress: 3, total: 10, icon: Martini, category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
-  { id: "14", title: "Koktél Guru", description: "Válts be 5 ingyen koktélt!", points: 400, progress: 1, total: 5, icon: Martini, category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
-  { id: "15", title: "Wine Connoisseur", description: "Válts be 8 ingyen bort!", points: 600, progress: 2, total: 8, icon: Wine, category: "redeems", isCompleted: false, expiryDate: "2026. 12. 31." },
-  { id: "16", title: "Shot Master", description: "Válts be 15 ingyen shotot!", points: 450, progress: 7, total: 15, icon: Sparkles, category: "redeems", isCompleted: false, expiryDate: "2026. 11. 15." },
-  { id: "18", title: "Gin & Tonic Fan", description: "Válts be 7 ingyen gin tonicot!", points: 420, progress: 3, total: 7, icon: Martini, category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
-  { id: "19", title: "Prosecco Party", description: "Válts be 4 ingyen proseccot!", points: 480, progress: 1, total: 4, icon: PartyPopper, category: "redeems", isCompleted: false, expiryDate: "2026. 11. 30." },
+  { id: "13", title: "Sör Mester", description: "Válts be 10 ingyen sört!", points: 500, progress: 3, total: 10, icon: Beer, color: "#F6B93B", category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
+  { id: "14", title: "Koktél Guru", description: "Válts be 5 ingyen koktélt!", points: 400, progress: 1, total: 5, icon: Martini, color: "#00C8E8", category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
+  { id: "15", title: "Wine Connoisseur", description: "Válts be 8 ingyen bort!", points: 600, progress: 2, total: 8, icon: Wine, color: "#E85D75", category: "redeems", isCompleted: false, expiryDate: "2026. 12. 31." },
+  { id: "16", title: "Shot Master", description: "Válts be 15 ingyen shotot!", points: 450, progress: 7, total: 15, icon: Zap, color: "#FFD646", category: "redeems", isCompleted: false, expiryDate: "2026. 11. 15." },
+  { id: "18", title: "Gin & Tonic Fan", description: "Válts be 7 ingyen gin tonicot!", points: 420, progress: 3, total: 7, icon: CupSoda, color: "#34D399", category: "redeems", isCompleted: false, expiryDate: "2026. 10. 31." },
+  { id: "19", title: "Prosecco Party", description: "Válts be 4 ingyen proseccot!", points: 480, progress: 1, total: 4, icon: PartyPopper, color: "#F6B17A", category: "redeems", isCompleted: false, expiryDate: "2026. 11. 30." },
 
-  { id: "21", title: "Barát Meghívó", description: "Hívd meg egy barátodat, aki először használja a Come Get It appot!", points: 400, progress: 0, total: 1, icon: Users, category: "social", isCompleted: false },
-  { id: "22", title: "Társaság Szervező", description: "Látogass meg 5 helyet barátokkal együtt!", points: 600, progress: 2, total: 5, icon: Users, category: "social", isCompleted: false },
-  { id: "24", title: "Csapat Kapitány", description: "Hívj meg 3 barátot, akik mind használják az appot!", points: 900, progress: 1, total: 3, icon: Users, category: "social", isCompleted: false },
-  { id: "25", title: "Születésnapi Buli", description: "Ünnepelj egy születésnapot 5+ fővel egy helyen!", points: 500, progress: 0, total: 1, icon: PartyPopper, category: "social", isCompleted: false },
+  { id: "21", title: "Barát Meghívó", description: "Hívd meg egy barátodat, aki először használja a Come Get It appot!", points: 400, progress: 0, total: 1, icon: UserPlus, color: "#34D399", category: "social", isCompleted: false },
+  { id: "22", title: "Társaság Szervező", description: "Látogass meg 5 helyet barátokkal együtt!", points: 600, progress: 2, total: 5, icon: Users, color: "#7DD3FC", category: "social", isCompleted: false },
+  { id: "24", title: "Csapat Kapitány", description: "Hívj meg 3 barátot, akik mind használják az appot!", points: 900, progress: 1, total: 3, icon: Crown, color: "#FFD646", category: "social", isCompleted: false },
+  { id: "25", title: "Születésnapi Buli", description: "Ünnepelj egy születésnapot 5+ fővel egy helyen!", points: 500, progress: 0, total: 1, icon: Cake, color: "#FB7185", category: "social", isCompleted: false },
 
-  { id: "28", title: "App Használó - Kezdő", description: "Használd az appot 5 napon keresztül!", points: 200, progress: 5, total: 5, icon: Smartphone, category: "app", isCompleted: true },
-  { id: "29", title: "App Használó - Haladó", description: "Használd az appot 10 napon keresztül!", points: 400, progress: 8, total: 10, icon: Smartphone, category: "app", isCompleted: false },
-  { id: "30", title: "App Használó - Mester", description: "Használd az appot 20 napon keresztül!", points: 800, progress: 8, total: 20, icon: Smartphone, category: "app", isCompleted: false },
-  { id: "32", title: "Értékelő", description: "Értékelj 10 helyet az appban!", points: 300, progress: 3, total: 10, icon: Star, category: "app", isCompleted: false },
-  { id: "33", title: "Fotós", description: "Tölts fel 15 fotót helyekről!", points: 450, progress: 6, total: 15, icon: Camera, category: "app", isCompleted: false },
-  { id: "34", title: "Check-in Bajnok", description: "Végezz 25 check-int különböző helyeken!", points: 750, progress: 12, total: 25, icon: MapPin, category: "app", isCompleted: false },
+  { id: "28", title: "App Használó - Kezdő", description: "Használd az appot 5 napon keresztül!", points: 200, progress: 5, total: 5, icon: Smartphone, color: "#00C8E8", category: "app", isCompleted: true },
+  { id: "29", title: "App Használó - Haladó", description: "Használd az appot 10 napon keresztül!", points: 400, progress: 8, total: 10, icon: Rocket, color: "#A78BFA", category: "app", isCompleted: false },
+  { id: "30", title: "App Használó - Mester", description: "Használd az appot 20 napon keresztül!", points: 800, progress: 8, total: 20, icon: Trophy, color: "#FFD646", category: "app", isCompleted: false },
+  { id: "32", title: "Értékelő", description: "Értékelj 10 helyet az appban!", points: 300, progress: 3, total: 10, icon: Star, color: "#F6B93B", category: "app", isCompleted: false },
+  { id: "33", title: "Fotós", description: "Tölts fel 15 fotót helyekről!", points: 450, progress: 6, total: 15, icon: Camera, color: "#FB7185", category: "app", isCompleted: false },
+  { id: "34", title: "Check-in Bajnok", description: "Végezz 25 check-int különböző helyeken!", points: 750, progress: 12, total: 25, icon: MapPin, color: "#34D399", category: "app", isCompleted: false },
 ];
 
 const BG_URI = "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/nuxl82z0l3d1zls67c787";
@@ -115,8 +125,14 @@ export default function RewardsMissionsScreen() {
         testID={`mission-${mission.id}`}
       >
         <View style={styles.missionTopRow}>
-          <View style={[styles.missionIconWrap, isAlmostDone && styles.missionIconWrapHighlight]}>
-            <Icon size={19} color={CYAN} strokeWidth={1.9} />
+          <View
+            style={[
+              styles.missionIconWrap,
+              { backgroundColor: `${mission.color}1A`, borderColor: `${mission.color}40` },
+              isAlmostDone && { backgroundColor: `${mission.color}2E`, borderColor: `${mission.color}66` },
+            ]}
+          >
+            <Icon size={19} color={mission.color} strokeWidth={1.9} />
           </View>
           <View style={styles.missionTextBlock}>
             <Text style={styles.missionTitle} numberOfLines={1}>{mission.title}</Text>
@@ -369,15 +385,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 14,
-    backgroundColor: "rgba(0, 200, 232, 0.10)",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.22)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  missionIconWrapHighlight: {
-    backgroundColor: "rgba(0, 200, 232, 0.18)",
-    borderColor: "rgba(0, 200, 232, 0.45)",
   },
   missionTextBlock: {
     flex: 1,
