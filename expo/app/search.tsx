@@ -32,10 +32,13 @@ export default function SearchScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await rest('/venues?select=id,name,address,image_url,plan,created_at,website_url,is_paused&order=created_at.desc&limit=100');
+      const res = await rest('/venues?select=id,name,address,image_url,plan,created_at,website_url,is_paused&is_paused=not.is.true&order=created_at.desc&limit=100');
       const venueData = (await res.json()) as SupaVenue[];
-      setVenues(Array.isArray(venueData) ? venueData : []);
-      console.info('[SearchScreen] Loaded venues for search:', Array.isArray(venueData) ? venueData.length : 0);
+      const visibleVenues = (Array.isArray(venueData) ? venueData : []).filter(
+        (venue: SupaVenue) => venue.is_paused !== true
+      );
+      setVenues(visibleVenues);
+      console.info('[SearchScreen] Loaded venues for search:', visibleVenues.length);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       console.error('[SearchScreen] Load error', e);

@@ -7,7 +7,14 @@ type FetchVenuesOptions = {
   limit?: number;
   offset?: number;
   orderByCreated?: boolean;
+  /** When true, paused/hidden venues are included (admin use only). Defaults to false. */
+  includeHidden?: boolean;
 };
+
+/** Returns true when a venue is visible to app users (not hidden/paused in the admin panel). */
+export function isVenueVisible(venue: Pick<Venue, 'is_paused'>): boolean {
+  return venue.is_paused !== true;
+}
 
 type VenueImageRow = {
   url?: string | null;
@@ -41,6 +48,7 @@ function normalizeVenue(venue: Venue): Venue {
 function buildVenuesRestPath(options: FetchVenuesOptions): string {
   const params: string[] = [`select=${encodeURIComponent(options.columns ?? '*')}`];
 
+  if (!(options.includeHidden ?? false)) params.push('is_paused=not.is.true');
   if (options.limit !== undefined) params.push(`limit=${options.limit}`);
   if (options.offset !== undefined) params.push(`offset=${options.offset}`);
   if (options.orderByCreated ?? true) params.push('order=created_at.desc');
@@ -55,9 +63,15 @@ function buildVenuesRestPath(options: FetchVenuesOptions): string {
 export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Venue[]> {
   const columns = options.columns ?? '*';
 
+  const includeHidden = options.includeHidden ?? false;
+
   try {
     const supabase = getSupabase();
     let query = supabase.from('venues').select(columns);
+
+    if (!includeHidden) {
+      query = query.or('is_paused.is.null,is_paused.eq.false');
+    }
 
     if (options.orderByCreated ?? true) {
       query = query.order('created_at', { ascending: false });
@@ -75,8 +89,9 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
     if (error) throw error;
 
     const rows = Array.isArray(data) ? (data as unknown as Venue[]) : [];
-    console.log('[VenueService] Venues loaded via Supabase client', { count: rows.length });
-    return rows.map(normalizeVenue);
+    const visible = includeHidden ? rows : rows.filter(isVenueVisible);
+    console.log('[VenueService] Venues loaded via Supabase client', { count: visible.length, hiddenFiltered: rows.length - visible.length });
+    return visible.map(normalizeVenue);
   } catch (error) {
     console.warn('[VenueService] Supabase client venue fetch failed, falling back to REST', logError(error));
   }
@@ -84,8 +99,9 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
   const response = await rest(buildVenuesRestPath(options));
   const json = (await response.json()) as unknown;
   const rows = Array.isArray(json) ? (json as Venue[]) : [];
-  console.log('[VenueService] Venues loaded via REST fallback', { count: rows.length });
-  return rows.map(normalizeVenue);
+  const visible = includeHidden ? rows : rows.filter(isVenueVisible);
+  console.log('[VenueService] Venues loaded via REST fallback', { count: visible.length, hiddenFiltered: rows.length - visible.length });
+  return visible.map(normalizeVenue);
 }
 
 export async function fetchVenueCoverUrl(venueId: string): Promise<string | null> {

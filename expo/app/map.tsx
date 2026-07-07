@@ -53,8 +53,11 @@ export default function MapScreen() {
   useEffect(() => {
     const fetchVenuesAndLocation = async () => {
       try {
-        const venuesResponse = await rest('/venues?select=*');
-        let venuesData: Venue[] = await venuesResponse.json();
+        const venuesResponse = await rest('/venues?select=*&is_paused=not.is.true');
+        const venuesRaw: Venue[] = await venuesResponse.json();
+        const venuesData: Venue[] = (Array.isArray(venuesRaw) ? venuesRaw : []).filter(
+          (venue: Venue) => venue.is_paused !== true
+        );
         console.log('[Map] Fetched venues:', venuesData.length);
         
         // Geocode venues that don't have coordinates.

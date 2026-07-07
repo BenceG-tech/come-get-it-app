@@ -96,6 +96,11 @@ export default function VenueModalScreen() {
           setError('Venue not found');
           return;
         }
+        if (v.is_paused === true) {
+          console.info('[VenueDetail] Venue is hidden by admin, blocking detail view', id);
+          setError('Ez a helyszín jelenleg nem elérhető');
+          return;
+        }
         console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
         
         const latRaw = v.coordinates?.lat ?? v.latitude;
