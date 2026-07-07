@@ -25,7 +25,10 @@ import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { getUserCSRImpact } from "@/lib/csrService";
 
-const COLLAPSED_VISIBLE_HEIGHT = 96 as const;
+const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
+const LOGO_ASPECT_RATIO = 3.5 as const;
+const LOGO_CROP_LEFT_FRACTION = 0.24 as const;
+const LOGO_CROP_VERTICAL_FRACTION = 0.3 as const;
 
 type SnapState = "expanded" | "half" | "collapsed";
 
@@ -61,7 +64,11 @@ export default function BarsScreen() {
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
-  const logoHeight = width <= 375 ? 58 : 66;
+  const logoBoxHeight = width <= 375 ? 34 : 38;
+  const logoDrawHeight = Math.round(logoBoxHeight / (1 - LOGO_CROP_VERTICAL_FRACTION));
+  const logoDrawWidth = Math.round(logoDrawHeight * LOGO_ASPECT_RATIO);
+  const logoCropLeft = Math.round(logoDrawWidth * LOGO_CROP_LEFT_FRACTION);
+  const logoBoxWidth = logoDrawWidth - logoCropLeft;
 
   const expandedTop = insets.top + 8;
   const halfOffset = Math.max(0, Math.round(containerHeight * 0.5) - expandedTop);
@@ -232,6 +239,8 @@ export default function BarsScreen() {
         zoom={13}
         style={StyleSheet.absoluteFillObject}
         onMarkerPress={onMarkerPress}
+        interactive={snapState === "collapsed"}
+        controlsBottomOffset={COLLAPSED_VISIBLE_HEIGHT + 16}
         testID="home-fullscreen-map"
       />
 
@@ -270,11 +279,26 @@ export default function BarsScreen() {
             style={styles.headerRow}
             testID="home-sheet-header"
           >
-            <Image
-              source={{ uri: logoUri }}
-              accessibilityLabel="Come Get It logo"
-              style={[styles.brandLogo, { height: logoHeight }]}
-            />
+            <View
+              style={[
+                styles.logoCropBox,
+                { width: logoBoxWidth, height: logoBoxHeight },
+              ]}
+            >
+              <Image
+                source={{ uri: logoUri }}
+                accessibilityLabel="Come Get It logo"
+                style={[
+                  styles.brandLogo,
+                  {
+                    width: logoDrawWidth,
+                    height: logoDrawHeight,
+                    left: -logoCropLeft,
+                    top: -Math.round((logoDrawHeight - logoBoxHeight) / 2),
+                  },
+                ]}
+              />
+            </View>
             <View style={styles.headerActions}>
               <TouchableOpacity
                 testID="home-search"
@@ -286,6 +310,68 @@ export default function BarsScreen() {
               </TouchableOpacity>
             </View>
           </Pressable>
+
+          <View style={styles.filtersContainer}>
+            <View style={styles.filtersContent}>
+              <TouchableOpacity
+                testID="chip-nyitva"
+                style={[
+                  styles.filterPill,
+                  selectedFilters.includes("nyitva") && styles.filterPillActive,
+                ]}
+                onPress={() => {
+                  const newFilters = selectedFilters.includes("nyitva")
+                    ? selectedFilters.filter((f) => f !== "nyitva")
+                    : [...selectedFilters, "nyitva"];
+                  setSelectedFilters(newFilters);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    selectedFilters.includes("nyitva") && styles.filterPillTextActive,
+                  ]}
+                >
+                  NYITVA
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                testID="chip-free"
+                style={[
+                  styles.filterPill,
+                  selectedFilters.includes("ingyen-ital") && styles.filterPillActive,
+                ]}
+                onPress={() => {
+                  const newFilters = selectedFilters.includes("ingyen-ital")
+                    ? selectedFilters.filter((f) => f !== "ingyen-ital")
+                    : [...selectedFilters, "ingyen-ital"];
+                  setSelectedFilters(newFilters);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    selectedFilters.includes("ingyen-ital") && styles.filterPillTextActive,
+                  ]}
+                >
+                  Ingyen ital elérhető
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                testID="chip-filters"
+                style={styles.filterButton}
+                onPress={openFilter}
+                activeOpacity={0.7}
+              >
+                <Filter size={width <= 375 ? 16 : 18} color="rgba(234,234,234,0.7)" />
+                <Text style={styles.filterButtonText}>Szűrők</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           <Animated.ScrollView
             style={styles.venuesList}
@@ -335,68 +421,6 @@ export default function BarsScreen() {
                 </View>
               </TouchableOpacity>
             )}
-
-            <View style={styles.filtersContainer}>
-              <View style={styles.filtersContent}>
-                <TouchableOpacity
-                  testID="chip-nyitva"
-                  style={[
-                    styles.filterPill,
-                    selectedFilters.includes("nyitva") && styles.filterPillActive,
-                  ]}
-                  onPress={() => {
-                    const newFilters = selectedFilters.includes("nyitva")
-                      ? selectedFilters.filter((f) => f !== "nyitva")
-                      : [...selectedFilters, "nyitva"];
-                    setSelectedFilters(newFilters);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.filterPillText,
-                      selectedFilters.includes("nyitva") && styles.filterPillTextActive,
-                    ]}
-                  >
-                    NYITVA
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  testID="chip-free"
-                  style={[
-                    styles.filterPill,
-                    selectedFilters.includes("ingyen-ital") && styles.filterPillActive,
-                  ]}
-                  onPress={() => {
-                    const newFilters = selectedFilters.includes("ingyen-ital")
-                      ? selectedFilters.filter((f) => f !== "ingyen-ital")
-                      : [...selectedFilters, "ingyen-ital"];
-                    setSelectedFilters(newFilters);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.filterPillText,
-                      selectedFilters.includes("ingyen-ital") && styles.filterPillTextActive,
-                    ]}
-                  >
-                    Ingyen ital elérhető
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  testID="chip-filters"
-                  style={styles.filterButton}
-                  onPress={openFilter}
-                  activeOpacity={0.7}
-                >
-                  <Filter size={width <= 375 ? 16 : 18} color="rgba(234,234,234,0.7)" />
-                  <Text style={styles.filterButtonText}>Szűrők</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
 
             {loading ? (
               <View style={styles.emptyState}>
@@ -502,13 +526,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingLeft: 0,
     paddingRight: 4,
-    paddingBottom: 2,
+    paddingBottom: 0,
+  },
+  logoCropBox: {
+    overflow: "hidden",
   },
   brandLogo: {
-    width: undefined as unknown as number,
-    aspectRatio: 3.5,
+    position: "absolute",
     resizeMode: "contain",
-    marginLeft: -34,
   },
   headerActions: {
     flexDirection: "row",
@@ -521,10 +546,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   filtersContainer: {
-    paddingTop: 2,
-    paddingBottom: 6,
+    paddingTop: 4,
+    paddingBottom: 8,
     borderBottomWidth: 0,
-    backgroundColor: Colors.background,
+    backgroundColor: "#000000",
   },
   filtersContent: {
     paddingHorizontal: 12,

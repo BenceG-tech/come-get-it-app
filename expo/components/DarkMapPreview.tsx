@@ -1,14 +1,35 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { View, Image, Text, StyleSheet, Pressable, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  Image,
+  Text,
+  StyleSheet,
+  Pressable,
+  TouchableOpacity,
+  PanResponder,
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { Plus, Minus, Crosshair } from 'lucide-react-native';
 import { Venue } from '@/types/venue';
 
 const TILE_SIZE = 256 as const;
 const BUDAPEST = { latitude: 47.4979, longitude: 19.0402 } as const;
+const MIN_ZOOM = 11 as const;
+const MAX_ZOOM = 18 as const;
 
 export type ResolvedCoordinate = {
   latitude: number;
   longitude: number;
   approximate: boolean;
+};
+
+type MapView = {
+  latitude: number;
+  longitude: number;
+  zoom: number;
 };
 
 function hashString(value: string): number {
@@ -54,6 +75,27 @@ function latToTileY(lat: number, zoom: number): number {
   return ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * Math.pow(2, zoom);
 }
 
+function tileXToLng(x: number, zoom: number): number {
+  return (x / Math.pow(2, zoom)) * 360 - 180;
+}
+
+function tileYToLat(y: number, zoom: number): number {
+  const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, zoom);
+  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function touchDistance(evt: GestureResponderEvent): number | null {
+  const touches = evt.nativeEvent.touches;
+  if (touches.length < 2) return null;
+  const dx = touches[0].pageX - touches[1].pageX;
+  const dy = touches[0].pageY - touches[1].pageY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 type TileSpec = {
   key: string;
   uri: string;
@@ -67,19 +109,32 @@ type MarkerSpec = {
   top: number;
 };
 
+type GestureStart = {
+  view: MapView;
+  pinchDist: number | null;
+  pinchZoom: number;
+  pinchCenter: { latitude: number; longitude: number };
+  panDisabled: boolean;
+};
+
 type DarkMapPreviewProps = {
   venues: Venue[];
   zoom?: number;
   style?: StyleProp<ViewStyle>;
   onMarkerPress?: (venue: Venue) => void;
   showAttribution?: boolean;
+  /** Enables drag-to-pan, pinch-to-zoom and zoom controls. */
+  interactive?: boolean;
+  /** Bottom offset for the zoom controls (to clear overlaying sheets). */
+  controlsBottomOffset?: number;
   testID?: string;
 };
 
 /**
  * Always-visible dark map rendered from CARTO dark basemap tiles with
- * cyan venue markers. Works on web and native (plain Image tiles),
- * so the venue list map header never appears blank.
+ * cyan venue markers. Works on web and native (plain Image tiles).
+ * When `interactive` is true it supports drag panning, pinch zoom and
+ * on-screen +/- and re-center controls.
  */
 export default function DarkMapPreview({
   venues,
@@ -87,9 +142,12 @@ export default function DarkMapPreview({
   style,
   onMarkerPress,
   showAttribution = true,
+  interactive = false,
+  controlsBottomOffset = 24,
   testID,
 }: DarkMapPreviewProps) {
   const [size, setSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [viewOverride, setViewOverride] = useState<MapView | null>(null);
 
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -100,7 +158,7 @@ export default function DarkMapPreview({
     return venues.slice(0, 30).map((venue) => ({ venue, coord: resolveVenueCoordinate(venue) }));
   }, [venues]);
 
-  const center = useMemo(() => {
+  const defaultCenter = useMemo(() => {
     const precise = coordinates.filter((item) => !item.coord.approximate);
     const source = precise.length > 0 ? precise : coordinates;
     if (source.length === 0) return { latitude: BUDAPEST.latitude, longitude: BUDAPEST.longitude };
@@ -109,21 +167,126 @@ export default function DarkMapPreview({
     return { latitude: latSum / source.length, longitude: lngSum / source.length };
   }, [coordinates]);
 
+  const view: MapView = useMemo(
+    () =>
+      viewOverride ?? {
+        latitude: defaultCenter.latitude,
+        longitude: defaultCenter.longitude,
+        zoom,
+      },
+    [viewOverride, defaultCenter, zoom]
+  );
+
+  const viewRef = useRef<MapView>(view);
+  const interactiveRef = useRef<boolean>(interactive);
+  const gestureRef = useRef<GestureStart | null>(null);
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
+    interactiveRef.current = interactive;
+  }, [interactive]);
+
+  const panResponder = useMemo(() => {
+    const applyPan = (dx: number, dy: number) => {
+      const g = gestureRef.current;
+      if (!g || g.panDisabled) return;
+      const start = g.view;
+      const worldPx = TILE_SIZE * Math.pow(2, start.zoom);
+      const startX = lngToTileX(start.longitude, start.zoom) * TILE_SIZE;
+      const startY = latToTileY(start.latitude, start.zoom) * TILE_SIZE;
+      const nextX = startX - dx;
+      const nextY = clampNumber(startY - dy, 0, worldPx);
+      setViewOverride({
+        latitude: tileYToLat(nextY / TILE_SIZE, start.zoom),
+        longitude: tileXToLng(((nextX % worldPx) + worldPx) % worldPx / TILE_SIZE, start.zoom),
+        zoom: start.zoom,
+      });
+    };
+
+    const applyPinch = (dist: number) => {
+      const g = gestureRef.current;
+      if (!g) return;
+      if (g.pinchDist === null || g.pinchDist <= 0) {
+        g.pinchDist = dist;
+        g.pinchZoom = viewRef.current.zoom;
+        g.pinchCenter = { latitude: viewRef.current.latitude, longitude: viewRef.current.longitude };
+        g.panDisabled = true;
+        return;
+      }
+      const nextZoom = clampNumber(g.pinchZoom + Math.log2(dist / g.pinchDist), MIN_ZOOM, MAX_ZOOM);
+      setViewOverride({
+        latitude: g.pinchCenter.latitude,
+        longitude: g.pinchCenter.longitude,
+        zoom: nextZoom,
+      });
+    };
+
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (evt, g) => {
+        if (!interactiveRef.current) return false;
+        return evt.nativeEvent.touches.length >= 2 || Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4;
+      },
+      onPanResponderGrant: () => {
+        gestureRef.current = {
+          view: { ...viewRef.current },
+          pinchDist: null,
+          pinchZoom: viewRef.current.zoom,
+          pinchCenter: { latitude: viewRef.current.latitude, longitude: viewRef.current.longitude },
+          panDisabled: false,
+        };
+      },
+      onPanResponderMove: (evt, g) => {
+        const dist = touchDistance(evt);
+        if (dist !== null) {
+          applyPinch(dist);
+        } else {
+          applyPan(g.dx, g.dy);
+        }
+      },
+      onPanResponderRelease: () => {
+        gestureRef.current = null;
+      },
+      onPanResponderTerminate: () => {
+        gestureRef.current = null;
+      },
+    });
+  }, []);
+
+  const zoomBy = useCallback((delta: number) => {
+    const current = viewRef.current;
+    setViewOverride({
+      latitude: current.latitude,
+      longitude: current.longitude,
+      zoom: clampNumber(current.zoom + delta, MIN_ZOOM, MAX_ZOOM),
+    });
+  }, []);
+
+  const resetView = useCallback(() => {
+    setViewOverride(null);
+  }, []);
+
   const { tiles, markers } = useMemo(() => {
     if (size.width <= 0 || size.height <= 0) {
       return { tiles: [] as TileSpec[], markers: [] as MarkerSpec[] };
     }
 
-    const worldTiles = Math.pow(2, zoom);
-    const centerPxX = lngToTileX(center.longitude, zoom) * TILE_SIZE;
-    const centerPxY = latToTileY(center.latitude, zoom) * TILE_SIZE;
+    const tileZoom = Math.round(clampNumber(view.zoom, 3, MAX_ZOOM));
+    const scale = Math.pow(2, view.zoom - tileZoom);
+    const scaledTile = TILE_SIZE * scale;
+    const worldTiles = Math.pow(2, tileZoom);
+    const centerPxX = lngToTileX(view.longitude, tileZoom) * scaledTile;
+    const centerPxY = latToTileY(view.latitude, tileZoom) * scaledTile;
     const originX = centerPxX - size.width / 2;
     const originY = centerPxY - size.height / 2;
 
-    const startTileX = Math.floor(originX / TILE_SIZE);
-    const endTileX = Math.floor((originX + size.width) / TILE_SIZE);
-    const startTileY = Math.floor(originY / TILE_SIZE);
-    const endTileY = Math.floor((originY + size.height) / TILE_SIZE);
+    const startTileX = Math.floor(originX / scaledTile);
+    const endTileX = Math.floor((originX + size.width) / scaledTile);
+    const startTileY = Math.floor(originY / scaledTile);
+    const endTileY = Math.floor((originY + size.height) / scaledTile);
 
     const subdomains = ['a', 'b', 'c', 'd'] as const;
     const tileList: TileSpec[] = [];
@@ -134,10 +297,10 @@ export default function DarkMapPreview({
         const wrappedX = ((tx % worldTiles) + worldTiles) % worldTiles;
         const subdomain = subdomains[(Math.abs(tx) + Math.abs(ty)) % subdomains.length];
         tileList.push({
-          key: `${tx}-${ty}`,
-          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_all/${zoom}/${wrappedX}/${ty}@2x.png`,
-          left: tx * TILE_SIZE - originX,
-          top: ty * TILE_SIZE - originY,
+          key: `${tileZoom}-${tx}-${ty}`,
+          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
+          left: tx * scaledTile - originX,
+          top: ty * scaledTile - originY,
         });
       }
     }
@@ -145,21 +308,29 @@ export default function DarkMapPreview({
     const markerList: MarkerSpec[] = coordinates
       .map(({ venue, coord }) => ({
         venue,
-        left: lngToTileX(coord.longitude, zoom) * TILE_SIZE - originX,
-        top: latToTileY(coord.latitude, zoom) * TILE_SIZE - originY,
+        left: lngToTileX(coord.longitude, tileZoom) * scaledTile - originX,
+        top: latToTileY(coord.latitude, tileZoom) * scaledTile - originY,
       }))
       .filter((marker) => marker.left >= -20 && marker.left <= size.width + 20 && marker.top >= -20 && marker.top <= size.height + 20);
 
     return { tiles: tileList, markers: markerList };
-  }, [size, center, zoom, coordinates]);
+  }, [size, view, coordinates]);
+
+  const tileZoomForRender = Math.round(clampNumber(view.zoom, 3, MAX_ZOOM));
+  const renderedTileSize = TILE_SIZE * Math.pow(2, view.zoom - tileZoomForRender);
 
   return (
-    <View style={[styles.container, style]} onLayout={onLayout} testID={testID}>
+    <View
+      style={[styles.container, style]}
+      onLayout={onLayout}
+      testID={testID}
+      {...panResponder.panHandlers}
+    >
       {tiles.map((tile) => (
         <Image
           key={tile.key}
           source={{ uri: tile.uri }}
-          style={[styles.tile, { left: tile.left, top: tile.top }]}
+          style={[styles.tile, { left: tile.left, top: tile.top, width: renderedTileSize, height: renderedTileSize }]}
           resizeMode="cover"
         />
       ))}
@@ -197,6 +368,38 @@ export default function DarkMapPreview({
         );
       })}
 
+      {interactive && (
+        <View style={[styles.controls, { bottom: controlsBottomOffset }]} pointerEvents="box-none">
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() => zoomBy(1)}
+            activeOpacity={0.8}
+            accessibilityLabel="Közelítés"
+            testID="map-zoom-in"
+          >
+            <Plus size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={() => zoomBy(-1)}
+            activeOpacity={0.8}
+            accessibilityLabel="Távolítás"
+            testID="map-zoom-out"
+          >
+            <Minus size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={resetView}
+            activeOpacity={0.8}
+            accessibilityLabel="Alaphelyzet"
+            testID="map-recenter"
+          >
+            <Crosshair size={17} color="#00D1FF" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {showAttribution && (
         <Text style={styles.attribution}>© OpenStreetMap © CARTO</Text>
       )}
@@ -211,8 +414,6 @@ const styles = StyleSheet.create({
   },
   tile: {
     position: 'absolute',
-    width: TILE_SIZE,
-    height: TILE_SIZE,
   },
   markerHitBox: {
     position: 'absolute',
@@ -236,6 +437,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#00D1FF',
     borderWidth: 2,
     borderColor: '#001014',
+  },
+  controls: {
+    position: 'absolute',
+    right: 12,
+    gap: 8,
+  },
+  controlButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.78)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   attribution: {
     position: 'absolute',
