@@ -14,6 +14,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle } from 'react-native-svg';
 import {
   AlertCircle,
   ArrowLeft,
@@ -70,6 +72,15 @@ const MAX_DISTANCE_METERS = 100;
 const WINDOW_SECONDS = 120;
 const CYAN = '#00C8E8' as const;
 
+const RING_SIZE = 156;
+const RING_STROKE = 5;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+const STEP_LABELS = ['Érkezés', 'Mutasd', 'Beváltás'] as const;
+
 function distanceMeters(a: Coordinates, b: Coordinates): number {
   const radius = 6371e3;
   const phi1 = (a.latitude * Math.PI) / 180;
@@ -107,7 +118,8 @@ export default function RedemptionWindowModal({
 }: RedemptionWindowModalProps) {
   const queryClient = useQueryClient();
   const { getCurrentLocation } = useLocation();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const imageHeight = Math.max(200, Math.round(screenHeight * 0.28));
   const [state, setState] = useState<FlowState>('step1_arrive');
   const [windowToken, setWindowToken] = useState<RedemptionWindow | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(WINDOW_SECONDS * 1000);
@@ -125,16 +137,23 @@ export default function RedemptionWindowModal({
   const waterScale = useRef(new Animated.Value(0.7)).current;
   const waterOpacity = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const ringProgress = useRef(new Animated.Value(1)).current;
+  const haloScale = useRef(new Animated.Value(0.4)).current;
 
   const selectedDrinkName = drink?.drinkName ?? 'Ingyen ital';
   const drinkImageUrl = drink?.imageUrl ?? null;
 
+  const localEligibility = useMemo(
+    () => (drink ? checkLocalEligibility(freeDrinkWindows, drink.id) : null),
+    [drink, freeDrinkWindows]
+  );
+
+  const alwaysAvailable = localEligibility?.alwaysAvailable === true;
+
   const nextWindowText = useMemo(() => {
-    if (!drink) return null;
-    const local = checkLocalEligibility(freeDrinkWindows, drink.id);
-    if (local.eligible || !local.nextWindow) return null;
-    return `${getDayLabel(local.nextWindow.day)} ${local.nextWindow.start}-${local.nextWindow.end}`;
-  }, [drink, freeDrinkWindows]);
+    if (!localEligibility || localEligibility.eligible || !localEligibility.nextWindow) return null;
+    return `${getDayLabel(localEligibility.nextWindow.day)} ${localEligibility.nextWindow.start}-${localEligibility.nextWindow.end}`;
+  }, [localEligibility]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -162,7 +181,10 @@ export default function RedemptionWindowModal({
     waterScale.setValue(0.7);
     waterOpacity.setValue(0);
     fadeAnim.setValue(0);
-  }, [clearTimer, stopAnimations, waterOpacity, waterScale, fadeAnim]);
+    ringProgress.stopAnimation();
+    ringProgress.setValue(1);
+    haloScale.setValue(0.4);
+  }, [clearTimer, stopAnimations, waterOpacity, waterScale, fadeAnim, ringProgress, haloScale]);
 
   useEffect(() => {
     if (!visible) reset();
@@ -222,15 +244,30 @@ export default function RedemptionWindowModal({
   // Success animation
   useEffect(() => {
     if (state !== 'success') return;
+    haloScale.setValue(0.4);
     Animated.parallel([
-      Animated.spring(waterScale, { toValue: 1, useNativeDriver: true, damping: 9, stiffness: 90 }),
-      Animated.timing(waterOpacity, { toValue: 1, duration: 480, useNativeDriver: true }),
+      Animated.spring(haloScale, { toValue: 1, useNativeDriver: true, damping: 7, stiffness: 120 }),
+      Animated.sequence([
+        Animated.delay(180),
+        Animated.parallel([
+          Animated.spring(waterScale, { toValue: 1, useNativeDriver: true, damping: 9, stiffness: 90 }),
+          Animated.timing(waterOpacity, { toValue: 1, duration: 480, useNativeDriver: true }),
+        ]),
+      ]),
     ]).start();
-  }, [state, waterOpacity, waterScale]);
+  }, [state, waterOpacity, waterScale, haloScale]);
 
   const startCountdown = useCallback(
     (expiresAt: string) => {
       clearTimer();
+      const totalMs = WINDOW_SECONDS * 1000;
+      const remainingMs = getTimeRemainingMs(expiresAt);
+      ringProgress.setValue(Math.min(1, Math.max(0, remainingMs / totalMs)));
+      Animated.timing(ringProgress, {
+        toValue: 0,
+        duration: remainingMs,
+        useNativeDriver: false,
+      }).start();
       const tick = () => {
         const remaining = getTimeRemainingMs(expiresAt);
         setTimeRemaining(remaining);
@@ -243,7 +280,7 @@ export default function RedemptionWindowModal({
       tick();
       timerRef.current = setInterval(tick, 1000);
     },
-    [clearTimer]
+    [clearTimer, ringProgress]
   );
 
   const handleClose = useCallback(() => {
@@ -385,8 +422,8 @@ export default function RedemptionWindowModal({
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }, [clearTimer, queryClient, windowToken]);
 
-  const renderDrinkImage = (height: number) => (
-    <View style={[styles.drinkImageSection, { height }]}>
+  const renderDrinkImage = () => (
+    <View style={[styles.drinkImageSection, { height: imageHeight }]}>
       {drinkImageUrl ? (
         <Image source={{ uri: drinkImageUrl }} style={styles.drinkImage} resizeMode="cover" />
       ) : (
@@ -394,13 +431,23 @@ export default function RedemptionWindowModal({
           <Text style={styles.drinkImageEmoji}>🍺</Text>
         </View>
       )}
-      <View style={styles.drinkImageGradient} pointerEvents="none" />
+      <LinearGradient
+        colors={['transparent', 'rgba(7,16,20,0.55)', '#071014']}
+        style={styles.drinkImageGradient}
+        pointerEvents="none"
+      />
       <TouchableOpacity style={styles.closeButton} onPress={handleClose} hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
         <X size={22} color={Colors.dark.text} />
       </TouchableOpacity>
       <View style={styles.drinkNameChip}>
         <Text style={styles.drinkNameChipText}>{selectedDrinkName}</Text>
       </View>
+      {alwaysAvailable && (
+        <View style={styles.anytimeChip}>
+          <Clock3 size={12} color="#001014" />
+          <Text style={styles.anytimeChipText}>Bármikor</Text>
+        </View>
+      )}
     </View>
   );
 
@@ -410,8 +457,11 @@ export default function RedemptionWindowModal({
       <View style={styles.stepIndicatorRow}>
         {steps.map((s, idx) => (
           <View key={s} style={styles.stepIndicatorItem}>
-            <View style={[styles.stepDot, s <= currentStep && styles.stepDotActive]}>
-              <Text style={[styles.stepDotText, s <= currentStep && styles.stepDotTextActive]}>{s}</Text>
+            <View style={styles.stepColumn}>
+              <View style={[styles.stepDot, s <= currentStep && styles.stepDotActive]}>
+                <Text style={[styles.stepDotText, s <= currentStep && styles.stepDotTextActive]}>{s}</Text>
+              </View>
+              <Text style={[styles.stepLabel, s <= currentStep && styles.stepLabelActive]}>{STEP_LABELS[s - 1]}</Text>
             </View>
             {idx < steps.length - 1 && <View style={[styles.stepConnector, s < currentStep && styles.stepConnectorActive]} />}
           </View>
@@ -424,7 +474,7 @@ export default function RedemptionWindowModal({
     if (state === 'checking' || state === 'confirming') {
       return (
         <View style={styles.body}>
-          {renderDrinkImage(180)}
+          {renderDrinkImage()}
           <View style={styles.bodyContent}>
             <ActivityIndicator size="large" color={CYAN} />
             <Text style={styles.loadingTitle}>{state === 'checking' ? 'Beváltási ablak nyitása...' : 'Beváltás rögzítése...'}</Text>
@@ -436,9 +486,10 @@ export default function RedemptionWindowModal({
 
     if (state === 'countdown') {
       const lowTime = timeRemaining <= 30_000;
+      const ringColor = lowTime ? '#FF6B6B' : CYAN;
       return (
         <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
-          {renderDrinkImage(180)}
+          {renderDrinkImage()}
           <View style={styles.bodyContent}>
             {renderStepIndicator(3)}
             <View style={styles.readyBadge}>
@@ -448,10 +499,37 @@ export default function RedemptionWindowModal({
             <Text style={styles.stepTitle}>Mutasd a pultosnak</Text>
             <Text style={styles.stepSubtitle}>A pultos a te telefonodon nyomja meg a gombot.</Text>
 
-            <View style={[styles.timerRing, lowTime && styles.timerRingWarning]}>
-              <Clock3 size={22} color={lowTime ? '#FF6B6B' : CYAN} />
-              <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
-              <Text style={styles.timerLabel}>maradt</Text>
+            <View style={styles.timerWrap}>
+              <Svg width={RING_SIZE} height={RING_SIZE} style={styles.timerSvg}>
+                <Circle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeWidth={RING_STROKE}
+                  fill="none"
+                />
+                <AnimatedCircle
+                  cx={RING_SIZE / 2}
+                  cy={RING_SIZE / 2}
+                  r={RING_RADIUS}
+                  stroke={ringColor}
+                  strokeWidth={RING_STROKE}
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
+                  strokeDashoffset={ringProgress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [RING_CIRCUMFERENCE, 0],
+                  })}
+                  transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+                />
+              </Svg>
+              <View style={styles.timerInner} pointerEvents="none">
+                <Clock3 size={20} color={ringColor} />
+                <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
+                <Text style={styles.timerLabel}>maradt</Text>
+              </View>
             </View>
 
             <Text style={styles.drinkName}>{selectedDrinkName}</Text>
@@ -480,13 +558,14 @@ export default function RedemptionWindowModal({
     if (state === 'success') {
       return (
         <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
-          {renderDrinkImage(180)}
+          {renderDrinkImage()}
           <View style={styles.bodyContent}>
-            <View style={styles.successHalo}>
+            <Animated.View style={[styles.successHalo, { transform: [{ scale: haloScale }] }]}>
               <Text style={styles.cheersEmoji}>🍻</Text>
-            </View>
+            </Animated.View>
             <Text style={styles.successTitle}>Egészségedre!</Text>
-            <Text style={styles.successSubtitle}>{selectedDrinkName} sikeresen beváltva.</Text>
+            <Text style={styles.successDrinkName}>{selectedDrinkName}</Text>
+            <Text style={styles.successSubtitle}>sikeresen beváltva</Text>
 
             <Animated.View style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}>
               <View style={styles.waveIcon}>
@@ -520,7 +599,7 @@ export default function RedemptionWindowModal({
     if (state === 'not_eligible' || state === 'error' || state === 'expired') {
       return (
         <View style={styles.body}>
-          {renderDrinkImage(180)}
+          {renderDrinkImage()}
           <View style={styles.bodyContent}>
             <View style={styles.errorIcon}>
               <AlertCircle size={40} color={state === 'expired' ? '#FFB020' : '#FF6B6B'} />
@@ -550,7 +629,7 @@ export default function RedemptionWindowModal({
     if (state === 'step2_show') {
       return (
         <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
-          {renderDrinkImage(180)}
+          {renderDrinkImage()}
           <View style={styles.bodyContent}>
             {renderStepIndicator(2)}
             <Animated.View
@@ -593,7 +672,7 @@ export default function RedemptionWindowModal({
     // Step 1: Legyél a vendéglátóhelyen (default)
     return (
       <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
-        {renderDrinkImage(180)}
+        {renderDrinkImage()}
         <View style={styles.bodyContent}>
           {renderStepIndicator(1)}
           <Animated.View style={[styles.pulseRing, { opacity: pulseOpacity, transform: [{ scale: pulseScale }] }]} />
@@ -604,6 +683,9 @@ export default function RedemptionWindowModal({
           <Text style={styles.stepSubtitle}>
             Látogass el a partnerhelyre, hogy igényelhesd az ingyen italodat. {DEMO_MODE ? '(Demo mód aktív)' : '100 méteren belül kell lenned.'}
           </Text>
+          {alwaysAvailable && (
+            <Text style={styles.anytimeNote}>Ehhez az italhoz nincs időkorlát — bármikor beváltható.</Text>
+          )}
 
           <View style={styles.stepButtons}>
             <TouchableOpacity style={styles.backBtn} onPress={handleClose} activeOpacity={0.84}>
@@ -675,10 +757,37 @@ const styles = StyleSheet.create({
     fontSize: 56,
   },
   drinkImageGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-    borderBottomColor: CYAN,
-    borderBottomWidth: 2,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 110,
+  },
+  anytimeChip: {
+    position: 'absolute',
+    bottom: 14,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: CYAN,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  anytimeChipText: {
+    color: '#001014',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  anytimeNote: {
+    color: CYAN,
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginTop: -12,
+    marginBottom: 18,
   },
   closeButton: {
     position: 'absolute',
@@ -726,7 +835,22 @@ const styles = StyleSheet.create({
   },
   stepIndicatorItem: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  stepColumn: {
     alignItems: 'center',
+    gap: 4,
+    width: 62,
+  },
+  stepLabel: {
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  stepLabelActive: {
+    color: CYAN,
   },
   stepDot: {
     width: 26,
@@ -751,9 +875,11 @@ const styles = StyleSheet.create({
     color: '#001014',
   },
   stepConnector: {
-    width: 32,
+    width: 22,
     height: 2,
     backgroundColor: 'rgba(255,255,255,0.12)',
+    marginTop: 12,
+    marginHorizontal: -8,
   },
   stepConnectorActive: {
     backgroundColor: CYAN,
@@ -886,20 +1012,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
   },
-  timerRing: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 2,
-    borderColor: 'rgba(0, 200, 232, 0.4)',
-    backgroundColor: 'rgba(0, 200, 232, 0.06)',
+  timerWrap: {
+    width: RING_SIZE,
+    height: RING_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
-  timerRingWarning: {
-    borderColor: 'rgba(255,107,107,0.7)',
-    backgroundColor: 'rgba(255,107,107,0.1)',
+  timerSvg: {
+    position: 'absolute',
+  },
+  timerInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timerValue: {
     color: Colors.dark.text,
@@ -989,13 +1114,20 @@ const styles = StyleSheet.create({
     fontSize: 29,
     fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 7,
+    marginBottom: 5,
+  },
+  successDrinkName: {
+    color: CYAN,
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 2,
   },
   successSubtitle: {
     color: 'rgba(255,255,255,0.55)',
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   impactCard: {
     width: '100%',

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Heart } from 'lucide-react-native';
+import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Heart, Martini } from 'lucide-react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -13,6 +13,7 @@ import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday
 import { geocodeVenueAddress } from '@/utils/geocoding';
 import RedemptionWindowModal from '@/components/RedemptionWindowModal';
 import { useFavorites } from '@/context/FavoritesContext';
+import { checkLocalEligibility, isDrinkAlwaysAvailable, getDayLabel } from '@/lib/redemptionService';
 
 
 function getTodayISODay(): number {
@@ -80,6 +81,19 @@ export default function VenueModalScreen() {
       },
     })
   ).current;
+
+  const glowPulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowPulse, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(glowPulse, { toValue: 0, duration: 1400, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [glowPulse]);
 
   useEffect(() => {
     const fetchVenue = async () => {
@@ -205,6 +219,32 @@ export default function VenueModalScreen() {
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
   const venueIsFavorite = venue ? isFavorite(String(venue.id)) : false;
+
+  const currentDrink = freeDrinks[selectedDrinkIndex] ?? null;
+
+  const drinkAlwaysAvailable = useMemo(
+    () => (currentDrink ? isDrinkAlwaysAvailable(windowsNormalized, currentDrink.id) : false),
+    [currentDrink, windowsNormalized]
+  );
+
+  const drinkEligibility = useMemo(
+    () => (currentDrink ? checkLocalEligibility(windowsNormalized, currentDrink.id) : null),
+    [currentDrink, windowsNormalized]
+  );
+
+  const ctaIsActive = drinkEligibility?.eligible === true;
+
+  const ctaSubtitle = useMemo(() => {
+    if (drinkAlwaysAvailable) return 'Bármikor beváltható';
+    if (ctaIsActive) return 'Most elérhető';
+    const next = drinkEligibility?.nextWindow;
+    if (next) {
+      const start = next.start.includes(':') ? next.start.substring(0, 5) : next.start;
+      const end = next.end.includes(':') ? next.end.substring(0, 5) : next.end;
+      return `Következő: ${getDayLabel(next.day)} ${start}-${end}`;
+    }
+    return 'Jelenleg nem elérhető';
+  }, [drinkAlwaysAvailable, ctaIsActive, drinkEligibility]);
 
   const handleFavoritePress = useCallback(async () => {
     if (!venue?.id) return;
@@ -383,29 +423,19 @@ export default function VenueModalScreen() {
           </View>
 
           <View style={styles.content}>
-            <View style={styles.tagsSection}>
-              <View style={styles.earnPointsLabel}>
-                <Star size={16} color={Colors.dark.primary} fill={Colors.dark.primary} />
-                <Text style={styles.earnPointsLabelText}>Szerezz pontokat</Text>
-              </View>
-              {venue.tags && venue.tags.length > 0 ? (
-                <Text style={styles.tagsText}>
-                  {venue.tags.join(' • ')}
-                </Text>
-              ) : null}
-            </View>
+            {venue.tags && venue.tags.length > 0 ? (
+              <Text style={styles.tagsText}>
+                {venue.tags.join(' • ')}
+              </Text>
+            ) : null}
 
-            <View style={styles.earnPointsContent} testID="earn-points-card">
-              <View style={styles.earnPointsIconGroup} testID="earn-points-icon">
-                <Image 
-                  source={{ uri: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/3a1fkjr5hx679da6zl8hz" }}
-                  style={styles.earnPointsStarImage}
-                  resizeMode="contain"
-                />
+            <View style={styles.pointsBar} testID="earn-points-card">
+              <View style={styles.pointsBarIcon} testID="earn-points-icon">
+                <Star size={16} color={Colors.dark.primary} fill={Colors.dark.primary} />
               </View>
-              <View style={styles.earnPointsTextContainer} testID="earn-points-text">
-                <Text style={styles.earnPointsTitle}>SZEREZZ PONTOKAT</Text>
-                <Text style={styles.earnPointsDescription} numberOfLines={2} ellipsizeMode="tail">Ha itt fogyasztasz, gyűlnek a pontjaid, melyeket értékes jutalmakra válthatsz.</Text>
+              <View style={styles.pointsBarTextWrap} testID="earn-points-text">
+                <Text style={styles.pointsBarTitle}>Szerezz pontokat</Text>
+                <Text style={styles.pointsBarDesc} numberOfLines={1} ellipsizeMode="tail">Fogyasztás után pontok, jutalmakra válthatóan</Text>
               </View>
             </View>
 
@@ -498,58 +528,63 @@ export default function VenueModalScreen() {
                   )}
 
                   <View style={styles.daySelectSection}>
-                    <View style={styles.dayTabsRow}>
-                      {dayLabels.map((day, index) => {
-                        const isoDay = index + 1; // Convert to ISO 8601 (1-7)
-                        const currentDrink = freeDrinks[selectedDrinkIndex];
-                        const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, isoDay) : null;
-                        const isAvailable = Boolean(availability);
-                        const isSelected = selectedDay === isoDay;
-                        return (
-                          <Pressable
-                            key={isoDay}
-                            testID={`day-tab-${isoDay}`}
-                            disabled={!isAvailable}
-                            style={({ pressed }) => [
-                              styles.dayTab,
-                              isSelected && styles.dayTabSelected,
-                              !isAvailable && styles.dayTabDisabled,
-                              pressed && isAvailable && styles.dayTabPressed,
-                            ]}
-                            onPress={() => {
-                              if (!isAvailable) return;
-                              console.log(`[VenueDetail] Day tab pressed: ${day.full} (ISO ${isoDay}), availability: ${availability}`);
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              setSelectedDay(isoDay);
-                            }}
-                            hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-                          >
-                            <Text style={[
-                              styles.dayTabText,
-                              isSelected && styles.dayTabTextSelected,
-                              !isAvailable && styles.dayTabTextDisabled
-                            ]}>
-                              {day.short}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                    {freeDrinks[selectedDrinkIndex] && (() => {
-                      const currentDrink = freeDrinks[selectedDrinkIndex];
-                      const availability = getAvailabilityForDrink(currentDrink.id, selectedDay);
-                      const dayLabel = dayLabels[selectedDay - 1]?.full ?? '';
-                      return availability ? (
-                        <View style={styles.timeSlotDisplay}>
-                          <Clock size={16} color={Colors.dark.primary} />
-                          <Text testID="time-slot-text" style={styles.timeSlotText}>{`${dayLabel} ${availability}`}</Text>
+                    {drinkAlwaysAvailable ? (
+                      <View style={styles.anytimeBadge} testID="anytime-badge">
+                        <Clock size={15} color={Colors.dark.primary} />
+                        <Text style={styles.anytimeBadgeText}>Bármikor beváltható</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <View style={styles.dayPillsRow}>
+                          {dayLabels.map((day, index) => {
+                            const isoDay = index + 1; // Convert to ISO 8601 (1-7)
+                            const availability = currentDrink ? getAvailabilityForDrink(currentDrink.id, isoDay) : null;
+                            const isAvailable = Boolean(availability);
+                            const isSelected = selectedDay === isoDay;
+                            return (
+                              <Pressable
+                                key={isoDay}
+                                testID={`day-tab-${isoDay}`}
+                                disabled={!isAvailable}
+                                style={({ pressed }) => [
+                                  styles.dayPill,
+                                  isSelected && styles.dayPillSelected,
+                                  !isAvailable && styles.dayPillDisabled,
+                                  pressed && isAvailable && styles.dayPillPressed,
+                                ]}
+                                onPress={() => {
+                                  if (!isAvailable) return;
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                  setSelectedDay(isoDay);
+                                }}
+                                hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }}
+                              >
+                                <Text style={[
+                                  styles.dayPillText,
+                                  isSelected && styles.dayPillTextSelected,
+                                  !isAvailable && styles.dayPillTextDisabled
+                                ]}>
+                                  {day.short}
+                                </Text>
+                                {isAvailable && !isSelected && <View style={styles.dayPillDot} />}
+                              </Pressable>
+                            );
+                          })}
                         </View>
-                      ) : (
-                        <View style={styles.noTimeSlotDisplay}>
-                          <Text style={styles.noTimeSlotText}>Ezen a napon nincs elérhető idősáv</Text>
-                        </View>
-                      );
-                    })()}
+                        {currentDrink && (() => {
+                          const availability = getAvailabilityForDrink(currentDrink.id, selectedDay);
+                          const dayLabel = dayLabels[selectedDay - 1]?.full ?? '';
+                          return availability ? (
+                            <View style={styles.timeSlotRow}>
+                              <Clock size={14} color={Colors.dark.primary} />
+                              <Text testID="time-slot-text" style={styles.timeSlotRowText}>{`${dayLabel} ${availability}`}</Text>
+                            </View>
+                          ) : (
+                            <Text style={styles.noTimeSlotRowText}>Ezen a napon nincs elérhető idősáv</Text>
+                          );
+                        })()}
+                      </>
+                    )}
                   </View>
                 </View>
               )}
@@ -708,27 +743,40 @@ export default function VenueModalScreen() {
           style={[styles.bottomCarousel, { paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}
           pointerEvents="box-none"
         >
-          <Pressable 
-            style={({ pressed }) => [
-              styles.carouselCard,
-              pressed && styles.carouselCardPressed,
-            ]} 
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowRedeemModal(true);
-            }}
-          >
-            <View style={styles.carouselContent}>
-              <View style={styles.carouselIcon}>
-                <Text style={styles.carouselIconText}>🍺</Text>
+          <View style={styles.ctaWrap}>
+            {ctaIsActive && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.ctaGlow,
+                  { opacity: glowPulse.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.55] }) },
+                ]}
+              />
+            )}
+            <Pressable
+              testID="free-drink-cta"
+              accessibilityRole="button"
+              accessibilityLabel="Kérd ingyen italod"
+              style={({ pressed }) => [
+                styles.ctaButton,
+                !ctaIsActive && styles.ctaButtonInactive,
+                pressed && styles.ctaButtonPressed,
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setShowRedeemModal(true);
+              }}
+            >
+              <View style={[styles.ctaIcon, !ctaIsActive && styles.ctaIconInactive]}>
+                <Martini size={20} color={ctaIsActive ? '#001014' : 'rgba(255,255,255,0.55)'} />
               </View>
-              <View>
-                <Text style={styles.carouselTitle}>Kérd ingyen italod</Text>
-                <Text style={styles.carouselSubtitle}>Most elérhető</Text>
+              <View style={styles.ctaTextWrap}>
+                <Text style={[styles.ctaTitle, !ctaIsActive && styles.ctaTitleInactive]}>Kérd ingyen italod</Text>
+                <Text style={[styles.ctaSubtitle, !ctaIsActive && styles.ctaSubtitleInactive]} numberOfLines={1}>{ctaSubtitle}</Text>
               </View>
-            </View>
-            <ChevronRight size={16} color="#FFFFFF" style={styles.carouselArrow} />
-          </Pressable>
+              <ChevronRight size={18} color={ctaIsActive ? '#00D1FF' : 'rgba(255,255,255,0.4)'} />
+            </Pressable>
+          </View>
         </View>
       </Animated.View>
 
@@ -1348,6 +1396,207 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: 12,
     zIndex: 100,
+  },
+  ctaWrap: {
+    marginHorizontal: 20,
+    position: 'relative',
+  },
+  ctaGlow: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#00D1FF',
+    shadowColor: '#00D1FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  ctaButton: {
+    minHeight: 62,
+    borderRadius: 18,
+    backgroundColor: '#0A161B',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 209, 255, 0.65)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 12,
+    shadowColor: '#00D1FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  ctaButtonInactive: {
+    borderColor: 'rgba(255,255,255,0.14)',
+    shadowOpacity: 0,
+    elevation: 0,
+    backgroundColor: '#0C1114',
+  },
+  ctaButtonPressed: {
+    transform: [{ scale: 0.97 }],
+    opacity: 0.92,
+  },
+  ctaIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#00D1FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctaIconInactive: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+  },
+  ctaTextWrap: {
+    flex: 1,
+  },
+  ctaTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  ctaTitleInactive: {
+    color: 'rgba(255,255,255,0.75)',
+  },
+  ctaSubtitle: {
+    color: '#00D1FF',
+    fontSize: 12.5,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  ctaSubtitleInactive: {
+    color: 'rgba(255,255,255,0.42)',
+    fontWeight: '600',
+  },
+  pointsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(0, 209, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 209, 255, 0.22)',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  pointsBarIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0, 209, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 209, 255, 0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pointsBarTextWrap: {
+    flex: 1,
+  },
+  pointsBarTitle: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  pointsBarDesc: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11.5,
+    marginTop: 1,
+  },
+  anytimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0, 209, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 209, 255, 0.35)',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  anytimeBadgeText: {
+    color: '#00D1FF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  dayPillsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 5,
+  },
+  dayPill: {
+    flex: 1,
+    height: 36,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 36,
+  },
+  dayPillSelected: {
+    backgroundColor: '#00D1FF',
+    borderColor: '#00D1FF',
+  },
+  dayPillDisabled: {
+    opacity: 0.32,
+    backgroundColor: 'transparent',
+  },
+  dayPillPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.94 }],
+  },
+  dayPillText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  dayPillTextSelected: {
+    color: '#001014',
+    fontWeight: '900',
+  },
+  dayPillTextDisabled: {
+    color: 'rgba(255,255,255,0.35)',
+  },
+  dayPillDot: {
+    position: 'absolute',
+    bottom: 4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#00D1FF',
+  },
+  timeSlotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 10,
+    paddingHorizontal: 2,
+  },
+  timeSlotRowText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  noTimeSlotRowText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12.5,
+    fontStyle: 'italic',
+    marginTop: 10,
+    paddingHorizontal: 2,
   },
   carouselCard: {
     height: 56,
