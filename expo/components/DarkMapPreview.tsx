@@ -131,10 +131,10 @@ type DarkMapPreviewProps = {
 };
 
 /**
- * Always-visible dark map rendered from CARTO dark basemap tiles with
- * cyan venue markers. Works on web and native (plain Image tiles).
- * When `interactive` is true it supports drag panning, pinch zoom and
- * on-screen +/- and re-center controls.
+ * Always-visible dark map rendered from CARTO dark basemap tiles
+ * (dark background, light roads) with cyan venue markers. Works on web
+ * and native (plain Image tiles). When `interactive` is true it supports
+ * drag panning, pinch zoom and on-screen +/- and re-center controls.
  */
 export default function DarkMapPreview({
   venues,
@@ -298,7 +298,7 @@ export default function DarkMapPreview({
         const subdomain = subdomains[(Math.abs(tx) + Math.abs(ty)) % subdomains.length];
         tileList.push({
           key: `${tileZoom}-${tx}-${ty}`,
-          uri: `https://${subdomain}.basemaps.cartocdn.com/light_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
+          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
           left: tx * scaledTile - originX,
           top: ty * scaledTile - originY,
         });
@@ -335,7 +335,7 @@ export default function DarkMapPreview({
         />
       ))}
 
-      <View style={styles.darkVeil} pointerEvents="none" />
+      <View style={styles.cyanTint} pointerEvents="none" />
 
       {markers.map((marker) => {
         const dot = (
@@ -412,14 +412,14 @@ export default function DarkMapPreview({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#DDE1E4',
+    backgroundColor: '#0B0E12',
   },
   tile: {
     position: 'absolute',
   },
-  darkVeil: {
+  cyanTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6, 12, 18, 0.34)',
+    backgroundColor: 'rgba(0, 40, 60, 0.08)',
   },
   markerHitBox: {
     position: 'absolute',
@@ -446,8 +446,8 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: '#00D1FF',
-    borderWidth: 2.5,
-    borderColor: '#04121A',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   controls: {
     position: 'absolute',
