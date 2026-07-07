@@ -43,8 +43,8 @@ export default memo(SocialButton);
 const styles = StyleSheet.create({
   btn: {
     width: '100%',
-    height: 48,
-    borderRadius: 24,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: SURFACE_DARK,

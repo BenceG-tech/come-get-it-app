@@ -298,7 +298,7 @@ export default function DarkMapPreview({
         const subdomain = subdomains[(Math.abs(tx) + Math.abs(ty)) % subdomains.length];
         tileList.push({
           key: `${tileZoom}-${tx}-${ty}`,
-          uri: `https://${subdomain}.basemaps.cartocdn.com/light_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
+          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_nolabels/${tileZoom}/${wrappedX}/${ty}@2x.png`,
           left: tx * scaledTile - originX,
           top: ty * scaledTile - originY,
         });
@@ -335,7 +335,6 @@ export default function DarkMapPreview({
         />
       ))}
 
-      <View style={styles.darkVeil} pointerEvents="none" />
 
       {markers.map((marker) => {
         const dot = (
@@ -412,14 +411,10 @@ export default function DarkMapPreview({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#DDE1E4',
+    backgroundColor: '#0A0A0A',
   },
   tile: {
     position: 'absolute',
-  },
-  darkVeil: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6, 12, 18, 0.34)',
   },
   markerHitBox: {
     position: 'absolute',
@@ -429,25 +424,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   markerOuter: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 209, 255, 0.30)',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(0, 209, 255, 0.26)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#00D1FF',
-    shadowOpacity: 0.65,
-    shadowRadius: 7,
+    shadowOpacity: 0.9,
+    shadowRadius: 9,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 5,
+    elevation: 6,
   },
   markerInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
     backgroundColor: '#00D1FF',
-    borderWidth: 2.5,
-    borderColor: '#04121A',
+    borderWidth: 2,
+    borderColor: '#001016',
   },
   controls: {
     position: 'absolute',

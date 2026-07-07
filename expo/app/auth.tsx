@@ -24,7 +24,7 @@ import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
 const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
-const BG_SOURCE = { uri: 'https://r2-pub.rork.com/projects/d5gcr740rcssgvx3ot5z5/assets/6caed7fd-7a07-465a-9688-a7d61abc6ddd.png' } as const;
+const BG_SOURCE = { uri: 'https://r2-pub.rork.com/projects/d5gcr740rcssgvx3ot5z5/assets/4c4b41dc-519a-4113-8ddb-f871184447bf.png' } as const;
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
@@ -119,13 +119,13 @@ function AuthScreen() {
       <LinearGradient
         pointerEvents="none"
         colors={[
-          'rgba(0, 0, 0, 0.42)',
-          'rgba(0, 0, 0, 0.20)',
-          'rgba(0, 0, 0, 0.78)',
-          'rgba(0, 0, 0, 0.97)',
+          'rgba(0, 0, 0, 0.66)',
+          'rgba(0, 0, 0, 0.30)',
+          'rgba(0, 0, 0, 0.62)',
+          'rgba(0, 0, 0, 0.92)',
           '#000000',
         ]}
-        locations={[0, 0.28, 0.52, 0.74, 1]}
+        locations={[0, 0.30, 0.56, 0.78, 1]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -139,7 +139,7 @@ function AuthScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.content}>
+            <View style={styles.logoBlock}>
               <Image
                 source={LOGO_SOURCE}
                 style={styles.logo}
@@ -147,11 +147,13 @@ function AuthScreen() {
                 cachePolicy="memory-disk"
                 accessibilityLabel="Come Get It"
               />
+            </View>
 
+            <View style={styles.content}>
               <View style={styles.heroTextBlock}>
-                <Text style={styles.heading}>Üdv újra!</Text>
+                <Text style={styles.heading}>{mode === 'login' ? 'Üdv újra!' : 'Csatlakozz!'}</Text>
                 <Text style={styles.subheading}>
-                  Jelentkezz be, és fedezd fel partnereinket és a napi ingyen italokat.
+                  Fedezd fel partnereinket és a napi ingyen italokat.
                 </Text>
               </View>
 
@@ -268,10 +270,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 36,
     paddingBottom: 14,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  logoBlock: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 28,
+    paddingBottom: 24,
   },
   content: {
     width: '100%',
@@ -279,21 +287,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 168,
-    height: 78,
-    marginBottom: 12,
+    width: 260,
+    height: 122,
   },
   heroTextBlock: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   heading: {
     color: '#FFFFFF',
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '800' as const,
     textAlign: 'center',
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
     marginBottom: 6,
   },
   subheading: {
@@ -301,7 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
-    maxWidth: 290,
+    maxWidth: 280,
     fontWeight: '500' as const,
   },
   formBlock: {

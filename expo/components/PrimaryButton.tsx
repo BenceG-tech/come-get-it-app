@@ -61,8 +61,8 @@ export default memo(PrimaryButton);
 const styles = StyleSheet.create({
   outer: {
     width: '100%',
-    height: 50,
-    borderRadius: 25,
+    height: 48,
+    borderRadius: 24,
     overflow: 'hidden',
     shadowColor: CYAN,
     shadowOpacity: 0.22,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#001014',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800' as const,
     letterSpacing: -0.1,
   },

@@ -88,7 +88,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
         const { status } = await Location.getForegroundPermissionsAsync();
         if (isMounted) setHasPermission(status === 'granted');
       } catch (e) {
-        console.error('[Location] init failed:', e);
+        console.log('[Location] init failed:', e);
         if (isMounted) setHasPermission(false);
       }
     };
@@ -108,9 +108,8 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
           setHasPermission(true);
           return true;
         } catch (e) {
-          console.error('[Location] Web permission / location failed:', e);
+          console.log('[Location] Web permission / location unavailable:', e);
           setHasPermission(false);
-          Alert.alert('Engedély szükséges', 'A böngészőben engedélyezned kell a helymeghatározást.');
           return false;
         }
       }
@@ -139,7 +138,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
 
       return true;
     } catch (error) {
-      console.error('[Location] Permission request failed:', error);
+      console.log('[Location] Permission request failed:', error);
       return false;
     }
   }, []);
@@ -169,7 +168,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       setLocation(nextLocation);
       return nextLocation;
     } catch (error) {
-      console.error('[Location] Failed to get current location:', error);
+      console.log('[Location] Failed to get current location:', error);
       return null;
     }
   }, [hasPermission, requestPermission]);
@@ -201,7 +200,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
               });
             },
             (err) => {
-              console.error('[Location] Web watch error:', err);
+              console.log('[Location] Web watch error:', err);
             },
             { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
           );
@@ -264,8 +263,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
 
       console.log('[Location] Tracking started (native)');
     } catch (error) {
-      console.error('[Location] Failed to start tracking:', error);
-      Alert.alert('Hiba', 'Nem sikerült elindítani a helymeghatározást');
+      console.log('[Location] Failed to start tracking:', error);
     }
   }, [hasPermission, requestPermission]);
 
@@ -292,7 +290,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       setIsTracking(false);
       console.log('[Location] Tracking stopped (native)');
     } catch (error) {
-      console.error('[Location] Failed to stop tracking:', error);
+      console.log('[Location] Failed to stop tracking:', error);
     }
   }, []);
 
