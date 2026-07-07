@@ -29,6 +29,7 @@ const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
 const LOGO_ASPECT_RATIO = 3.5 as const;
 const LOGO_CROP_LEFT_FRACTION = 0.24 as const;
 const LOGO_CROP_VERTICAL_FRACTION = 0.3 as const;
+const LOGO_SCALE = 1.22 as const; // ~22% nagyobb logó
 
 type SnapState = "expanded" | "half" | "collapsed";
 
@@ -64,7 +65,7 @@ export default function BarsScreen() {
     []
   );
   const iconSize = width <= 375 ? 20 : 22;
-  const logoBoxHeight = width <= 375 ? 34 : 38;
+  const logoBoxHeight = Math.round((width <= 375 ? 34 : 38) * LOGO_SCALE);
   const logoDrawHeight = Math.round(logoBoxHeight / (1 - LOGO_CROP_VERTICAL_FRACTION));
   const logoDrawWidth = Math.round(logoDrawHeight * LOGO_ASPECT_RATIO);
   const logoCropLeft = Math.round(logoDrawWidth * LOGO_CROP_LEFT_FRACTION);
@@ -546,50 +547,55 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   filtersContainer: {
-    paddingTop: 4,
+    paddingTop: 6,
     paddingBottom: 8,
     borderBottomWidth: 0,
     backgroundColor: "#000000",
   },
   filtersContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 7,
   },
   filterPill: {
-    height: 28,
-    paddingHorizontal: 12,
+    height: 24,
+    paddingHorizontal: 11,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: pillRadius,
-    backgroundColor: "#1A1F24",
-    borderWidth: 0,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   filterPillActive: {
-    backgroundColor: "#24303A",
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderColor: "rgba(0, 200, 232, 0.5)",
   },
   filterPillText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
-    color: "#EAEAEA",
+    color: "rgba(234,234,234,0.72)",
   },
   filterPillTextActive: {
     color: "#FFFFFF",
+    fontWeight: "600",
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    height: 28,
-    paddingHorizontal: 12,
+    height: 24,
+    paddingHorizontal: 11,
     borderRadius: pillRadius,
-    backgroundColor: "#1A1F24",
-    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    gap: 5,
   },
   filterButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
-    color: "#EAEAEA",
+    color: "rgba(234,234,234,0.72)",
   },
   venuesList: {
     flex: 1,

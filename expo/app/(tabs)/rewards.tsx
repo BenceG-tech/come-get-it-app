@@ -16,13 +16,15 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
-import RewardCard from "@/components/RewardCard";
+import BigRewardCard from "@/components/BigRewardCard";
 import { router } from "expo-router";
 import { useAppContext } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
 import { mergeWithMockRewards } from "@/data/mockRewards";
+
+const CYAN = "#00C8E8" as const;
 
 type RewardCategoryItem = {
   key: string;
@@ -99,17 +101,13 @@ export default function RewardsScreen() {
         return a.points_required - b.points_required;
       });
 
-    console.log("[Rewards] normalizedRewards", {
-      rawCount: raw.length,
-      cleanedCount: cleaned.length,
-      categories: Array.from(new Set(cleaned.map((r) => r.category ?? ""))),
-    });
-
     return cleaned;
   }, [rewardsQuery.data]);
 
-  const filteredEditorPicks = useMemo(() => {
-    return normalizedRewards.slice(0, 3);
+  const editorPicks = useMemo(() => normalizedRewards.slice(0, 5), [normalizedRewards]);
+  const newRewards = useMemo(() => {
+    const remaining = normalizedRewards.slice(5);
+    return remaining.length > 0 ? remaining.slice(0, 5) : normalizedRewards.slice(0, 5);
   }, [normalizedRewards]);
 
   const { points } = useAppContext();
@@ -121,6 +119,8 @@ export default function RewardsScreen() {
     console.log("[Rewards] Navigate to category:", cat);
     router.push({ pathname: "/(tabs)/rewards-category/[category]", params: { category: cat } });
   };
+
+  const cardWidth = 260;
 
   return (
     <View style={styles.container} testID="rewards-screen">
@@ -139,36 +139,11 @@ export default function RewardsScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.heroCard} activeOpacity={0.9} accessibilityRole="button" testID="add-card-button">
-          <LinearGradient
-            colors={["rgba(0, 200, 232, 0.20)", "rgba(29, 109, 255, 0.10)", "rgba(10, 16, 22, 0.86)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroGradient}
-          >
-            <View style={styles.heroTopRow}>
-              <View style={styles.heroIconWrap}>
-                <CreditCard size={21} color="#00C8E8" />
-              </View>
-              <View style={styles.secureBadge}>
-                <ShieldCheck size={13} color="rgba(255,255,255,0.76)" />
-                <Text style={styles.secureBadgeText}>Biztonságos</Text>
-              </View>
-            </View>
-            <Text style={styles.heroTitle}>Kapcsold hozzá a kártyád</Text>
-            <Text style={styles.heroSubtitle}>Automatikusan pontot kapsz, amikor partnerhelyeinken fizetsz. Nem terhelünk meg külön.</Text>
-            <View style={styles.heroActionRow}>
-              <Text style={styles.heroActionText}>Kártya hozzáadása</Text>
-              <ChevronRight size={17} color="#001014" />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <View>
               <Text style={styles.progressLabel}>Következő jutalom</Text>
-              <Text style={styles.progressTitle}>{nextReward ? nextReward.name : "Új partner ajánlat"}</Text>
+              <Text style={styles.progressTitle} numberOfLines={1}>{nextReward ? nextReward.name : "Új partner ajánlat"}</Text>
             </View>
             <Text style={styles.progressPoints}>{Math.max(closestRewardCost - points, 0).toLocaleString("hu-HU")} pont</Text>
           </View>
@@ -180,33 +155,52 @@ export default function RewardsScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View>
-              <Text style={styles.sectionTitle}>Kiemelt ajánlatok</Text>
+              <Text style={styles.sectionTitle}>Szerkesztők kedvencei</Text>
               <Text style={styles.sectionSubtitle}>A legjobb beváltások ma estére</Text>
             </View>
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
-            {rewardsQuery.isLoading && filteredEditorPicks.length === 0 ? (
+            {rewardsQuery.isLoading && editorPicks.length === 0 ? (
               <View style={styles.inlineState} testID="rewards-loading">
                 <Text style={styles.inlineStateText}>Jutalmak betöltése...</Text>
               </View>
-            ) : filteredEditorPicks.length === 0 ? (
+            ) : editorPicks.length === 0 ? (
               <View style={styles.inlineState} testID="rewards-empty">
                 <Text style={styles.inlineStateText}>Jelenleg nincsenek elérhető jutalmak.</Text>
               </View>
             ) : (
-              filteredEditorPicks.map((reward) => (
-                <RewardCard
+              editorPicks.map((reward) => (
+                <BigRewardCard
                   key={reward.id}
                   reward={reward}
+                  width={cardWidth}
                   canRedeem={points >= reward.points_required}
-                  onRedeem={(r) => {
-                    console.log("[Rewards] redeem pressed", { rewardId: r.id });
-                    if (points < r.points_required) return;
-                  }}
+                  testID={`editor-${reward.id}`}
                 />
               ))
             )}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>Új jutalmak</Text>
+              <Text style={styles.sectionSubtitle}>A legfrissebb ajánlatok</Text>
+            </View>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+            {newRewards.map((reward) => (
+              <BigRewardCard
+                key={reward.id}
+                reward={reward}
+                width={cardWidth}
+                canRedeem={points >= reward.points_required}
+                testID={`new-${reward.id}`}
+              />
+            ))}
           </ScrollView>
         </View>
 
@@ -258,6 +252,31 @@ export default function RewardsScreen() {
             })}
           </View>
         </View>
+
+        <TouchableOpacity style={styles.heroCard} activeOpacity={0.9} accessibilityRole="button" testID="add-card-button">
+          <LinearGradient
+            colors={["rgba(0, 200, 232, 0.20)", "rgba(29, 109, 255, 0.10)", "rgba(10, 16, 22, 0.86)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
+          >
+            <View style={styles.heroTopRow}>
+              <View style={styles.heroIconWrap}>
+                <CreditCard size={21} color="#00C8E8" />
+              </View>
+              <View style={styles.secureBadge}>
+                <ShieldCheck size={13} color="rgba(255,255,255,0.76)" />
+                <Text style={styles.secureBadgeText}>Biztonságos</Text>
+              </View>
+            </View>
+            <Text style={styles.heroTitle}>Kapcsold hozzá a kártyád</Text>
+            <Text style={styles.heroSubtitle}>Automatikusan pontot kapsz, amikor partnerhelyeinken fizetsz. Nem terhelünk meg külön.</Text>
+            <View style={styles.heroActionRow}>
+              <Text style={styles.heroActionText}>Kártya hozzáadása</Text>
+              <ChevronRight size={17} color="#001014" />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -323,82 +342,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
   },
-  heroCard: {
-    marginHorizontal: 18,
-    marginBottom: 12,
-    borderRadius: 24,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(10,16,22,0.78)",
-  },
-  heroGradient: {
-    padding: 18,
-  },
-  heroTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-  heroIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: "rgba(0, 200, 232, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.28)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  secureBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-  },
-  secureBadgeText: {
-    color: "rgba(255,255,255,0.76)",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  heroTitle: {
-    color: Colors.text,
-    fontSize: 21,
-    fontWeight: "900",
-    letterSpacing: -0.3,
-    marginBottom: 7,
-  },
-  heroSubtitle: {
-    color: "rgba(255,255,255,0.62)",
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 17,
-  },
-  heroActionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "flex-start",
-    gap: 5,
-    borderRadius: 999,
-    backgroundColor: "#00C8E8",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  heroActionText: {
-    color: "#001014",
-    fontSize: 14,
-    fontWeight: "900",
-  },
   progressCard: {
     marginHorizontal: 18,
-    marginBottom: 26,
+    marginBottom: 24,
     borderRadius: 18,
     padding: 15,
     backgroundColor: "rgba(255,255,255,0.045)",
@@ -467,10 +413,10 @@ const styles = StyleSheet.create({
   },
   inlineState: {
     width: 260,
-    minHeight: 112,
+    minHeight: 200,
     justifyContent: "center",
     padding: 16,
-    borderRadius: 18,
+    borderRadius: 22,
     backgroundColor: "rgba(255,255,255,0.045)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.09)",
@@ -480,6 +426,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     lineHeight: 20,
+    textAlign: "center",
   },
   referButton: {
     flexDirection: "row",
@@ -561,5 +508,78 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.50)",
     fontSize: 12,
     lineHeight: 17,
+  },
+  heroCard: {
+    marginHorizontal: 18,
+    marginBottom: 12,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(10,16,22,0.78)",
+  },
+  heroGradient: {
+    padding: 18,
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  heroIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.28)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  secureBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+  },
+  secureBadgeText: {
+    color: "rgba(255,255,255,0.76)",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  heroTitle: {
+    color: Colors.text,
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+    marginBottom: 7,
+  },
+  heroSubtitle: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 17,
+  },
+  heroActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    gap: 5,
+    borderRadius: 999,
+    backgroundColor: "#00C8E8",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  heroActionText: {
+    color: "#001014",
+    fontSize: 14,
+    fontWeight: "900",
   },
 });

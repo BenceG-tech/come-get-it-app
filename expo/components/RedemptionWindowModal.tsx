@@ -2,17 +2,29 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  Image,
   Modal,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { AlertCircle, CheckCircle2, Clock3, Heart, MapPin, Waves, X } from 'lucide-react-native';
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  Clock3,
+  Heart,
+  MapPin,
+  Smartphone,
+  Waves,
+  X,
+} from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useLocation } from '@/context/LocationContext';
 import { VenueDrink, FreeDrinkWindow } from '@/types/venue';
@@ -42,11 +54,21 @@ type RedemptionWindowModalProps = {
   freeDrinkWindows: FreeDrinkWindow[];
 };
 
-type FlowState = 'intro' | 'checking' | 'countdown' | 'confirming' | 'success' | 'not_eligible' | 'expired' | 'error';
+type FlowState =
+  | 'step1_arrive'
+  | 'step2_show'
+  | 'checking'
+  | 'countdown'
+  | 'confirming'
+  | 'success'
+  | 'not_eligible'
+  | 'expired'
+  | 'error';
 
 const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 const MAX_DISTANCE_METERS = 100;
 const WINDOW_SECONDS = 120;
+const CYAN = '#00C8E8' as const;
 
 function distanceMeters(a: Coordinates, b: Coordinates): number {
   const radius = 6371e3;
@@ -85,7 +107,8 @@ export default function RedemptionWindowModal({
 }: RedemptionWindowModalProps) {
   const queryClient = useQueryClient();
   const { getCurrentLocation } = useLocation();
-  const [state, setState] = useState<FlowState>('intro');
+  const { width: screenWidth } = useWindowDimensions();
+  const [state, setState] = useState<FlowState>('step1_arrive');
   const [windowToken, setWindowToken] = useState<RedemptionWindow | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(WINDOW_SECONDS * 1000);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -93,10 +116,18 @@ export default function RedemptionWindowModal({
   const [impactMessage, setImpactMessage] = useState<string>('+1 ember kap ma tiszta vizet');
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Animations
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.5)).current;
+  const phoneShake = useRef(new Animated.Value(0)).current;
+  const phoneScale = useRef(new Animated.Value(1)).current;
   const waterScale = useRef(new Animated.Value(0.7)).current;
   const waterOpacity = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const selectedDrinkName = drink?.drinkName ?? 'Ingyen ital';
+  const drinkImageUrl = drink?.imageUrl ?? null;
 
   const nextWindowText = useMemo(() => {
     if (!drink) return null;
@@ -112,9 +143,17 @@ export default function RedemptionWindowModal({
     }
   }, []);
 
+  const stopAnimations = useCallback(() => {
+    pulseScale.stopAnimation();
+    pulseOpacity.stopAnimation();
+    phoneShake.stopAnimation();
+    phoneScale.stopAnimation();
+  }, [pulseScale, pulseOpacity, phoneShake, phoneScale]);
+
   const reset = useCallback(() => {
     clearTimer();
-    setState('intro');
+    stopAnimations();
+    setState('step1_arrive');
     setWindowToken(null);
     setTimeRemaining(WINDOW_SECONDS * 1000);
     setErrorMessage('');
@@ -122,50 +161,100 @@ export default function RedemptionWindowModal({
     setImpactMessage('+1 ember kap ma tiszta vizet');
     waterScale.setValue(0.7);
     waterOpacity.setValue(0);
-  }, [clearTimer, waterOpacity, waterScale]);
+    fadeAnim.setValue(0);
+  }, [clearTimer, stopAnimations, waterOpacity, waterScale, fadeAnim]);
 
   useEffect(() => {
     if (!visible) reset();
   }, [reset, visible]);
 
+  // Pulsing location icon animation for step 1
+  useEffect(() => {
+    if (state !== 'step1_arrive') return;
+    pulseScale.setValue(1);
+    pulseOpacity.setValue(0.4);
+    const loop = Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulseScale, { toValue: 1.35, duration: 900, useNativeDriver: true }),
+          Animated.timing(pulseScale, { toValue: 1, duration: 900, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(pulseOpacity, { toValue: 0.85, duration: 900, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.4, duration: 900, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [state, pulseScale, pulseOpacity]);
+
+  // Animated phone icon for step 2 — gentle wobble + scale pulse
+  useEffect(() => {
+    if (state !== 'step2_show') return;
+    phoneShake.setValue(0);
+    phoneScale.setValue(1);
+    const loop = Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(phoneShake, { toValue: 0.08, duration: 600, useNativeDriver: true }),
+          Animated.timing(phoneShake, { toValue: -0.08, duration: 600, useNativeDriver: true }),
+          Animated.timing(phoneShake, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(phoneScale, { toValue: 1.08, duration: 700, useNativeDriver: true }),
+          Animated.timing(phoneScale, { toValue: 1, duration: 700, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [state, phoneShake, phoneScale]);
+
+  // Fade-in for step transitions
+  useEffect(() => {
+    if (state === 'step1_arrive' || state === 'step2_show' || state === 'countdown' || state === 'success') {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+    }
+  }, [state, fadeAnim]);
+
+  // Success animation
   useEffect(() => {
     if (state !== 'success') return;
     Animated.parallel([
-      Animated.spring(waterScale, {
-        toValue: 1,
-        useNativeDriver: true,
-        damping: 9,
-        stiffness: 90,
-      }),
-      Animated.timing(waterOpacity, {
-        toValue: 1,
-        duration: 480,
-        useNativeDriver: true,
-      }),
+      Animated.spring(waterScale, { toValue: 1, useNativeDriver: true, damping: 9, stiffness: 90 }),
+      Animated.timing(waterOpacity, { toValue: 1, duration: 480, useNativeDriver: true }),
     ]).start();
   }, [state, waterOpacity, waterScale]);
 
-  const startCountdown = useCallback((expiresAt: string) => {
-    clearTimer();
-
-    const tick = () => {
-      const remaining = getTimeRemainingMs(expiresAt);
-      setTimeRemaining(remaining);
-      if (remaining <= 0) {
-        clearTimer();
-        setState('expired');
-        setWindowToken(null);
-      }
-    };
-
-    tick();
-    timerRef.current = setInterval(tick, 1000);
-  }, [clearTimer]);
+  const startCountdown = useCallback(
+    (expiresAt: string) => {
+      clearTimer();
+      const tick = () => {
+        const remaining = getTimeRemainingMs(expiresAt);
+        setTimeRemaining(remaining);
+        if (remaining <= 0) {
+          clearTimer();
+          setState('expired');
+          setWindowToken(null);
+        }
+      };
+      tick();
+      timerRef.current = setInterval(tick, 1000);
+    },
+    [clearTimer]
+  );
 
   const handleClose = useCallback(() => {
     reset();
     onClose();
   }, [onClose, reset]);
+
+  const goToStep2 = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setState('step2_show');
+  }, []);
 
   const handleCreateWindow = useCallback(async () => {
     if (!drink) {
@@ -197,11 +286,7 @@ export default function RedemptionWindowModal({
           return;
         }
 
-        userCoordinates = {
-          latitude: current.coords.latitude,
-          longitude: current.coords.longitude,
-        };
-
+        userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
         const measured = distanceMeters(userCoordinates, venueCoordinates);
         setDistance(measured);
         if (measured > MAX_DISTANCE_METERS) {
@@ -266,7 +351,6 @@ export default function RedemptionWindowModal({
 
   const handleConfirm = useCallback(async () => {
     if (!windowToken) return;
-
     clearTimer();
     setState('confirming');
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -301,13 +385,51 @@ export default function RedemptionWindowModal({
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }, [clearTimer, queryClient, windowToken]);
 
+  const renderDrinkImage = (height: number) => (
+    <View style={[styles.drinkImageSection, { height }]}>
+      {drinkImageUrl ? (
+        <Image source={{ uri: drinkImageUrl }} style={styles.drinkImage} resizeMode="cover" />
+      ) : (
+        <View style={[styles.drinkImage, styles.drinkImageFallback]}>
+          <Text style={styles.drinkImageEmoji}>🍺</Text>
+        </View>
+      )}
+      <View style={styles.drinkImageGradient} pointerEvents="none" />
+      <TouchableOpacity style={styles.closeButton} onPress={handleClose} hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
+        <X size={22} color={Colors.dark.text} />
+      </TouchableOpacity>
+      <View style={styles.drinkNameChip}>
+        <Text style={styles.drinkNameChipText}>{selectedDrinkName}</Text>
+      </View>
+    </View>
+  );
+
+  const renderStepIndicator = (currentStep: 1 | 2 | 3) => {
+    const steps = [1, 2, 3];
+    return (
+      <View style={styles.stepIndicatorRow}>
+        {steps.map((s, idx) => (
+          <View key={s} style={styles.stepIndicatorItem}>
+            <View style={[styles.stepDot, s <= currentStep && styles.stepDotActive]}>
+              <Text style={[styles.stepDotText, s <= currentStep && styles.stepDotTextActive]}>{s}</Text>
+            </View>
+            {idx < steps.length - 1 && <View style={[styles.stepConnector, s < currentStep && styles.stepConnectorActive]} />}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   const renderBody = () => {
     if (state === 'checking' || state === 'confirming') {
       return (
         <View style={styles.body}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
-          <Text style={styles.loadingTitle}>{state === 'checking' ? 'Beváltási ablak nyitása...' : 'Beváltás rögzítése...'}</Text>
-          <Text style={styles.helperText}>Egy pillanat, ellenőrizzük az ingyen ital jogosultságot.</Text>
+          {renderDrinkImage(180)}
+          <View style={styles.bodyContent}>
+            <ActivityIndicator size="large" color={CYAN} />
+            <Text style={styles.loadingTitle}>{state === 'checking' ? 'Beváltási ablak nyitása...' : 'Beváltás rögzítése...'}</Text>
+            <Text style={styles.helperText}>Egy pillanat, ellenőrizzük az ingyen ital jogosultságot.</Text>
+          </View>
         </View>
       );
     }
@@ -315,147 +437,198 @@ export default function RedemptionWindowModal({
     if (state === 'countdown') {
       const lowTime = timeRemaining <= 30_000;
       return (
-        <View style={styles.body}>
-          <View style={styles.readyBadge}>
-            <CheckCircle2 size={18} color="#041015" />
-            <Text style={styles.readyBadgeText}>Ablak megnyitva</Text>
+        <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
+          {renderDrinkImage(180)}
+          <View style={styles.bodyContent}>
+            {renderStepIndicator(3)}
+            <View style={styles.readyBadge}>
+              <CheckCircle2 size={16} color="#001014" />
+              <Text style={styles.readyBadgeText}>Ablak megnyitva</Text>
+            </View>
+            <Text style={styles.stepTitle}>Mutasd a pultosnak</Text>
+            <Text style={styles.stepSubtitle}>A pultos a te telefonodon nyomja meg a gombot.</Text>
+
+            <View style={[styles.timerRing, lowTime && styles.timerRingWarning]}>
+              <Clock3 size={22} color={lowTime ? '#FF6B6B' : CYAN} />
+              <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
+              <Text style={styles.timerLabel}>maradt</Text>
+            </View>
+
+            <Text style={styles.drinkName}>{selectedDrinkName}</Text>
+            <Text style={styles.venueName}>{venueName}</Text>
+
+            <Pressable
+              onPress={handleConfirm}
+              testID="redeem-now-button"
+              accessibilityRole="button"
+              accessibilityLabel="Beváltom"
+              style={({ pressed }) => [styles.redeemButton, pressed && styles.redeemButtonPressed]}
+            >
+              <Text style={styles.redeemButtonText}>BEVÁLTOM</Text>
+            </Pressable>
+
+            {DEMO_MODE && (
+              <TouchableOpacity style={styles.demoConfirmButton} onPress={handleConfirm} testID="demo-staff-confirm-button" activeOpacity={0.82}>
+                <Text style={styles.demoConfirmText}>DEMO: Pultos confirmed</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          <Text style={styles.title}>Mutasd ezt a pultosnak</Text>
-          <Text style={styles.subtitle}>A pultos a te telefonodon nyomja meg a gombot.</Text>
-
-          <View style={[styles.timerRing, lowTime && styles.timerRingWarning]}>
-            <Clock3 size={24} color={lowTime ? '#FF6B6B' : Colors.dark.primary} />
-            <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
-            <Text style={styles.timerLabel}>maradt</Text>
-          </View>
-
-          <Text style={styles.drinkName}>{selectedDrinkName}</Text>
-          <Text style={styles.venueName}>{venueName}</Text>
-
-          <Pressable
-            onPress={handleConfirm}
-            testID="redeem-now-button"
-            accessibilityRole="button"
-            accessibilityLabel="Beváltom"
-            style={({ pressed }) => [styles.redeemButton, pressed && styles.redeemButtonPressed]}
-          >
-            <Text style={styles.redeemButtonText}>BEVÁLTOM</Text>
-          </Pressable>
-
-          {DEMO_MODE && (
-            <TouchableOpacity style={styles.demoConfirmButton} onPress={handleConfirm} testID="demo-staff-confirm-button" activeOpacity={0.82}>
-              <Text style={styles.demoConfirmText}>DEMO: Pultos confirmed</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        </Animated.View>
       );
     }
 
     if (state === 'success') {
       return (
-        <View style={styles.body}>
-          <View style={styles.successHalo}>
-            <Text style={styles.cheersEmoji}>🍻</Text>
-          </View>
-          <Text style={styles.successTitle}>Egészségedre!</Text>
-          <Text style={styles.successSubtitle}>{selectedDrinkName} sikeresen beváltva.</Text>
-
-          <Animated.View style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}>
-            <View style={styles.waveIcon}>
-              <Waves size={28} color="#041015" />
+        <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
+          {renderDrinkImage(180)}
+          <View style={styles.bodyContent}>
+            <View style={styles.successHalo}>
+              <Text style={styles.cheersEmoji}>🍻</Text>
             </View>
-            <Text style={styles.impactPlus}>+1</Text>
-            <Text style={styles.impactText}>{impactMessage.replace(/^\+1\s*/, '')}</Text>
-          </Animated.View>
+            <Text style={styles.successTitle}>Egészségedre!</Text>
+            <Text style={styles.successSubtitle}>{selectedDrinkName} sikeresen beváltva.</Text>
 
-          <View style={styles.successActions}>
-            <TouchableOpacity style={styles.secondaryAction} onPress={() => {
-              handleClose();
-              router.push('/my-impact');
-            }} activeOpacity={0.84}>
-              <Heart size={18} color={Colors.dark.primary} />
-              <Text style={styles.secondaryActionText}>Hatásom megtekintése</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.primaryAction} onPress={handleClose} activeOpacity={0.84}>
-              <Text style={styles.primaryActionText}>Bezárás</Text>
-            </TouchableOpacity>
+            <Animated.View style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}>
+              <View style={styles.waveIcon}>
+                <Waves size={26} color="#041015" />
+              </View>
+              <Text style={styles.impactPlus}>+1</Text>
+              <Text style={styles.impactText}>{impactMessage.replace(/^\+1\s*/, '')}</Text>
+            </Animated.View>
+
+            <View style={styles.successActions}>
+              <TouchableOpacity
+                style={styles.secondaryAction}
+                onPress={() => {
+                  handleClose();
+                  router.push('/my-impact');
+                }}
+                activeOpacity={0.84}
+              >
+                <Heart size={18} color={CYAN} />
+                <Text style={styles.secondaryActionText}>Hatásom megtekintése</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.primaryAction} onPress={handleClose} activeOpacity={0.84}>
+                <Text style={styles.primaryActionText}>Bezárás</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </Animated.View>
       );
     }
 
     if (state === 'not_eligible' || state === 'error' || state === 'expired') {
       return (
         <View style={styles.body}>
-          <View style={styles.errorIcon}>
-            <AlertCircle size={42} color={state === 'expired' ? '#FFB020' : '#FF6B6B'} />
+          {renderDrinkImage(180)}
+          <View style={styles.bodyContent}>
+            <View style={styles.errorIcon}>
+              <AlertCircle size={40} color={state === 'expired' ? '#FFB020' : '#FF6B6B'} />
+            </View>
+            <Text style={styles.errorTitle}>{state === 'expired' ? 'Lejárt az ablak' : 'Most nem indítható'}</Text>
+            <Text style={styles.errorText}>
+              {state === 'expired'
+                ? 'A 120 másodperces beváltási ablak lejárt. Kérj újat a folytatáshoz.'
+                : errorMessage || 'Valami hiba történt. Próbáld újra.'}
+            </Text>
+            {nextWindowText && state === 'not_eligible' && (
+              <Text style={styles.nextWindowText}>Következő idősáv: {nextWindowText}</Text>
+            )}
+            {distance !== null && <Text style={styles.nextWindowText}>Mért távolság: {Math.round(distance)} m</Text>}
+            <TouchableOpacity style={styles.primaryAction} onPress={handleCreateWindow} activeOpacity={0.84}>
+              <Text style={styles.primaryActionText}>Újrapróbálás</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.ghostAction} onPress={handleClose} activeOpacity={0.84}>
+              <Text style={styles.ghostActionText}>Vissza</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.errorTitle}>{state === 'expired' ? 'Lejárt az ablak' : 'Most nem indítható'}</Text>
-          <Text style={styles.errorText}>
-            {state === 'expired'
-              ? 'A 120 másodperces beváltási ablak lejárt. Kérj újat a folytatáshoz.'
-              : errorMessage || 'Valami hiba történt. Próbáld újra.'}
-          </Text>
-          {nextWindowText && state === 'not_eligible' && (
-            <Text style={styles.nextWindowText}>Következő idősáv: {nextWindowText}</Text>
-          )}
-          {distance !== null && (
-            <Text style={styles.nextWindowText}>Mért távolság: {Math.round(distance)} m</Text>
-          )}
-          <TouchableOpacity style={styles.primaryAction} onPress={handleCreateWindow} activeOpacity={0.84}>
-            <Text style={styles.primaryActionText}>Újrapróbálás</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.ghostAction} onPress={handleClose} activeOpacity={0.84}>
-            <Text style={styles.ghostActionText}>Vissza</Text>
-          </TouchableOpacity>
         </View>
       );
     }
 
-    return (
-      <View style={styles.body}>
-        <View style={styles.iconStack}>
-          <Text style={styles.drinkEmoji}>🍺</Text>
-          <View style={styles.locationDot}>
-            <MapPin size={18} color="#041015" />
+    // Step 2: Mutasd a pultosnak
+    if (state === 'step2_show') {
+      return (
+        <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
+          {renderDrinkImage(180)}
+          <View style={styles.bodyContent}>
+            {renderStepIndicator(2)}
+            <Animated.View
+              style={[
+                styles.phoneIconWrap,
+                {
+                  transform: [
+                    { rotate: phoneShake.interpolate({ inputRange: [-1, 1], outputRange: ['-8deg', '8deg'] }) },
+                    { scale: phoneScale },
+                  ],
+                },
+              ]}
+            >
+              <Smartphone size={44} color={CYAN} strokeWidth={1.6} />
+            </Animated.View>
+            <Text style={styles.stepTitle}>Mutasd a következő oldalt a pultosnak</Text>
+            <Text style={styles.stepSubtitle}>Tartsd a képernyőt a pultosnak — ő nyitja meg a beváltási ablakot.</Text>
+
+            <View style={styles.stepButtons}>
+              <TouchableOpacity style={styles.backBtn} onPress={() => setState('step1_arrive')} activeOpacity={0.84}>
+                <ArrowLeft size={17} color="rgba(255,255,255,0.6)" />
+                <Text style={styles.backBtnText}>Vissza</Text>
+              </TouchableOpacity>
+              <Pressable
+                onPress={handleCreateWindow}
+                testID="start-redemption-window-button"
+                accessibilityRole="button"
+                accessibilityLabel="Mutat"
+                style={({ pressed }) => [styles.primaryStepButton, pressed && styles.primaryStepButtonPressed]}
+              >
+                <Text style={styles.primaryStepButtonText}>Mutat</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.responsibleText}>18+ • Fogyaszt felelősségteljesen</Text>
           </View>
+        </Animated.View>
+      );
+    }
+
+    // Step 1: Legyél a vendéglátóhelyen (default)
+    return (
+      <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
+        {renderDrinkImage(180)}
+        <View style={styles.bodyContent}>
+          {renderStepIndicator(1)}
+          <Animated.View style={[styles.pulseRing, { opacity: pulseOpacity, transform: [{ scale: pulseScale }] }]} />
+          <View style={styles.locationIconWrap}>
+            <MapPin size={38} color={CYAN} strokeWidth={1.6} />
+          </View>
+          <Text style={styles.stepTitle}>Legyél a vendéglátóhelyen</Text>
+          <Text style={styles.stepSubtitle}>
+            Látogass el a partnerhelyre, hogy igényelhesd az ingyen italodat. {DEMO_MODE ? '(Demo mód aktív)' : '100 méteren belül kell lenned.'}
+          </Text>
+
+          <View style={styles.stepButtons}>
+            <TouchableOpacity style={styles.backBtn} onPress={handleClose} activeOpacity={0.84}>
+              <Text style={styles.backBtnText}>Mégsem</Text>
+            </TouchableOpacity>
+            <Pressable
+              onPress={goToStep2}
+              testID="im-here-button"
+              accessibilityRole="button"
+              accessibilityLabel="Itt vagyok"
+              style={({ pressed }) => [styles.primaryStepButton, pressed && styles.primaryStepButtonPressed]}
+            >
+              <Text style={styles.primaryStepButtonText}>Itt vagyok</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.responsibleText}>18+ • Fogyaszt felelősségteljesen</Text>
         </View>
-        <Text style={styles.title}>Kérd ingyen italod</Text>
-        <Text style={styles.subtitle}>Nyiss egy 120 másodperces beváltási ablakot, majd add oda a telefonod a pultosnak.</Text>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Hely</Text>
-          <Text style={styles.summaryValue}>{venueName}</Text>
-          <View style={styles.summaryDivider} />
-          <Text style={styles.summaryLabel}>Ital</Text>
-          <Text style={styles.summaryValue}>{selectedDrinkName}</Text>
-          <View style={styles.summaryDivider} />
-          <Text style={styles.summaryNote}>{DEMO_MODE ? 'Demo mód aktív: GPS és napi limit nem blokkol.' : 'Éles módban 100 méteren belül kell lenned.'}</Text>
-        </View>
-        <Pressable
-          onPress={handleCreateWindow}
-          testID="start-redemption-window-button"
-          accessibilityRole="button"
-          accessibilityLabel="Kérd ingyen italod"
-          style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
-        >
-          <Text style={styles.startButtonText}>Kérd ingyen italod</Text>
-        </Pressable>
-        <TouchableOpacity style={styles.ghostAction} onPress={handleClose} activeOpacity={0.84}>
-          <Text style={styles.ghostActionText}>Mégsem</Text>
-        </TouchableOpacity>
-      </View>
+      </Animated.View>
     );
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose} statusBarTranslucent>
       <View style={styles.overlay}>
-        <View style={styles.modalCard}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-            <X size={22} color={Colors.dark.text} />
-          </TouchableOpacity>
-          {renderBody()}
-        </View>
+        <View style={[styles.modalCard, { width: Math.min(screenWidth, 440) }]}>{renderBody()}</View>
       </View>
     </Modal>
   );
@@ -464,155 +637,236 @@ export default function RedemptionWindowModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.86)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 18,
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 430,
-    borderRadius: 34,
+    height: '92%',
+    borderRadius: 28,
     backgroundColor: '#071014',
     borderWidth: 1,
-    borderColor: 'rgba(0,209,255,0.28)',
+    borderColor: 'rgba(0, 200, 232, 0.22)',
     overflow: 'hidden',
-    shadowColor: '#00D1FF',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.25,
-    shadowRadius: 34,
+    shadowColor: CYAN,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 30,
     elevation: 18,
+  },
+  body: {
+    flex: 1,
+  },
+  drinkImageSection: {
+    width: '100%',
+    backgroundColor: '#050709',
+    position: 'relative',
+  },
+  drinkImage: {
+    width: '100%',
+    height: '100%',
+  },
+  drinkImageFallback: {
+    backgroundColor: 'rgba(0, 200, 232, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drinkImageEmoji: {
+    fontSize: 56,
+  },
+  drinkImageGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+    borderBottomColor: CYAN,
+    borderBottomWidth: 2,
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 5,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    padding: 24,
-    paddingTop: 66,
-    alignItems: 'center',
-  },
-  iconStack: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(0,209,255,0.12)',
+    top: 14,
+    right: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     borderWidth: 1,
-    borderColor: 'rgba(0,209,255,0.34)',
+    borderColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 22,
+    zIndex: 10,
   },
-  drinkEmoji: {
-    fontSize: 44,
-  },
-  locationDot: {
+  drinkNameChip: {
     position: 'absolute',
-    right: -2,
-    bottom: 4,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.dark.primary,
+    bottom: 14,
+    left: 16,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 200, 232, 0.3)',
+  },
+  drinkNameChipText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  bodyContent: {
+    flex: 1,
+    padding: 24,
+    paddingTop: 22,
+    alignItems: 'center',
+  },
+  stepIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    gap: 0,
+  },
+  stepIndicatorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepDot: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
+  stepDotActive: {
+    backgroundColor: CYAN,
+    borderColor: CYAN,
+  },
+  stepDotText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  stepDotTextActive: {
+    color: '#001014',
+  },
+  stepConnector: {
+    width: 32,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  stepConnectorActive: {
+    backgroundColor: CYAN,
+  },
+  pulseRing: {
+    position: 'absolute',
+    top: 80,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 2,
+    borderColor: CYAN,
+  },
+  locationIconWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(0, 200, 232, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 200, 232, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  phoneIconWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(0, 200, 232, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 200, 232, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  stepTitle: {
     color: Colors.dark.text,
-    fontSize: 26,
+    fontSize: 23,
     fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 9,
+    letterSpacing: -0.4,
   },
-  subtitle: {
-    color: Colors.dark.subtext,
-    fontSize: 15,
-    lineHeight: 22,
+  stepSubtitle: {
+    color: 'rgba(255,255,255,0.58)',
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: 'center',
     marginBottom: 22,
+    maxWidth: 300,
   },
-  summaryCard: {
+  stepButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     width: '100%',
-    borderRadius: 22,
-    padding: 18,
-    backgroundColor: 'rgba(255,255,255,0.065)',
+    maxWidth: 340,
+  },
+  backBtn: {
+    flex: 1,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 20,
-  },
-  summaryLabel: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  summaryValue: {
-    color: Colors.dark.text,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginVertical: 14,
-  },
-  summaryNote: {
-    color: Colors.dark.primary,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
-  },
-  startButton: {
-    width: '100%',
-    minHeight: 58,
-    borderRadius: 18,
-    backgroundColor: Colors.dark.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.dark.primary,
-    shadowOpacity: 0.32,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    flexDirection: 'row',
+    gap: 7,
   },
-  startButtonPressed: {
-    transform: [{ scale: 0.98 }],
+  backBtnText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  primaryStepButton: {
+    flex: 1.4,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: CYAN,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: CYAN,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  primaryStepButtonPressed: {
+    transform: [{ scale: 0.97 }],
     opacity: 0.88,
   },
-  startButtonText: {
-    color: '#041015',
-    fontSize: 18,
+  primaryStepButtonText: {
+    color: '#001014',
+    fontSize: 16,
     fontWeight: '900',
   },
-  ghostAction: {
-    paddingVertical: 15,
-    paddingHorizontal: 24,
-    marginTop: 6,
-  },
-  ghostActionText: {
-    color: Colors.dark.subtext,
-    fontSize: 16,
+  responsibleText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 11,
     fontWeight: '700',
+    letterSpacing: 0.8,
+    marginTop: 16,
   },
   loadingTitle: {
     color: Colors.dark.text,
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '800',
     marginTop: 18,
     marginBottom: 8,
   },
   helperText: {
-    color: Colors.dark.subtext,
+    color: 'rgba(255,255,255,0.5)',
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -621,27 +875,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    paddingVertical: 8,
-    paddingHorizontal: 13,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
     borderRadius: 999,
-    backgroundColor: Colors.dark.primary,
-    marginBottom: 18,
+    backgroundColor: CYAN,
+    marginBottom: 14,
   },
   readyBadgeText: {
-    color: '#041015',
-    fontSize: 13,
+    color: '#001014',
+    fontSize: 12,
     fontWeight: '900',
   },
   timerRing: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     borderWidth: 2,
-    borderColor: 'rgba(0,209,255,0.42)',
-    backgroundColor: 'rgba(0,209,255,0.08)',
+    borderColor: 'rgba(0, 200, 232, 0.4)',
+    backgroundColor: 'rgba(0, 200, 232, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 14,
   },
   timerRingWarning: {
     borderColor: 'rgba(255,107,107,0.7)',
@@ -649,62 +903,62 @@ const styles = StyleSheet.create({
   },
   timerValue: {
     color: Colors.dark.text,
-    fontSize: 38,
+    fontSize: 36,
     fontWeight: '900',
-    marginTop: 8,
+    marginTop: 6,
   },
   timerValueWarning: {
     color: '#FF6B6B',
   },
   timerLabel: {
-    color: Colors.dark.subtext,
-    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   drinkName: {
-    color: Colors.dark.primary,
-    fontSize: 18,
+    color: CYAN,
+    fontSize: 17,
     fontWeight: '900',
     textAlign: 'center',
-    marginTop: 2,
   },
   venueName: {
-    color: Colors.dark.subtext,
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
-    marginTop: 5,
-    marginBottom: 22,
+    marginTop: 4,
+    marginBottom: 18,
   },
   redeemButton: {
     width: '100%',
-    minHeight: 88,
-    borderRadius: 26,
+    maxWidth: 340,
+    minHeight: 78,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: Colors.dark.primary,
+    borderColor: CYAN,
     shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 10,
   },
   redeemButtonPressed: {
     transform: [{ scale: 0.975 }],
   },
   redeemButtonText: {
     color: '#041015',
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '900',
-    letterSpacing: 1.2,
+    letterSpacing: 1,
   },
   demoConfirmButton: {
-    marginTop: 14,
-    paddingVertical: 11,
+    marginTop: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 14,
     borderWidth: 1,
@@ -712,124 +966,138 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.07)',
   },
   demoConfirmText: {
-    color: Colors.dark.primary,
+    color: CYAN,
     fontSize: 13,
     fontWeight: '800',
   },
   successHalo: {
-    width: 106,
-    height: 106,
-    borderRadius: 53,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: 'rgba(34,197,94,0.14)',
     borderWidth: 1,
     borderColor: 'rgba(34,197,94,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   cheersEmoji: {
-    fontSize: 52,
+    fontSize: 46,
   },
   successTitle: {
     color: Colors.dark.text,
-    fontSize: 32,
+    fontSize: 29,
     fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 7,
   },
   successSubtitle: {
-    color: Colors.dark.subtext,
-    fontSize: 15,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 14,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   impactCard: {
     width: '100%',
-    borderRadius: 26,
-    padding: 20,
-    backgroundColor: 'rgba(0,209,255,0.12)',
+    maxWidth: 340,
+    borderRadius: 24,
+    padding: 18,
+    backgroundColor: 'rgba(0, 200, 232, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(0,209,255,0.38)',
+    borderColor: 'rgba(0, 200, 232, 0.35)',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   waveIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: Colors.dark.primary,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: CYAN,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 9,
   },
   impactPlus: {
-    color: Colors.dark.primary,
-    fontSize: 44,
+    color: CYAN,
+    fontSize: 38,
     fontWeight: '900',
-    lineHeight: 50,
+    lineHeight: 44,
   },
   impactText: {
     color: Colors.dark.text,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '900',
     textAlign: 'center',
   },
   successActions: {
     width: '100%',
-    gap: 10,
+    maxWidth: 340,
+    gap: 9,
   },
   secondaryAction: {
-    minHeight: 52,
+    minHeight: 48,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0,209,255,0.32)',
-    backgroundColor: 'rgba(0,209,255,0.08)',
+    borderColor: 'rgba(0, 200, 232, 0.3)',
+    backgroundColor: 'rgba(0, 200, 232, 0.06)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   secondaryActionText: {
-    color: Colors.dark.primary,
-    fontSize: 15,
+    color: CYAN,
+    fontSize: 14,
     fontWeight: '800',
   },
   primaryAction: {
-    minHeight: 54,
+    minHeight: 50,
     borderRadius: 16,
-    backgroundColor: Colors.dark.primary,
+    backgroundColor: CYAN,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
     marginTop: 4,
+    width: '100%',
+    maxWidth: 340,
   },
   primaryActionText: {
-    color: '#041015',
-    fontSize: 16,
+    color: '#001014',
+    fontSize: 15,
     fontWeight: '900',
   },
   errorIcon: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   errorTitle: {
     color: Colors.dark.text,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 9,
+  },
+  errorText: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  nextWindowText: {
+    color: CYAN,
+    fontSize: 13,
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 10,
   },
-  errorText: {
-    color: Colors.dark.subtext,
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: 'center',
-    marginBottom: 16,
+  ghostAction: {
+    paddingVertical: 13,
+    paddingHorizontal: 24,
+    marginTop: 4,
   },
-  nextWindowText: {
-    color: Colors.dark.primary,
-    fontSize: 14,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 12,
+  ghostActionText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
