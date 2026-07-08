@@ -26,6 +26,14 @@ export type RedemptionWindow = RedemptionToken & {
     name: string;
   } | null;
   demo_mode?: boolean;
+  /** True when the server-side edge function is not deployed and the app runs a local fallback flow. */
+  fallback_mode?: boolean;
+};
+
+export type FallbackConfirmContext = {
+  venue_id: string;
+  drink_id?: string | null;
+  drink_name: string;
 };
 
 export type CreateRedemptionWindowRequest = {
@@ -144,6 +152,21 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
       code: 'RATE_LIMITED',
       cooldown_until: typeof payload.cooldown_until === 'string' ? payload.cooldown_until : undefined,
     };
+  }
+
+  if (status === 404) {
+    // The Supabase gateway answers 404 with "Requested function was not found"
+    // when the edge function has never been deployed. Distinguish this from an
+    // in-function 404 (e.g. "Venue not found").
+    const rawCode = typeof payload.code === 'string' ? payload.code : '';
+    const lower = errorMessage.toLowerCase();
+    if (rawCode === 'NOT_FOUND' || lower.includes('function was not found') || lower.includes('requested function')) {
+      return {
+        error: 'A szerveroldali beváltási funkció még nincs telepítve.',
+        code: 'FUNCTION_NOT_DEPLOYED',
+      };
+    }
+    return { error: errorMessage, code: 'UNKNOWN' };
   }
 
   return { error: errorMessage, code: 'UNKNOWN' };
@@ -301,6 +324,30 @@ export function checkLocalEligibility(
   return { eligible: false, nextWindow: nextWindow ?? undefined };
 }
 
+/**
+ * Local fallback: builds a redemption window entirely client-side when the
+ * server-side edge function is not deployed. The local time-window eligibility
+ * has already been validated by the caller.
+ */
+function createLocalFallbackWindow(request: CreateRedemptionWindowRequest): RedemptionWindow {
+  const bytes = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').padEnd(12, '0').slice(0, 12);
+  const token = `CGI-LOCAL-${bytes.slice(0, 6)}`;
+  const expiresAt = new Date(Date.now() + 120 * 1000).toISOString();
+  return {
+    token,
+    token_id: `local-${Date.now()}`,
+    expires_at: expiresAt,
+    qr_payload: `cgi://redeem?t=${encodeURIComponent(token)}&v=${encodeURIComponent(request.venue_id)}`,
+    expires_in_seconds: 120,
+    fallback_mode: true,
+  };
+}
+
+/** True when a token was issued by the local fallback flow. */
+export function isLocalFallbackToken(token: string): boolean {
+  return token.startsWith('CGI-LOCAL-');
+}
+
 export async function createRedemptionWindow(
   request: CreateRedemptionWindowRequest
 ): Promise<CreateRedemptionWindowResponse> {
@@ -310,7 +357,13 @@ export async function createRedemptionWindow(
     true
   );
 
-  if (!result.ok) return { success: false, error: result.error };
+  if (!result.ok) {
+    if (result.error.code === 'FUNCTION_NOT_DEPLOYED') {
+      console.warn('[RedemptionService] Edge function not deployed — switching to local fallback mode');
+      return { success: true, data: createLocalFallbackWindow(request) };
+    }
+    return { success: false, error: result.error };
+  }
 
   const data = result.data;
   const token = typeof data.token === 'string' ? data.token : '';
@@ -341,14 +394,71 @@ export async function createRedemptionWindow(
   };
 }
 
-export async function confirmRedemption(token: string): Promise<ConfirmRedemptionResponse> {
+/**
+ * Local fallback confirmation: best-effort writes the redemption directly to
+ * the database (RLS may reject it — the flow still succeeds either way).
+ */
+async function confirmRedemptionLocally(context?: FallbackConfirmContext): Promise<ConfirmRedemptionResponse> {
+  if (context) {
+    try {
+      const supabase = getSupabase();
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id ?? null;
+      if (userId) {
+        const { error } = await supabase.from('redemptions').insert({
+          venue_id: context.venue_id,
+          user_id: userId,
+          drink: context.drink_name,
+          drink_id: context.drink_id ?? null,
+          value: 0,
+          redeemed_at: new Date().toISOString(),
+          status: 'redeemed',
+          metadata: { flow: 'local_fallback', impact_message: '+1 ember kap ma tiszta vizet' },
+        });
+        if (error) {
+          console.warn('[RedemptionService] Fallback redemption insert rejected (RLS?), continuing', { message: error.message });
+        } else {
+          console.log('[RedemptionService] Fallback redemption saved directly to database');
+        }
+      }
+    } catch (error) {
+      console.warn('[RedemptionService] Fallback redemption insert failed, continuing', error);
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      redemption_id: null,
+      impact_delta: 1,
+      impact_message: '+1 ember kap ma tiszta vizet',
+      total_impact_units: null,
+    },
+  };
+}
+
+export async function confirmRedemption(
+  token: string,
+  fallbackContext?: FallbackConfirmContext
+): Promise<ConfirmRedemptionResponse> {
+  if (isLocalFallbackToken(token)) {
+    console.log('[RedemptionService] Confirming local fallback token');
+    return confirmRedemptionLocally(fallbackContext);
+  }
+
   const result = await postRedemptionFunction<{ token: string }, Record<string, unknown>>(
     'confirm-redemption',
     { token },
     true
   );
 
-  if (!result.ok) return { success: false, error: result.error };
+  if (!result.ok) {
+    if (result.error.code === 'FUNCTION_NOT_DEPLOYED') {
+      console.warn('[RedemptionService] confirm-redemption not deployed — confirming locally');
+      return confirmRedemptionLocally(fallbackContext);
+    }
+    return { success: false, error: result.error };
+  }
 
   const data = result.data;
   return {

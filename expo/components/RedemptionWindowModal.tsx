@@ -452,7 +452,12 @@ export default function RedemptionWindowModal({
       return;
     }
 
-    const response = await confirmRedemption(windowToken.token);
+    const response = await confirmRedemption(
+      windowToken.token,
+      windowToken.fallback_mode
+        ? { venue_id: venueId, drink_id: drink?.id ?? null, drink_name: selectedDrinkName }
+        : undefined
+    );
     if (response.success) {
       setImpactMessage(response.data.impact_message || '+1 ember kap ma tiszta vizet');
       setState('success');
@@ -474,7 +479,7 @@ export default function RedemptionWindowModal({
     setErrorMessage(getFriendlyError(response.error.error));
     setState(response.error.code === 'EXPIRED' ? 'expired' : 'error');
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  }, [clearTimer, queryClient, windowToken, selectedDrinkName]);
+  }, [clearTimer, queryClient, windowToken, selectedDrinkName, venueId, drink]);
 
   const renderDrinkImage = () => (
     <View style={[styles.drinkImageSection, { height: imageHeight }]}>
@@ -552,6 +557,12 @@ export default function RedemptionWindowModal({
             </View>
             <Text style={styles.stepTitle}>Mutasd a pultosnak</Text>
             <Text style={styles.stepSubtitle}>A pultos a te telefonodon nyomja meg a gombot.</Text>
+            {windowToken?.fallback_mode && (
+              <View style={styles.fallbackChip} testID="fallback-mode-chip">
+                <AlertCircle size={12} color="#FFB020" />
+                <Text style={styles.fallbackChipText}>Teszt mód — a szerveroldali rögzítés még nincs telepítve</Text>
+              </View>
+            )}
             {locationWarning && (
               <Text style={styles.locationWarningText}>{locationWarning}</Text>
             )}
@@ -623,6 +634,12 @@ export default function RedemptionWindowModal({
             <Text style={styles.successTitle}>Egészségedre!</Text>
             <Text style={styles.successDrinkName}>{selectedDrinkName}</Text>
             <Text style={styles.successSubtitle}>sikeresen beváltva</Text>
+            {windowToken?.fallback_mode && (
+              <View style={styles.fallbackChip} testID="fallback-mode-chip-success">
+                <AlertCircle size={12} color="#FFB020" />
+                <Text style={styles.fallbackChipText}>Teszt mód — a szerveroldali rögzítés még nincs telepítve</Text>
+              </View>
+            )}
 
             <Animated.View style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}>
               <View style={styles.waveIcon}>
@@ -837,6 +854,26 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 0.3,
+  },
+  fallbackChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,176,32,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,176,32,0.3)',
+    marginTop: -10,
+    marginBottom: 14,
+    maxWidth: 320,
+  },
+  fallbackChipText: {
+    color: '#FFB020',
+    fontSize: 11,
+    fontWeight: '800',
+    flexShrink: 1,
   },
   locationWarningText: {
     color: '#FFB020',
