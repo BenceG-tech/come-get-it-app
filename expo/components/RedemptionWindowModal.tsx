@@ -160,8 +160,11 @@ export default function RedemptionWindowModal({
   const queryClient = useQueryClient();
   const { getCurrentLocation } = useLocation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const imageHeight = Math.max(200, Math.round(screenHeight * 0.28));
   const [state, setState] = useState<FlowState>('step1_arrive');
+  const isCompactImageState = state === 'countdown' || state === 'success';
+  const imageHeight = isCompactImageState
+    ? Math.max(140, Math.round(screenHeight * 0.18))
+    : Math.max(200, Math.round(screenHeight * 0.28));
   const [windowToken, setWindowToken] = useState<RedemptionWindow | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number>(WINDOW_SECONDS * 1000);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -549,25 +552,26 @@ export default function RedemptionWindowModal({
       return (
         <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
           {renderDrinkImage()}
-          <View style={styles.bodyContent}>
-            {renderStepIndicator(3)}
-            <View style={styles.readyBadge}>
-              <CheckCircle2 size={16} color="#001014" />
-              <Text style={styles.readyBadgeText}>Ablak megnyitva</Text>
-            </View>
-            <Text style={styles.stepTitle}>Mutasd a pultosnak</Text>
-            <Text style={styles.stepSubtitle}>A pultos a te telefonodon nyomja meg a gombot.</Text>
-            {windowToken?.fallback_mode && (
-              <View style={styles.fallbackChip} testID="fallback-mode-chip">
-                <AlertCircle size={12} color="#FFB020" />
-                <Text style={styles.fallbackChipText}>Teszt mód — a szerveroldali rögzítés még nincs telepítve</Text>
+          <View style={styles.countdownContent}>
+            <View style={styles.countdownTop}>
+              {renderStepIndicator(3)}
+              <View style={styles.readyBadge}>
+                <CheckCircle2 size={15} color="#001014" />
+                <Text style={styles.readyBadgeText}>Ablak megnyitva — mutasd a pultosnak</Text>
               </View>
-            )}
-            {locationWarning && (
-              <Text style={styles.locationWarningText}>{locationWarning}</Text>
-            )}
+              {windowToken?.fallback_mode && (
+                <View style={styles.fallbackChip} testID="fallback-mode-chip">
+                  <AlertCircle size={12} color="#FFB020" />
+                  <Text style={styles.fallbackChipText}>Teszt mód — a szerveroldali rögzítés még nincs telepítve</Text>
+                </View>
+              )}
+              {locationWarning && (
+                <Text style={styles.locationWarningText}>{locationWarning}</Text>
+              )}
+            </View>
 
-            <View style={styles.timerWrap}>
+            <View style={styles.countdownMiddle}>
+              <View style={[styles.timerWrap, styles.timerGlow, lowTime && styles.timerGlowWarning]}>
               <Svg width={RING_SIZE} height={RING_SIZE} style={styles.timerSvg}>
                 <Circle
                   cx={RING_SIZE / 2}
@@ -593,31 +597,42 @@ export default function RedemptionWindowModal({
                   transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
                 />
               </Svg>
-              <View style={styles.timerInner} pointerEvents="none">
-                <Clock3 size={20} color={ringColor} />
-                <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
-                <Text style={styles.timerLabel}>maradt</Text>
+                <View style={styles.timerInner} pointerEvents="none">
+                  <Clock3 size={20} color={ringColor} />
+                  <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
+                  <Text style={styles.timerLabel}>maradt</Text>
+                </View>
               </View>
+
+              <Text style={styles.drinkName}>{selectedDrinkName}</Text>
+              <Text style={styles.venueName}>{venueName}</Text>
             </View>
 
-            <Text style={styles.drinkName}>{selectedDrinkName}</Text>
-            <Text style={styles.venueName}>{venueName}</Text>
+            <View style={styles.countdownBottom}>
+              <Text style={styles.confirmHint}>A pultos a te telefonodon nyomja meg a gombot.</Text>
+              <Pressable
+                onPress={handleConfirm}
+                testID="redeem-now-button"
+                accessibilityRole="button"
+                accessibilityLabel="Beváltom"
+                style={({ pressed }) => [styles.redeemButtonWrap, pressed && styles.redeemButtonPressed]}
+              >
+                <LinearGradient
+                  colors={lowTime ? ['#FF8A7A', '#E8443A'] : ['#00E0FF', '#0090B8']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.redeemButtonGradient}
+                >
+                  <Text style={styles.redeemButtonText}>BEVÁLTOM</Text>
+                </LinearGradient>
+              </Pressable>
 
-            <Pressable
-              onPress={handleConfirm}
-              testID="redeem-now-button"
-              accessibilityRole="button"
-              accessibilityLabel="Beváltom"
-              style={({ pressed }) => [styles.redeemButton, pressed && styles.redeemButtonPressed]}
-            >
-              <Text style={styles.redeemButtonText}>BEVÁLTOM</Text>
-            </Pressable>
-
-            {DEMO_MODE && (
-              <TouchableOpacity style={styles.demoConfirmButton} onPress={handleConfirm} testID="demo-staff-confirm-button" activeOpacity={0.82}>
-                <Text style={styles.demoConfirmText}>DEMO: Pultos confirmed</Text>
-              </TouchableOpacity>
-            )}
+              {DEMO_MODE && (
+                <TouchableOpacity style={styles.demoConfirmButton} onPress={handleConfirm} testID="demo-staff-confirm-button" activeOpacity={0.82}>
+                  <Text style={styles.demoConfirmText}>DEMO: Pultos confirmed</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </Animated.View>
       );
@@ -865,8 +880,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,176,32,0.1)',
     borderWidth: 1,
     borderColor: 'rgba(255,176,32,0.3)',
-    marginTop: -10,
-    marginBottom: 14,
+    marginTop: 2,
+    marginBottom: 6,
     maxWidth: 320,
   },
   fallbackChipText: {
@@ -1104,16 +1119,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 999,
     backgroundColor: CYAN,
-    marginBottom: 14,
+    marginBottom: 10,
+    shadowColor: CYAN,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   readyBadgeText: {
     color: '#001014',
     fontSize: 12,
     fontWeight: '900',
+  },
+  countdownContent: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 22,
+    alignItems: 'center',
+  },
+  countdownTop: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  countdownMiddle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  countdownBottom: {
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  confirmHint: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   timerWrap: {
     width: RING_SIZE,
@@ -1121,6 +1171,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
+  },
+  timerGlow: {
+    borderRadius: RING_SIZE / 2,
+    shadowColor: CYAN,
+    shadowOpacity: 0.45,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
+    backgroundColor: 'rgba(0, 200, 232, 0.04)',
+  },
+  timerGlowWarning: {
+    shadowColor: '#FF6B6B',
+    backgroundColor: 'rgba(255, 107, 107, 0.05)',
   },
   timerSvg: {
     position: 'absolute',
@@ -1147,7 +1210,7 @@ const styles = StyleSheet.create({
   },
   drinkName: {
     color: CYAN,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
     textAlign: 'center',
   },
@@ -1157,32 +1220,34 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     marginTop: 4,
-    marginBottom: 18,
   },
-  redeemButton: {
+  redeemButtonWrap: {
     width: '100%',
-    maxWidth: 340,
-    minHeight: 78,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    shadowColor: CYAN,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  redeemButtonGradient: {
+    width: '100%',
+    minHeight: 72,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: CYAN,
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
   redeemButtonPressed: {
-    transform: [{ scale: 0.975 }],
+    transform: [{ scale: 0.97 }],
+    opacity: 0.92,
   },
   redeemButtonText: {
-    color: '#041015',
-    fontSize: 26,
+    color: '#001014',
+    fontSize: 24,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 1.4,
   },
   demoConfirmButton: {
     marginTop: 12,

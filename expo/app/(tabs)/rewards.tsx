@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -8,8 +8,11 @@ import {
   Martini,
   Nfc,
   Send,
+  ShieldCheck,
   Sparkles,
+  Star,
   UtensilsCrossed,
+  Zap,
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -22,6 +25,9 @@ import type { Reward } from "@/types/reward";
 import { mergeWithMockRewards } from "@/data/mockRewards";
 
 const CYAN = "#00C8E8" as const;
+const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
+
+const HERO_BG_URI = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&q=80";
 
 type RewardCategoryItem = {
   key: string;
@@ -67,6 +73,34 @@ const rewardCategories: RewardCategoryItem[] = [
   },
 ];
 
+type HeroBenefit = {
+  key: string;
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+};
+
+const heroBenefits: HeroBenefit[] = [
+  {
+    key: "auto",
+    icon: Zap,
+    title: "Automatikus pontgyűjtés",
+    subtitle: "Minden partnerhelyi fizetés után pont jár.",
+  },
+  {
+    key: "member",
+    icon: Star,
+    title: "Exkluzív tagi előnyök",
+    subtitle: "Csak kártyás tagoknak szóló ajánlatok.",
+  },
+  {
+    key: "secure",
+    icon: ShieldCheck,
+    title: "Gyors és biztonságos",
+    subtitle: "Az adataid titkosítva, egy koppintás az egész.",
+  },
+];
+
 export default function RewardsScreen() {
   const rewardsQuery = useQuery({
     queryKey: ["rewards", "app"],
@@ -108,9 +142,6 @@ export default function RewardsScreen() {
   }, [normalizedRewards]);
 
   const { points } = useAppContext();
-  const nextReward = normalizedRewards.find((reward: Reward) => reward.points_required > points);
-  const closestRewardCost = nextReward?.points_required ?? 2500;
-  const progress = Math.min(points / Math.max(closestRewardCost, 1), 1);
 
   const goToCategory = (cat: string) => {
     console.log("[Rewards] Navigate to category:", cat);
@@ -118,6 +149,27 @@ export default function RewardsScreen() {
   };
 
   const cardWidth = 240;
+
+  const renderSectionHeader = (title: string, subtitle: string, allKey?: string) => (
+    <View style={styles.sectionHeader}>
+      <View style={styles.sectionHeaderText}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+      </View>
+      {allKey ? (
+        <TouchableOpacity
+          style={styles.sectionAllLink}
+          onPress={() => goToCategory(allKey)}
+          accessibilityRole="button"
+          testID={`see-all-${allKey}`}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.sectionAllText}>Összes</Text>
+          <ChevronRight size={14} color={CYAN} />
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
 
   return (
     <View style={styles.container} testID="rewards-screen">
@@ -136,66 +188,84 @@ export default function RewardsScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.linkCardTouch} activeOpacity={0.92} accessibilityRole="button" testID="add-card-button">
-          <View style={styles.bankCard}>
+        <View style={styles.heroCard} testID="link-card-hero">
+          <ImageBackground source={{ uri: HERO_BG_URI }} style={styles.heroBg} imageStyle={styles.heroBgImage}>
             <LinearGradient
-              colors={["#00C8E8", "#00A6C4"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.bankBand}
-            >
-              <Text style={styles.bankBandText}>COME GET IT</Text>
-              <Nfc size={17} color="#001014" />
-            </LinearGradient>
-            <View style={styles.bankBody}>
-              <View style={styles.bankMidRow}>
-                <View style={styles.bankChip}>
-                  <View style={styles.bankChipLine} />
-                  <View style={styles.bankChipLineVertical} />
-                </View>
-                <Text style={styles.bankNumber}>••••  4412</Text>
-              </View>
-              <View style={styles.bankBottomRow}>
-                <View>
-                  <Text style={styles.bankLabel}>KÁRTYABIRTOKOS</Text>
-                  <Text style={styles.bankName}>CLUB TAG</Text>
-                </View>
-                <View style={styles.bankCircles}>
-                  <View style={styles.bankCircleLeft} />
-                  <View style={styles.bankCircleRight} />
-                </View>
-              </View>
-            </View>
-          </View>
-          <View style={styles.linkCardFooter}>
-            <Text style={styles.linkCardHint}>Automatikusan pontot kapsz, amikor partnerhelyen fizetsz.</Text>
-            <View style={styles.linkCardCta}>
-              <Text style={styles.linkCardCtaText}>Kártya hozzáadása</Text>
-              <ChevronRight size={16} color="#001014" />
-            </View>
-          </View>
-        </TouchableOpacity>
+              colors={["rgba(4,8,11,0.55)", "rgba(4,8,11,0.82)", "rgba(4,8,11,0.97)"]}
+              locations={[0, 0.45, 1]}
+              style={StyleSheet.absoluteFill}
+            />
 
-        <View style={styles.progressCard}>
-          <View style={styles.progressHeader}>
-            <View>
-              <Text style={styles.progressLabel}>Következő jutalom</Text>
-              <Text style={styles.progressTitle} numberOfLines={1}>{nextReward ? nextReward.name : "Új partner ajánlat"}</Text>
+            <View style={styles.heroCardInner}>
+              <Text style={styles.heroTitle}>Kapcsold össze a kártyádat</Text>
+              <Text style={styles.heroSubtitle}>Fizess a partnerhelyeken és a pontok maguktól gyűlnek.</Text>
+
+              <View style={styles.clubCardGlowWrap}>
+                <View style={styles.clubCard}>
+                  <LinearGradient
+                    colors={["rgba(0,200,232,0.16)", "rgba(4,10,14,0.4)"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.clubCardTopRow}>
+                    <Text style={styles.clubCardBrand}>COME GET IT</Text>
+                    <Nfc size={16} color={CYAN} />
+                  </View>
+                  <View style={styles.clubCardChipRow}>
+                    <View style={styles.clubChip}>
+                      <View style={styles.clubChipLine} />
+                      <View style={styles.clubChipLineVertical} />
+                    </View>
+                    <Text style={styles.clubCardNumber}>••••  4412</Text>
+                  </View>
+                  <View style={styles.clubCardBottomRow}>
+                    <View>
+                      <Text style={styles.clubCardLabel}>KÁRTYABIRTOKOS</Text>
+                      <Text style={styles.clubCardName}>CLUB TAG</Text>
+                    </View>
+                    <View style={styles.clubCircles}>
+                      <View style={styles.clubCircleLeft} />
+                      <View style={styles.clubCircleRight} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.benefitsList}>
+                {heroBenefits.map((benefit) => {
+                  const Icon = benefit.icon;
+                  return (
+                    <View key={benefit.key} style={styles.benefitRow}>
+                      <View style={styles.benefitIconWrap}>
+                        <Icon size={16} color={CYAN} />
+                      </View>
+                      <View style={styles.benefitTextBlock}>
+                        <Text style={styles.benefitTitle}>{benefit.title}</Text>
+                        <Text style={styles.benefitSubtitle}>{benefit.subtitle}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
+              <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button">
+                <LinearGradient
+                  colors={["#00E0FF", "#0090B8"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.heroCta}
+                >
+                  <Text style={styles.heroCtaText}>Kártya hozzáadása</Text>
+                  <ChevronRight size={18} color="#001014" />
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.progressPoints}>{Math.max(closestRewardCost - points, 0).toLocaleString("hu-HU")} pont</Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-          </View>
+          </ImageBackground>
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Szerkesztők kedvencei</Text>
-              <Text style={styles.sectionSubtitle}>A legjobb beváltások ma estére</Text>
-            </View>
-          </View>
+          {renderSectionHeader("Szerkesztők kedvencei", "A legjobb beváltások ma estére", "all")}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
             {rewardsQuery.isLoading && editorPicks.length === 0 ? (
@@ -221,12 +291,7 @@ export default function RewardsScreen() {
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Új jutalmak</Text>
-              <Text style={styles.sectionSubtitle}>A legfrissebb ajánlatok</Text>
-            </View>
-          </View>
+          {renderSectionHeader("Új jutalmak", "A legfrissebb ajánlatok", "all")}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
             {newRewards.map((reward) => (
@@ -249,16 +314,13 @@ export default function RewardsScreen() {
             <Text style={styles.referTitle}>Hívj meg egy barátot</Text>
             <Text style={styles.referSubtitle}>500 pont jár, amikor csatlakozik és használja az appot.</Text>
           </View>
-          <ChevronRight size={19} color="rgba(255,255,255,0.42)" />
+          <View style={styles.referPointsChip}>
+            <Text style={styles.referPointsChipText}>+500 p</Text>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Kategóriák</Text>
-              <Text style={styles.sectionSubtitle}>Gyors út a megfelelő ajánlathoz</Text>
-            </View>
-          </View>
+          {renderSectionHeader("Kategóriák", "Gyors út a megfelelő ajánlathoz")}
 
           <View style={styles.categoriesGrid}>
             {rewardCategories.map((category: RewardCategoryItem) => {
@@ -330,10 +392,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 34,
-    lineHeight: 38,
-    fontWeight: "900",
+    lineHeight: 40,
+    fontWeight: "700",
+    fontFamily: SERIF,
     color: Colors.text,
-    letterSpacing: -0.8,
+    letterSpacing: -0.4,
   },
   subtitle: {
     color: "rgba(255,255,255,0.62)",
@@ -361,70 +424,234 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
   },
-  progressCard: {
+  heroCard: {
     marginHorizontal: 18,
-    marginBottom: 24,
-    borderRadius: 18,
-    padding: 15,
-    backgroundColor: "rgba(255,255,255,0.045)",
+    marginBottom: 26,
+    borderRadius: 26,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)",
+    borderColor: "rgba(0, 200, 232, 0.28)",
+    shadowColor: "#00C8E8",
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 9,
+    backgroundColor: "#04080B",
   },
-  progressHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 12,
+  heroBg: {
+    width: "100%",
   },
-  progressLabel: {
-    color: "rgba(255,255,255,0.44)",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1.1,
-    textTransform: "uppercase",
-    marginBottom: 5,
+  heroBgImage: {
+    resizeMode: "cover",
   },
-  progressTitle: {
-    color: "rgba(255,255,255,0.88)",
-    fontSize: 14,
-    fontWeight: "800",
-    maxWidth: 210,
+  heroCardInner: {
+    padding: 18,
+    paddingTop: 20,
   },
-  progressPoints: {
-    color: "#00C8E8",
+  heroTitle: {
+    color: Colors.text,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "700",
+    fontFamily: SERIF,
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    color: "rgba(255,255,255,0.66)",
     fontSize: 13,
-    fontWeight: "900",
+    lineHeight: 19,
+    marginBottom: 16,
+    maxWidth: 300,
   },
-  progressTrack: {
-    height: 7,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.08)",
+  clubCardGlowWrap: {
+    alignItems: "center",
+    marginBottom: 18,
+    shadowColor: "#00C8E8",
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 12,
+  },
+  clubCard: {
+    width: "94%",
+    borderRadius: 18,
+    backgroundColor: "rgba(5, 12, 16, 0.94)",
+    borderWidth: 1.5,
+    borderColor: "rgba(0, 224, 255, 0.55)",
+    paddingHorizontal: 18,
+    paddingVertical: 15,
     overflow: "hidden",
   },
-  progressFill: {
+  clubCardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  clubCardBrand: {
+    color: CYAN,
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 2.4,
+  },
+  clubCardChipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 16,
+  },
+  clubChip: {
+    width: 36,
+    height: 26,
+    borderRadius: 6,
+    backgroundColor: "rgba(246, 200, 100, 0.28)",
+    borderWidth: 1,
+    borderColor: "rgba(246, 200, 100, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  clubChipLine: {
+    position: "absolute",
+    width: "100%",
+    height: 1,
+    backgroundColor: "rgba(246, 200, 100, 0.65)",
+  },
+  clubChipLineVertical: {
+    position: "absolute",
+    width: 1,
     height: "100%",
-    borderRadius: 999,
-    backgroundColor: "#00C8E8",
+    backgroundColor: "rgba(246, 200, 100, 0.65)",
+  },
+  clubCardNumber: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: 2.6,
+  },
+  clubCardBottomRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  clubCardLabel: {
+    color: "rgba(255,255,255,0.40)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    marginBottom: 3,
+  },
+  clubCardName: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+  },
+  clubCircles: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  clubCircleLeft: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.85)",
+  },
+  clubCircleRight: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 120, 150, 0.75)",
+    marginLeft: -9,
+  },
+  benefitsList: {
+    gap: 12,
+    marginBottom: 18,
+  },
+  benefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  benefitIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 200, 232, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.26)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  benefitTextBlock: {
+    flex: 1,
+  },
+  benefitTitle: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 1,
+  },
+  benefitSubtitle: {
+    color: "rgba(255,255,255,0.52)",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  heroCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    minHeight: 52,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+  },
+  heroCtaText: {
+    color: "#001014",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 0.2,
   },
   section: {
     marginBottom: 24,
   },
   sectionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 12,
     paddingHorizontal: 18,
     marginBottom: 13,
   },
+  sectionHeaderText: {
+    flex: 1,
+  },
   sectionTitle: {
     color: Colors.text,
-    fontSize: 20,
-    fontWeight: "900",
-    letterSpacing: -0.3,
+    fontSize: 22,
+    lineHeight: 27,
+    fontWeight: "700",
+    fontFamily: SERIF,
+    letterSpacing: -0.2,
   },
   sectionSubtitle: {
     color: "rgba(255,255,255,0.48)",
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
+  },
+  sectionAllLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  sectionAllText: {
+    color: CYAN,
+    fontSize: 13,
+    fontWeight: "800",
   },
   horizontalList: {
     paddingLeft: 18,
@@ -456,7 +683,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "rgba(10, 16, 22, 0.82)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
+    borderColor: "rgba(0, 200, 232, 0.18)",
   },
   referIconWrap: {
     width: 42,
@@ -471,6 +698,7 @@ const styles = StyleSheet.create({
   },
   referTextContainer: {
     flex: 1,
+    marginRight: 10,
   },
   referTitle: {
     color: Colors.text,
@@ -482,6 +710,17 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.54)",
     fontSize: 13,
     lineHeight: 18,
+  },
+  referPointsChip: {
+    backgroundColor: CYAN,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  referPointsChipText: {
+    color: "#001014",
+    fontSize: 12,
+    fontWeight: "900",
   },
   categoriesGrid: {
     flexDirection: "row",
@@ -540,142 +779,5 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.50)",
     fontSize: 11,
     lineHeight: 15,
-  },
-  linkCardTouch: {
-    marginHorizontal: 18,
-    marginBottom: 22,
-    borderRadius: 24,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.30)",
-    backgroundColor: "rgba(10,16,22,0.9)",
-    shadowColor: "#00C8E8",
-    shadowOpacity: 0.22,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-  bankCard: {
-    backgroundColor: "#06090C",
-    overflow: "hidden",
-  },
-  bankBand: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  bankBandText: {
-    color: "#001014",
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 2.2,
-  },
-  bankBody: {
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 14,
-  },
-  bankMidRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    marginBottom: 16,
-  },
-  bankChip: {
-    width: 38,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: "rgba(246, 200, 100, 0.28)",
-    borderWidth: 1,
-    borderColor: "rgba(246, 200, 100, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  bankChipLine: {
-    position: "absolute",
-    width: "100%",
-    height: 1,
-    backgroundColor: "rgba(246, 200, 100, 0.65)",
-  },
-  bankChipLineVertical: {
-    position: "absolute",
-    width: 1,
-    height: "100%",
-    backgroundColor: "rgba(246, 200, 100, 0.65)",
-  },
-  bankNumber: {
-    color: "rgba(255,255,255,0.9)",
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: 2.6,
-  },
-  bankBottomRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  bankLabel: {
-    color: "rgba(255,255,255,0.40)",
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    marginBottom: 3,
-  },
-  bankName: {
-    color: "rgba(255,255,255,0.86)",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  bankCircles: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  bankCircleLeft: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(0, 200, 232, 0.85)",
-  },
-  bankCircleRight: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(0, 120, 150, 0.75)",
-    marginLeft: -10,
-  },
-  linkCardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    backgroundColor: "rgba(0, 200, 232, 0.06)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0, 200, 232, 0.16)",
-  },
-  linkCardHint: {
-    flex: 1,
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  linkCardCta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: 999,
-    backgroundColor: "#00C8E8",
-    paddingVertical: 9,
-    paddingHorizontal: 13,
-  },
-  linkCardCtaText: {
-    color: "#001014",
-    fontSize: 13,
-    fontWeight: "900",
   },
 });

@@ -3,8 +3,8 @@ import { StyleSheet, View, Text, Image, Pressable, Dimensions } from "react-nati
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
+  ArrowRight,
   BadgePercent,
-  ChevronRight,
   Handshake,
   Martini,
   Sparkles,
@@ -83,19 +83,20 @@ function BigRewardCardInner({ reward, width = 240, canRedeem, testID }: BigRewar
       </View>
 
       <View style={styles.bottomContent}>
-        <View style={[styles.categoryRow, { borderColor: `${meta.color}55` }]}>
-          <View style={[styles.categoryDot, { backgroundColor: meta.color }]} />
-          <Text style={[styles.categoryLabel, { color: meta.color }]}>{meta.label}</Text>
-        </View>
-        <Text style={styles.title} numberOfLines={2}>{reward.name}</Text>
-        {canRedeem !== undefined && (
-          <View style={[styles.statusRow, canRedeem ? styles.statusOk : styles.statusPending]}>
-            <Text style={[styles.statusText, canRedeem ? styles.statusTextOk : styles.statusTextPending]}>
+        <View style={styles.bottomTextBlock}>
+          <Text style={[styles.categoryLabel, { color: meta.color }]}>{meta.label.toUpperCase()}</Text>
+          <Text style={styles.title} numberOfLines={2}>{reward.name}</Text>
+          {reward.description ? (
+            <Text style={styles.description} numberOfLines={1}>{reward.description}</Text>
+          ) : canRedeem !== undefined ? (
+            <Text style={[styles.description, canRedeem ? styles.statusTextOk : undefined]} numberOfLines={1}>
               {canRedeem ? "Azonnal beváltható" : "Még gyűjts pontot"}
             </Text>
-            <ChevronRight size={14} color={canRedeem ? CYAN : "rgba(255,255,255,0.4)"} />
-          </View>
-        )}
+          ) : null}
+        </View>
+        <View style={[styles.arrowButton, canRedeem && styles.arrowButtonActive]}>
+          <ArrowRight size={17} color={canRedeem ? "#001014" : "rgba(255,255,255,0.75)"} />
+        </View>
       </View>
     </Pressable>
   );
@@ -188,29 +189,43 @@ const styles = StyleSheet.create({
     left: 13,
     right: 13,
     bottom: 13,
-  },
-  categoryRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    alignSelf: "flex-start",
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderWidth: 1,
-    marginBottom: 9,
+    alignItems: "flex-end",
+    gap: 10,
   },
-  categoryDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  bottomTextBlock: {
+    flex: 1,
   },
   categoryLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
+    letterSpacing: 1.2,
+    marginBottom: 5,
+  },
+  description: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 5,
+  },
+  arrowButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  arrowButtonActive: {
+    backgroundColor: CYAN,
+    borderColor: CYAN,
+    shadowColor: CYAN,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
   title: {
     color: "#FFFFFF",
@@ -219,22 +234,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: -0.3,
   },
-  statusRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 8,
-  },
-  statusOk: {},
-  statusPending: {},
-  statusText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
   statusTextOk: {
     color: CYAN,
-  },
-  statusTextPending: {
-    color: "rgba(255,255,255,0.42)",
+    fontWeight: "700" as const,
   },
 });
