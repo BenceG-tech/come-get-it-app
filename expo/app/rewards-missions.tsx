@@ -176,21 +176,14 @@ export default function RewardsMissionsScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Vissza">
-            <ArrowLeft size={21} color={Colors.text} />
+            <ArrowLeft size={19} color={Colors.text} />
           </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerEyebrow}>COME GET IT CLUB</Text>
-            <Text style={styles.headerTitle}>Küldetések</Text>
-          </View>
+          <Text style={styles.headerTitle}>Küldetések</Text>
           <View style={styles.pointsPill} testID="rewards-missions-points">
             <Sparkles size={13} color="#001014" />
             <Text style={styles.pointsPillText}>{points.toLocaleString("hu-HU")}</Text>
           </View>
         </View>
-
-        <Text style={styles.headerSubtitle}>
-          Teljesíts küldetéseket és gyűjts extra pontokat italokra és élményekre.
-        </Text>
 
         <TouchableOpacity
           style={styles.rewardsShortcut}
@@ -198,10 +191,8 @@ export default function RewardsMissionsScreen() {
           onPress={() => router.push("/(tabs)/rewards")}
           testID="rewards-missions-open-rewards"
         >
-          <View style={styles.rewardsShortcutIcon}>
-            <Gift size={16} color={CYAN} />
-          </View>
-          <Text style={styles.rewardsShortcutText}>Pontjaid beváltása a Jutalmak fülön</Text>
+          <Gift size={14} color={CYAN} />
+          <Text style={styles.rewardsShortcutText} numberOfLines={1}>Pontjaid beváltása a Jutalmak fülön</Text>
         </TouchableOpacity>
 
         <View style={styles.tabsWrap}>
@@ -247,35 +238,26 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 56,
+    paddingTop: 54,
     paddingHorizontal: 16,
     gap: 12,
   },
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 13,
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     justifyContent: "center",
     alignItems: "center",
   },
-  headerCenter: {
-    flex: 1,
-  },
-  headerEyebrow: {
-    color: "rgba(0, 200, 232, 0.86)",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    marginBottom: 2,
-  },
   headerTitle: {
+    flex: 1,
     color: Colors.text,
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   pointsPill: {
     flexDirection: "row",
@@ -291,43 +273,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
   },
-  headerSubtitle: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 13,
-    lineHeight: 18,
-    paddingHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 12,
-  },
   rewardsShortcut: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     marginHorizontal: 16,
-    marginBottom: 14,
-    paddingVertical: 11,
-    paddingHorizontal: 13,
-    borderRadius: 16,
+    marginTop: 10,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     backgroundColor: "rgba(0, 200, 232, 0.08)",
     borderWidth: 1,
     borderColor: "rgba(0, 200, 232, 0.22)",
   },
-  rewardsShortcutIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 11,
-    backgroundColor: "rgba(0, 200, 232, 0.12)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   rewardsShortcutText: {
     flex: 1,
     color: "rgba(255,255,255,0.82)",
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "700",
   },
   tabsWrap: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   tabsContent: {
     paddingHorizontal: 16,

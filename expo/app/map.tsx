@@ -23,8 +23,25 @@ import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
 import DarkMapPreview from '@/components/DarkMapPreview';
 import VenueMiniCard from '@/components/VenueMiniCard';
 import { geocodeVenueAddress } from '@/utils/geocoding';
+import { useLocation } from '@/context/LocationContext';
 
-let Location: any = null;
+function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
+  return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
+}
 
 type MapRegion = {
   latitude: number;
@@ -48,9 +65,19 @@ export default function MapScreen() {
   const statusBarStyle = 'light' as const;
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userLocation, setUserLocation] = useState<any>(null);
   const [sheetMode, setSheetMode] = useState<'collapsed' | 'expanded'>('collapsed');
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
+
+  const { location: userLocation, getCurrentLocation } = useLocation();
+
+  useEffect(() => {
+    getCurrentLocation()
+      .then((loc) => {
+        console.log('[Map] User location resolved:', loc?.coords ?? null);
+      })
+      .catch((e) => console.log('[Map] Failed to resolve user location:', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onMiniCardDetails = useCallback(
     (venue: Venue) => {
@@ -152,17 +179,6 @@ export default function MapScreen() {
           ).length,
         });
         setVenues(venuesWithCoords as Venue[]);
-
-        if (Platform.OS !== 'web' && Location) {
-          const locationStatus = await Location.requestForegroundPermissionsAsync();
-          if (locationStatus.status === 'granted') {
-            const location = await Location.getCurrentPositionAsync({});
-            setUserLocation(location);
-            console.log('[Map] User location:', location.coords);
-          } else {
-            console.log('[Map] Location permission denied');
-          }
-        }
       } catch (error) {
         console.error('[Map] Error fetching data:', error);
         Alert.alert('Hiba', 'Nem sikerült betölteni a térképet');
@@ -188,11 +204,35 @@ export default function MapScreen() {
         longitudeDelta: 0.1,
       };
 
+  const userCoords = userLocation?.coords ?? null;
+
+  const venuesSorted = useMemo(() => {
+    const withDistance = venues.map((v) => {
+      if (
+        userCoords &&
+        typeof v.latitude === 'number' &&
+        typeof v.longitude === 'number'
+      ) {
+        return {
+          ...v,
+          distance: haversineMeters(userCoords.latitude, userCoords.longitude, v.latitude, v.longitude),
+        };
+      }
+      return v;
+    });
+    if (userCoords) {
+      withDistance.sort(
+        (a, b) => (typeof a.distance === 'number' ? a.distance : Infinity) - (typeof b.distance === 'number' ? b.distance : Infinity)
+      );
+    }
+    return withDistance;
+  }, [venues, userCoords]);
+
   const venuesWithCoords = useMemo(() => {
-    const filtered = venues.filter((v) => typeof v.latitude === 'number' && typeof v.longitude === 'number');
+    const filtered = venuesSorted.filter((v) => typeof v.latitude === 'number' && typeof v.longitude === 'number');
     console.log('[Map] venuesWithCoords:', filtered.length);
     return filtered;
-  }, [venues]);
+  }, [venuesSorted]);
 
   const sheetSnap = useRef<BottomSheetSnap | null>(null);
 
@@ -379,9 +419,14 @@ export default function MapScreen() {
                         </View>
                       </View>
                       <View style={styles.venueRowBody}>
-                        <Text style={styles.venueRowTitle} numberOfLines={1}>
-                          {item.name}
-                        </Text>
+                        <View style={styles.venueRowTitleRow}>
+                          <Text style={styles.venueRowTitle} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                          {typeof item.distance === 'number' ? (
+                            <Text style={styles.venueRowDistance}>{formatDistance(item.distance)}</Text>
+                          ) : null}
+                        </View>
                         <Text style={styles.venueRowAddress} numberOfLines={1}>
                           {item.address ?? ''}
                         </Text>
@@ -413,12 +458,13 @@ export default function MapScreen() {
         </View>
       ) : (
         <WebMapView
-          venues={venues}
+          venues={venuesSorted}
           router={router}
           previewVenue={previewVenue}
           onMarkerPress={(venue) => setPreviewVenue(venue)}
           onClosePreview={() => setPreviewVenue(null)}
           onDetails={onMiniCardDetails}
+          userCoordinate={userCoords}
         />
       )}
     </View>
@@ -650,9 +696,21 @@ const styles = StyleSheet.create({
   venueRowBody: {
     flex: 1,
   },
+  venueRowTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   venueRowTitle: {
+    flex: 1,
     color: Colors.text,
     fontSize: 15,
+    fontWeight: '800',
+  },
+  venueRowDistance: {
+    color: '#00D1FF',
+    fontSize: 12,
     fontWeight: '800',
   },
   venueRowAddress: {
@@ -675,6 +733,7 @@ function WebMapView({
   onMarkerPress,
   onClosePreview,
   onDetails,
+  userCoordinate,
 }: {
   venues: Venue[];
   router: ReturnType<typeof useRouter>;
@@ -682,6 +741,7 @@ function WebMapView({
   onMarkerPress: (venue: Venue) => void;
   onClosePreview: () => void;
   onDetails: (venue: Venue) => void;
+  userCoordinate: { latitude: number; longitude: number } | null;
 }) {
   return (
     <View style={styles.webMapContainer} testID="web-map">
@@ -691,6 +751,7 @@ function WebMapView({
         style={styles.webMapCanvas}
         interactive
         controlsBottomOffset={24}
+        userCoordinate={userCoordinate}
         onMarkerPress={(venue) => {
           console.log('[Map] Web marker pressed, showing mini card:', venue.id);
           onMarkerPress(venue);
@@ -725,9 +786,14 @@ function WebMapView({
                   </View>
                 </View>
                 <View style={styles.venueRowBody}>
-                  <Text style={styles.venueRowTitle} numberOfLines={1}>
-                    {item.name}
-                  </Text>
+                  <View style={styles.venueRowTitleRow}>
+                    <Text style={styles.venueRowTitle} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    {typeof item.distance === 'number' ? (
+                      <Text style={styles.venueRowDistance}>{formatDistance(item.distance)}</Text>
+                    ) : null}
+                  </View>
                   <Text style={styles.venueRowAddress} numberOfLines={1}>
                     {item.address ?? ''}
                   </Text>

@@ -43,6 +43,7 @@ export default function VenueModalScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const glowPulse = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -303,36 +304,62 @@ export default function VenueModalScreen() {
       ]}
       testID="venue-detail-root"
     >
-        <ScrollView 
+        {(() => {
+          const heroHeight = Math.max(280, height * 0.45);
+          const heroTransform = {
+            transform: [
+              {
+                translateY: scrollY.interpolate({
+                  inputRange: [-heroHeight, 0, heroHeight],
+                  outputRange: [-heroHeight / 2, 0, heroHeight * 0.5],
+                }),
+              },
+              {
+                scale: scrollY.interpolate({
+                  inputRange: [-heroHeight, 0],
+                  outputRange: [2, 1],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+          };
+          return (
+        <Animated.ScrollView 
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false} 
-          bounces={false}
+          bounces={true}
           scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
         >
-          <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-                const offsetX = e.nativeEvent.contentOffset.x;
-                const index = Math.round(offsetX / width);
-                setActiveIndex(index);
-              }}
-              scrollEventThrottle={16}
-              style={styles.imageScroller}
-            >
-              {images.map((uri, idx) => (
-                <Image
-                  key={`img-${uri}-${idx}`}
-                  testID={`venue-image-${idx}`}
-                  source={{ uri }}
-                  style={[styles.image, { width }]}
-                  resizeMode="cover"
-                  onError={() => onImageError(idx)}
-                />
-              ))}
-            </ScrollView>
+          <View style={[styles.imageContainer, { height: heroHeight }]}>
+            <Animated.View style={[StyleSheet.absoluteFill, heroTransform]}>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                  const offsetX = e.nativeEvent.contentOffset.x;
+                  const index = Math.round(offsetX / width);
+                  setActiveIndex(index);
+                }}
+                scrollEventThrottle={16}
+                style={styles.imageScroller}
+              >
+                {images.map((uri, idx) => (
+                  <Image
+                    key={`img-${uri}-${idx}`}
+                    testID={`venue-image-${idx}`}
+                    source={{ uri }}
+                    style={[styles.image, { width }]}
+                    resizeMode="cover"
+                    onError={() => onImageError(idx)}
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
             {images.length > 1 && (
               <View style={styles.paginationDots}>
                 {images.map((_, idx) => (
@@ -698,7 +725,9 @@ export default function VenueModalScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
+          );
+        })()}
 
         <View 
           style={[styles.bottomCarousel, { paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}
@@ -912,6 +941,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    backgroundColor: Colors.dark.background,
   },
   venueNameOverlay: {
     position: 'absolute',

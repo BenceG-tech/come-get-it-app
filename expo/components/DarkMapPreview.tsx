@@ -7,6 +7,7 @@ import {
   Pressable,
   TouchableOpacity,
   PanResponder,
+  Animated,
   type GestureResponderEvent,
   type LayoutChangeEvent,
   type StyleProp,
@@ -127,6 +128,8 @@ type DarkMapPreviewProps = {
   interactive?: boolean;
   /** Bottom offset for the zoom controls (to clear overlaying sheets). */
   controlsBottomOffset?: number;
+  /** The user's current position — rendered as a pulsing blue dot. */
+  userCoordinate?: { latitude: number; longitude: number } | null;
   testID?: string;
 };
 
@@ -144,6 +147,7 @@ export default function DarkMapPreview({
   showAttribution = true,
   interactive = false,
   controlsBottomOffset = 24,
+  userCoordinate = null,
   testID,
 }: DarkMapPreviewProps) {
   const [size, setSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -266,8 +270,30 @@ export default function DarkMapPreview({
   }, []);
 
   const resetView = useCallback(() => {
+    if (userCoordinate) {
+      setViewOverride({
+        latitude: userCoordinate.latitude,
+        longitude: userCoordinate.longitude,
+        zoom: Math.max(viewRef.current.zoom, 14),
+      });
+      return;
+    }
     setViewOverride(null);
-  }, []);
+  }, [userCoordinate]);
+
+  const userPulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!userCoordinate) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(userPulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(userPulse, { toValue: 0, duration: 1200, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [userCoordinate, userPulse]);
 
   const { tiles, markers } = useMemo(() => {
     if (size.width <= 0 || size.height <= 0) {
@@ -315,6 +341,19 @@ export default function DarkMapPreview({
 
     return { tiles: tileList, markers: markerList };
   }, [size, view, coordinates]);
+
+  const userMarker = useMemo(() => {
+    if (!userCoordinate || size.width <= 0 || size.height <= 0) return null;
+    const tileZoom = Math.round(clampNumber(view.zoom, 3, MAX_ZOOM));
+    const scale = Math.pow(2, view.zoom - tileZoom);
+    const scaledTile = TILE_SIZE * scale;
+    const originX = lngToTileX(view.longitude, tileZoom) * scaledTile - size.width / 2;
+    const originY = latToTileY(view.latitude, tileZoom) * scaledTile - size.height / 2;
+    const left = lngToTileX(userCoordinate.longitude, tileZoom) * scaledTile - originX;
+    const top = latToTileY(userCoordinate.latitude, tileZoom) * scaledTile - originY;
+    if (left < -30 || left > size.width + 30 || top < -30 || top > size.height + 30) return null;
+    return { left, top };
+  }, [userCoordinate, size, view]);
 
   const tileZoomForRender = Math.round(clampNumber(view.zoom, 3, MAX_ZOOM));
   const renderedTileSize = TILE_SIZE * Math.pow(2, view.zoom - tileZoomForRender);
@@ -368,6 +407,27 @@ export default function DarkMapPreview({
           </View>
         );
       })}
+
+      {userMarker && (
+        <View
+          style={[styles.userMarkerBox, { left: userMarker.left - 24, top: userMarker.top - 24 }]}
+          pointerEvents="none"
+          testID="map-user-location"
+        >
+          <Animated.View
+            style={[
+              styles.userPulseRing,
+              {
+                opacity: userPulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0] }),
+                transform: [{ scale: userPulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.5] }) }],
+              },
+            ]}
+          />
+          <View style={styles.userDotOuter}>
+            <View style={styles.userDotInner} />
+          </View>
+        </View>
+      )}
 
       {interactive && (
         <View style={[styles.controls, { bottom: controlsBottomOffset }]} pointerEvents="box-none">
@@ -443,6 +503,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#00D1FF',
     borderWidth: 2,
     borderColor: '#001016',
+  },
+  userMarkerBox: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userPulseRing: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2B7FFF',
+  },
+  userDotOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(43, 127, 255, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2B7FFF',
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  userDotInner: {
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
+    backgroundColor: '#2B7FFF',
+    borderWidth: 2.5,
+    borderColor: '#FFFFFF',
   },
   controls: {
     position: 'absolute',
