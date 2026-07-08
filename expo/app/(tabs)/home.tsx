@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import VenueCard from "@/components/VenueCard";
 import DarkMapPreview from "@/components/DarkMapPreview";
+import VenueMiniCard from "@/components/VenueMiniCard";
 import { Venue } from "@/types/venue";
 import { fetchVenueCoverUrl, fetchVenues } from "@/lib/venueService";
 import { useAppContext } from "@/context/AppContext";
@@ -48,6 +49,7 @@ export default function BarsScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [snapState, setSnapState] = useState<SnapState>("half");
+  const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
 
   const { data: csrData } = useQuery({
     queryKey: ["csr-impact"],
@@ -222,14 +224,29 @@ export default function BarsScreen() {
     router.push("/search");
   };
 
-  const onMarkerPress = useCallback(
+  const onMarkerPress = useCallback((venue: Venue) => {
+    console.log("[Home] Marker pressed, showing mini card:", venue.id);
+    setPreviewVenue(venue);
+  }, []);
+
+  const onMiniCardDetails = useCallback(
     (venue: Venue) => {
+      setPreviewVenue(null);
       router.push(`/venue/${venue.id}` as never);
     },
     [router]
   );
 
   const panelHeight = Math.max(0, containerHeight - expandedTop);
+
+  const visibleMapHeight =
+    snapState === "half"
+      ? halfOffset + expandedTop
+      : containerHeight - Math.max(0, containerHeight - expandedTop - collapsedOffset);
+  const mapControlsOffset =
+    snapState === "half"
+      ? Math.max(0, containerHeight - visibleMapHeight) + 16
+      : COLLAPSED_VISIBLE_HEIGHT + 16;
 
   return (
     <View style={styles.container} testID="home-root" onLayout={onContainerLayout}>
@@ -240,8 +257,8 @@ export default function BarsScreen() {
         zoom={13}
         style={StyleSheet.absoluteFillObject}
         onMarkerPress={onMarkerPress}
-        interactive={snapState === "collapsed"}
-        controlsBottomOffset={COLLAPSED_VISIBLE_HEIGHT + 16}
+        interactive={snapState !== "expanded"}
+        controlsBottomOffset={mapControlsOffset}
         testID="home-fullscreen-map"
       />
 
@@ -460,6 +477,16 @@ export default function BarsScreen() {
             )}
           </Animated.ScrollView>
         </Animated.View>
+      )}
+
+      {previewVenue && (
+        <VenueMiniCard
+          venue={previewVenue}
+          onClose={() => setPreviewVenue(null)}
+          onDetails={onMiniCardDetails}
+          bottomOffset={insets.bottom + 12}
+          testID="home-venue-mini-card"
+        />
       )}
     </View>
   );

@@ -21,6 +21,7 @@ import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
 import DarkMapPreview from '@/components/DarkMapPreview';
+import VenueMiniCard from '@/components/VenueMiniCard';
 import { geocodeVenueAddress } from '@/utils/geocoding';
 
 let Location: any = null;
@@ -49,6 +50,15 @@ export default function MapScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [userLocation, setUserLocation] = useState<any>(null);
   const [sheetMode, setSheetMode] = useState<'collapsed' | 'expanded'>('collapsed');
+  const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
+
+  const onMiniCardDetails = useCallback(
+    (venue: Venue) => {
+      setPreviewVenue(null);
+      router.push(`/venue/${venue.id}`);
+    },
+    [router]
+  );
 
   useEffect(() => {
     const fetchVenuesAndLocation = async () => {
@@ -309,8 +319,8 @@ export default function MapScreen() {
                 title={v.name}
                 description={v.address ?? undefined}
                 onPress={() => {
-                  console.log('[Map] Marker pressed:', v.id, v.name);
-                  router.push(`/venue/${v.id}`);
+                  console.log('[Map] Marker pressed, showing mini card:', v.id, v.name);
+                  setPreviewVenue(v);
                 }}
                 testID={`venue-marker-${v.id}`}
               />
@@ -390,9 +400,26 @@ export default function MapScreen() {
               />
             </View>
           </Animated.View>
+
+          {previewVenue && (
+            <VenueMiniCard
+              venue={previewVenue}
+              onClose={() => setPreviewVenue(null)}
+              onDetails={onMiniCardDetails}
+              bottomOffset={24}
+              testID="map-venue-mini-card"
+            />
+          )}
         </View>
       ) : (
-        <WebMapView venues={venues} router={router} />
+        <WebMapView
+          venues={venues}
+          router={router}
+          previewVenue={previewVenue}
+          onMarkerPress={(venue) => setPreviewVenue(venue)}
+          onClosePreview={() => setPreviewVenue(null)}
+          onDetails={onMiniCardDetails}
+        />
       )}
     </View>
   );
@@ -641,16 +668,32 @@ const styles = StyleSheet.create({
   },
 });
 
-function WebMapView({ venues, router }: { venues: Venue[]; router: ReturnType<typeof useRouter> }) {
+function WebMapView({
+  venues,
+  router,
+  previewVenue,
+  onMarkerPress,
+  onClosePreview,
+  onDetails,
+}: {
+  venues: Venue[];
+  router: ReturnType<typeof useRouter>;
+  previewVenue: Venue | null;
+  onMarkerPress: (venue: Venue) => void;
+  onClosePreview: () => void;
+  onDetails: (venue: Venue) => void;
+}) {
   return (
     <View style={styles.webMapContainer} testID="web-map">
       <DarkMapPreview
         venues={venues}
         zoom={13}
         style={styles.webMapCanvas}
+        interactive
+        controlsBottomOffset={24}
         onMarkerPress={(venue) => {
-          console.log('[Map] Web marker pressed:', venue.id);
-          router.push(`/venue/${venue.id}`);
+          console.log('[Map] Web marker pressed, showing mini card:', venue.id);
+          onMarkerPress(venue);
         }}
       />
 
@@ -702,6 +745,16 @@ function WebMapView({ venues, router }: { venues: Venue[]; router: ReturnType<ty
           testID="venue-list"
         />
       </View>
+
+      {previewVenue && (
+        <VenueMiniCard
+          venue={previewVenue}
+          onClose={onClosePreview}
+          onDetails={onDetails}
+          bottomOffset={24}
+          testID="map-venue-mini-card"
+        />
+      )}
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, PanResponder, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, Pressable } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Heart, Martini } from 'lucide-react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
@@ -39,48 +39,7 @@ export default function VenueModalScreen() {
   const { width, height } = useWindowDimensions();
   const { isFavorite, toggleFavorite } = useFavorites();
   
-  const translateY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
-  const [scrollEnabled, setScrollEnabled] = useState<boolean>(true);
-  const [scrollY, setScrollY] = useState<number>(0);
-  
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        const { dx, dy } = gestureState;
-        // Only capture vertical swipes when at top of scroll and swiping down significantly
-        return scrollY <= 0 && Math.abs(dy) > Math.abs(dx) && dy > 20;
-      },
-      onPanResponderGrant: () => {
-        setScrollEnabled(false);
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        if (gestureState.dy > 0 && scrollY <= 0) {
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        setScrollEnabled(true);
-        if (gestureState.dy > height * 0.2) {
-          Animated.timing(translateY, {
-            toValue: height,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => {
-            router.back();
-          });
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 50,
-            friction: 8,
-          }).start();
-        }
-      },
-    })
-  ).current;
 
   const glowPulse = useRef(new Animated.Value(0)).current;
 
@@ -333,31 +292,20 @@ export default function VenueModalScreen() {
   console.log('[VenueDetail] isOpen:', isOpen, 'closingTime:', closingTime);
 
   return (
-    <Modal
-      animationType="slide"
-      presentationStyle="fullScreen"
-      visible={true}
-      onRequestClose={() => router.back()}
->
-      <Animated.View 
-        style={[
-          styles.container, 
-          { 
-            paddingTop: insets.top, 
-            paddingBottom: insets.bottom,
-            transform: [{ translateY }]
-          }
-        ]}
-        {...panResponder.panHandlers}
-      >
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: Platform.OS === 'ios' ? 0 : insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+      testID="venue-detail-root"
+    >
         <ScrollView 
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false} 
           bounces={false}
-          scrollEnabled={scrollEnabled}
-          onScroll={(e) => {
-            setScrollY(e.nativeEvent.contentOffset.y);
-          }}
           scrollEventThrottle={16}
         >
           <View style={[styles.imageContainer, { height: Math.max(280, height * 0.45) }]}>
@@ -778,7 +726,6 @@ export default function VenueModalScreen() {
             </Pressable>
           </View>
         </View>
-      </Animated.View>
 
       <RedemptionWindowModal
         visible={showRedeemModal}
@@ -789,7 +736,7 @@ export default function VenueModalScreen() {
         drink={freeDrinks[selectedDrinkIndex] ?? null}
         freeDrinkWindows={windowsNormalized}
       />
-    </Modal>
+    </View>
   );
 }
 

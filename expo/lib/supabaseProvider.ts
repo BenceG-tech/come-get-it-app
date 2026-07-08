@@ -349,15 +349,20 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
       // Use the mapping from temp IDs to new UUIDs
       const mappedDrinkId = tempToNewDrinkId[String(w.drinkId)] ?? String(w.drinkId);
       const dayOfWeek = w.dayOfWeek === undefined || w.dayOfWeek === null ? null : Number(w.dayOfWeek);
-      const days = Array.isArray(w.days) ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d)) : null;
-      
-      console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, dayOfWeek: ${dayOfWeek}, days: ${JSON.stringify(days)}`);
-      
+      const days = Array.isArray(w.days) && w.days.length > 0
+        ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d))
+        : dayOfWeek !== null
+          ? [dayOfWeek]
+          : null;
+
+      console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, days: ${JSON.stringify(days)}`);
+
+      // NOTE: the free_drink_windows table has NO day_of_week column — only
+      // `days` (int array). Sending day_of_week makes the whole upsert fail.
       return {
         id: w.id && !String(w.id).startsWith('window-') ? w.id : uuid(),
         venue_id: id,
         drink_id: mappedDrinkId,
-        day_of_week: dayOfWeek,
         days: days,
         start_time: w.start,
         end_time: w.end,
@@ -369,18 +374,23 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
     const keepWIds = new Set(incomingW.map((i) => i.id));
     const toDeleteW = (existingW || []).map((e) => String(e.id)).filter((eid) => !keepWIds.has(eid));
 
+    // Delete stale windows FIRST so setting a drink to "no time limit"
+    // always clears old windows, even if a later insert fails.
+    for (const delId of toDeleteW) {
+      try {
+        await rest(`/free_drink_windows?id=eq.${delId}`, { method: 'DELETE' });
+        console.log('[Provider] Deleted stale free drink window', delId);
+      } catch (deleteError) {
+        console.error('[Provider] Failed to delete free drink window (continuing)', { delId, deleteError });
+      }
+    }
+
     if (incomingW.length > 0) {
       await rest('/free_drink_windows', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' },
         body: JSON.stringify(incomingW),
       });
-    }
-
-    if (toDeleteW.length > 0) {
-      for (const delId of toDeleteW) {
-        await rest(`/free_drink_windows?id=eq.${delId}`, { method: 'DELETE' });
-      }
     }
   }
 

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Apple, Chrome, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AuthDivider from '@/components/AuthDivider';
@@ -24,7 +25,7 @@ import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
 const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
-const BG_SOURCE = { uri: 'https://r2-pub.rork.com/projects/d5gcr740rcssgvx3ot5z5/assets/4c4b41dc-519a-4113-8ddb-f871184447bf.png' } as const;
+const BG_SOURCE = require('@/assets/images/login-bg-chain-bridge.png');
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
@@ -119,13 +120,12 @@ function AuthScreen() {
       <LinearGradient
         pointerEvents="none"
         colors={[
-          'rgba(0, 0, 0, 0.66)',
-          'rgba(0, 0, 0, 0.30)',
-          'rgba(0, 0, 0, 0.62)',
-          'rgba(0, 0, 0, 0.92)',
-          '#000000',
+          'rgba(0, 0, 0, 0.55)',
+          'rgba(0, 0, 0, 0.16)',
+          'rgba(0, 0, 0, 0.42)',
+          'rgba(0, 0, 0, 0.82)',
         ]}
-        locations={[0, 0.30, 0.56, 0.78, 1]}
+        locations={[0, 0.32, 0.62, 1]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -157,6 +157,7 @@ function AuthScreen() {
                 </Text>
               </View>
 
+              <BlurView intensity={26} tint="dark" style={styles.glassCard}>
               <View style={styles.formBlock}>
                 <TextInputField
                   ref={emailRef}
@@ -221,6 +222,7 @@ function AuthScreen() {
                   disabled={loading}
                 />
               </View>
+              </BlurView>
 
               <View style={styles.dividerBlock}>
                 <AuthDivider />
@@ -310,6 +312,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 280,
     fontWeight: '500' as const,
+  },
+  glassCard: {
+    width: '100%',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(10, 16, 24, 0.38)',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    overflow: 'hidden',
   },
   formBlock: {
     width: '100%',

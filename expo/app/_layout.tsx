@@ -24,14 +24,26 @@ function RootLayoutNav() {
         headerTintColor: Colors.text,
         headerShadowVisible: false,
         contentStyle: { backgroundColor: Colors.background },
+        animation: "slide_from_right",
+        gestureEnabled: true,
+        fullScreenGestureEnabled: true,
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="landing" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="venue/[id]" options={{ presentation: "card", headerShown: false }} />
-      <Stack.Screen name="filter" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen
+        name="venue/[id]"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          animation: "slide_from_bottom",
+          gestureEnabled: true,
+          gestureDirection: "vertical",
+        }}
+      />
+      <Stack.Screen name="filter" options={{ presentation: "modal", headerShown: false, animation: "slide_from_bottom" }} />
       <Stack.Screen name="rewards-missions" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="map" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="search" options={{ presentation: "card", headerShown: false }} />
