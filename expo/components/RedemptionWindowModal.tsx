@@ -4,6 +4,7 @@ import {
   Animated,
   Image,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -81,6 +82,46 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const STEP_LABELS = ['Érkezés', 'Mutasd', 'Beváltás'] as const;
 
+/** Schedules a local "Egészségedre!" notification a few seconds after a successful redemption. */
+async function scheduleCheersNotification(drinkName: string): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const Notifications = await import('expo-notifications');
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+    const current = await Notifications.getPermissionsAsync();
+    let granted = current.granted;
+    if (!granted) {
+      const req = await Notifications.requestPermissionsAsync();
+      granted = req.granted;
+    }
+    if (!granted) {
+      console.log('[RedemptionWindowModal] Notification permission not granted, skipping cheers notification');
+      return;
+    }
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Egészségedre! 🍻',
+        body: `Élvezd az italod: ${drinkName}. Fogyaszd felelősségteljesen!`,
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 4,
+      },
+    });
+    console.log('[RedemptionWindowModal] Cheers notification scheduled');
+  } catch (error) {
+    console.log('[RedemptionWindowModal] Failed to schedule cheers notification', error);
+  }
+}
+
 function distanceMeters(a: Coordinates, b: Coordinates): number {
   const radius = 6371e3;
   const phi1 = (a.latitude * Math.PI) / 180;
@@ -125,6 +166,7 @@ export default function RedemptionWindowModal({
   const [timeRemaining, setTimeRemaining] = useState<number>(WINDOW_SECONDS * 1000);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [distance, setDistance] = useState<number | null>(null);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
   const [impactMessage, setImpactMessage] = useState<string>('+1 ember kap ma tiszta vizet');
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -177,6 +219,7 @@ export default function RedemptionWindowModal({
     setTimeRemaining(WINDOW_SECONDS * 1000);
     setErrorMessage('');
     setDistance(null);
+    setLocationWarning(null);
     setImpactMessage('+1 ember kap ma tiszta vizet');
     waterScale.setValue(0.7);
     waterOpacity.setValue(0);
@@ -187,8 +230,17 @@ export default function RedemptionWindowModal({
   }, [clearTimer, stopAnimations, waterOpacity, waterScale, fadeAnim, ringProgress, haloScale]);
 
   useEffect(() => {
-    if (!visible) reset();
-  }, [reset, visible]);
+    if (!visible) {
+      reset();
+      return;
+    }
+    // Fresh start on every open — the state may already be 'step1_arrive',
+    // so the state-based fade effect would not re-run and the content would
+    // stay invisible (opacity 0). Reset and animate explicitly.
+    reset();
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+  }, [reset, visible, fadeAnim]);
 
   // Pulsing location icon animation for step 1
   useEffect(() => {
@@ -306,31 +358,30 @@ export default function RedemptionWindowModal({
 
     try {
       let userCoordinates: Coordinates | null = null;
+      setLocationWarning(null);
 
       if (!DEMO_MODE) {
         if (!venueCoordinates) {
-          setErrorMessage('A hely koordinátája hiányzik, ezért most nem tudjuk ellenőrizni a közelségedet.');
-          setState('error');
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          return;
-        }
-
-        const current = await getCurrentLocation();
-        if (!current?.coords) {
-          setErrorMessage('Nem sikerült lekérni a helyzetedet. Engedélyezd a helymeghatározást és próbáld újra.');
-          setState('error');
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          return;
-        }
-
-        userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
-        const measured = distanceMeters(userCoordinates, venueCoordinates);
-        setDistance(measured);
-        if (measured > MAX_DISTANCE_METERS) {
-          setErrorMessage(`Most kb. ${Math.round(measured)} méterre vagy. A beváltáshoz 100 méteren belül kell lenned.`);
-          setState('not_eligible');
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          return;
+          // Flexible: missing venue coordinates should not block the flow.
+          console.log('[RedemptionWindowModal] Venue coordinates missing — proceeding without proximity check');
+          setLocationWarning('A hely koordinátája hiányzik, a közelséged most nem ellenőrizhető.');
+        } else {
+          const current = await getCurrentLocation().catch(() => null);
+          if (!current?.coords) {
+            // Flexible: location fetch failure should not block the flow.
+            console.log('[RedemptionWindowModal] Location unavailable — proceeding without proximity check');
+            setLocationWarning('A helyzeted most nem ellenőrizhető, de folytathatod a beváltást.');
+          } else {
+            userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
+            const measured = distanceMeters(userCoordinates, venueCoordinates);
+            setDistance(measured);
+            if (measured > MAX_DISTANCE_METERS) {
+              setErrorMessage(`Most kb. ${Math.round(measured)} méterre vagy. A beváltáshoz 100 méteren belül kell lenned.`);
+              setState('not_eligible');
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              return;
+            }
+          }
         }
       }
 
@@ -397,6 +448,7 @@ export default function RedemptionWindowModal({
       setState('success');
       queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      scheduleCheersNotification(selectedDrinkName);
       return;
     }
 
@@ -406,6 +458,7 @@ export default function RedemptionWindowModal({
       setState('success');
       queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      scheduleCheersNotification(selectedDrinkName);
       return;
     }
 
@@ -414,13 +467,14 @@ export default function RedemptionWindowModal({
       setState('success');
       queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      scheduleCheersNotification(selectedDrinkName);
       return;
     }
 
     setErrorMessage(getFriendlyError(response.error.error));
     setState(response.error.code === 'EXPIRED' ? 'expired' : 'error');
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  }, [clearTimer, queryClient, windowToken]);
+  }, [clearTimer, queryClient, windowToken, selectedDrinkName]);
 
   const renderDrinkImage = () => (
     <View style={[styles.drinkImageSection, { height: imageHeight }]}>
@@ -498,6 +552,9 @@ export default function RedemptionWindowModal({
             </View>
             <Text style={styles.stepTitle}>Mutasd a pultosnak</Text>
             <Text style={styles.stepSubtitle}>A pultos a te telefonodon nyomja meg a gombot.</Text>
+            {locationWarning && (
+              <Text style={styles.locationWarningText}>{locationWarning}</Text>
+            )}
 
             <View style={styles.timerWrap}>
               <Svg width={RING_SIZE} height={RING_SIZE} style={styles.timerSvg}>
@@ -780,6 +837,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 0.3,
+  },
+  locationWarningText: {
+    color: '#FFB020',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: -14,
+    marginBottom: 14,
+    maxWidth: 300,
   },
   anytimeNote: {
     color: CYAN,

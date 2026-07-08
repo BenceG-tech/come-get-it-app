@@ -1,5 +1,5 @@
-import React from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import React, { useCallback, useState } from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, type Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -10,6 +10,7 @@ import {
   Heart,
   HelpCircle,
   History,
+  LogOut,
   ShieldCheck,
   Sparkles,
   Ticket,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import type { Venue } from "@/types/venue";
 
@@ -149,9 +151,32 @@ const MenuRow: React.FC<MenuRowProps> = ({ item, onPress }: MenuRowProps) => {
 export default function ProfileScreen() {
   const router = useRouter();
   const { points } = useAppContext();
+  const { signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState<boolean>(false);
   const { favoriteVenues, isLoading: favoritesLoading, syncError } = useFavorites();
   const profileFavoriteVenues = favoriteVenues.slice(0, 5);
   const fallbackImageUri = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600";
+
+  const handleSignOut = useCallback(() => {
+    Alert.alert("Kijelentkezés", "Biztosan kijelentkezel?", [
+      { text: "Mégsem", style: "cancel" },
+      {
+        text: "Kijelentkezés",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setSigningOut(true);
+            await signOut();
+            router.replace("/auth");
+          } catch (e) {
+            console.error("[Profile] Sign out failed", e);
+          } finally {
+            setSigningOut(false);
+          }
+        },
+      },
+    ]);
+  }, [router, signOut]);
 
   const stats: ProfileStat[] = [
     { label: "Pont", value: points.toLocaleString("hu-HU"), icon: Sparkles },
@@ -299,6 +324,23 @@ export default function ProfileScreen() {
             ))}
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.signOutButton}
+          onPress={handleSignOut}
+          disabled={signingOut}
+          activeOpacity={0.82}
+          testID="sign-out-button"
+          accessibilityRole="button"
+          accessibilityLabel="Kijelentkezés"
+        >
+          {signingOut ? (
+            <ActivityIndicator size="small" color="#FF6B6B" />
+          ) : (
+            <LogOut size={17} color="#FF6B6B" />
+          )}
+          <Text style={styles.signOutText}>Kijelentkezés</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -710,5 +752,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "rgba(255,255,255,0.42)",
     lineHeight: 15,
+  },
+  signOutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    minHeight: 52,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 107, 107, 0.07)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.28)",
+  },
+  signOutText: {
+    color: "#FF6B6B",
+    fontSize: 14.5,
+    fontWeight: "800",
   },
 });

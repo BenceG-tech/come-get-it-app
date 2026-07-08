@@ -6,7 +6,7 @@ import { ArrowLeft, Search, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import VenueCard from '@/components/VenueCard';
-import { rest } from '@/lib/supabaseRest';
+import { fetchVenues } from '@/lib/venueService';
 import { Venue } from '@/types/venue';
 
 type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at'> & { 
@@ -32,13 +32,12 @@ export default function SearchScreen() {
     setLoading(true);
     setError(null);
     try {
-      const res = await rest('/venues?select=id,name,address,image_url,plan,created_at,website_url,is_paused&is_paused=not.is.true&order=created_at.desc&limit=100');
-      const venueData = (await res.json()) as SupaVenue[];
-      const visibleVenues = (Array.isArray(venueData) ? venueData : []).filter(
-        (venue: SupaVenue) => venue.is_paused !== true
-      );
-      setVenues(visibleVenues);
-      console.info('[SearchScreen] Loaded venues for search:', visibleVenues.length);
+      const venueData = await fetchVenues({
+        columns: 'id,name,address,image_url,plan,created_at,website_url,is_paused',
+        limit: 100,
+      });
+      setVenues(venueData as SupaVenue[]);
+      console.info('[SearchScreen] Loaded venues for search:', venueData.length);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       console.error('[SearchScreen] Load error', e);

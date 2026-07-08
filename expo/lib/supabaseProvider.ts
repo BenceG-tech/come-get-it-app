@@ -125,7 +125,7 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   console.info('[Provider] getVenueWithDetails', normalizedId);
 
   type ImageRow = { id: string; venue_id: string; image_url?: string | null; url?: string | null; label?: string | null; is_cover?: boolean | null };
-  type DrinkRow = { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null };
+  type DrinkRow = { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null; description?: string | null };
   type WindowRow = {
     id: string;
     venue_id: string;
@@ -236,6 +236,7 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     imageUrl: d.image_url ?? null,
     isFreeDrink: d.is_free_drink ?? null,
     isCover: d.is_cover ?? null,
+    description: typeof d.description === 'string' && d.description.trim().length > 0 ? d.description.trim() : null,
   }));
 
   const windows: FreeDrinkWindow[] = (windowsRows ?? []).map((w) => ({

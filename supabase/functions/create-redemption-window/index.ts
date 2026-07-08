@@ -142,9 +142,19 @@ Deno.serve(async (req: Request) => {
     const venueCoords = venueCoordinates(venue);
     const userLatitude = numeric(body.user_latitude);
     const userLongitude = numeric(body.user_longitude);
-    if (!venueCoords || userLatitude === null || userLongitude === null) return json({ error: 'GPS validation failed' }, 403);
-    const measured = distanceMeters({ latitude: userLatitude, longitude: userLongitude }, venueCoords);
-    if (measured > MAX_DISTANCE_METERS) return json({ error: 'TOO_FAR', distance_meters: Math.round(measured) }, 403);
+    // Flexible GPS policy: only block when the distance is measurable and
+    // clearly too far. Missing coordinates (device location unavailable or
+    // venue coordinates not configured) let the flow continue with a warning
+    // shown client-side.
+    if (venueCoords && userLatitude !== null && userLongitude !== null) {
+      const measured = distanceMeters({ latitude: userLatitude, longitude: userLongitude }, venueCoords);
+      if (measured > MAX_DISTANCE_METERS) return json({ error: 'TOO_FAR', distance_meters: Math.round(measured) }, 403);
+    } else {
+      console.log('[create-redemption-window] GPS check skipped — missing coordinates', {
+        hasVenueCoords: Boolean(venueCoords),
+        hasUserCoords: userLatitude !== null && userLongitude !== null,
+      });
+    }
   }
 
   let drinkQuery = admin.from('venue_drinks').select('id,drink_name').eq('venue_id', venueId).eq('is_free_drink', true);

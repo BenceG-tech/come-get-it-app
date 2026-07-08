@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, Pressable, Modal } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Heart, Martini } from 'lucide-react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
@@ -27,6 +27,7 @@ export default function VenueModalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showRedeemModal, setShowRedeemModal] = useState<boolean>(false);
   const [showHours, setShowHours] = useState<boolean>(false);
+  const [descDrink, setDescDrink] = useState<VenueDrink | null>(null);
 
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -441,7 +442,16 @@ export default function VenueModalScreen() {
                   >
                     {freeDrinks.map((drink, idx) => (
                       <View key={`drink-${drink.id}-${idx}`} style={[styles.drinkSlide, { width }]}>
-                        <View style={styles.drinkImageContainer}>
+                        <Pressable
+                          style={styles.drinkImageContainer}
+                          testID={`drink-image-${idx}`}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${drink.drinkName} leírása`}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setDescDrink(drink);
+                          }}
+                        >
                           {drink.imageUrl ? (
                             <Image 
                               source={{ uri: drink.imageUrl }} 
@@ -455,8 +465,9 @@ export default function VenueModalScreen() {
                           )}
                           <View style={styles.drinkNameOverlay}>
                             <Text style={styles.drinkNameText}>{drink.drinkName}</Text>
+                            <Text style={styles.drinkInfoHint}>Bökj a képre a részletekért</Text>
                           </View>
-                        </View>
+                        </Pressable>
                       </View>
                     ))}
                   </ScrollView>
@@ -680,7 +691,9 @@ export default function VenueModalScreen() {
                   }
                 }}
               >
-                <Navigation size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <View style={styles.directionsIcon}>
+                  <Navigation size={17} color="#001014" />
+                </View>
                 <Text style={styles.directionsText}>Útvonaltervezés</Text>
               </TouchableOpacity>
             </View>
@@ -726,6 +739,45 @@ export default function VenueModalScreen() {
             </Pressable>
           </View>
         </View>
+
+      <Modal
+        visible={descDrink !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDescDrink(null)}
+      >
+        <Pressable style={styles.descOverlay} onPress={() => setDescDrink(null)}>
+          <Pressable style={styles.descCard} onPress={() => {}} testID="drink-description-card">
+            <View style={styles.descImageWrap}>
+              {descDrink?.imageUrl ? (
+                <Image source={{ uri: descDrink.imageUrl }} style={styles.descImage} resizeMode="cover" />
+              ) : (
+                <View style={[styles.descImage, styles.descImageFallback]}>
+                  <Text style={styles.drinkImagePlaceholderText}>🍸</Text>
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.descCloseButton}
+                onPress={() => setDescDrink(null)}
+                hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+                testID="drink-description-close"
+              >
+                <X size={19} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.descBody}>
+              <View style={styles.descBadge}>
+                <Martini size={12} color="#001014" />
+                <Text style={styles.descBadgeText}>Ingyen ital</Text>
+              </View>
+              <Text style={styles.descTitle}>{descDrink?.drinkName ?? ''}</Text>
+              <Text style={styles.descText}>
+                {descDrink?.description ?? 'Ehhez az italhoz még nincs részletes leírás. Hamarosan itt találod az összetevőket és az ital történetét.'}
+              </Text>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <RedemptionWindowModal
         visible={showRedeemModal}
@@ -999,6 +1051,90 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+  drinkInfoHint: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 11.5,
+    fontWeight: '600',
+    marginTop: 3,
+  },
+  descOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.82)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  descCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 24,
+    backgroundColor: '#0A161B',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 209, 255, 0.3)',
+    overflow: 'hidden',
+    shadowColor: '#00D1FF',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 26,
+    elevation: 14,
+  },
+  descImageWrap: {
+    height: 190,
+    backgroundColor: '#050709',
+  },
+  descImage: {
+    width: '100%',
+    height: '100%',
+  },
+  descImageFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 209, 255, 0.07)',
+  },
+  descCloseButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  descBody: {
+    padding: 18,
+    gap: 8,
+  },
+  descBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 5,
+    backgroundColor: '#00D1FF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  descBadgeText: {
+    color: '#001014',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  descTitle: {
+    color: '#FFFFFF',
+    fontSize: 21,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  descText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    lineHeight: 21,
+  },
   dayTab: {
     flex: 1,
     paddingVertical: 14,
@@ -1240,18 +1376,36 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   directionsButton: {
-    backgroundColor: Colors.accentEarn,
-    height: 46,
+    backgroundColor: '#0A161B',
+    height: 54,
     paddingVertical: 0,
+    paddingHorizontal: 16,
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 209, 255, 0.5)',
+    shadowColor: '#00D1FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  directionsIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#00D1FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   directionsText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   claimButton: {
     backgroundColor: Colors.dark.primary,
@@ -1427,19 +1581,19 @@ const styles = StyleSheet.create({
   pointsBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 14,
     backgroundColor: 'rgba(0, 209, 255, 0.06)',
     borderWidth: 1,
     borderColor: 'rgba(0, 209, 255, 0.22)',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 16,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 22,
   },
   pointsBarIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(0, 209, 255, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(0, 209, 255, 0.28)',
@@ -1448,17 +1602,18 @@ const styles = StyleSheet.create({
   },
   pointsBarTextWrap: {
     flex: 1,
+    gap: 3,
   },
   pointsBarTitle: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: 14.5,
     fontWeight: '800',
     letterSpacing: 0.2,
   },
   pointsBarDesc: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 11.5,
-    marginTop: 1,
+    fontSize: 12.5,
+    lineHeight: 17,
   },
   anytimeBadge: {
     flexDirection: 'row',

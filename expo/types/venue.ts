@@ -54,6 +54,7 @@ export type VenueDrink = {
   imageUrl?: string | null;
   isFreeDrink?: boolean | null;
   isCover?: boolean | null;
+  description?: string | null;
 };
 
 export type FreeDrinkWindow = {
