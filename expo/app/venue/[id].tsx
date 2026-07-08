@@ -1588,6 +1588,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 16,
+    marginTop: 18,
     marginBottom: 22,
   },
   pointsBarIcon: {

@@ -350,10 +350,12 @@ export async function updateVenueWithDetails(id: string, updates: VenueUpdateInp
       // Use the mapping from temp IDs to new UUIDs
       const mappedDrinkId = tempToNewDrinkId[String(w.drinkId)] ?? String(w.drinkId);
       const dayOfWeek = w.dayOfWeek === undefined || w.dayOfWeek === null ? null : Number(w.dayOfWeek);
+      // Canonical DB format is ISO days (1=Monday...7=Sunday). The legacy
+      // dayOfWeek field is a 0-based UI index (0=Monday), so convert it.
       const days = Array.isArray(w.days) && w.days.length > 0
-        ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d))
+        ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d) && d >= 1 && d <= 7)
         : dayOfWeek !== null
-          ? [dayOfWeek]
+          ? [Math.min(Math.max(dayOfWeek + 1, 1), 7)]
           : null;
 
       console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, days: ${JSON.stringify(days)}`);

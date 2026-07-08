@@ -78,6 +78,28 @@ function normalizeTimeHour(value: string | undefined): number {
   return Number.isFinite(hour) ? hour : -1;
 }
 
+type ConfiguredWindowInfo = {
+  days?: number[];
+  start_time?: string;
+  end_time?: string;
+};
+
+function formatConfiguredWindows(windows: ConfiguredWindowInfo[]): string {
+  const parts = windows
+    .map((window) => {
+      const dayNames = (window.days ?? [])
+        .map((day) => getDayLabel(day, 'full'))
+        .filter((label) => label.length > 0)
+        .join(', ');
+      const start = (window.start_time ?? '').slice(0, 5);
+      const end = (window.end_time ?? '').slice(0, 5);
+      if (!dayNames || !start || !end) return '';
+      return `${dayNames} ${start}–${end}`;
+    })
+    .filter((part) => part.length > 0);
+  return parts.join(' • ');
+}
+
 function mapRedemptionError(status: number, payload: Record<string, unknown>): RedemptionError {
   const rawMessage = payload.message ?? payload.error;
   const errorMessage = typeof rawMessage === 'string' && rawMessage.trim().length > 0
@@ -85,6 +107,18 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
     : 'Ismeretlen hiba történt.';
 
   if (status === 400) {
+    if (rawMessage === 'NO_ACTIVE_WINDOW') {
+      const configured = Array.isArray(payload.configured_windows)
+        ? formatConfiguredWindows(payload.configured_windows as ConfiguredWindowInfo[])
+        : '';
+      const detail = configured.length > 0
+        ? ` Az ital beállított idősávja: ${configured}.`
+        : '';
+      return {
+        error: `Most nincs aktív idősáv ehhez az italhoz.${detail}`,
+        code: 'NOT_ELIGIBLE',
+      };
+    }
     return { error: errorMessage, code: 'BAD_REQUEST' };
   }
 

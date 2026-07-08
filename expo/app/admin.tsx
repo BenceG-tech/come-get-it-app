@@ -94,12 +94,18 @@ export default function AdminScreen() {
       const drinks: EditingDrink[] = (venueWithDrinks.drinks || []).map((drink: VenueDrink) => {
         const timeSlots: EditingTimeSlot[] = (venueWithDrinks.freeDrinkWindows || [])
           .filter((window: FreeDrinkWindow) => window.drinkId === drink.id)
-          .map((window: FreeDrinkWindow) => ({
-            id: window.id,
-            dayOfWeek: window.dayOfWeek ?? (window.days?.[0] ?? 1),
-            start: window.start,
-            end: window.end,
-          }));
+          .map((window: FreeDrinkWindow) => {
+            // DB stores ISO days (1=Monday...7=Sunday); the admin UI uses a
+            // 0-based index (0=Monday...6=Sunday). Convert ISO -> UI index.
+            const isoDay = window.days?.[0] ?? ((window.dayOfWeek ?? 0) + 1);
+            const uiDayIndex = Math.min(Math.max(isoDay - 1, 0), 6);
+            return {
+              id: window.id,
+              dayOfWeek: uiDayIndex,
+              start: window.start,
+              end: window.end,
+            };
+          });
         
         return {
           id: drink.id,
@@ -260,13 +266,15 @@ export default function AdminScreen() {
         isCover: null,
       }));
 
+      // UI index (0=Monday) -> ISO day (1=Monday...7=Sunday) — the DB, the
+      // app, and the redemption server all use ISO days.
       const freeDrinkWindows = editingDrinks.flatMap(d => 
         d.timeSlots.map(slot => ({
           id: slot.id,
           venueId: editingVenueWithDrinks.id,
           drinkId: d.id,
           dayOfWeek: slot.dayOfWeek,
-          days: [slot.dayOfWeek],
+          days: [slot.dayOfWeek + 1],
           start: slot.start,
           end: slot.end,
         }))

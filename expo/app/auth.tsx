@@ -1,12 +1,13 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,7 +26,7 @@ import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
 const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
-const BG_SOURCE = require('@/assets/images/login-bg-chain-bridge.png');
+const BG_SOURCE = require('@/assets/images/login-bg-budapest-night.png');
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
@@ -120,12 +121,12 @@ function AuthScreen() {
       <LinearGradient
         pointerEvents="none"
         colors={[
-          'rgba(0, 0, 0, 0.55)',
-          'rgba(0, 0, 0, 0.16)',
-          'rgba(0, 0, 0, 0.42)',
-          'rgba(0, 0, 0, 0.82)',
+          'rgba(0, 0, 0, 0.38)',
+          'rgba(0, 0, 0, 0.20)',
+          'rgba(0, 0, 0, 0.48)',
+          'rgba(0, 0, 0, 0.84)',
         ]}
-        locations={[0, 0.32, 0.62, 1]}
+        locations={[0, 0.28, 0.6, 1]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -134,11 +135,8 @@ function AuthScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.staticContent}>
             <View style={styles.logoBlock}>
               <Image
                 source={LOGO_SOURCE}
@@ -249,7 +247,8 @@ function AuthScreen() {
                 <AuthLegalText />
               </View>
             </View>
-          </ScrollView>
+          </View>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -269,19 +268,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 36,
-    paddingBottom: 14,
+  staticContent: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 4,
+    paddingBottom: 8,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   logoBlock: {
     width: '100%',
     alignItems: 'center',
-    paddingTop: 28,
-    paddingBottom: 24,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   content: {
     width: '100%',
@@ -289,72 +288,72 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 260,
-    height: 122,
+    width: 190,
+    height: 88,
   },
   heroTextBlock: {
     alignItems: 'center',
-    marginBottom: 22,
+    marginBottom: 12,
   },
   heading: {
     color: '#FFFFFF',
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 22,
+    lineHeight: 27,
     fontWeight: '800' as const,
     textAlign: 'center',
-    letterSpacing: -0.6,
-    marginBottom: 6,
+    letterSpacing: -0.5,
+    marginBottom: 3,
   },
   subheading: {
     color: TEXT_MUTED,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12.5,
+    lineHeight: 17,
     textAlign: 'center',
     maxWidth: 280,
     fontWeight: '500' as const,
   },
   glassCard: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.16)',
     backgroundColor: 'rgba(10, 16, 24, 0.38)',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
     overflow: 'hidden',
   },
   formBlock: {
     width: '100%',
-    gap: 12,
+    gap: 8,
   },
   forgotButton: {
     alignSelf: 'flex-end',
-    marginTop: 1,
-    marginBottom: 6,
+    marginTop: 0,
+    marginBottom: 2,
   },
   forgotText: {
     color: CYAN,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '600' as const,
   },
   actionsBlock: {
     width: '100%',
-    gap: 12,
-    marginTop: 10,
+    gap: 8,
+    marginTop: 6,
   },
   dividerBlock: {
     width: '100%',
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 10,
+    marginBottom: 8,
   },
   socialBlock: {
     width: '100%',
-    gap: 8,
+    gap: 7,
   },
   legalBlock: {
-    marginTop: 14,
+    marginTop: 8,
     alignItems: 'center',
   },
 });

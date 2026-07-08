@@ -95,8 +95,8 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
-    borderRadius: 16,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: SURFACE_DARK,
     borderWidth: 1,
     borderColor: SURFACE_BORDER,
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: TEXT_WHITE,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600' as const,
     padding: 0,
   },

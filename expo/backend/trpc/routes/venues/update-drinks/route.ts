@@ -14,7 +14,10 @@ const VenueDrinkSchema = z.object({
 const FreeDrinkWindowSchema = z.object({
   id: z.string(),
   drinkId: z.string(),
+  /** Legacy UI index: 0=Monday...6=Sunday. */
   dayOfWeek: z.number().min(0).max(6),
+  /** ISO 8601 days: 1=Monday...7=Sunday. Preferred over dayOfWeek. */
+  days: z.array(z.number().int().min(1).max(7)).optional(),
   start: z.string(),
   end: z.string(),
 });
@@ -43,6 +46,9 @@ export const updateVenueDrinksRoute = publicProcedure
         venueId: input.venueId,
         drinkId: w.drinkId,
         dayOfWeek: w.dayOfWeek,
+        // Prefer explicit ISO days; fall back to converting the legacy
+        // 0-based UI index (0=Monday) to ISO (1=Monday).
+        days: w.days && w.days.length > 0 ? w.days : [w.dayOfWeek + 1],
         start: w.start,
         end: w.end,
       }));

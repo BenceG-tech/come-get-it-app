@@ -182,7 +182,19 @@ Deno.serve(async (req: Request) => {
         const days = Array.isArray(window.days) ? window.days : [];
         return days.includes(today) && window.start_time <= nowTime && window.end_time >= nowTime;
       });
-      if (!active) return json({ error: 'NO_ACTIVE_WINDOW' }, 400);
+      if (!active) {
+        console.log('[create-redemption-window] NO_ACTIVE_WINDOW', { today, nowTime, windows: windowList });
+        return json({
+          error: 'NO_ACTIVE_WINDOW',
+          today_iso_day: today,
+          current_time: nowTime,
+          configured_windows: windowList.map((window) => ({
+            days: Array.isArray(window.days) ? window.days : [],
+            start_time: window.start_time,
+            end_time: window.end_time,
+          })),
+        }, 400);
+      }
     }
   }
 
