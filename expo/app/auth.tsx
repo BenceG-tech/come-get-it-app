@@ -26,7 +26,7 @@ import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
 const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
-const BG_SOURCE = require('@/assets/images/login-bg-blue-drink.png');
+const BG_SOURCE = require('@/assets/images/login-bg-budapest-arcs.png');
 
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;

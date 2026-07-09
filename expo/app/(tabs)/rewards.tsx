@@ -25,6 +25,7 @@ const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
 
 const HERO_BG_URI = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&q=80";
+const CLUB_CARD_SOURCE = require("@/assets/images/club-card-glow.png");
 
 type RewardCategoryItem = {
   key: string;
@@ -117,7 +118,7 @@ export default function RewardsScreen() {
     router.push({ pathname: "/(tabs)/rewards-category/[category]", params: { category: cat } });
   };
 
-  const cardWidth = 176;
+  const cardWidth = 148;
 
   const renderSectionHeader = (title: string, subtitle: string, allKey?: string) => (
     <View style={styles.sectionHeader}>
@@ -166,25 +167,23 @@ export default function RewardsScreen() {
               style={StyleSheet.absoluteFill}
             />
 
-            <View style={styles.heroCompactRow}>
-              <View style={styles.miniCardGlow}>
-                <View style={styles.miniCard}>
-                  <Nfc size={13} color={CYAN} />
-                  <View style={styles.miniCardStripe} />
-                </View>
+            <View style={styles.heroContent}>
+              <View style={styles.heroCardImageWrap}>
+                <Image source={CLUB_CARD_SOURCE} style={styles.heroCardImage} resizeMode="contain" />
               </View>
-              <View style={styles.heroTextBlock}>
-                <Text style={styles.heroTitle} numberOfLines={1}>Kapcsold össze a kártyádat</Text>
-                <Text style={styles.heroSubtitle} numberOfLines={1}>A pontok maguktól gyűlnek fizetéskor.</Text>
-              </View>
-              <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button">
+              <Text style={styles.heroTitle}>Kapcsold össze a kártyádat</Text>
+              <Text style={styles.heroSubtitle}>
+                Kapcsold hozzá a bankkártyádat, és a pontok maguktól gyűlnek minden fizetéskor.
+              </Text>
+              <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button" style={styles.heroCtaTouch}>
                 <LinearGradient
                   colors={["#00E0FF", "#0090B8"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.heroCta}
                 >
-                  <Text style={styles.heroCtaText}>Hozzáadás</Text>
+                  <Nfc size={16} color="#001014" />
+                  <Text style={styles.heroCtaText}>Kártya hozzáadása</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -371,67 +370,58 @@ const styles = StyleSheet.create({
   heroBgImage: {
     resizeMode: "cover",
   },
-  heroCompactRow: {
-    flexDirection: "row",
+  heroContent: {
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 13,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 18,
   },
-  miniCardGlow: {
+  heroCardImageWrap: {
+    width: "100%",
+    height: 150,
+    marginBottom: 10,
     shadowColor: "#00C8E8",
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
+    shadowOpacity: 0.45,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
-  miniCard: {
-    width: 46,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "rgba(5, 12, 16, 0.95)",
-    borderWidth: 1.2,
-    borderColor: "rgba(0, 224, 255, 0.55)",
-    paddingHorizontal: 6,
-    paddingTop: 4,
-    justifyContent: "flex-start",
-  },
-  miniCardStripe: {
-    position: "absolute",
-    left: 6,
-    right: 6,
-    bottom: 6,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: "rgba(0, 200, 232, 0.45)",
-  },
-  heroTextBlock: {
-    flex: 1,
+  heroCardImage: {
+    width: "100%",
+    height: "100%",
   },
   heroTitle: {
     color: Colors.text,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 20,
+    lineHeight: 25,
     fontWeight: "800",
-    letterSpacing: -0.2,
-    marginBottom: 2,
+    letterSpacing: -0.3,
+    textAlign: "center",
+    marginBottom: 6,
   },
   heroSubtitle: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 11.5,
-    lineHeight: 15,
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    maxWidth: 300,
+    marginBottom: 14,
+  },
+  heroCtaTouch: {
+    width: "100%",
   },
   heroCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 36,
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    gap: 8,
+    minHeight: 48,
+    borderRadius: 14,
+    paddingHorizontal: 16,
   },
   heroCtaText: {
     color: "#001014",
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: "900",
     letterSpacing: 0.2,
   },

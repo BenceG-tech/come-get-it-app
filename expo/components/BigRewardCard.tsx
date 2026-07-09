@@ -42,7 +42,7 @@ function categoryMeta(category?: string): { label: string; color: string; icon: 
   }
 }
 
-function BigRewardCardInner({ reward, width = 176, canRedeem, testID }: BigRewardCardProps) {
+function BigRewardCardInner({ reward, width = 148, canRedeem, testID }: BigRewardCardProps) {
   const meta = useMemo(() => categoryMeta(reward.category), [reward.category]);
   const Icon = meta.icon;
 
@@ -93,7 +93,7 @@ function BigRewardCardInner({ reward, width = 176, canRedeem, testID }: BigRewar
           ) : null}
         </View>
         <View style={[styles.arrowButton, canRedeem && styles.arrowButtonActive]}>
-          <ArrowRight size={14} color={canRedeem ? "#001014" : "rgba(255,255,255,0.75)"} />
+          <ArrowRight size={13} color={canRedeem ? "#001014" : "rgba(255,255,255,0.75)"} />
         </View>
       </View>
     </Pressable>
@@ -104,10 +104,10 @@ export default memo(BigRewardCardInner);
 
 const styles = StyleSheet.create({
   card: {
-    height: 212,
-    borderRadius: 18,
+    height: 182,
+    borderRadius: 16,
     overflow: "hidden",
-    marginRight: 11,
+    marginRight: 10,
     backgroundColor: "rgba(16, 24, 22, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
@@ -140,9 +140,9 @@ const styles = StyleSheet.create({
   },
   topRow: {
     position: "absolute",
-    top: 8,
-    left: 8,
-    right: 8,
+    top: 7,
+    left: 7,
+    right: 7,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   partnerBadgeText: {
     color: "#FFFFFF",
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: "800",
     letterSpacing: 0.3,
   },
@@ -179,37 +179,37 @@ const styles = StyleSheet.create({
   },
   pointsChipText: {
     color: "#001014",
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: "900",
   },
   bottomContent: {
     position: "absolute",
-    left: 10,
-    right: 10,
-    bottom: 10,
+    left: 9,
+    right: 9,
+    bottom: 9,
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 8,
+    gap: 7,
   },
   bottomTextBlock: {
     flex: 1,
   },
   categoryLabel: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: "800",
     letterSpacing: 1,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   description: {
     color: "rgba(255,255,255,0.55)",
-    fontSize: 10.5,
-    lineHeight: 14,
-    marginTop: 3,
+    fontSize: 10,
+    lineHeight: 13,
+    marginTop: 2,
   },
   arrowButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: "rgba(255,255,255,0.12)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
@@ -227,9 +227,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 13.5,
+    fontSize: 12.5,
     fontWeight: "900",
-    lineHeight: 17,
+    lineHeight: 16,
     letterSpacing: -0.2,
   },
   statusTextOk: {

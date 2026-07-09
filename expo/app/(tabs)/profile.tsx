@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, Alert, ActivityIndicator, Platform } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, type Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -29,8 +29,6 @@ import { useFavorites } from "@/context/FavoritesContext";
 
 const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
-const HEADER_BG_URI = "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=1200&q=80";
-const AVATAR_URI = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80";
 
 const NEXT_REWARD_TARGET = 5000;
 
@@ -160,26 +158,16 @@ export default function ProfileScreen() {
       <StatusBar style="light" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <ImageBackground source={{ uri: HEADER_BG_URI }} style={styles.headerBg} imageStyle={styles.headerBgImage}>
-          <LinearGradient
-            colors={["rgba(0,0,0,0.30)", "rgba(0,0,0,0.62)", Colors.background]}
-            locations={[0, 0.6, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.headerContent}>
-            <View style={styles.avatarRing}>
-              <View style={styles.avatarRingInner}>
-                <Image source={{ uri: AVATAR_URI }} style={styles.avatarImage} accessibilityIgnoresInvertColors />
-              </View>
-            </View>
+        <View style={styles.headerCompact}>
+          <View style={styles.headerNameRow}>
             <Text style={styles.profileName}>Bence</Text>
             <View style={styles.tierBadge}>
-              <Crown size={12} color="#0A1114" />
+              <Crown size={11} color="#0A1114" />
               <Text style={styles.tierBadgeText}>Platina</Text>
             </View>
-            <Text style={styles.memberSince}>Come Get It tag · 2024. január óta</Text>
           </View>
-        </ImageBackground>
+          <Text style={styles.memberSince}>Come Get It tag · 2024. január óta</Text>
+        </View>
 
         <View style={styles.balanceCard} testID="balance-card">
           <View style={styles.balanceTopRow}>
@@ -251,7 +239,7 @@ export default function ProfileScreen() {
                 <View key={item.id} style={styles.timelineRow}>
                   <View style={styles.timelineLeft}>
                     <View style={[styles.timelineDot, positive ? styles.timelineDotEarn : styles.timelineDotSpend]}>
-                      <Icon size={13} color={positive ? CYAN : "#F6B17A"} />
+                      <Icon size={11} color={positive ? CYAN : "#F6B17A"} />
                     </View>
                     {!isLast ? <View style={styles.timelineLine} /> : null}
                   </View>
@@ -323,63 +311,33 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
-  headerBg: {
-    width: "100%",
-    paddingTop: 66,
-    paddingBottom: 18,
-  },
-  headerBgImage: {
-    resizeMode: "cover",
-  },
-  headerContent: {
-    alignItems: "center",
+  headerCompact: {
+    paddingTop: 62,
+    paddingBottom: 14,
     paddingHorizontal: 16,
   },
-  avatarRing: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    borderWidth: 2,
-    borderColor: "rgba(0, 224, 255, 0.75)",
+  headerNameRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: CYAN,
-    shadowOpacity: 0.6,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
-    marginBottom: 12,
-  },
-  avatarRingInner: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "rgba(0, 0, 0, 0.55)",
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
+    gap: 10,
+    marginBottom: 4,
   },
   profileName: {
     color: Colors.text,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 26,
+    lineHeight: 31,
     fontWeight: "700",
     fontFamily: SERIF,
     letterSpacing: -0.3,
-    marginBottom: 8,
   },
   tierBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
     backgroundColor: CYAN,
     borderRadius: 999,
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    marginBottom: 7,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     shadowColor: CYAN,
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -388,7 +346,7 @@ const styles = StyleSheet.create({
   },
   tierBadgeText: {
     color: "#0A1114",
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: "900",
     letterSpacing: 0.6,
   },
@@ -550,9 +508,9 @@ const styles = StyleSheet.create({
   },
   timelineCard: {
     marginHorizontal: 16,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingTop: 13,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingTop: 10,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -562,12 +520,12 @@ const styles = StyleSheet.create({
   },
   timelineLeft: {
     alignItems: "center",
-    marginRight: 11,
+    marginRight: 9,
   },
   timelineDot: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -584,37 +542,37 @@ const styles = StyleSheet.create({
     flex: 1,
     width: 1.5,
     backgroundColor: "rgba(255,255,255,0.10)",
-    marginVertical: 3,
+    marginVertical: 2,
   },
   timelineBody: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
-    paddingBottom: 13,
+    gap: 8,
+    paddingBottom: 9,
   },
   timelineBodyBorder: {
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.055)",
-    marginBottom: 13,
+    marginBottom: 9,
   },
   timelineTextBlock: {
     flex: 1,
   },
   timelineTitle: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   timelineMeta: {
     color: "rgba(255,255,255,0.46)",
-    fontSize: 11.5,
-    lineHeight: 15,
+    fontSize: 11,
+    lineHeight: 14,
   },
   timelineDelta: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "900",
   },
   deltaEarn: {
