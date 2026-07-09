@@ -25,7 +25,7 @@ const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
 
 const HERO_BG_URI = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&q=80";
-const CLUB_CARD_SOURCE = require("@/assets/images/club-card-glow.png");
+const CLUB_CARD_SOURCE = require("@/assets/images/club-card-flat.png");
 
 type RewardCategoryItem = {
   key: string;
@@ -150,7 +150,6 @@ export default function RewardsScreen() {
           <View style={styles.headerTextBlock}>
             <Text style={styles.eyebrow}>COME GET IT CLUB</Text>
             <Text style={styles.title}>Jutalmak</Text>
-            <Text style={styles.subtitle}>Gyűjts pontokat, válts be italokat, kedvezményeket és exkluzív élményeket.</Text>
           </View>
           <View style={styles.pointsPill}>
             <Sparkles size={14} color="#001014" />
@@ -300,10 +299,10 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 18,
-    marginBottom: 18,
+    marginBottom: 14,
     gap: 14,
   },
   headerTextBlock: {
@@ -317,8 +316,8 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   title: {
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 30,
+    lineHeight: 36,
     fontWeight: "700",
     fontFamily: SERIF,
     color: Colors.text,
@@ -352,7 +351,7 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginHorizontal: 18,
-    marginBottom: 22,
+    marginBottom: 18,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
@@ -372,14 +371,14 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 18,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 13,
   },
   heroCardImageWrap: {
-    width: "100%",
-    height: 150,
-    marginBottom: 10,
+    width: "78%",
+    height: 104,
+    marginBottom: 6,
     shadowColor: "#00C8E8",
     shadowOpacity: 0.45,
     shadowRadius: 22,
@@ -392,20 +391,20 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: Colors.text,
-    fontSize: 20,
-    lineHeight: 25,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: "800",
     letterSpacing: -0.3,
     textAlign: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
   heroSubtitle: {
     color: "rgba(255,255,255,0.62)",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: "center",
     maxWidth: 300,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   heroCtaTouch: {
     width: "100%",
@@ -415,13 +414,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    minHeight: 48,
-    borderRadius: 14,
+    minHeight: 42,
+    borderRadius: 13,
     paddingHorizontal: 16,
   },
   heroCtaText: {
     color: "#001014",
-    fontSize: 14.5,
+    fontSize: 13.5,
     fontWeight: "900",
     letterSpacing: 0.2,
   },
