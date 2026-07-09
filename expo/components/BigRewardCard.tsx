@@ -42,7 +42,7 @@ function categoryMeta(category?: string): { label: string; color: string; icon: 
   }
 }
 
-function BigRewardCardInner({ reward, width = 240, canRedeem, testID }: BigRewardCardProps) {
+function BigRewardCardInner({ reward, width = 176, canRedeem, testID }: BigRewardCardProps) {
   const meta = useMemo(() => categoryMeta(reward.category), [reward.category]);
   const Icon = meta.icon;
 
@@ -74,7 +74,7 @@ function BigRewardCardInner({ reward, width = 240, canRedeem, testID }: BigRewar
 
       <View style={styles.topRow} pointerEvents="none">
         <View style={styles.partnerBadge}>
-          <Icon size={11} color={CYAN} />
+          <Icon size={10} color={CYAN} />
           <Text style={styles.partnerBadgeText} numberOfLines={1}>{reward.partner_name ?? "Come Get It"}</Text>
         </View>
         <View style={styles.pointsChip}>
@@ -86,16 +86,14 @@ function BigRewardCardInner({ reward, width = 240, canRedeem, testID }: BigRewar
         <View style={styles.bottomTextBlock}>
           <Text style={[styles.categoryLabel, { color: meta.color }]}>{meta.label.toUpperCase()}</Text>
           <Text style={styles.title} numberOfLines={2}>{reward.name}</Text>
-          {reward.description ? (
-            <Text style={styles.description} numberOfLines={1}>{reward.description}</Text>
-          ) : canRedeem !== undefined ? (
+          {canRedeem !== undefined ? (
             <Text style={[styles.description, canRedeem ? styles.statusTextOk : undefined]} numberOfLines={1}>
               {canRedeem ? "Azonnal beváltható" : "Még gyűjts pontot"}
             </Text>
           ) : null}
         </View>
         <View style={[styles.arrowButton, canRedeem && styles.arrowButtonActive]}>
-          <ArrowRight size={17} color={canRedeem ? "#001014" : "rgba(255,255,255,0.75)"} />
+          <ArrowRight size={14} color={canRedeem ? "#001014" : "rgba(255,255,255,0.75)"} />
         </View>
       </View>
     </Pressable>
@@ -106,10 +104,10 @@ export default memo(BigRewardCardInner);
 
 const styles = StyleSheet.create({
   card: {
-    height: 290,
-    borderRadius: 22,
+    height: 212,
+    borderRadius: 18,
     overflow: "hidden",
-    marginRight: 14,
+    marginRight: 11,
     backgroundColor: "rgba(16, 24, 22, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
@@ -142,9 +140,9 @@ const styles = StyleSheet.create({
   },
   topRow: {
     position: "absolute",
-    top: 10,
-    left: 10,
-    right: 10,
+    top: 8,
+    left: 8,
+    right: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -153,9 +151,9 @@ const styles = StyleSheet.create({
   partnerBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
     borderRadius: 999,
     backgroundColor: "rgba(0,0,0,0.72)",
     borderWidth: 1,
@@ -164,14 +162,14 @@ const styles = StyleSheet.create({
   },
   partnerBadgeText: {
     color: "#FFFFFF",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
     letterSpacing: 0.3,
   },
   pointsChip: {
     backgroundColor: CYAN,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
     borderRadius: 999,
     shadowColor: CYAN,
     shadowOpacity: 0.3,
@@ -181,37 +179,37 @@ const styles = StyleSheet.create({
   },
   pointsChipText: {
     color: "#001014",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "900",
   },
   bottomContent: {
     position: "absolute",
-    left: 13,
-    right: 13,
-    bottom: 13,
+    left: 10,
+    right: 10,
+    bottom: 10,
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 10,
+    gap: 8,
   },
   bottomTextBlock: {
     flex: 1,
   },
   categoryLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
-    letterSpacing: 1.2,
-    marginBottom: 5,
+    letterSpacing: 1,
+    marginBottom: 3,
   },
   description: {
     color: "rgba(255,255,255,0.55)",
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 5,
+    fontSize: 10.5,
+    lineHeight: 14,
+    marginTop: 3,
   },
   arrowButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: "rgba(255,255,255,0.12)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.22)",
@@ -229,10 +227,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 13.5,
     fontWeight: "900",
-    lineHeight: 20,
-    letterSpacing: -0.3,
+    lineHeight: 17,
+    letterSpacing: -0.2,
   },
   statusTextOk: {
     color: CYAN,

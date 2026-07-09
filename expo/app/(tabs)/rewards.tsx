@@ -8,11 +8,8 @@ import {
   Martini,
   Nfc,
   Send,
-  ShieldCheck,
   Sparkles,
-  Star,
   UtensilsCrossed,
-  Zap,
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -73,34 +70,6 @@ const rewardCategories: RewardCategoryItem[] = [
   },
 ];
 
-type HeroBenefit = {
-  key: string;
-  icon: LucideIcon;
-  title: string;
-  subtitle: string;
-};
-
-const heroBenefits: HeroBenefit[] = [
-  {
-    key: "auto",
-    icon: Zap,
-    title: "Automatikus pontgyűjtés",
-    subtitle: "Minden partnerhelyi fizetés után pont jár.",
-  },
-  {
-    key: "member",
-    icon: Star,
-    title: "Exkluzív tagi előnyök",
-    subtitle: "Csak kártyás tagoknak szóló ajánlatok.",
-  },
-  {
-    key: "secure",
-    icon: ShieldCheck,
-    title: "Gyors és biztonságos",
-    subtitle: "Az adataid titkosítva, egy koppintás az egész.",
-  },
-];
-
 export default function RewardsScreen() {
   const rewardsQuery = useQuery({
     queryKey: ["rewards", "app"],
@@ -148,7 +117,7 @@ export default function RewardsScreen() {
     router.push({ pathname: "/(tabs)/rewards-category/[category]", params: { category: cat } });
   };
 
-  const cardWidth = 240;
+  const cardWidth = 176;
 
   const renderSectionHeader = (title: string, subtitle: string, allKey?: string) => (
     <View style={styles.sectionHeader}>
@@ -191,64 +160,23 @@ export default function RewardsScreen() {
         <View style={styles.heroCard} testID="link-card-hero">
           <ImageBackground source={{ uri: HERO_BG_URI }} style={styles.heroBg} imageStyle={styles.heroBgImage}>
             <LinearGradient
-              colors={["rgba(4,8,11,0.55)", "rgba(4,8,11,0.82)", "rgba(4,8,11,0.97)"]}
-              locations={[0, 0.45, 1]}
+              colors={["rgba(4,8,11,0.86)", "rgba(4,8,11,0.93)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFill}
             />
 
-            <View style={styles.heroCardInner}>
-              <Text style={styles.heroTitle}>Kapcsold össze a kártyádat</Text>
-              <Text style={styles.heroSubtitle}>Fizess a partnerhelyeken és a pontok maguktól gyűlnek.</Text>
-
-              <View style={styles.clubCardGlowWrap}>
-                <View style={styles.clubCard}>
-                  <LinearGradient
-                    colors={["rgba(0,200,232,0.16)", "rgba(4,10,14,0.4)"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <View style={styles.clubCardTopRow}>
-                    <Text style={styles.clubCardBrand}>COME GET IT</Text>
-                    <Nfc size={16} color={CYAN} />
-                  </View>
-                  <View style={styles.clubCardChipRow}>
-                    <View style={styles.clubChip}>
-                      <View style={styles.clubChipLine} />
-                      <View style={styles.clubChipLineVertical} />
-                    </View>
-                    <Text style={styles.clubCardNumber}>••••  4412</Text>
-                  </View>
-                  <View style={styles.clubCardBottomRow}>
-                    <View>
-                      <Text style={styles.clubCardLabel}>KÁRTYABIRTOKOS</Text>
-                      <Text style={styles.clubCardName}>CLUB TAG</Text>
-                    </View>
-                    <View style={styles.clubCircles}>
-                      <View style={styles.clubCircleLeft} />
-                      <View style={styles.clubCircleRight} />
-                    </View>
-                  </View>
+            <View style={styles.heroCompactRow}>
+              <View style={styles.miniCardGlow}>
+                <View style={styles.miniCard}>
+                  <Nfc size={13} color={CYAN} />
+                  <View style={styles.miniCardStripe} />
                 </View>
               </View>
-
-              <View style={styles.benefitsList}>
-                {heroBenefits.map((benefit) => {
-                  const Icon = benefit.icon;
-                  return (
-                    <View key={benefit.key} style={styles.benefitRow}>
-                      <View style={styles.benefitIconWrap}>
-                        <Icon size={16} color={CYAN} />
-                      </View>
-                      <View style={styles.benefitTextBlock}>
-                        <Text style={styles.benefitTitle}>{benefit.title}</Text>
-                        <Text style={styles.benefitSubtitle}>{benefit.subtitle}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
+              <View style={styles.heroTextBlock}>
+                <Text style={styles.heroTitle} numberOfLines={1}>Kapcsold össze a kártyádat</Text>
+                <Text style={styles.heroSubtitle} numberOfLines={1}>A pontok maguktól gyűlnek fizetéskor.</Text>
               </View>
-
               <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button">
                 <LinearGradient
                   colors={["#00E0FF", "#0090B8"]}
@@ -256,8 +184,7 @@ export default function RewardsScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.heroCta}
                 >
-                  <Text style={styles.heroCtaText}>Kártya hozzáadása</Text>
-                  <ChevronRight size={18} color="#001014" />
+                  <Text style={styles.heroCtaText}>Hozzáadás</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -426,16 +353,16 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginHorizontal: 18,
-    marginBottom: 26,
-    borderRadius: 26,
+    marginBottom: 22,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.28)",
+    borderColor: "rgba(0, 200, 232, 0.24)",
     shadowColor: "#00C8E8",
-    shadowOpacity: 0.22,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 9,
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
     backgroundColor: "#04080B",
   },
   heroBg: {
@@ -444,172 +371,67 @@ const styles = StyleSheet.create({
   heroBgImage: {
     resizeMode: "cover",
   },
-  heroCardInner: {
-    padding: 18,
-    paddingTop: 20,
+  heroCompactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 13,
+  },
+  miniCardGlow: {
+    shadowColor: "#00C8E8",
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  miniCard: {
+    width: 46,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "rgba(5, 12, 16, 0.95)",
+    borderWidth: 1.2,
+    borderColor: "rgba(0, 224, 255, 0.55)",
+    paddingHorizontal: 6,
+    paddingTop: 4,
+    justifyContent: "flex-start",
+  },
+  miniCardStripe: {
+    position: "absolute",
+    left: 6,
+    right: 6,
+    bottom: 6,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "rgba(0, 200, 232, 0.45)",
+  },
+  heroTextBlock: {
+    flex: 1,
   },
   heroTitle: {
     color: Colors.text,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: "700",
-    fontFamily: SERIF,
-    letterSpacing: -0.3,
-    marginBottom: 6,
+    fontSize: 15,
+    lineHeight: 19,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    marginBottom: 2,
   },
   heroSubtitle: {
-    color: "rgba(255,255,255,0.66)",
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 16,
-    maxWidth: 300,
-  },
-  clubCardGlowWrap: {
-    alignItems: "center",
-    marginBottom: 18,
-    shadowColor: "#00C8E8",
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 12,
-  },
-  clubCard: {
-    width: "94%",
-    borderRadius: 18,
-    backgroundColor: "rgba(5, 12, 16, 0.94)",
-    borderWidth: 1.5,
-    borderColor: "rgba(0, 224, 255, 0.55)",
-    paddingHorizontal: 18,
-    paddingVertical: 15,
-    overflow: "hidden",
-  },
-  clubCardTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  clubCardBrand: {
-    color: CYAN,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 2.4,
-  },
-  clubCardChipRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    marginBottom: 16,
-  },
-  clubChip: {
-    width: 36,
-    height: 26,
-    borderRadius: 6,
-    backgroundColor: "rgba(246, 200, 100, 0.28)",
-    borderWidth: 1,
-    borderColor: "rgba(246, 200, 100, 0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  clubChipLine: {
-    position: "absolute",
-    width: "100%",
-    height: 1,
-    backgroundColor: "rgba(246, 200, 100, 0.65)",
-  },
-  clubChipLineVertical: {
-    position: "absolute",
-    width: 1,
-    height: "100%",
-    backgroundColor: "rgba(246, 200, 100, 0.65)",
-  },
-  clubCardNumber: {
-    color: "rgba(255,255,255,0.9)",
-    fontSize: 17,
-    fontWeight: "800",
-    letterSpacing: 2.6,
-  },
-  clubCardBottomRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  clubCardLabel: {
-    color: "rgba(255,255,255,0.40)",
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    marginBottom: 3,
-  },
-  clubCardName: {
-    color: "rgba(255,255,255,0.86)",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  clubCircles: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  clubCircleLeft: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "rgba(0, 200, 232, 0.85)",
-  },
-  clubCircleRight: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "rgba(0, 120, 150, 0.75)",
-    marginLeft: -9,
-  },
-  benefitsList: {
-    gap: 12,
-    marginBottom: 18,
-  },
-  benefitRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  benefitIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: "rgba(0, 200, 232, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.26)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  benefitTextBlock: {
-    flex: 1,
-  },
-  benefitTitle: {
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 14,
-    fontWeight: "800",
-    marginBottom: 1,
-  },
-  benefitSubtitle: {
-    color: "rgba(255,255,255,0.52)",
-    fontSize: 12,
-    lineHeight: 16,
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 11.5,
+    lineHeight: 15,
   },
   heroCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
-    minHeight: 52,
-    borderRadius: 16,
-    paddingHorizontal: 20,
+    minHeight: 36,
+    borderRadius: 12,
+    paddingHorizontal: 14,
   },
   heroCtaText: {
     color: "#001014",
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "900",
     letterSpacing: 0.2,
   },

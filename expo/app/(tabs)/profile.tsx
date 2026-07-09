@@ -1,63 +1,70 @@
-import React, { useCallback, useState } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, Alert, ActivityIndicator, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, type Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   ChevronRight,
+  Coins,
   CreditCard,
+  Crown,
   Gift,
   Heart,
   HelpCircle,
   History,
   LogOut,
-  ShieldCheck,
+  Martini,
+  MapPin,
   Sparkles,
   Ticket,
   User,
   UserPlus,
+  Wallet,
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import type { Venue } from "@/types/venue";
 
-type ShortcutItem = {
+const CYAN = "#00C8E8" as const;
+const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
+const HEADER_BG_URI = "https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=1200&q=80";
+const AVATAR_URI = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80";
+
+const NEXT_REWARD_TARGET = 5000;
+
+type MenuGridItem = {
   title: string;
-  subtitle?: string;
+  subtitle: string;
   route: Href;
   icon: LucideIcon;
 };
 
-type ProfileStat = {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-};
-
-const quickActions: ShortcutItem[] = [
-  {
-    title: "Látogatási előzmények",
-    subtitle: "Korábbi helyek és aktivitás",
-    route: "/visit-history",
-    icon: History,
-  },
+const menuGrid: MenuGridItem[] = [
   {
     title: "Kreditek és tokenek",
-    subtitle: "Egyenleg, pontok és beváltások",
+    subtitle: "Egyenleg és beváltások",
     route: "/credits-tokens",
-    icon: CreditCard,
+    icon: Wallet,
   },
-];
-
-const accountMenu: ShortcutItem[] = [
   {
     title: "Barátok meghívása",
-    subtitle: "Szerezz extra pontokat",
+    subtitle: "+500 pont barátonként",
     route: "/invite-friends",
     icon: UserPlus,
+  },
+  {
+    title: "Fizetési módok",
+    subtitle: "Kártyák kezelése",
+    route: "/payment-methods",
+    icon: CreditCard,
+  },
+  {
+    title: "Látogatási előzmények",
+    subtitle: "Korábbi helyek",
+    route: "/visit-history",
+    icon: History,
   },
   {
     title: "Hatásom",
@@ -66,20 +73,11 @@ const accountMenu: ShortcutItem[] = [
     icon: Heart,
   },
   {
-    title: "Kuponkód beváltása",
+    title: "Kuponkód",
     subtitle: "Partner ajánlat aktiválása",
     route: "/redeem-coupon",
     icon: Ticket,
   },
-  {
-    title: "Segítség",
-    subtitle: "Gyors válaszok és támogatás",
-    route: "/help",
-    icon: HelpCircle,
-  },
-];
-
-const settingsMenu: ShortcutItem[] = [
   {
     title: "Fiók",
     subtitle: "Profiladatok és belépés",
@@ -87,65 +85,33 @@ const settingsMenu: ShortcutItem[] = [
     icon: User,
   },
   {
-    title: "Fizetési módok",
-    subtitle: "Kártyák és fizetési beállítások",
-    route: "/payment-methods",
-    icon: CreditCard,
+    title: "Segítség",
+    subtitle: "Gyors válaszok",
+    route: "/help",
+    icon: HelpCircle,
   },
 ];
 
-function formatDistance(value?: number | null): string {
-  if (!value) return "Részletek";
-  return `${(value / 1000).toFixed(1).replace(".", ",")} km`;
-}
-
-type FavoriteVenueCardProps = {
-  venue: Venue;
-  fallbackImageUri: string;
-  onPress: () => void;
+type ActivityItem = {
+  id: string;
+  title: string;
+  place: string;
+  when: string;
+  delta: number;
+  icon: LucideIcon;
 };
 
-const FavoriteVenueCard: React.FC<FavoriteVenueCardProps> = ({ venue, fallbackImageUri, onPress }: FavoriteVenueCardProps) => {
-  const imageUri = venue.image_url ?? venue.hero_image_url ?? fallbackImageUri;
-  const category = venue.tags?.[0] ?? "Mentett hely";
+const recentActivity: ActivityItem[] = [
+  { id: "a1", title: "Pontszerzés", place: "Blue Fox Bar", when: "Ma, 21:14", delta: 240, icon: Sparkles },
+  { id: "a2", title: "Ital beváltva", place: "Vinozza Budapest", when: "Tegnap, 19:02", delta: -800, icon: Martini },
+  { id: "a3", title: "Pontszerzés", place: "Ruin Garden", when: "Kedd, 22:41", delta: 180, icon: Sparkles },
+  { id: "a4", title: "Meghívás jóváírás", place: "Barát csatlakozott", when: "Múlt héten", delta: 500, icon: UserPlus },
+];
 
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.favoriteCard} activeOpacity={0.86}>
-      <Image source={{ uri: imageUri }} style={styles.favoriteImage} accessibilityIgnoresInvertColors />
-      <LinearGradient colors={["transparent", "rgba(0,0,0,0.82)"]} style={styles.favoriteOverlay}>
-        <View style={styles.favoriteBadge}>
-          <Heart size={10} color="#FFFFFF" fill="#FFFFFF" />
-          <Text style={styles.favoriteBadgeText}>Kedvenc</Text>
-        </View>
-        <View>
-          <Text style={styles.favoriteName} numberOfLines={1}>{venue.name}</Text>
-          <Text style={styles.favoriteMeta} numberOfLines={1}>{category} · {formatDistance(venue.distance)}</Text>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-};
-
-type MenuRowProps = {
-  item: ShortcutItem;
-  onPress: () => void;
-};
-
-const MenuRow: React.FC<MenuRowProps> = ({ item, onPress }: MenuRowProps) => {
-  const Icon = item.icon;
-
-  return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.82}>
-      <View style={styles.menuIconWrap}>
-        <Icon size={16} color="#00C8E8" />
-      </View>
-      <View style={styles.menuTextBlock}>
-        <Text style={styles.menuTitle}>{item.title}</Text>
-        {item.subtitle ? <Text style={styles.menuSubtitle}>{item.subtitle}</Text> : null}
-      </View>
-      <ChevronRight size={16} color="rgba(255,255,255,0.30)" />
-    </TouchableOpacity>
-  );
+type StatChip = {
+  label: string;
+  value: string;
+  icon: LucideIcon;
 };
 
 export default function ProfileScreen() {
@@ -153,9 +119,7 @@ export default function ProfileScreen() {
   const { points } = useAppContext();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState<boolean>(false);
-  const { favoriteVenues, isLoading: favoritesLoading, syncError } = useFavorites();
-  const profileFavoriteVenues = favoriteVenues.slice(0, 5);
-  const fallbackImageUri = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600";
+  const { favoriteVenues } = useFavorites();
 
   const handleSignOut = useCallback(() => {
     Alert.alert("Kijelentkezés", "Biztosan kijelentkezel?", [
@@ -178,10 +142,17 @@ export default function ProfileScreen() {
     ]);
   }, [router, signOut]);
 
-  const stats: ProfileStat[] = [
-    { label: "Pont", value: points.toLocaleString("hu-HU"), icon: Sparkles },
-    { label: "Látogatás", value: "200+", icon: History },
+  const progress = useMemo<number>(() => {
+    const raw = points / NEXT_REWARD_TARGET;
+    return Math.max(0.04, Math.min(1, raw));
+  }, [points]);
+
+  const missing = Math.max(0, NEXT_REWARD_TARGET - points);
+
+  const stats: StatChip[] = [
+    { label: "Látogatás", value: "200+", icon: MapPin },
     { label: "Kedvenc", value: String(favoriteVenues.length), icon: Heart },
+    { label: "Token", value: "12", icon: Coins },
   ];
 
   return (
@@ -189,52 +160,79 @@ export default function ProfileScreen() {
       <StatusBar style="light" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>PROFIL</Text>
-            <Text style={styles.greeting}>Szia, Bence</Text>
-            <Text style={styles.headerSubtitle}>Kezeld a pontjaidat, kedvenceidet és Come Get It aktivitásodat.</Text>
+        <ImageBackground source={{ uri: HEADER_BG_URI }} style={styles.headerBg} imageStyle={styles.headerBgImage}>
+          <LinearGradient
+            colors={["rgba(0,0,0,0.30)", "rgba(0,0,0,0.62)", Colors.background]}
+            locations={[0, 0.6, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.headerContent}>
+            <View style={styles.avatarRing}>
+              <View style={styles.avatarRingInner}>
+                <Image source={{ uri: AVATAR_URI }} style={styles.avatarImage} accessibilityIgnoresInvertColors />
+              </View>
+            </View>
+            <Text style={styles.profileName}>Bence</Text>
+            <View style={styles.tierBadge}>
+              <Crown size={12} color="#0A1114" />
+              <Text style={styles.tierBadgeText}>Platina</Text>
+            </View>
+            <Text style={styles.memberSince}>Come Get It tag · 2024. január óta</Text>
           </View>
-          <TouchableOpacity style={styles.avatar} testID="profile-avatar" activeOpacity={0.82} onPress={() => router.push("/account")}>
-            <User size={19} color={Colors.text} />
+        </ImageBackground>
+
+        <View style={styles.balanceCard} testID="balance-card">
+          <View style={styles.balanceTopRow}>
+            <View style={styles.balanceLeft}>
+              <Text style={styles.balanceLabel}>EGYENLEG</Text>
+              <View style={styles.balancePointsRow}>
+                <Text style={styles.balancePoints} testID="profile-points">{points.toLocaleString("hu-HU")}</Text>
+                <Text style={styles.balanceUnit}>pont</Text>
+              </View>
+            </View>
+            <View style={styles.balanceGiftWrap}>
+              <Gift size={20} color={CYAN} strokeWidth={1.9} />
+            </View>
+          </View>
+
+          <View style={styles.progressBlock}>
+            <View style={styles.progressLabelsRow}>
+              <Text style={styles.progressLabel}>Következő jutalom</Text>
+              <Text style={styles.progressValue}>
+                {missing > 0 ? `még ${missing.toLocaleString("hu-HU")} pont` : "beváltható!"}
+              </Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <LinearGradient
+                colors={["#00E0FF", "#0090B8"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]}
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/rewards-missions")} testID="open-rewards-card">
+            <LinearGradient
+              colors={["#00E0FF", "#0090B8"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.balanceCta}
+            >
+              <Text style={styles.balanceCtaText}>Küldetések és jutalmak</Text>
+              <ChevronRight size={17} color="#001014" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => router.push("/rewards-missions")} activeOpacity={0.9} testID="open-rewards-card" style={styles.memberCardTouch}>
-          <View style={styles.memberCard}>
-            <View style={styles.memberBadge}>
-              <ShieldCheck size={11} color="rgba(0, 200, 232, 0.9)" />
-              <Text style={styles.memberBadgeText}>Come Get It Club</Text>
-            </View>
-
-            <View style={styles.memberMainRow}>
-              <View style={styles.memberContent}>
-                <Text style={styles.memberLabel}>Aktuális egyenleg</Text>
-                <View style={styles.memberPointsRow}>
-                  <Text style={styles.memberPoints} testID="profile-points">{points.toLocaleString("hu-HU")}</Text>
-                  <Text style={styles.memberPointsUnit}>pont</Text>
-                </View>
-              </View>
-              <View style={styles.memberGiftRing}>
-                <View style={styles.memberGiftRingInner}>
-                  <Gift size={22} color="#00C8E8" strokeWidth={1.9} />
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.memberCta}>
-              <Text style={styles.memberCtaText}>Küldetések megnyitása</Text>
-              <ChevronRight size={17} color="#001014" />
-            </View>
-          </View>
-        </TouchableOpacity>
-
         <View style={styles.statsRow}>
-          {stats.map((stat: ProfileStat) => {
+          {stats.map((stat: StatChip) => {
             const Icon = stat.icon;
             return (
-              <View key={stat.label} style={styles.statCard}>
-                <Icon size={15} color="#00C8E8" />
+              <View key={stat.label} style={styles.statChip}>
+                <View style={styles.statIconWrap}>
+                  <Icon size={14} color={CYAN} />
+                </View>
                 <Text style={styles.statValue}>{stat.value}</Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
               </View>
@@ -242,86 +240,57 @@ export default function ProfileScreen() {
           })}
         </View>
 
-        <View style={styles.quickGrid}>
-          {quickActions.map((item: ShortcutItem) => {
-            const Icon = item.icon;
-            return (
-              <TouchableOpacity key={item.title} style={styles.quickActionCard} onPress={() => router.push(item.route)} activeOpacity={0.84}>
-                <View style={styles.quickIconWrap}>
-                  <Icon size={17} color="#00C8E8" />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Legutóbbi aktivitás</Text>
+          <View style={styles.timelineCard}>
+            {recentActivity.map((item: ActivityItem, index: number) => {
+              const Icon = item.icon;
+              const isLast = index === recentActivity.length - 1;
+              const positive = item.delta > 0;
+              return (
+                <View key={item.id} style={styles.timelineRow}>
+                  <View style={styles.timelineLeft}>
+                    <View style={[styles.timelineDot, positive ? styles.timelineDotEarn : styles.timelineDotSpend]}>
+                      <Icon size={13} color={positive ? CYAN : "#F6B17A"} />
+                    </View>
+                    {!isLast ? <View style={styles.timelineLine} /> : null}
+                  </View>
+                  <View style={[styles.timelineBody, !isLast && styles.timelineBodyBorder]}>
+                    <View style={styles.timelineTextBlock}>
+                      <Text style={styles.timelineTitle}>{item.title}</Text>
+                      <Text style={styles.timelineMeta}>{item.place} · {item.when}</Text>
+                    </View>
+                    <Text style={[styles.timelineDelta, positive ? styles.deltaEarn : styles.deltaSpend]}>
+                      {positive ? "+" : ""}{item.delta.toLocaleString("hu-HU")} p
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.quickTitle}>{item.title}</Text>
-                {item.subtitle ? <Text style={styles.quickSubtitle}>{item.subtitle}</Text> : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <TouchableOpacity style={styles.inviteCard} onPress={() => router.push("/invite-friends")} activeOpacity={0.88}>
-          <View style={styles.inviteIconWrap}>
-            <UserPlus size={17} color="#00C8E8" />
-          </View>
-          <View style={styles.inviteTextBlock}>
-            <Text style={styles.inviteTitle}>Hívj meg egy barátot</Text>
-            <Text style={styles.inviteSubtitle}>Szerezz extra pontokat, ha csatlakozik és kipróbálja a partnereket.</Text>
-          </View>
-          <ChevronRight size={17} color="rgba(255,255,255,0.32)" />
-        </TouchableOpacity>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Kedvenceid</Text>
-              <Text style={styles.sectionSubtitle}>Gyorsan elérhető mentett helyek</Text>
-            </View>
-            <TouchableOpacity style={styles.viewAllButtonContainer} onPress={() => router.push("/favorites")} activeOpacity={0.82}>
-              <Text style={styles.viewAllButton}>Összes</Text>
-            </TouchableOpacity>
-          </View>
-
-          {syncError ? <Text style={styles.favoriteErrorText}>{syncError}</Text> : null}
-          {favoritesLoading ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Kedvencek betöltése...</Text>
-            </View>
-          ) : profileFavoriteVenues.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.favoritesList}>
-              {profileFavoriteVenues.map((venue: Venue) => (
-                <FavoriteVenueCard
-                  key={venue.id}
-                  venue={venue}
-                  fallbackImageUri={fallbackImageUri}
-                  onPress={() => router.push(`/venue/${encodeURIComponent(String(venue.id))}` as Href)}
-                />
-              ))}
-            </ScrollView>
-          ) : (
-            <TouchableOpacity style={styles.emptyCard} onPress={() => router.push("/(tabs)/home")} activeOpacity={0.85}>
-              <Heart size={18} color="#00C8E8" />
-              <Text style={styles.emptyText}>Még nincs kedvenc helyed. Ments el pár helyet a gyorsabb visszatéréshez.</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeaderCompact}>
-            <Text style={styles.sectionTitle}>Gyors elérés</Text>
-          </View>
-          <View style={styles.menuContainer}>
-            {accountMenu.map((item: ShortcutItem) => (
-              <MenuRow key={item.title} item={item} onPress={() => router.push(item.route)} />
-            ))}
+              );
+            })}
           </View>
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeaderCompact}>
-            <Text style={styles.sectionTitle}>Beállítások</Text>
-          </View>
-          <View style={styles.menuContainer}>
-            {settingsMenu.map((item: ShortcutItem) => (
-              <MenuRow key={item.title} item={item} onPress={() => router.push(item.route)} />
-            ))}
+          <Text style={styles.sectionTitle}>Menü</Text>
+          <View style={styles.menuGrid}>
+            {menuGrid.map((item: MenuGridItem) => {
+              const Icon = item.icon;
+              return (
+                <TouchableOpacity
+                  key={item.title}
+                  style={styles.menuCard}
+                  onPress={() => router.push(item.route)}
+                  activeOpacity={0.84}
+                  testID={`menu-${item.title}`}
+                >
+                  <View style={styles.menuIconWrap}>
+                    <Icon size={17} color={CYAN} />
+                  </View>
+                  <Text style={styles.menuTitle} numberOfLines={1}>{item.title}</Text>
+                  <Text style={styles.menuSubtitle} numberOfLines={1}>{item.subtitle}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -352,191 +321,324 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingTop: 52,
     paddingBottom: 32,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 16,
+  headerBg: {
+    width: "100%",
+    paddingTop: 66,
+    paddingBottom: 18,
   },
-  eyebrow: {
-    color: "rgba(0, 200, 232, 0.84)",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.3,
-    marginBottom: 5,
+  headerBgImage: {
+    resizeMode: "cover",
   },
-  greeting: {
-    fontSize: 22,
-    lineHeight: 26,
-    fontWeight: "900",
-    color: Colors.text,
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    color: "rgba(255,255,255,0.52)",
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 6,
-    maxWidth: 260,
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    justifyContent: "center",
+  headerContent: {
     alignItems: "center",
+    paddingHorizontal: 16,
   },
-  memberCardTouch: {
-    marginHorizontal: 16,
+  avatarRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 2,
+    borderColor: "rgba(0, 224, 255, 0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: CYAN,
+    shadowOpacity: 0.6,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
     marginBottom: 12,
-    borderRadius: 20,
+  },
+  avatarRingInner: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "rgba(0, 0, 0, 0.55)",
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+  },
+  profileName: {
+    color: Colors.text,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "700",
+    fontFamily: SERIF,
+    letterSpacing: -0.3,
+    marginBottom: 8,
+  },
+  tierBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: CYAN,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    marginBottom: 7,
+    shadowColor: CYAN,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  tierBadgeText: {
+    color: "#0A1114",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.6,
+  },
+  memberSince: {
+    color: "rgba(255,255,255,0.60)",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  balanceCard: {
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 14,
+    borderRadius: 22,
+    padding: 16,
+    backgroundColor: "rgba(8, 22, 28, 0.92)",
     borderWidth: 1,
     borderColor: "rgba(0, 200, 232, 0.24)",
-    backgroundColor: "rgba(8, 22, 28, 0.92)",
-    shadowColor: "#00C8E8",
+    shadowColor: CYAN,
     shadowOpacity: 0.16,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
   },
-  memberCard: {
-    padding: 15,
-  },
-  memberBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 5,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 999,
-    backgroundColor: "rgba(0, 200, 232, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.18)",
-    marginBottom: 12,
-  },
-  memberBadgeText: {
-    color: "rgba(255,255,255,0.66)",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-  },
-  memberMainRow: {
+  balanceTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: 13,
   },
-  memberContent: {
+  balanceLeft: {
     flex: 1,
   },
-  memberLabel: {
+  balanceLabel: {
     color: "rgba(255,255,255,0.44)",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    letterSpacing: 1.4,
     marginBottom: 3,
   },
-  memberPointsRow: {
+  balancePointsRow: {
     flexDirection: "row",
     alignItems: "baseline",
     gap: 7,
   },
-  memberPoints: {
-    color: "#00C8E8",
-    fontSize: 40,
-    lineHeight: 44,
+  balancePoints: {
+    color: CYAN,
+    fontSize: 38,
+    lineHeight: 42,
     fontWeight: "900",
     letterSpacing: -1.2,
   },
-  memberPointsUnit: {
+  balanceUnit: {
     color: "rgba(255,255,255,0.56)",
     fontSize: 14,
     fontWeight: "800",
   },
-  memberGiftRing: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    borderWidth: 2,
-    borderColor: "rgba(0, 200, 232, 0.34)",
-    justifyContent: "center",
+  balanceGiftWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1.5,
+    borderColor: "rgba(0, 200, 232, 0.32)",
     alignItems: "center",
-  },
-  memberGiftRingInner: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(0, 200, 232, 0.12)",
     justifyContent: "center",
-    alignItems: "center",
   },
-  memberCta: {
+  progressBlock: {
+    marginBottom: 14,
+  },
+  progressLabelsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 7,
+  },
+  progressLabel: {
+    color: "rgba(255,255,255,0.52)",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  progressValue: {
+    color: CYAN,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  balanceCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
     borderRadius: 15,
-    backgroundColor: "#00C8E8",
-    paddingVertical: 13,
+    minHeight: 48,
+    paddingHorizontal: 16,
   },
-  memberCtaText: {
+  balanceCtaText: {
     color: "#001014",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "900",
   },
   statsRow: {
     flexDirection: "row",
     paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 14,
+    gap: 9,
+    marginBottom: 22,
   },
-  statCard: {
+  statChip: {
     flex: 1,
-    borderRadius: 16,
-    padding: 11,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    alignItems: "center",
+    borderRadius: 18,
+    paddingVertical: 12,
+    backgroundColor: "rgba(255,255,255,0.045)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.09)",
+  },
+  statIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.20)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 7,
   },
   statValue: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
-    marginTop: 8,
   },
   statLabel: {
     color: "rgba(255,255,255,0.44)",
     fontSize: 10,
     fontWeight: "700",
-    marginTop: 2,
+    marginTop: 1,
   },
-  quickGrid: {
-    flexDirection: "row",
+  section: {
+    marginBottom: 22,
+  },
+  sectionTitle: {
+    color: Colors.text,
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: "700",
+    fontFamily: SERIF,
+    letterSpacing: -0.2,
     paddingHorizontal: 16,
-    gap: 10,
-    marginBottom: 12,
+    marginBottom: 11,
   },
-  quickActionCard: {
-    flex: 1,
-    minHeight: 100,
-    borderRadius: 16,
-    padding: 14,
+  timelineCard: {
+    marginHorizontal: 16,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingTop: 13,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
   },
-  quickIconWrap: {
+  timelineRow: {
+    flexDirection: "row",
+  },
+  timelineLeft: {
+    alignItems: "center",
+    marginRight: 11,
+  },
+  timelineDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  timelineDotEarn: {
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderColor: "rgba(0, 200, 232, 0.28)",
+  },
+  timelineDotSpend: {
+    backgroundColor: "rgba(246, 177, 122, 0.10)",
+    borderColor: "rgba(246, 177, 122, 0.30)",
+  },
+  timelineLine: {
+    flex: 1,
+    width: 1.5,
+    backgroundColor: "rgba(255,255,255,0.10)",
+    marginVertical: 3,
+  },
+  timelineBody: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingBottom: 13,
+  },
+  timelineBodyBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.055)",
+    marginBottom: 13,
+  },
+  timelineTextBlock: {
+    flex: 1,
+  },
+  timelineTitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 2,
+  },
+  timelineMeta: {
+    color: "rgba(255,255,255,0.46)",
+    fontSize: 11.5,
+    lineHeight: 15,
+  },
+  timelineDelta: {
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  deltaEarn: {
+    color: CYAN,
+  },
+  deltaSpend: {
+    color: "#F6B17A",
+  },
+  menuGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  menuCard: {
+    width: "48%",
+    flexGrow: 1,
+    borderRadius: 18,
+    padding: 13,
+    backgroundColor: "rgba(255,255,255,0.045)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+  },
+  menuIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 13,
@@ -547,210 +649,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  quickTitle: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: "900",
-    lineHeight: 17,
-  },
-  quickSubtitle: {
-    color: "rgba(255,255,255,0.44)",
-    fontSize: 11,
-    lineHeight: 15,
-    marginTop: 4,
-  },
-  inviteCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 16,
-    marginBottom: 20,
-    padding: 13,
-    borderRadius: 16,
-    backgroundColor: "rgba(10, 16, 22, 0.78)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  inviteIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
-    backgroundColor: "rgba(0, 200, 232, 0.09)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.18)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 11,
-  },
-  inviteTextBlock: {
-    flex: 1,
-  },
-  inviteTitle: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: "900",
-    marginBottom: 2,
-  },
-  inviteSubtitle: {
-    color: "rgba(255,255,255,0.48)",
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingHorizontal: 16,
-    marginBottom: 11,
-    gap: 16,
-  },
-  sectionHeaderCompact: {
-    paddingHorizontal: 16,
-    marginBottom: 11,
-  },
-  sectionTitle: {
-    color: Colors.text,
-    fontSize: 17,
-    fontWeight: "900",
-    letterSpacing: -0.2,
-  },
-  sectionSubtitle: {
-    color: "rgba(255,255,255,0.44)",
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 3,
-  },
-  viewAllButtonContainer: {
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 11,
-    backgroundColor: "rgba(0, 200, 232, 0.09)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.16)",
-  },
-  viewAllButton: {
-    fontSize: 12,
-    color: "#00C8E8",
-    fontWeight: "900",
-  },
-  favoriteErrorText: {
-    marginHorizontal: 16,
-    color: "#F6B17A",
-    fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 8,
-  },
-  favoritesList: {
-    paddingLeft: 16,
-    paddingRight: 6,
-  },
-  favoriteCard: {
-    width: 180,
-    height: 136,
-    borderRadius: 16,
-    overflow: "hidden",
-    marginRight: 10,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  favoriteImage: {
-    width: "100%",
-    height: "100%",
-  },
-  favoriteOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "space-between",
-    padding: 10,
-  },
-  favoriteBadge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 7,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.44)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-  },
-  favoriteBadgeText: {
-    color: Colors.text,
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  favoriteName: {
-    fontSize: 14,
-    fontWeight: "900",
-    color: Colors.text,
-    marginBottom: 3,
-  },
-  favoriteMeta: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.66)",
-    fontWeight: "700",
-  },
-  emptyCard: {
-    marginHorizontal: 16,
-    minHeight: 90,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    gap: 8,
-  },
-  emptyText: {
-    color: "rgba(255,255,255,0.52)",
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 18,
-  },
-  menuContainer: {
-    marginHorizontal: 16,
-    borderRadius: 18,
-    overflow: "hidden",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  menuItem: {
-    minHeight: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.06)",
-  },
-  menuIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: "rgba(0, 200, 232, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 200, 232, 0.14)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 11,
-  },
-  menuTextBlock: {
-    flex: 1,
-  },
   menuTitle: {
-    fontSize: 14,
-    fontWeight: "800",
     color: Colors.text,
+    fontSize: 13.5,
+    fontWeight: "900",
     marginBottom: 2,
   },
   menuSubtitle: {
+    color: "rgba(255,255,255,0.44)",
     fontSize: 11,
-    color: "rgba(255,255,255,0.42)",
     lineHeight: 15,
   },
   signOutButton: {
