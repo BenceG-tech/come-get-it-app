@@ -24,6 +24,7 @@ import { Venue } from "@/types/venue";
 import { fetchVenueCoverUrl, fetchVenues } from "@/lib/venueService";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "@/context/LocationContext";
 import { getUserCSRImpact } from "@/lib/csrService";
 
 const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
@@ -50,6 +51,17 @@ export default function BarsScreen() {
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [snapState, setSnapState] = useState<SnapState>("half");
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
+
+  const { location: userLocation, getCurrentLocation } = useLocation();
+
+  useEffect(() => {
+    getCurrentLocation()
+      .then((loc) => {
+        console.log("[Home] User location resolved:", loc?.coords ?? null);
+      })
+      .catch((e) => console.log("[Home] Failed to resolve user location:", e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: csrData } = useQuery({
     queryKey: ["csr-impact"],
@@ -280,6 +292,7 @@ export default function BarsScreen() {
         onMarkerPress={onMarkerPress}
         interactive={snapState !== "expanded"}
         controlsBottomOffset={mapControlsOffset}
+        userCoordinate={userLocation?.coords ?? null}
         testID="home-fullscreen-map"
       />
 
@@ -349,6 +362,14 @@ export default function BarsScreen() {
               />
             </View>
             <View style={styles.headerActions}>
+              <TouchableOpacity
+                testID="home-header-map"
+                onPress={openMap}
+                style={styles.headerButton}
+                activeOpacity={0.7}
+              >
+                <MapPin size={iconSize} color="#EAEAEA" />
+              </TouchableOpacity>
               <TouchableOpacity
                 testID="home-search"
                 onPress={openSearch}

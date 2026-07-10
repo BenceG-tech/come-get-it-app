@@ -1,25 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
-  Alert,
-  Animated,
-  PanResponder,
   FlatList,
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, MapPin, ChevronUp } from 'lucide-react-native';
+import { ArrowLeft, Search, MapPin } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
-import { MapView, Marker, PROVIDER_GOOGLE } from '@/lib/mapComponents';
+import { fetchVenues } from '@/lib/venueService';
 import DarkMapPreview from '@/components/DarkMapPreview';
 import VenueMiniCard from '@/components/VenueMiniCard';
 import { geocodeVenueAddress } from '@/utils/geocoding';
@@ -43,29 +39,12 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
 }
 
-type MapRegion = {
-  latitude: number;
-  longitude: number;
-  latitudeDelta: number;
-  longitudeDelta: number;
-};
-
-type BottomSheetSnap = {
-  expandedHeight: number;
-  collapsedHeight: number;
-  maxTranslateY: number;
-};
-
-function clamp(n: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, n));
-}
-
 export default function MapScreen() {
   const router = useRouter();
   const statusBarStyle = 'light' as const;
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sheetMode, setSheetMode] = useState<'collapsed' | 'expanded'>('collapsed');
+  const [loadError, setLoadError] = useState<boolean>(false);
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
 
   const { location: userLocation, getCurrentLocation } = useLocation();
@@ -90,11 +69,7 @@ export default function MapScreen() {
   useEffect(() => {
     const fetchVenuesAndLocation = async () => {
       try {
-        const venuesResponse = await rest('/venues?select=*&is_paused=not.is.true');
-        const venuesRaw: Venue[] = await venuesResponse.json();
-        const venuesData: Venue[] = (Array.isArray(venuesRaw) ? venuesRaw : []).filter(
-          (venue: Venue) => venue.is_paused !== true
-        );
+        const venuesData: Venue[] = await fetchVenues({ orderByCreated: true });
         console.log('[Map] Fetched venues:', venuesData.length);
         
         // Geocode venues that don't have coordinates.
@@ -179,9 +154,10 @@ export default function MapScreen() {
           ).length,
         });
         setVenues(venuesWithCoords as Venue[]);
+        setLoadError(false);
       } catch (error) {
         console.error('[Map] Error fetching data:', error);
-        Alert.alert('Hiba', 'Nem sikerült betölteni a térképet');
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -189,20 +165,6 @@ export default function MapScreen() {
 
     fetchVenuesAndLocation();
   }, []);
-
-  const initialRegion: MapRegion = userLocation
-    ? {
-        latitude: userLocation.coords.latitude,
-        longitude: userLocation.coords.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }
-    : {
-        latitude: 47.4979,
-        longitude: 19.0402,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
-      };
 
   const userCoords = userLocation?.coords ?? null;
 
@@ -227,80 +189,6 @@ export default function MapScreen() {
     }
     return withDistance;
   }, [venues, userCoords]);
-
-  const venuesWithCoords = useMemo(() => {
-    const filtered = venuesSorted.filter((v) => typeof v.latitude === 'number' && typeof v.longitude === 'number');
-    console.log('[Map] venuesWithCoords:', filtered.length);
-    return filtered;
-  }, [venuesSorted]);
-
-  const sheetSnap = useRef<BottomSheetSnap | null>(null);
-
-  const sheetTranslateY = useRef(new Animated.Value(0)).current;
-  const sheetTranslateYStart = useRef<number>(0);
-
-  const onSheetLayout = useCallback((h: number) => {
-    const mapAreaHeight = h;
-    const expandedHeight = clamp(mapAreaHeight * 0.92, 320, mapAreaHeight);
-    const collapsedHeight = clamp(mapAreaHeight * 0.32, 180, expandedHeight);
-    const maxTranslateY = expandedHeight - collapsedHeight;
-
-    sheetSnap.current = { expandedHeight, collapsedHeight, maxTranslateY };
-    const initial = maxTranslateY;
-    sheetTranslateY.setValue(initial);
-    sheetTranslateYStart.current = initial;
-    setSheetMode('collapsed');
-
-    console.log('[Map] Bottom sheet layout:', { mapAreaHeight, expandedHeight, collapsedHeight, maxTranslateY });
-  }, [sheetTranslateY]);
-
-  const snapSheetTo = useCallback(
-    (mode: 'collapsed' | 'expanded') => {
-      const snap = sheetSnap.current;
-      if (!snap) return;
-      const toValue = mode === 'expanded' ? 0 : snap.maxTranslateY;
-
-      setSheetMode(mode);
-      Animated.spring(sheetTranslateY, {
-        toValue,
-        useNativeDriver: true,
-        tension: 80,
-        friction: 12,
-      }).start(() => {
-        sheetTranslateYStart.current = toValue;
-      });
-    },
-    [sheetTranslateY]
-  );
-
-  const sheetPanResponder = useMemo(() => {
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_evt, gesture) => Math.abs(gesture.dy) > Math.abs(gesture.dx) && Math.abs(gesture.dy) > 4,
-      onPanResponderGrant: () => {
-        sheetTranslateY.stopAnimation((value) => {
-          sheetTranslateYStart.current = typeof value === 'number' ? value : 0;
-        });
-      },
-      onPanResponderMove: (_evt, gesture) => {
-        const snap = sheetSnap.current;
-        if (!snap) return;
-        const next = clamp(sheetTranslateYStart.current + gesture.dy, 0, snap.maxTranslateY);
-        sheetTranslateY.setValue(next);
-      },
-      onPanResponderRelease: (_evt, gesture) => {
-        const snap = sheetSnap.current;
-        if (!snap) return;
-
-        const shouldExpand = gesture.vy < -0.25 || (gesture.dy < -snap.maxTranslateY * 0.2);
-        const shouldCollapse = gesture.vy > 0.25 || (gesture.dy > snap.maxTranslateY * 0.2);
-
-        if (shouldExpand) snapSheetTo('expanded');
-        else if (shouldCollapse) snapSheetTo('collapsed');
-        else snapSheetTo(sheetMode);
-      },
-    });
-  }, [sheetMode, sheetTranslateY, snapSheetTo]);
 
   return (
     <View style={styles.container}>
@@ -334,131 +222,10 @@ export default function MapScreen() {
           <ActivityIndicator size="large" color={Colors.dark.primary} />
           <Text style={styles.loadingText}>Térkép betöltése...</Text>
         </View>
-      ) : Platform.OS !== 'web' && MapView ? (
-        <View
-          style={styles.nativeMapContainer}
-          onLayout={(e) => {
-            const h = e.nativeEvent.layout.height;
-            if (h > 0) onSheetLayout(h);
-          }}
-          testID="native-map-container"
-        >
-          <MapView
-            style={StyleSheet.absoluteFill}
-            provider={PROVIDER_GOOGLE}
-            initialRegion={initialRegion}
-            showsUserLocation={true}
-            showsMyLocationButton={true}
-            toolbarEnabled={false}
-            testID="native-map"
-          >
-            {venuesWithCoords.map((v) => (
-              <Marker
-                key={String(v.id)}
-                coordinate={{ latitude: v.latitude as number, longitude: v.longitude as number }}
-                title={v.name}
-                description={v.address ?? undefined}
-                onPress={() => {
-                  console.log('[Map] Marker pressed, showing mini card:', v.id, v.name);
-                  setPreviewVenue(v);
-                }}
-                testID={`venue-marker-${v.id}`}
-              />
-            ))}
-          </MapView>
-
-          <Animated.View
-            style={[
-              styles.sheet,
-              {
-                transform: [{ translateY: sheetTranslateY }],
-              },
-            ]}
-            pointerEvents="box-none"
-            testID="map-bottom-sheet"
-          >
-            <View style={styles.sheetCard} pointerEvents="auto">
-              <View style={styles.sheetHandleRow} {...sheetPanResponder.panHandlers} testID="sheet-handle">
-                <View style={styles.sheetHandle} />
-                <View style={{ flex: 1 }} />
-                <Pressable
-                  onPress={() => snapSheetTo(sheetMode === 'expanded' ? 'collapsed' : 'expanded')}
-                  style={({ pressed }) => [styles.sheetChevronButton, pressed && { opacity: 0.7 }]}
-                  testID="sheet-toggle"
-                >
-                  <ChevronUp
-                    size={18}
-                    color={Colors.text}
-                    style={{ transform: [{ rotate: sheetMode === 'expanded' ? '180deg' : '0deg' }] }}
-                  />
-                </Pressable>
-              </View>
-
-              <View style={styles.sheetHeader}>
-                <Text style={styles.sheetTitle}>Helyszínek</Text>
-                <Text style={styles.sheetSubtitle}>{venuesWithCoords.length} találat</Text>
-              </View>
-
-              <FlatList
-                data={venuesWithCoords}
-                keyExtractor={(item) => String(item.id)}
-                renderItem={({ item }) => {
-                  const tags = Array.isArray(item.tags) ? item.tags : [];
-                  return (
-                    <Pressable
-                      onPress={() => {
-                        console.log('[Map] Venue row pressed:', item.id);
-                        router.push(`/venue/${item.id}`);
-                      }}
-                      style={({ pressed }) => [styles.venueRow, pressed && styles.venueRowPressed]}
-                      testID={`venue-row-${item.id}`}
-                    >
-                      <View style={styles.venueRowLeft}>
-                        <View style={styles.venueRowIcon}>
-                          <MapPin size={16} color={Colors.dark.primary} />
-                        </View>
-                      </View>
-                      <View style={styles.venueRowBody}>
-                        <View style={styles.venueRowTitleRow}>
-                          <Text style={styles.venueRowTitle} numberOfLines={1}>
-                            {item.name}
-                          </Text>
-                          {typeof item.distance === 'number' ? (
-                            <Text style={styles.venueRowDistance}>{formatDistance(item.distance)}</Text>
-                          ) : null}
-                        </View>
-                        <Text style={styles.venueRowAddress} numberOfLines={1}>
-                          {item.address ?? ''}
-                        </Text>
-                        {tags.length > 0 ? (
-                          <Text style={styles.venueRowTags} numberOfLines={1}>
-                            {tags.slice(0, 4).join(' • ')}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </Pressable>
-                  );
-                }}
-                contentContainerStyle={styles.sheetListContent}
-                showsVerticalScrollIndicator={false}
-                testID="venue-list"
-              />
-            </View>
-          </Animated.View>
-
-          {previewVenue && (
-            <VenueMiniCard
-              venue={previewVenue}
-              onClose={() => setPreviewVenue(null)}
-              onDetails={onMiniCardDetails}
-              bottomOffset={24}
-              testID="map-venue-mini-card"
-            />
-          )}
-        </View>
       ) : (
-        <WebMapView
+        <DarkMapBody
           venues={venuesSorted}
+          loadError={loadError}
           router={router}
           previewVenue={previewVenue}
           onMarkerPress={(venue) => setPreviewVenue(venue)}
@@ -726,8 +493,9 @@ const styles = StyleSheet.create({
   },
 });
 
-function WebMapView({
+function DarkMapBody({
   venues,
+  loadError,
   router,
   previewVenue,
   onMarkerPress,
@@ -736,6 +504,7 @@ function WebMapView({
   userCoordinate,
 }: {
   venues: Venue[];
+  loadError: boolean;
   router: ReturnType<typeof useRouter>;
   previewVenue: Venue | null;
   onMarkerPress: (venue: Venue) => void;
@@ -744,7 +513,7 @@ function WebMapView({
   userCoordinate: { latitude: number; longitude: number } | null;
 }) {
   return (
-    <View style={styles.webMapContainer} testID="web-map">
+    <View style={styles.webMapContainer} testID="dark-map">
       <DarkMapPreview
         venues={venues}
         zoom={13}
@@ -764,7 +533,9 @@ function WebMapView({
         </View>
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Helyszínek</Text>
-          <Text style={styles.sheetSubtitle}>{venues.length} találat</Text>
+          <Text style={styles.sheetSubtitle}>
+            {loadError ? 'Nem sikerült betölteni a helyszíneket — próbáld újra később' : `${venues.length} találat`}
+          </Text>
         </View>
         <FlatList
           data={venues}
