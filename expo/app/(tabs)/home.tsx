@@ -73,11 +73,11 @@ export default function BarsScreen() {
   const logoCropLeft = Math.round(logoDrawWidth * LOGO_CROP_LEFT_FRACTION);
   const logoBoxWidth = logoDrawWidth - logoCropLeft;
 
-  const expandedTop = insets.top + 8;
-  const halfOffset = Math.max(0, Math.round(containerHeight * 0.5) - expandedTop);
-  const collapsedOffset = Math.max(0, containerHeight - expandedTop - COLLAPSED_VISIBLE_HEIGHT);
+  const halfOffset = Math.max(0, Math.round(containerHeight * 0.5));
+  const collapsedOffset = Math.max(0, containerHeight - COLLAPSED_VISIBLE_HEIGHT);
 
   const translateY = useRef(new Animated.Value(0)).current;
+  const expandProgress = useRef(new Animated.Value(0)).current;
   const offsetRef = useRef<number>(0);
   const snapPointsRef = useRef<{ half: number; collapsed: number }>({ half: 0, collapsed: 0 });
   const snapStateRef = useRef<SnapState>("half");
@@ -89,7 +89,8 @@ export default function BarsScreen() {
     const to = current === "expanded" ? 0 : current === "half" ? halfOffset : collapsedOffset;
     offsetRef.current = to;
     translateY.setValue(to);
-  }, [halfOffset, collapsedOffset, translateY]);
+    expandProgress.setValue(current === "expanded" ? 1 : 0);
+  }, [halfOffset, collapsedOffset, translateY, expandProgress]);
 
   const snapTo = useCallback(
     (state: SnapState) => {
@@ -105,8 +106,15 @@ export default function BarsScreen() {
         damping: 22,
         mass: 0.7,
       }).start();
+      Animated.spring(expandProgress, {
+        toValue: state === "expanded" ? 1 : 0,
+        useNativeDriver: false,
+        stiffness: 170,
+        damping: 22,
+        mass: 0.7,
+      }).start();
     },
-    [translateY]
+    [translateY, expandProgress]
   );
 
   const panResponder = useMemo(() => {
@@ -144,6 +152,10 @@ export default function BarsScreen() {
       onPanResponderMove: (_evt, g) => {
         const next = clamp(offsetRef.current + g.dy, 0, snapPointsRef.current.collapsed);
         translateY.setValue(next);
+        const half = snapPointsRef.current.half;
+        if (half > 0) {
+          expandProgress.setValue(1 - clamp(next / half, 0, 1));
+        }
       },
       onPanResponderRelease: (_evt, g) => {
         release(g.dy, g.vy);
@@ -152,7 +164,7 @@ export default function BarsScreen() {
         snapTo(snapStateRef.current);
       },
     });
-  }, [snapTo, translateY]);
+  }, [snapTo, translateY, expandProgress]);
 
   const onContainerLayout = useCallback((event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout;
@@ -237,16 +249,25 @@ export default function BarsScreen() {
     [router]
   );
 
-  const panelHeight = Math.max(0, containerHeight - expandedTop);
+  const panelHeight = containerHeight;
 
   const visibleMapHeight =
     snapState === "half"
-      ? halfOffset + expandedTop
-      : containerHeight - Math.max(0, containerHeight - expandedTop - collapsedOffset);
+      ? halfOffset
+      : containerHeight - Math.max(0, containerHeight - collapsedOffset);
   const mapControlsOffset =
     snapState === "half"
       ? Math.max(0, containerHeight - visibleMapHeight) + 16
       : COLLAPSED_VISIBLE_HEIGHT + 16;
+
+  const sheetTopRadius = expandProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [22, 0],
+  });
+  const headerPaddingTop = expandProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [6, insets.top + 6],
+  });
 
   return (
     <View style={styles.container} testID="home-root" onLayout={onContainerLayout}>
@@ -283,13 +304,23 @@ export default function BarsScreen() {
           style={[
             styles.sheet,
             {
-              top: expandedTop,
+              top: 0,
               height: panelHeight,
               transform: [{ translateY }],
             },
           ]}
           testID="home-sheet"
         >
+          <Animated.View
+            style={[
+              styles.sheetInner,
+              {
+                borderTopLeftRadius: sheetTopRadius,
+                borderTopRightRadius: sheetTopRadius,
+              },
+            ]}
+          >
+          <Animated.View style={{ paddingTop: headerPaddingTop, backgroundColor: "#000000" }}>
           <Pressable
             onPress={() => {
               if (snapStateRef.current === "collapsed") snapTo("half");
@@ -328,6 +359,7 @@ export default function BarsScreen() {
               </TouchableOpacity>
             </View>
           </Pressable>
+          </Animated.View>
 
           <View style={styles.filtersContainer}>
             <View style={styles.filtersContent}>
@@ -476,6 +508,7 @@ export default function BarsScreen() {
               </>
             )}
           </Animated.ScrollView>
+          </Animated.View>
         </Animated.View>
       )}
 
@@ -538,17 +571,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    zIndex: 2,
+  },
+  sheetInner: {
+    flex: 1,
     backgroundColor: "#000000",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
     borderTopWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
     overflow: "hidden",
-    zIndex: 2,
   },
   headerRow: {
     backgroundColor: "#000000",
-    paddingTop: 6,
+    paddingTop: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
