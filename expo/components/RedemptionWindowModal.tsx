@@ -20,7 +20,6 @@ import Svg, { Circle } from 'react-native-svg';
 import {
   AlertCircle,
   ArrowLeft,
-  CheckCircle2,
   Clock3,
   Heart,
   MapPin,
@@ -80,7 +79,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const STEP_LABELS = ['Érkezés', 'Mutasd', 'Beváltás'] as const;
+const STEP_LABELS = ['Érkezés', 'Mutasd', 'Beváltás', 'Kész'] as const;
 
 /** Schedules a local "Egészségedre!" notification a few seconds after a successful redemption. */
 async function scheduleCheersNotification(drinkName: string): Promise<void> {
@@ -513,14 +512,20 @@ export default function RedemptionWindowModal({
     </View>
   );
 
-  const renderStepIndicator = (currentStep: 1 | 2 | 3) => {
-    const steps = [1, 2, 3];
+  const renderStepIndicator = (currentStep: 1 | 2 | 3 | 4) => {
+    const steps = [1, 2, 3, 4];
     return (
       <View style={styles.stepIndicatorRow}>
         {steps.map((s, idx) => (
           <View key={s} style={styles.stepIndicatorItem}>
             <View style={styles.stepColumn}>
-              <View style={[styles.stepDot, s <= currentStep && styles.stepDotActive]}>
+              <View
+                style={[
+                  styles.stepDot,
+                  s <= currentStep && styles.stepDotActive,
+                  s === currentStep && styles.stepDotCurrent,
+                ]}
+              >
                 <Text style={[styles.stepDotText, s <= currentStep && styles.stepDotTextActive]}>{s}</Text>
               </View>
               <Text style={[styles.stepLabel, s <= currentStep && styles.stepLabelActive]}>{STEP_LABELS[s - 1]}</Text>
@@ -555,10 +560,11 @@ export default function RedemptionWindowModal({
           <View style={styles.countdownContent}>
             <View style={styles.countdownTop}>
               {renderStepIndicator(3)}
-              <View style={styles.readyBadge}>
-                <CheckCircle2 size={15} color="#001014" />
-                <Text style={styles.readyBadgeText}>Ablak megnyitva — mutasd a pultosnak</Text>
+              <View style={styles.openWindowChip}>
+                <View style={styles.openWindowDot} />
+                <Text style={styles.openWindowChipText}>Ablak megnyitva</Text>
               </View>
+              <Text style={styles.countdownTitle}>Mutasd a pultosnak</Text>
               {windowToken?.fallback_mode && (
                 <View style={styles.fallbackChip} testID="fallback-mode-chip">
                   <AlertCircle size={12} color="#FFB020" />
@@ -632,6 +638,7 @@ export default function RedemptionWindowModal({
                   <Text style={styles.demoConfirmText}>DEMO: Pultos confirmed</Text>
                 </TouchableOpacity>
               )}
+              <Text style={styles.responsibleText}>18+ • Fogyassz felelősséggel</Text>
             </View>
           </View>
         </Animated.View>
@@ -643,6 +650,7 @@ export default function RedemptionWindowModal({
         <Animated.View style={[styles.body, { opacity: fadeAnim }]}>
           {renderDrinkImage()}
           <View style={styles.bodyContent}>
+            {renderStepIndicator(4)}
             <Animated.View style={[styles.successHalo, { transform: [{ scale: haloScale }] }]}>
               <Text style={styles.cheersEmoji}>🍻</Text>
             </Animated.View>
@@ -680,6 +688,7 @@ export default function RedemptionWindowModal({
                 <Text style={styles.primaryActionText}>Bezárás</Text>
               </TouchableOpacity>
             </View>
+            <Text style={styles.responsibleText}>18+ • Fogyassz felelősséggel</Text>
           </View>
         </Animated.View>
       );
@@ -752,7 +761,7 @@ export default function RedemptionWindowModal({
                 <Text style={styles.primaryStepButtonText}>Mutat</Text>
               </Pressable>
             </View>
-            <Text style={styles.responsibleText}>18+ • Fogyaszt felelősségteljesen</Text>
+            <Text style={styles.responsibleText}>18+ • Fogyassz felelősséggel</Text>
           </View>
         </Animated.View>
       );
@@ -790,7 +799,7 @@ export default function RedemptionWindowModal({
               <Text style={styles.primaryStepButtonText}>Itt vagyok</Text>
             </Pressable>
           </View>
-          <Text style={styles.responsibleText}>18+ • Fogyaszt felelősségteljesen</Text>
+          <Text style={styles.responsibleText}>18+ • Fogyassz felelősséggel</Text>
         </View>
       </Animated.View>
     );
@@ -958,7 +967,7 @@ const styles = StyleSheet.create({
   stepColumn: {
     alignItems: 'center',
     gap: 4,
-    width: 62,
+    width: 58,
   },
   stepLabel: {
     color: 'rgba(255,255,255,0.35)',
@@ -984,6 +993,13 @@ const styles = StyleSheet.create({
     backgroundColor: CYAN,
     borderColor: CYAN,
   },
+  stepDotCurrent: {
+    shadowColor: CYAN,
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
   stepDotText: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: 12,
@@ -993,11 +1009,11 @@ const styles = StyleSheet.create({
     color: '#001014',
   },
   stepConnector: {
-    width: 22,
+    width: 18,
     height: 2,
     backgroundColor: 'rgba(255,255,255,0.12)',
     marginTop: 12,
-    marginHorizontal: -8,
+    marginHorizontal: -7,
   },
   stepConnectorActive: {
     backgroundColor: CYAN,
@@ -1115,25 +1131,37 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
   },
-  readyBadge: {
+  openWindowChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 7,
+    paddingHorizontal: 13,
     borderRadius: 999,
-    backgroundColor: CYAN,
-    marginBottom: 10,
-    shadowColor: CYAN,
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.4)',
+    marginBottom: 8,
   },
-  readyBadgeText: {
-    color: '#001014',
+  openWindowDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22C55E',
+  },
+  openWindowChipText: {
+    color: '#22C55E',
     fontSize: 12,
     fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  countdownTitle: {
+    color: Colors.dark.text,
+    fontSize: 21,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+    marginBottom: 10,
   },
   countdownContent: {
     flex: 1,

@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
   logoBlock: {
     width: '100%',
     alignItems: 'center',
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   content: {
     width: '100%',
@@ -288,12 +288,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 190,
-    height: 88,
+    width: 285,
+    height: 126,
   },
   heroTextBlock: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   heading: {
     color: '#FFFFFF',

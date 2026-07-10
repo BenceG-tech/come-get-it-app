@@ -5,6 +5,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   BadgePercent,
   ChevronRight,
+  Crown,
+  Gift,
   Martini,
   Nfc,
   Send,
@@ -167,13 +169,39 @@ export default function RewardsScreen() {
             />
 
             <View style={styles.heroContent}>
-              <View style={styles.heroCardImageWrap}>
-                <Image source={CLUB_CARD_SOURCE} style={styles.heroCardImage} resizeMode="contain" />
+              <View style={styles.heroTopRow}>
+                <View style={styles.heroTextCol}>
+                  <Text style={styles.heroTitle}>Kapcsold össze{"\n"}a kártyádat</Text>
+                  <Text style={styles.heroSubtitle}>
+                    A pontok maguktól gyűlnek minden fizetéskor.
+                  </Text>
+                </View>
+                <View style={styles.heroCardImageWrap}>
+                  <Image source={CLUB_CARD_SOURCE} style={styles.heroCardImage} resizeMode="contain" />
+                </View>
               </View>
-              <Text style={styles.heroTitle}>Kapcsold össze a kártyádat</Text>
-              <Text style={styles.heroSubtitle}>
-                Kapcsold hozzá a bankkártyádat, és a pontok maguktól gyűlnek minden fizetéskor.
-              </Text>
+
+              <View style={styles.heroBenefits}>
+                <View style={styles.heroBenefitRow}>
+                  <View style={styles.heroBenefitIcon}>
+                    <Text style={styles.heroBenefitIconText}>P</Text>
+                  </View>
+                  <Text style={styles.heroBenefitText}>Pontok minden vásárlás után</Text>
+                </View>
+                <View style={styles.heroBenefitRow}>
+                  <View style={styles.heroBenefitIcon}>
+                    <Gift size={14} color={CYAN} />
+                  </View>
+                  <Text style={styles.heroBenefitText}>Exkluzív ajánlatok és meglepetések</Text>
+                </View>
+                <View style={styles.heroBenefitRow}>
+                  <View style={styles.heroBenefitIcon}>
+                    <Crown size={14} color={CYAN} />
+                  </View>
+                  <Text style={styles.heroBenefitText}>VIP élmények és meghívók</Text>
+                </View>
+              </View>
+
               <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button" style={styles.heroCtaTouch}>
                 <LinearGradient
                   colors={["#00E0FF", "#0090B8"]}
@@ -370,17 +398,26 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   heroContent: {
-    alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 13,
+    paddingTop: 16,
+    paddingBottom: 15,
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  heroTextCol: {
+    flex: 1,
   },
   heroCardImageWrap: {
-    width: "78%",
-    height: 104,
-    marginBottom: 6,
+    width: 138,
+    height: 92,
+    marginRight: -6,
+    transform: [{ rotate: "6deg" }],
     shadowColor: "#00C8E8",
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.5,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
@@ -391,20 +428,48 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: Colors.text,
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: "800",
+    fontSize: 22,
+    lineHeight: 27,
+    fontWeight: "700",
+    fontFamily: SERIF,
     letterSpacing: -0.3,
-    textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 6,
   },
   heroSubtitle: {
     color: "rgba(255,255,255,0.62)",
-    fontSize: 12,
-    lineHeight: 16,
-    textAlign: "center",
-    maxWidth: 300,
-    marginBottom: 10,
+    fontSize: 12.5,
+    lineHeight: 17,
+    maxWidth: 190,
+  },
+  heroBenefits: {
+    gap: 9,
+    marginBottom: 15,
+  },
+  heroBenefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  heroBenefitIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0, 200, 232, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 232, 0.30)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroBenefitIconText: {
+    color: CYAN,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  heroBenefitText: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 13,
+    fontWeight: "600",
+    flex: 1,
   },
   heroCtaTouch: {
     width: "100%",
