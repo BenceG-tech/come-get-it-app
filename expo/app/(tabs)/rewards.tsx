@@ -202,7 +202,7 @@ export default function RewardsScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button" style={styles.heroCtaTouch}>
+              <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button" style={styles.heroCtaTouch} onPress={() => router.push("/add-card")}>
                 <LinearGradient
                   colors={["#00E0FF", "#0090B8"]}
                   start={{ x: 0, y: 0 }}

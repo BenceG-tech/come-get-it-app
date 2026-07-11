@@ -130,6 +130,8 @@ type DarkMapPreviewProps = {
   controlsBottomOffset?: number;
   /** The user's current position — rendered as a pulsing blue dot. */
   userCoordinate?: { latitude: number; longitude: number } | null;
+  /** When true, auto-center on userCoordinate when it arrives (one-shot). */
+  centerOnUser?: boolean;
   testID?: string;
 };
 
@@ -148,10 +150,12 @@ export default function DarkMapPreview({
   interactive = false,
   controlsBottomOffset = 24,
   userCoordinate = null,
+  centerOnUser = false,
   testID,
 }: DarkMapPreviewProps) {
   const [size, setSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [viewOverride, setViewOverride] = useState<MapView | null>(null);
+  const hasAutoCenteredRef = useRef<boolean>(false);
 
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -188,6 +192,17 @@ export default function DarkMapPreview({
   useEffect(() => {
     viewRef.current = view;
   }, [view]);
+
+  // Auto-center on user location when it first arrives (one-shot).
+  useEffect(() => {
+    if (!centerOnUser || !userCoordinate || hasAutoCenteredRef.current) return;
+    hasAutoCenteredRef.current = true;
+    setViewOverride({
+      latitude: userCoordinate.latitude,
+      longitude: userCoordinate.longitude,
+      zoom: Math.max(zoom, 14),
+    });
+  }, [centerOnUser, userCoordinate, zoom]);
 
   useEffect(() => {
     interactiveRef.current = interactive;

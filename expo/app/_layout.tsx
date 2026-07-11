@@ -47,6 +47,7 @@ function RootLayoutNav() {
       <Stack.Screen name="rewards-missions" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="map" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="search" options={{ presentation: "card", headerShown: false }} />
+      <Stack.Screen name="add-card" options={{ presentation: "card", headerShown: false }} />
 
       <Stack.Screen name="visit-history" options={{ presentation: "card", headerShown: true, title: "Látogatási előzmények", headerBackTitle: BACK_TITLE }} />
       <Stack.Screen name="credits-tokens" options={{ presentation: "card", headerShown: true, title: "Kreditek és Tokenek", headerBackTitle: BACK_TITLE }} />

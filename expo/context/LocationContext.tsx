@@ -16,12 +16,17 @@ type LocationObjectLike = {
   timestamp: number;
 };
 
+type LocationStatus = 'idle' | 'locating' | 'found' | 'denied' | 'unavailable';
+
 type LocationContextType = {
   location: LocationObjectLike | null;
+  locationStatus: LocationStatus;
   hasPermission: boolean;
   isTracking: boolean;
   requestPermission: () => Promise<boolean>;
   getCurrentLocation: () => Promise<LocationObjectLike | null>;
+  startWatching: () => Promise<void>;
+  stopWatching: () => void;
   startTracking: () => Promise<void>;
   stopTracking: () => Promise<void>;
   checkProximityToVenues: (venues: Venue[]) => Venue[];
@@ -68,11 +73,13 @@ function getWebLocationOnce(): Promise<LocationObjectLike> {
 
 export const [LocationProvider, useLocation] = createContextHook<LocationContextType>(() => {
   const [location, setLocation] = useState<LocationObjectLike | null>(null);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   const [isTracking, setIsTracking] = useState<boolean>(false);
 
   const webWatchIdRef = useRef<number | null>(null);
   const nativeSubscriptionRef = useRef<{ remove: () => void } | null>(null);
+  const nativeWatchRef = useRef<{ remove: () => void } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -145,19 +152,45 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
 
   const getCurrentLocation = useCallback(async (): Promise<LocationObjectLike | null> => {
     const granted = hasPermission || await requestPermission();
-    if (!granted) return null;
+    if (!granted) {
+      setLocationStatus('denied');
+      return null;
+    }
+
+    setLocationStatus('locating');
 
     try {
       if (Platform.OS === 'web') {
         const current = await getWebLocationOnce();
         setLocation(current);
+        setLocationStatus('found');
         return current;
       }
 
       const Location = await getExpoLocationModule();
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+
+      // Try high accuracy first, fall back to balanced, then low.
+      let currentLocation: Awaited<ReturnType<typeof Location.getCurrentPositionAsync>> | null = null;
+      try {
+        currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+      } catch (highErr) {
+        console.log('[Location] High accuracy failed, trying balanced:', highErr);
+        try {
+          currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+        } catch (balancedErr) {
+          console.log('[Location] Balanced accuracy failed, trying low:', balancedErr);
+          currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Low,
+          });
+        }
+      }
+
+      if (!currentLocation) throw new Error('No location returned');
+
       const nextLocation: LocationObjectLike = {
         coords: {
           latitude: currentLocation.coords.latitude,
@@ -166,12 +199,94 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
         timestamp: currentLocation.timestamp,
       };
       setLocation(nextLocation);
+      setLocationStatus('found');
       return nextLocation;
     } catch (error) {
       console.log('[Location] Failed to get current location:', error);
+      setLocationStatus('unavailable');
       return null;
     }
   }, [hasPermission, requestPermission]);
+
+  const startWatching = useCallback(async () => {
+    const granted = hasPermission || await requestPermission();
+    if (!granted) {
+      setLocationStatus('denied');
+      return;
+    }
+
+    // Stop any existing watch first
+    if (nativeWatchRef.current) {
+      nativeWatchRef.current.remove();
+      nativeWatchRef.current = null;
+    }
+    if (webWatchIdRef.current != null && typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.clearWatch(webWatchIdRef.current);
+      webWatchIdRef.current = null;
+    }
+
+    setLocationStatus('locating');
+
+    try {
+      if (Platform.OS === 'web') {
+        const current = await getWebLocationOnce();
+        setLocation(current);
+        setLocationStatus('found');
+
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          webWatchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+              setLocation({
+                coords: {
+                  latitude: pos.coords.latitude,
+                  longitude: pos.coords.longitude,
+                },
+                timestamp: pos.timestamp,
+              });
+              setLocationStatus('found');
+            },
+            (err) => {
+              console.log('[Location] Web watch error:', err);
+              setLocationStatus('unavailable');
+            },
+            { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+          );
+        }
+        return;
+      }
+
+      const Location = await getExpoLocationModule();
+      nativeWatchRef.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.Balanced, timeInterval: 5000, distanceInterval: 10 },
+        (loc) => {
+          setLocation({
+            coords: {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+            },
+            timestamp: loc.timestamp,
+          });
+          setLocationStatus('found');
+        }
+      );
+      console.log('[Location] Watching started (native)');
+    } catch (error) {
+      console.log('[Location] Failed to start watching:', error);
+      setLocationStatus('unavailable');
+    }
+  }, [hasPermission, requestPermission]);
+
+  const stopWatching = useCallback(() => {
+    if (nativeWatchRef.current) {
+      nativeWatchRef.current.remove();
+      nativeWatchRef.current = null;
+    }
+    if (webWatchIdRef.current != null && typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.clearWatch(webWatchIdRef.current);
+      webWatchIdRef.current = null;
+    }
+    console.log('[Location] Watching stopped');
+  }, []);
 
   const startTracking = useCallback(async () => {
     if (!hasPermission) {
@@ -323,20 +438,26 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
   return useMemo(
     () => ({
       location,
+      locationStatus,
       hasPermission,
       isTracking,
       requestPermission,
       getCurrentLocation,
+      startWatching,
+      stopWatching,
       startTracking,
       stopTracking,
       checkProximityToVenues,
     }),
     [
       location,
+      locationStatus,
       hasPermission,
       isTracking,
       requestPermission,
       getCurrentLocation,
+      startWatching,
+      stopWatching,
       startTracking,
       stopTracking,
       checkProximityToVenues,

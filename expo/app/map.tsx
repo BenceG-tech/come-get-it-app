@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Search, MapPin, Navigation, AlertCircle, CheckCircle2, Crosshair } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { rest } from '@/lib/supabaseRest';
@@ -47,14 +47,19 @@ export default function MapScreen() {
   const [loadError, setLoadError] = useState<boolean>(false);
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
 
-  const { location: userLocation, getCurrentLocation } = useLocation();
+  const {
+    location: userLocation,
+    locationStatus,
+    getCurrentLocation,
+    startWatching,
+    stopWatching,
+    requestPermission,
+  } = useLocation();
 
+  // Start watching position on mount; stop on unmount.
   useEffect(() => {
-    getCurrentLocation()
-      .then((loc) => {
-        console.log('[Map] User location resolved:', loc?.coords ?? null);
-      })
-      .catch((e) => console.log('[Map] Failed to resolve user location:', e));
+    startWatching();
+    return () => stopWatching();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -232,6 +237,16 @@ export default function MapScreen() {
           onClosePreview={() => setPreviewVenue(null)}
           onDetails={onMiniCardDetails}
           userCoordinate={userCoords}
+          centerOnUser={locationStatus === 'found'}
+          locationStatus={locationStatus}
+          onRecenter={async () => {
+            if (locationStatus === 'denied' || locationStatus === 'idle') {
+              const granted = await requestPermission();
+              if (granted) await startWatching();
+            } else {
+              await getCurrentLocation();
+            }
+          }}
         />
       )}
     </View>
@@ -354,6 +369,29 @@ const styles = StyleSheet.create({
   },
   webMapCanvas: {
     flex: 1,
+  },
+  locationStatusBar: {
+    position: 'absolute',
+    top: 8,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 13,
+    borderRadius: 12,
+    zIndex: 50,
+  },
+  locationStatusText: {
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  locationStatusAction: {
+    fontSize: 12.5,
+    fontWeight: '900',
+    color: '#00D1FF',
   },
   webSheet: {
     height: '42%',
@@ -502,6 +540,9 @@ function DarkMapBody({
   onClosePreview,
   onDetails,
   userCoordinate,
+  centerOnUser,
+  locationStatus,
+  onRecenter,
 }: {
   venues: Venue[];
   loadError: boolean;
@@ -511,7 +552,21 @@ function DarkMapBody({
   onClosePreview: () => void;
   onDetails: (venue: Venue) => void;
   userCoordinate: { latitude: number; longitude: number } | null;
+  centerOnUser: boolean;
+  locationStatus: 'idle' | 'locating' | 'found' | 'denied' | 'unavailable';
+  onRecenter: () => Promise<void>;
 }) {
+  const statusConfig = {
+    idle: { text: 'Helymeghatározás inaktív', icon: Crosshair, color: 'rgba(255,255,255,0.55)', bg: 'rgba(255,255,255,0.08)' },
+    locating: { text: 'Helymeghatározás folyamatban…', icon: Navigation, color: '#00D1FF', bg: 'rgba(0,209,255,0.10)' },
+    found: { text: 'Helyzet megtalálva', icon: CheckCircle2, color: '#22C55E', bg: 'rgba(34,197,94,0.10)' },
+    denied: { text: 'Nincs engedély — koppints az engedélyezéshez', icon: AlertCircle, color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
+    unavailable: { text: 'Helymeghatározás nem elérhető', icon: AlertCircle, color: '#EF4444', bg: 'rgba(239,68,68,0.10)' },
+  } as const;
+
+  const status = statusConfig[locationStatus];
+  const StatusIcon = status.icon;
+
   return (
     <View style={styles.webMapContainer} testID="dark-map">
       <DarkMapPreview
@@ -521,11 +576,29 @@ function DarkMapBody({
         interactive
         controlsBottomOffset={24}
         userCoordinate={userCoordinate}
+        centerOnUser={centerOnUser}
         onMarkerPress={(venue) => {
           console.log('[Map] Web marker pressed, showing mini card:', venue.id);
           onMarkerPress(venue);
         }}
       />
+
+      {/* Location status bar */}
+      <Pressable
+        style={[styles.locationStatusBar, { backgroundColor: status.bg }]}
+        onPress={() => {
+          if (locationStatus === 'denied' || locationStatus === 'idle' || locationStatus === 'unavailable') {
+            onRecenter();
+          }
+        }}
+        testID="map-location-status"
+      >
+        <StatusIcon size={15} color={status.color} />
+        <Text style={[styles.locationStatusText, { color: status.color }]}>{status.text}</Text>
+        {(locationStatus === 'denied' || locationStatus === 'idle') && (
+          <Text style={styles.locationStatusAction}>Engedélyezés</Text>
+        )}
+      </Pressable>
 
       <View style={styles.webSheet}>
         <View style={styles.webSheetHandleRow}>
