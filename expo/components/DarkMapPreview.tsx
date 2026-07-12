@@ -247,7 +247,11 @@ export default function DarkMapPreview({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (evt, g) => {
         if (!interactiveRef.current) return false;
-        return evt.nativeEvent.touches.length >= 2 || Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4;
+        return evt.nativeEvent.touches.length >= 2 || Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6;
+      },
+      onMoveShouldSetPanResponderCapture: (evt, g) => {
+        if (!interactiveRef.current) return false;
+        return evt.nativeEvent.touches.length >= 2 || Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6;
       },
       onPanResponderGrant: () => {
         gestureRef.current = {
@@ -352,7 +356,7 @@ export default function DarkMapPreview({
         left: lngToTileX(coord.longitude, tileZoom) * scaledTile - originX,
         top: latToTileY(coord.latitude, tileZoom) * scaledTile - originY,
       }))
-      .filter((marker) => marker.left >= -20 && marker.left <= size.width + 20 && marker.top >= -20 && marker.top <= size.height + 20);
+      .filter((marker) => marker.left >= -36 && marker.left <= size.width + 36 && marker.top >= -36 && marker.top <= size.height + 36);
 
     return { tiles: tileList, markers: markerList };
   }, [size, view, coordinates]);
@@ -366,7 +370,6 @@ export default function DarkMapPreview({
     const originY = latToTileY(view.latitude, tileZoom) * scaledTile - size.height / 2;
     const left = lngToTileX(userCoordinate.longitude, tileZoom) * scaledTile - originX;
     const top = latToTileY(userCoordinate.latitude, tileZoom) * scaledTile - originY;
-    if (left < -30 || left > size.width + 30 || top < -30 || top > size.height + 30) return null;
     return { left, top };
   }, [userCoordinate, size, view]);
 
@@ -402,7 +405,7 @@ export default function DarkMapPreview({
             <Pressable
               key={`marker-${String(marker.venue.id)}`}
               onPress={() => onMarkerPress(marker.venue)}
-              style={[styles.markerHitBox, { left: marker.left - 18, top: marker.top - 18 }]}
+              style={[styles.markerHitBox, { left: marker.left - 22, top: marker.top - 22 }]}
               accessibilityRole="button"
               accessibilityLabel={`${marker.venue.name} a térképen`}
               testID={`map-marker-${String(marker.venue.id)}`}
@@ -415,7 +418,7 @@ export default function DarkMapPreview({
         return (
           <View
             key={`marker-${String(marker.venue.id)}`}
-            style={[styles.markerHitBox, { left: marker.left - 18, top: marker.top - 18 }]}
+            style={[styles.markerHitBox, { left: marker.left - 22, top: marker.top - 22 }]}
             pointerEvents="none"
           >
             {dot}
@@ -493,15 +496,15 @@ const styles = StyleSheet.create({
   },
   markerHitBox: {
     position: 'absolute',
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   markerOuter: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: 'rgba(0, 209, 255, 0.26)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -512,9 +515,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   markerInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
     backgroundColor: '#00D1FF',
     borderWidth: 2,
     borderColor: '#001016',
@@ -557,12 +560,12 @@ const styles = StyleSheet.create({
   controls: {
     position: 'absolute',
     right: 12,
-    gap: 8,
+    gap: 10,
   },
   controlButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: 'rgba(0, 6, 10, 0.88)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.22)',

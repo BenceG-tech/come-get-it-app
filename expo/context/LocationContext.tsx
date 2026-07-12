@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import { Venue } from '@/types/venue';
 
@@ -24,6 +24,7 @@ type LocationContextType = {
   hasPermission: boolean;
   isTracking: boolean;
   requestPermission: () => Promise<boolean>;
+  openLocationSettings: () => Promise<void>;
   getCurrentLocation: () => Promise<LocationObjectLike | null>;
   startWatching: () => Promise<void>;
   stopWatching: () => void;
@@ -107,6 +108,18 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
     };
   }, []);
 
+  const openLocationSettings = useCallback(async () => {
+    try {
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        await Linking.openSettings();
+      } else {
+        Alert.alert('Engedély szükséges', 'Engedélyezd a helymeghatározást a böngészőbeállításokban.');
+      }
+    } catch (e) {
+      console.log('[Location] Failed to open settings:', e);
+    }
+  }, []);
+
   const requestPermission = useCallback(async (): Promise<boolean> => {
     try {
       if (Platform.OS === 'web') {
@@ -122,13 +135,25 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       }
 
       const Location = await getExpoLocationModule();
+      const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
       const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
 
       if (foregroundStatus !== 'granted') {
-        Alert.alert(
-          'Engedély szükséges',
-          'A helymeghatározás engedélyezése szükséges a közeli helyszínek megjelenítéséhez.'
-        );
+        if (existingStatus === 'denied') {
+          Alert.alert(
+            'Engedély szükséges',
+            'A helymeghatározás korábban el lett utasítva. A Beállítások appban engedélyezheted újra.',
+            [
+              { text: 'Mégse', style: 'cancel' },
+              { text: 'Beállítások', style: 'default', onPress: openLocationSettings },
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Engedély szükséges',
+            'A helymeghatározás engedélyezése szükséges a közeli helyszínek megjelenítéséhez.'
+          );
+        }
         setHasPermission(false);
         return false;
       }
@@ -148,7 +173,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       console.log('[Location] Permission request failed:', error);
       return false;
     }
-  }, []);
+  }, [openLocationSettings]);
 
   const getCurrentLocation = useCallback(async (): Promise<LocationObjectLike | null> => {
     const granted = hasPermission || await requestPermission();

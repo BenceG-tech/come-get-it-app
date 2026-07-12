@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { Linking } from 'react-native';
 import { ArrowLeft, Search, MapPin, Navigation, AlertCircle, CheckCircle2, Crosshair } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
@@ -54,6 +55,7 @@ export default function MapScreen() {
     startWatching,
     stopWatching,
     requestPermission,
+    openLocationSettings,
   } = useLocation();
 
   // Start watching position on mount; stop on unmount.
@@ -247,6 +249,7 @@ export default function MapScreen() {
               await getCurrentLocation();
             }
           }}
+          onOpenSettings={openLocationSettings}
         />
       )}
     </View>
@@ -392,6 +395,16 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: '900',
     color: '#00D1FF',
+  },
+  locationStatusButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: -4,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 209, 255, 0.12)',
+    minWidth: 84,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   webSheet: {
     height: '42%',
@@ -555,6 +568,7 @@ function DarkMapBody({
   centerOnUser: boolean;
   locationStatus: 'idle' | 'locating' | 'found' | 'denied' | 'unavailable';
   onRecenter: () => Promise<void>;
+  onOpenSettings: () => Promise<void>;
 }) {
   const statusConfig = {
     idle: { text: 'Helymeghatározás inaktív', icon: Crosshair, color: 'rgba(255,255,255,0.55)', bg: 'rgba(255,255,255,0.08)' },
@@ -584,21 +598,27 @@ function DarkMapBody({
       />
 
       {/* Location status bar */}
-      <Pressable
-        style={[styles.locationStatusBar, { backgroundColor: status.bg }]}
-        onPress={() => {
-          if (locationStatus === 'denied' || locationStatus === 'idle' || locationStatus === 'unavailable') {
-            onRecenter();
-          }
-        }}
-        testID="map-location-status"
-      >
+      <View style={[styles.locationStatusBar, { backgroundColor: status.bg }]} pointerEvents="box-none" testID="map-location-status">
         <StatusIcon size={15} color={status.color} />
         <Text style={[styles.locationStatusText, { color: status.color }]}>{status.text}</Text>
-        {(locationStatus === 'denied' || locationStatus === 'idle') && (
-          <Text style={styles.locationStatusAction}>Engedélyezés</Text>
+        {(locationStatus === 'denied' || locationStatus === 'idle' || locationStatus === 'unavailable') && (
+          <TouchableOpacity
+            activeOpacity={0.75}
+            style={styles.locationStatusButton}
+            onPress={() => {
+              console.log('[Map] Location action pressed, status:', locationStatus);
+              if (locationStatus === 'denied') {
+                onOpenSettings();
+              } else if (locationStatus === 'idle' || locationStatus === 'unavailable') {
+                onRecenter();
+              }
+            }}
+            testID="map-location-action"
+          >
+            <Text style={styles.locationStatusAction}>{locationStatus === 'denied' ? 'Beállítások' : 'Engedélyezés'}</Text>
+          </TouchableOpacity>
         )}
-      </Pressable>
+      </View>
 
       <View style={styles.webSheet}>
         <View style={styles.webSheetHandleRow}>
