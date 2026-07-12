@@ -556,6 +556,7 @@ function DarkMapBody({
   centerOnUser,
   locationStatus,
   onRecenter,
+  onOpenSettings,
 }: {
   venues: Venue[];
   loadError: boolean;

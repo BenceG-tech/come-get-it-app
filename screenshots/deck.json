@@ -1,0 +1,39 @@
+{
+  "theme": {
+    "style": "Deep nightclub darkness with electric cyan and magenta neon glow, like wandering through Budapest's underground bar district after midnight. Glossy black surfaces reflect pulsing club lights, fine haze and smoke drift through the air, and every gradient feels charged with kinetic energy. Bold, saturated, and immersive — the visual language of velvet ropes and glowing dance floors.",
+    "headlineFont": "'Plus Jakarta Sans', sans-serif — import via @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap')",
+    "headlineFontSize": 128,
+    "mockupIds": {
+      "iphone": "deep-blue",
+      "ipad": "space-gray"
+    },
+    "palette": {
+      "primary": "#0B0B1A",
+      "secondary": "#FF2EC4",
+      "accent": "#00E5FF"
+    }
+  },
+  "slides": [
+    {
+      "label": "Helyszínlista",
+      "backgroundPrompt": "Abstract digital art set in a deep obsidian black void with tall vertical ribbons of glowing magenta and electric cyan light weaving upward like nightclub laser beams, thin wisps of smoke drifting through the beams catching stray light. Colors are near-black void, hot magenta pink, and bright cyan, with dramatic uplighting from the lower third creating strong contrast against a calm dark upper region. Fine grain texture and soft depth of field blur at the edges give a moody club atmosphere, 8K quality, ultra smooth gradients, premium feel, no text, no letters, no UI elements, no device mockups",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/ca7962a0-8174-4ba2-8d68-0ce77f806daa.png"
+    },
+    {
+      "label": "Térkép",
+      "backgroundPrompt": "placeholder",
+      "backgroundUrl": "https://r2-pub.rork.com/app-store-screenshots/cfbbb7ab-2fdb-497f-8937-79a8a4a64bef.png"
+    },
+    {
+      "label": "placeholder2",
+      "backgroundPrompt": "placeholder"
+    }
+  ],
+  "headlines": {
+    "hu": {
+      "Helyszínlista": "Fedezd Fel<br>A Helyeket",
+      "Térkép": "Találd Meg<br>Az Utad",
+      "placeholder2": "placeholder"
+    }
+  }
+}
