@@ -26,6 +26,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { getUserCSRImpact } from "@/lib/csrService";
+import { convertOpeningHoursToBusinessHours, isVenueOpenNow } from "@/utils/openingHours";
 
 const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
 const LOGO_ASPECT_RATIO = 3.5 as const;
@@ -220,14 +221,32 @@ export default function BarsScreen() {
   const filteredVenues = useMemo(() => {
     return venues.filter((venue) => {
       if (selectedFilters.length === 0) return true;
-      let passesFilters = true;
-      if (selectedFilters.includes("nyitva")) {
-        passesFilters = passesFilters && true;
-      }
-      if (selectedFilters.includes("ingyen-ital")) {
-        passesFilters = passesFilters && true;
-      }
-      return passesFilters;
+
+      const normalizedTags = (venue.tags ?? []).map((tag) => tag.trim().toLowerCase());
+      const matchesTag = (filter: string) =>
+        normalizedTags.some((tag) => tag === filter || tag.includes(filter) || filter.includes(tag));
+
+      return selectedFilters.every((filter) => {
+        if (filter === "nyitva") {
+          const businessHours = convertOpeningHoursToBusinessHours(venue.opening_hours ?? null);
+          return businessHours ? isVenueOpenNow({ business_hours: businessHours }) : false;
+        }
+        if (filter === "ingyen-ital" || filter === "free-drink") {
+          return true;
+        }
+        if (filter === "reward-bar") {
+          return venue.participates_in_points === true;
+        }
+        if (filter === "new-bars") {
+          if (!venue.created_at) return false;
+          const createdAt = new Date(venue.created_at).getTime();
+          return Number.isFinite(createdAt) && Date.now() - createdAt <= 60 * 24 * 60 * 60 * 1000;
+        }
+        if (filter === "baller") {
+          return Number(venue.price_level ?? venue.priceLevel ?? 0) >= 4;
+        }
+        return matchesTag(filter);
+      });
     });
   }, [selectedFilters, venues]);
 

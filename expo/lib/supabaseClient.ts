@@ -5,6 +5,16 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 
+const projectRef = (() => {
+  try {
+    return new URL(SUPABASE_URL).hostname.split('.')[0] || 'come-get-it';
+  } catch {
+    return 'come-get-it';
+  }
+})();
+
+export const SUPABASE_AUTH_STORAGE_KEY = `sb-${projectRef}-auth-token`;
+
 if (!SUPABASE_URL || !SUPABASE_ANON) {
   console.error('[SupabaseClient] Missing env vars', {
     hasUrl: Boolean(SUPABASE_URL),
@@ -90,8 +100,14 @@ export function getSupabase(): SupabaseClient {
       // PKCE flow: a Google OAuth után a code csak így cserélhető session-re
       flowType: 'pkce',
       storage,
+      storageKey: SUPABASE_AUTH_STORAGE_KEY,
     },
   });
 
   return client;
+}
+
+/** Eltávolítja a sérült vagy már visszavont helyi munkamenetet. */
+export async function clearPersistedSupabaseSession(): Promise<void> {
+  await storage.removeItem(SUPABASE_AUTH_STORAGE_KEY);
 }

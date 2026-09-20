@@ -80,13 +80,16 @@ Deno.serve(async (req: Request) => {
 
   const drinkName = drink?.drink_name ?? 'Ingyen ital';
 
-  const { error: tokenUpdateError } = await admin
+  const { data: consumedToken, error: tokenUpdateError } = await admin
     .from('redemption_tokens')
     .update({ status: 'consumed', consumed_at: new Date().toISOString() })
     .eq('id', tokenRow.id)
-    .eq('status', 'issued');
+    .eq('status', 'issued')
+    .select('id')
+    .maybeSingle<{ id: string }>();
 
   if (tokenUpdateError) return json({ error: 'Token update failed', detail: tokenUpdateError.message }, 500);
+  if (!consumedToken) return json({ error: 'Token already used' }, 409);
 
   const { data: redemption, error: redemptionError } = await admin
     .from('redemptions')
@@ -98,13 +101,21 @@ Deno.serve(async (req: Request) => {
       value: 0,
       token_id: tokenRow.id,
       redeemed_at: new Date().toISOString(),
-      status: 'redeemed',
-      metadata: { flow: 'guest_button', impact_message: '+1 ember kap ma tiszta vizet' },
+      status: 'success',
+      metadata: { flow: 'guest_button' },
     })
     .select('id')
     .single<{ id: string }>();
 
-  if (redemptionError) return json({ error: 'Redemption insert failed', detail: redemptionError.message }, 500);
+  if (redemptionError) {
+    // Ha a beváltás naplózása meghiúsul, a token újrapróbálható marad.
+    await admin
+      .from('redemption_tokens')
+      .update({ status: 'issued', consumed_at: null })
+      .eq('id', tokenRow.id)
+      .eq('status', 'consumed');
+    return json({ error: 'Redemption insert failed', detail: redemptionError.message }, 500);
+  }
 
   const { data: venue } = await admin
     .from('venues')
@@ -135,8 +146,8 @@ Deno.serve(async (req: Request) => {
   return json({
     success: true,
     redemption_id: redemption.id,
-    impact_delta: impactDelta || 1,
-    impact_message: '+1 ember kap ma tiszta vizet',
+    impact_delta: impactDelta,
+    impact_message: impactDelta > 0 ? '+1 támogatott adag' : 'Sikeres beváltás',
     total_impact_units: count ?? null,
   });
 });

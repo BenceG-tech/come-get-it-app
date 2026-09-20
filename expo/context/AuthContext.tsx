@@ -6,7 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
 import type { Session } from '@supabase/supabase-js';
-import { getSupabase } from '@/lib/supabaseClient';
+import { clearPersistedSupabaseSession, getSupabase } from '@/lib/supabaseClient';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -17,6 +17,9 @@ type AuthContextType = {
   signUpWithEmail: (email: string, password: string) => Promise<boolean>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -36,7 +39,7 @@ function mapAuthError(err: unknown): string {
   const raw = toUserMessage(err);
   const msg = raw.toLowerCase();
   if (msg.includes('email_not_confirmed') || msg.includes('email not confirmed')) {
-    return 'Az e-mail cím még nincs megerősítve. Két megoldás:\n1) Kattints a regisztrációs e-mailben kapott megerősítő linkre.\n2) Vagy kapcsold ki a kötelező megerősítést: Supabase → Authentication → Sign In / Up → Email → “Confirm email” kikapcsolása.';
+    return 'Az e-mail cím még nincs megerősítve. Nyisd meg a regisztráció után kapott e-mailt, és kattints a megerősítő linkre.';
   }
   if (msg.includes('invalid login credentials')) {
     return 'Hibás e-mail cím vagy jelszó.';
@@ -45,12 +48,17 @@ function mapAuthError(err: unknown): string {
     return 'Ezzel az e-mail címmel már van fiókod — jelentkezz be.';
   }
   if (msg.includes('password should be')) {
-    return 'A jelszó túl rövid — legalább 6 karakter legyen.';
+    return 'A jelszó túl rövid — legalább 8 karakter legyen.';
   }
   if (msg.includes('fetch') || msg.includes('network') || msg.includes('unable to connect')) {
     return 'Nem sikerült elérni a szervert. Ellenőrizd az internetkapcsolatot, és próbáld újra.';
   }
   return raw;
+}
+
+function isInvalidRefreshToken(err: unknown): boolean {
+  const message = toUserMessage(err).toLowerCase();
+  return message.includes('invalid refresh token') || message.includes('refresh token not found');
 }
 
 type OAuthCallbackParams = {
@@ -111,13 +119,22 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
       try {
         console.log('[Auth] ensureProfileRow start', { userId });
+        const email = nextSession.user.email ?? null;
+        const metadata = nextSession.user.user_metadata as Record<string, unknown> | undefined;
+        const metadataName = metadata?.full_name ?? metadata?.name;
+        const fallbackName = email?.split('@')[0] || 'Come Get It tag';
         const payload = {
           id: userId,
+          name: typeof metadataName === 'string' && metadataName.trim() ? metadataName.trim() : fallbackName,
+          email,
           points: 0,
           updated_at: new Date().toISOString(),
         } as Record<string, unknown>;
 
-        const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+        // Meglévő profilnál soha ne írjuk felül a pontokat vagy a felhasználó adatait.
+        const { error } = await supabase
+          .from('profiles')
+          .upsert(payload, { onConflict: 'id', ignoreDuplicates: true });
         if (error) {
           console.warn('[Auth] ensureProfileRow failed', {
             message: (error as { message?: unknown })?.message,
@@ -143,7 +160,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         const { data, error } = await supabase.auth.getSession();
         console.log('[Auth] getSession completed', { hasSession: Boolean(data?.session), error: error?.message });
         if (error) {
-          console.warn('[Auth] getSession error', error);
+          if (isInvalidRefreshToken(error)) {
+            console.warn('[Auth] Removing invalid persisted session');
+            await clearPersistedSupabaseSession();
+          } else {
+            console.warn('[Auth] getSession error', error);
+          }
         }
         if (!mounted) return;
         setSession(data?.session ?? null);
@@ -151,7 +173,12 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
           console.warn('[Auth] ensureProfileRow after getSession failed', e);
         });
       } catch (e) {
-        console.error('[Auth] getSession threw', e);
+        if (isInvalidRefreshToken(e)) {
+          console.warn('[Auth] Removing invalid persisted session after exception');
+          await clearPersistedSupabaseSession();
+        } else {
+          console.error('[Auth] getSession threw', e);
+        }
         if (mounted) setSession(null);
       } finally {
         console.log('[Auth] Setting isAuthReady to true');
@@ -294,13 +321,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       throw new Error('A bejelentkezés válaszában nem volt munkamenet-adat. Ellenőrizd a Supabase redirect beállításokat.');
     } catch (e) {
       console.error('[Auth] signInWithGoogle failed', e);
-
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-      const callbackHint = supabaseUrl ? `${supabaseUrl}/auth/v1/callback` : '<projekt>.supabase.co/auth/v1/callback';
-
       Alert.alert(
         'Nem sikerült a Google bejelentkezés',
-        `${mapAuthError(e)}\n\nBeállítási teendőlista:\n1) Supabase → Authentication → Providers → Google: legyen engedélyezve, Client ID + Client Secret megadva.\n2) Google Cloud Console-ban a kliens „Authorized redirect URI”-je: ${callbackHint}\n3) Supabase → Authentication → URL Configuration → Redirect URLs: add hozzá ezt:\n${redirectTo || getRedirectTo()}`
+        `${mapAuthError(e)} Próbáld újra, vagy jelentkezz be e-mail címmel.`
       );
       throw e;
     }
@@ -360,6 +383,47 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     }
   }, [supabase]);
 
+  const requestPasswordReset = useCallback(
+    async (email: string) => {
+      try {
+        const redirectTo = Platform.OS === 'web'
+          ? `${typeof window !== 'undefined' ? window.location.origin : ''}/reset-password`
+          : Linking.createURL('reset-password');
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+        if (error) throw error;
+      } catch (e) {
+        Alert.alert('Nem sikerült elküldeni', mapAuthError(e));
+        throw e;
+      }
+    },
+    [supabase]
+  );
+
+  const updatePassword = useCallback(
+    async (password: string) => {
+      try {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+      } catch (e) {
+        Alert.alert('Nem sikerült módosítani a jelszót', mapAuthError(e));
+        throw e;
+      }
+    },
+    [supabase]
+  );
+
+  const deleteAccount = useCallback(async () => {
+    try {
+      const { error } = await supabase.functions.invoke('delete-account', { body: {} });
+      if (error) throw error;
+      await clearPersistedSupabaseSession();
+      setSession(null);
+    } catch (e) {
+      Alert.alert('Nem sikerült törölni a fiókot', mapAuthError(e));
+      throw e;
+    }
+  }, [supabase]);
+
   const signOut = useCallback(async () => {
     try {
       console.log('[Auth] signOut');
@@ -367,8 +431,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       if (error) throw error;
     } catch (e) {
       console.error('[Auth] signOut failed', e);
-      Alert.alert('Nem sikerült kijelentkezni', toUserMessage(e));
-      throw e;
+      // Visszavont refresh token esetén a helyi munkamenet törlése a helyes helyreállítás.
+      if (!isInvalidRefreshToken(e)) {
+        Alert.alert('Nem sikerült kijelentkezni', toUserMessage(e));
+        throw e;
+      }
+      await clearPersistedSupabaseSession();
+      setSession(null);
     }
   }, [supabase]);
 
@@ -379,6 +448,9 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     signUpWithEmail,
     signInWithGoogle,
     signInWithApple,
+    requestPasswordReset,
+    updatePassword,
+    deleteAccount,
     signOut,
   };
 });

@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import {
   Keyboard,
   KeyboardAvoidingView,
+  Alert,
   Platform,
   Pressable,
   StyleSheet,
@@ -37,7 +38,7 @@ type FocusedField = 'email' | 'password' | null;
 
 function AuthScreen() {
   const router = useRouter();
-  const { session, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple } = useAuth();
+  const { session, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, requestPasswordReset } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -49,8 +50,9 @@ function AuthScreen() {
   const passwordRef = useRef<TextInput>(null);
 
   const canSubmit = useMemo<boolean>(() => {
-    return email.trim().length > 3 && password.length >= 6 && !loading;
-  }, [email, loading, password]);
+    const passwordIsValid = mode === 'login' ? password.length > 0 : password.length >= 8;
+    return email.trim().length > 3 && passwordIsValid && !loading;
+  }, [email, loading, mode, password]);
 
   useEffect(() => {
     if (!session) return;
@@ -69,13 +71,34 @@ function AuthScreen() {
         // Ha a megerősítés kikapcsolt, a regisztráció azonnal session-t ad — nincs külön bejelentkezés.
         const signedIn = await signUpWithEmail(normalizedEmail, password);
         if (!signedIn) {
-          await signInWithEmail(normalizedEmail, password);
+          Alert.alert(
+            'Erősítsd meg az e-mail címed',
+            'Elküldtük a megerősítő linket. Nyisd meg az e-mailt, majd jelentkezz be.'
+          );
+          setMode('login');
         }
       }
     } finally {
       setLoading(false);
     }
   }, [canSubmit, email, mode, password, signInWithEmail, signUpWithEmail]);
+
+  const onForgotPassword = useCallback(async () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail.includes('@')) {
+      Alert.alert('Add meg az e-mail címed', 'Írd be a regisztrációhoz használt e-mail címet.');
+      emailRef.current?.focus();
+      return;
+    }
+    if (loading) return;
+    setLoading(true);
+    try {
+      await requestPasswordReset(normalizedEmail);
+      Alert.alert('E-mail elküldve', 'A jelszó módosításához nyisd meg az e-mailben kapott linket.');
+    } finally {
+      setLoading(false);
+    }
+  }, [email, loading, requestPasswordReset]);
 
   const onGoogle = useCallback(async () => {
     if (loading) return;
@@ -197,13 +220,13 @@ function AuthScreen() {
                   onFocus={focusPassword}
                   onBlur={clearFocus}
                   secureTextEntry={!showPassword}
-                  autoComplete="password"
-                  textContentType="password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  textContentType={mode === 'login' ? 'password' : 'newPassword'}
                   returnKeyType="done"
                   onSubmitEditing={onSubmit}
                 />
 
-                <Pressable hitSlop={10} style={styles.forgotButton}>
+                <Pressable hitSlop={10} style={styles.forgotButton} onPress={onForgotPassword} disabled={loading}>
                   <Text style={styles.forgotText}>Elfelejtetted a jelszavad?</Text>
                 </Pressable>
               </View>

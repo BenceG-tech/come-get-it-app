@@ -67,7 +67,7 @@ type FlowState =
   | 'expired'
   | 'error';
 
-const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
+const DEMO_MODE = __DEV__ && process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 const MAX_DISTANCE_METERS = 100;
 const WINDOW_SECONDS = 120;
 const CYAN = '#00C8E8' as const;
@@ -80,46 +80,6 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const STEP_LABELS = ['Érkezés', 'Mutasd', 'Beváltás', 'Kész'] as const;
-
-/** Schedules a local "Egészségedre!" notification a few seconds after a successful redemption. */
-async function scheduleCheersNotification(drinkName: string): Promise<void> {
-  if (Platform.OS === 'web') return;
-  try {
-    const Notifications = await import('expo-notifications');
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
-    });
-    const current = await Notifications.getPermissionsAsync();
-    let granted = current.granted;
-    if (!granted) {
-      const req = await Notifications.requestPermissionsAsync();
-      granted = req.granted;
-    }
-    if (!granted) {
-      console.log('[RedemptionWindowModal] Notification permission not granted, skipping cheers notification');
-      return;
-    }
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Egészségedre! 🍻',
-        body: `Élvezd az italod: ${drinkName}. Fogyaszd felelősségteljesen!`,
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 4,
-      },
-    });
-    console.log('[RedemptionWindowModal] Cheers notification scheduled');
-  } catch (error) {
-    console.log('[RedemptionWindowModal] Failed to schedule cheers notification', error);
-  }
-}
 
 function distanceMeters(a: Coordinates, b: Coordinates): number {
   const radius = 6371e3;
@@ -169,7 +129,8 @@ export default function RedemptionWindowModal({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [distance, setDistance] = useState<number | null>(null);
   const [locationWarning, setLocationWarning] = useState<string | null>(null);
-  const [impactMessage, setImpactMessage] = useState<string>('+1 ember kap ma tiszta vizet');
+  const [impactMessage, setImpactMessage] = useState<string>('');
+  const [impactDelta, setImpactDelta] = useState<number>(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -364,15 +325,17 @@ export default function RedemptionWindowModal({
 
       if (!DEMO_MODE) {
         if (!venueCoordinates) {
-          // Flexible: missing venue coordinates should not block the flow.
-          console.log('[RedemptionWindowModal] Venue coordinates missing — proceeding without proximity check');
-          setLocationWarning('A hely koordinátája hiányzik, a közelséged most nem ellenőrizhető.');
+          setErrorMessage('Ennél a partnerhelynél még hiányzik a beváltási helyzet. Kérj segítséget a személyzettől.');
+          setState('not_eligible');
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          return;
         } else {
           const current = await getCurrentLocation().catch(() => null);
           if (!current?.coords) {
-            // Flexible: location fetch failure should not block the flow.
-            console.log('[RedemptionWindowModal] Location unavailable — proceeding without proximity check');
-            setLocationWarning('A helyzeted most nem ellenőrizhető, de folytathatod a beváltást.');
+            setErrorMessage('A beváltáshoz engedélyezd a helymeghatározást, hogy ellenőrizni tudjuk: a partnerhelynél vagy.');
+            setState('not_eligible');
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            return;
           } else {
             userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
             const measured = distanceMeters(userCoordinates, venueCoordinates);
@@ -447,10 +410,10 @@ export default function RedemptionWindowModal({
 
     if (DEMO_MODE && windowToken.demo_mode) {
       setImpactMessage('+1 ember kap ma tiszta vizet');
+      setImpactDelta(1);
       setState('success');
       queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      scheduleCheersNotification(selectedDrinkName);
       return;
     }
 
@@ -461,20 +424,20 @@ export default function RedemptionWindowModal({
         : undefined
     );
     if (response.success) {
-      setImpactMessage(response.data.impact_message || '+1 ember kap ma tiszta vizet');
+      setImpactMessage(response.data.impact_message || 'Sikeres beváltás');
+      setImpactDelta(response.data.impact_delta);
       setState('success');
       queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      scheduleCheersNotification(selectedDrinkName);
       return;
     }
 
     if (DEMO_MODE) {
       setImpactMessage('+1 ember kap ma tiszta vizet');
+      setImpactDelta(1);
       setState('success');
       queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      scheduleCheersNotification(selectedDrinkName);
       return;
     }
 
@@ -664,26 +627,32 @@ export default function RedemptionWindowModal({
               </View>
             )}
 
-            <Animated.View style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}>
-              <View style={styles.waveIcon}>
-                <Waves size={26} color="#041015" />
-              </View>
-              <Text style={styles.impactPlus}>+1</Text>
-              <Text style={styles.impactText}>{impactMessage.replace(/^\+1\s*/, '')}</Text>
-            </Animated.View>
+            {impactDelta > 0 && (
+              <Animated.View
+                style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}
+              >
+                <View style={styles.waveIcon}>
+                  <Waves size={26} color="#041015" />
+                </View>
+                <Text style={styles.impactPlus}>+{impactDelta}</Text>
+                <Text style={styles.impactText}>{impactMessage.replace(/^\+\d+\s*/, '')}</Text>
+              </Animated.View>
+            )}
 
             <View style={styles.successActions}>
-              <TouchableOpacity
-                style={styles.secondaryAction}
-                onPress={() => {
-                  handleClose();
-                  router.push('/my-impact');
-                }}
-                activeOpacity={0.84}
-              >
-                <Heart size={18} color={CYAN} />
-                <Text style={styles.secondaryActionText}>Hatásom megtekintése</Text>
-              </TouchableOpacity>
+              {impactDelta > 0 && (
+                <TouchableOpacity
+                  style={styles.secondaryAction}
+                  onPress={() => {
+                    handleClose();
+                    router.push('/my-impact');
+                  }}
+                  activeOpacity={0.84}
+                >
+                  <Heart size={18} color={CYAN} />
+                  <Text style={styles.secondaryActionText}>Hatásom megtekintése</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity style={styles.primaryAction} onPress={handleClose} activeOpacity={0.84}>
                 <Text style={styles.primaryActionText}>Bezárás</Text>
               </TouchableOpacity>

@@ -1,7 +1,7 @@
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
-import { Mail, Phone, MessageCircle, HelpCircle } from "lucide-react-native";
+import { Mail, Phone, HelpCircle } from "lucide-react-native";
 import Colors from "@/constants/colors";
 
 const CYAN = "#00C8E8" as const;
@@ -10,13 +10,10 @@ export default function HelpScreen() {
   const handleContact = (method: string) => {
     switch (method) {
       case "email":
-        Linking.openURL("mailto:support@comegetit.hu");
+        Linking.openURL("mailto:hello@come-get-it.app?subject=Come%20Get%20It%20seg%C3%ADts%C3%A9g");
         break;
       case "phone":
-        Linking.openURL("tel:+36301234567");
-        break;
-      case "chat":
-        console.log("Opening chat...");
+        Linking.openURL("tel:+36705852053");
         break;
     }
   };
@@ -29,21 +26,11 @@ export default function HelpScreen() {
     },
     {
       id: 2,
-      question: "Mennyi ideig érvényesek a pontjaim?",
-      answer: "A pontok 1 évig érvényesek a megszerzésük dátumától számítva.",
-    },
-    {
-      id: 3,
-      question: "Hogyan tudok barátokat meghívni?",
-      answer: "Menj a Profil fülre, válaszd a 'Barátok meghívása' opciót, és oszd meg az egyedi kódodat.",
-    },
-    {
-      id: 4,
       question: "Mikor kapok pontokat egy látogatás után?",
       answer: "A pontok automatikusan jóváírásra kerülnek a látogatás igazolása után, általában néhány percen belül.",
     },
     {
-      id: 5,
+      id: 3,
       question: "Hogyan változtathatom meg a fiókadataimat?",
       answer: "Menj a Profil > Beállítások > Fiók menüpontra a fiókadatok szerkesztéséhez.",
     },
@@ -72,27 +59,17 @@ export default function HelpScreen() {
               </View>
               <View style={styles.contactInfo}>
                 <Text style={styles.contactTitle}>Email</Text>
-                <Text style={styles.contactSubtitle}>support@comegetit.hu</Text>
+                <Text style={styles.contactSubtitle}>hello@come-get-it.app</Text>
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.contactRow} onPress={() => handleContact("phone")}>
+            <TouchableOpacity style={[styles.contactRow, styles.contactRowLast]} onPress={() => handleContact("phone")}>
               <View style={styles.contactIcon}>
                 <Phone size={18} color={CYAN} />
               </View>
               <View style={styles.contactInfo}>
                 <Text style={styles.contactTitle}>Telefon</Text>
-                <Text style={styles.contactSubtitle}>+36 30 123 4567</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.contactRow, styles.contactRowLast]} onPress={() => handleContact("chat")}>
-              <View style={styles.contactIcon}>
-                <MessageCircle size={18} color={CYAN} />
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactTitle}>Chat</Text>
-                <Text style={styles.contactSubtitle}>Azonnal elérhető</Text>
+                <Text style={styles.contactSubtitle}>+36 70 585 2053</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -115,9 +92,8 @@ export default function HelpScreen() {
         <View style={styles.infoBox}>
           <HelpCircle size={18} color={CYAN} />
           <View style={styles.infoTextBlock}>
-            <Text style={styles.infoTitle}>Nyitvatartás</Text>
-            <Text style={styles.infoText}>Hétfő - Péntek: 9:00 - 18:00</Text>
-            <Text style={styles.infoText}>Hétvégén: 10:00 - 16:00</Text>
+            <Text style={styles.infoTitle}>Ügyfélszolgálat</Text>
+            <Text style={styles.infoText}>Általában egy munkanapon belül válaszolunk.</Text>
           </View>
         </View>
       </ScrollView>

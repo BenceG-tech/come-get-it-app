@@ -6,7 +6,6 @@ import RewardListCard from "@/components/RewardListCard";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
-import { mergeWithMockRewards } from "@/data/mockRewards";
 import { useAppContext } from "@/context/AppContext";
 
 export default function RewardsCategoryScreen() {
@@ -25,7 +24,7 @@ export default function RewardsCategoryScreen() {
   });
 
   const normalizedRewards = useMemo(() => {
-    const raw = mergeWithMockRewards((rewardsQuery.data ?? []) as Reward[]);
+    const raw = (rewardsQuery.data ?? []) as Reward[];
     const today = new Date();
     const cleaned = raw
       .filter((r) => {

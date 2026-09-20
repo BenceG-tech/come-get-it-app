@@ -1,15 +1,28 @@
 import React, { memo } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Linking, StyleSheet, Text } from 'react-native';
 
 const CYAN = '#00C8E8' as const;
+const PRIVACY_URL = 'https://github.com/BenceG-tech/come-get-it-app/blob/main/PRIVACY.md';
 
 function AuthLegalText() {
   return (
     <Text style={styles.text}>
       A folytatással elfogadod az{' '}
-      <Text style={styles.link}>Általános Szerződési Feltételeket</Text>
+      <Text
+        accessibilityRole="link"
+        onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+        style={styles.link}
+      >
+        Használati Feltételeket
+      </Text>
       {' '}és az{' '}
-      <Text style={styles.link}>Adatvédelmi Szabályzatot</Text>.
+      <Text
+        accessibilityRole="link"
+        onPress={() => Linking.openURL(PRIVACY_URL)}
+        style={styles.link}
+      >
+        Adatvédelmi Szabályzatot
+      </Text>.
     </Text>
   );
 }

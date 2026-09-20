@@ -26,6 +26,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { filterCategories } from "@/data/filters";
+import { useAppContext } from "@/context/AppContext";
 
 const CYAN = "#00C8E8" as const;
 
@@ -58,7 +59,8 @@ const filterIconMap: Record<string, LucideIcon> = {
 
 export default function FilterScreen() {
   const router = useRouter();
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const { selectedFilters: appliedFilters, setSelectedFilters: setAppliedFilters } = useAppContext();
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(appliedFilters);
 
   const toggleFilter = (filterId: string) => {
     if (selectedFilters.includes(filterId)) {
@@ -73,6 +75,7 @@ export default function FilterScreen() {
   };
 
   const applyFilters = () => {
+    setAppliedFilters(selectedFilters);
     router.back();
   };
 

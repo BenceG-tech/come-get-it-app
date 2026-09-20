@@ -115,6 +115,12 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
     : 'Ismeretlen hiba történt.';
 
   if (status === 400) {
+    if (rawMessage === 'LOCATION_REQUIRED') {
+      return {
+        error: 'A beváltáshoz engedélyezd a helymeghatározást.',
+        code: 'NOT_ELIGIBLE',
+      };
+    }
     if (rawMessage === 'NO_ACTIVE_WINDOW') {
       const configured = Array.isArray(payload.configured_windows)
         ? formatConfiguredWindows(payload.configured_windows as ConfiguredWindowInfo[])
@@ -128,6 +134,13 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
       };
     }
     return { error: errorMessage, code: 'BAD_REQUEST' };
+  }
+
+  if (status === 409 && rawMessage === 'VENUE_LOCATION_MISSING') {
+    return {
+      error: 'Ennél a partnerhelynél még hiányzik a beváltási helyzet. Kérj segítséget a személyzettől.',
+      code: 'NOT_ELIGIBLE',
+    };
   }
 
   if (status === 401) {
@@ -348,6 +361,8 @@ export function isLocalFallbackToken(token: string): boolean {
   return token.startsWith('CGI-LOCAL-');
 }
 
+const demoFallbackEnabled = __DEV__ && process.env.EXPO_PUBLIC_ENABLE_REDEMPTION_DEMO === 'true';
+
 export async function createRedemptionWindow(
   request: CreateRedemptionWindowRequest
 ): Promise<CreateRedemptionWindowResponse> {
@@ -358,7 +373,7 @@ export async function createRedemptionWindow(
   );
 
   if (!result.ok) {
-    if (result.error.code === 'FUNCTION_NOT_DEPLOYED') {
+    if (result.error.code === 'FUNCTION_NOT_DEPLOYED' && demoFallbackEnabled) {
       console.warn('[RedemptionService] Edge function not deployed — switching to local fallback mode');
       return { success: true, data: createLocalFallbackWindow(request) };
     }
@@ -412,7 +427,7 @@ async function confirmRedemptionLocally(context?: FallbackConfirmContext): Promi
           drink_id: context.drink_id ?? null,
           value: 0,
           redeemed_at: new Date().toISOString(),
-          status: 'redeemed',
+          status: 'success',
           metadata: { flow: 'local_fallback', impact_message: '+1 ember kap ma tiszta vizet' },
         });
         if (error) {
@@ -442,8 +457,14 @@ export async function confirmRedemption(
   fallbackContext?: FallbackConfirmContext
 ): Promise<ConfirmRedemptionResponse> {
   if (isLocalFallbackToken(token)) {
-    console.log('[RedemptionService] Confirming local fallback token');
-    return confirmRedemptionLocally(fallbackContext);
+    if (demoFallbackEnabled) {
+      console.log('[RedemptionService] Confirming local fallback token');
+      return confirmRedemptionLocally(fallbackContext);
+    }
+    return {
+      success: false,
+      error: { error: 'A demó token éles környezetben nem váltható be.', code: 'BAD_REQUEST' },
+    };
   }
 
   const result = await postRedemptionFunction<{ token: string }, Record<string, unknown>>(
@@ -453,7 +474,7 @@ export async function confirmRedemption(
   );
 
   if (!result.ok) {
-    if (result.error.code === 'FUNCTION_NOT_DEPLOYED') {
+    if (result.error.code === 'FUNCTION_NOT_DEPLOYED' && demoFallbackEnabled) {
       console.warn('[RedemptionService] confirm-redemption not deployed — confirming locally');
       return confirmRedemptionLocally(fallbackContext);
     }
@@ -465,8 +486,8 @@ export async function confirmRedemption(
     success: true,
     data: {
       redemption_id: typeof data.redemption_id === 'string' ? data.redemption_id : null,
-      impact_delta: typeof data.impact_delta === 'number' ? data.impact_delta : 1,
-      impact_message: typeof data.impact_message === 'string' ? data.impact_message : '+1 ember kap ma tiszta vizet',
+      impact_delta: typeof data.impact_delta === 'number' ? data.impact_delta : 0,
+      impact_message: typeof data.impact_message === 'string' ? data.impact_message : 'Sikeres beváltás',
       total_impact_units: typeof data.total_impact_units === 'number' ? data.total_impact_units : null,
     },
   };

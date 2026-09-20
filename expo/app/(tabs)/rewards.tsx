@@ -1,15 +1,11 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, Platform } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   BadgePercent,
   ChevronRight,
-  Crown,
-  Gift,
   Martini,
-  Nfc,
-  Send,
   Sparkles,
   UtensilsCrossed,
   type LucideIcon,
@@ -21,13 +17,9 @@ import { useAppContext } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
-import { mergeWithMockRewards } from "@/data/mockRewards";
 
 const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
-
-const HERO_BG_URI = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&q=80";
-const CLUB_CARD_SOURCE = require("@/assets/images/club-card-flat.png");
 
 type RewardCategoryItem = {
   key: string;
@@ -87,7 +79,7 @@ export default function RewardsScreen() {
   });
 
   const normalizedRewards = useMemo(() => {
-    const raw = mergeWithMockRewards((rewardsQuery.data ?? []) as Reward[]);
+    const raw = (rewardsQuery.data ?? []) as Reward[];
     const today = new Date();
     const cleaned = raw
       .filter((r) => {
@@ -110,7 +102,7 @@ export default function RewardsScreen() {
   const editorPicks = useMemo(() => normalizedRewards.slice(0, 5), [normalizedRewards]);
   const newRewards = useMemo(() => {
     const remaining = normalizedRewards.slice(5);
-    return remaining.length > 0 ? remaining.slice(0, 5) : normalizedRewards.slice(0, 5);
+    return remaining.slice(0, 5);
   }, [normalizedRewards]);
 
   const { points } = useAppContext();
@@ -159,64 +151,6 @@ export default function RewardsScreen() {
           </View>
         </View>
 
-        <View style={styles.heroCard} testID="link-card-hero">
-          <ImageBackground source={{ uri: HERO_BG_URI }} style={styles.heroBg} imageStyle={styles.heroBgImage}>
-            <LinearGradient
-              colors={["rgba(4,8,11,0.86)", "rgba(4,8,11,0.93)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
-
-            <View style={styles.heroContent}>
-              <View style={styles.heroTopRow}>
-                <View style={styles.heroTextCol}>
-                  <Text style={styles.heroTitle}>Kapcsold össze{"\n"}a kártyádat</Text>
-                  <Text style={styles.heroSubtitle}>
-                    A pontok maguktól gyűlnek minden fizetéskor.
-                  </Text>
-                </View>
-                <View style={styles.heroCardImageWrap}>
-                  <Image source={CLUB_CARD_SOURCE} style={styles.heroCardImage} resizeMode="contain" />
-                </View>
-              </View>
-
-              <View style={styles.heroBenefits}>
-                <View style={styles.heroBenefitRow}>
-                  <View style={styles.heroBenefitIcon}>
-                    <Text style={styles.heroBenefitIconText}>P</Text>
-                  </View>
-                  <Text style={styles.heroBenefitText}>Pontok minden vásárlás után</Text>
-                </View>
-                <View style={styles.heroBenefitRow}>
-                  <View style={styles.heroBenefitIcon}>
-                    <Gift size={14} color={CYAN} />
-                  </View>
-                  <Text style={styles.heroBenefitText}>Exkluzív ajánlatok és meglepetések</Text>
-                </View>
-                <View style={styles.heroBenefitRow}>
-                  <View style={styles.heroBenefitIcon}>
-                    <Crown size={14} color={CYAN} />
-                  </View>
-                  <Text style={styles.heroBenefitText}>VIP élmények és meghívók</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity activeOpacity={0.88} accessibilityRole="button" testID="add-card-button" style={styles.heroCtaTouch} onPress={() => router.push("/add-card")}>
-                <LinearGradient
-                  colors={["#00E0FF", "#0090B8"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.heroCta}
-                >
-                  <Nfc size={16} color="#001014" />
-                  <Text style={styles.heroCtaText}>Kártya hozzáadása</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </ImageBackground>
-        </View>
-
         <View style={styles.section}>
           {renderSectionHeader("Szerkesztők kedvencei", "A legjobb beváltások ma estére", "all")}
 
@@ -243,7 +177,7 @@ export default function RewardsScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.section}>
+        {newRewards.length > 0 ? <View style={styles.section}>
           {renderSectionHeader("Új jutalmak", "A legfrissebb ajánlatok", "all")}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
@@ -257,20 +191,7 @@ export default function RewardsScreen() {
               />
             ))}
           </ScrollView>
-        </View>
-
-        <TouchableOpacity style={styles.referButton} testID="refer-friend" activeOpacity={0.88} onPress={() => router.push("/invite-friends")}>
-          <View style={styles.referIconWrap}>
-            <Send size={19} color="#00C8E8" />
-          </View>
-          <View style={styles.referTextContainer}>
-            <Text style={styles.referTitle}>Hívj meg egy barátot</Text>
-            <Text style={styles.referSubtitle}>500 pont jár, amikor csatlakozik és használja az appot.</Text>
-          </View>
-          <View style={styles.referPointsChip}>
-            <Text style={styles.referPointsChipText}>+500 p</Text>
-          </View>
-        </TouchableOpacity>
+        </View> : null}
 
         <View style={styles.section}>
           {renderSectionHeader("Kategóriák", "Gyors út a megfelelő ajánlathoz")}

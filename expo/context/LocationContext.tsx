@@ -3,7 +3,6 @@ import { Alert, Linking, Platform } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import { Venue } from '@/types/venue';
 
-const LOCATION_TASK_NAME = 'background-location-task';
 const GEOFENCE_RADIUS = 500;
 
 type LocationCoords = {
@@ -41,14 +40,6 @@ async function getExpoLocationModule(): Promise<typeof import('expo-location')> 
   return cachedExpoLocationPromise;
 }
 
-let cachedTaskManagerPromise: Promise<typeof import('expo-task-manager')> | null = null;
-async function getTaskManagerModule(): Promise<typeof import('expo-task-manager')> {
-  if (!cachedTaskManagerPromise) {
-    cachedTaskManagerPromise = import('expo-task-manager');
-  }
-  return cachedTaskManagerPromise;
-}
-
 function getWebLocationOnce(): Promise<LocationObjectLike> {
   return new Promise((resolve, reject) => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -79,7 +70,6 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
   const [isTracking, setIsTracking] = useState<boolean>(false);
 
   const webWatchIdRef = useRef<number | null>(null);
-  const nativeSubscriptionRef = useRef<{ remove: () => void } | null>(null);
   const nativeWatchRef = useRef<{ remove: () => void } | null>(null);
 
   useEffect(() => {
@@ -159,15 +149,6 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       }
 
       setHasPermission(true);
-
-      const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-      if (backgroundStatus !== 'granted') {
-        Alert.alert(
-          'Háttér helymeghatározás',
-          'A háttérben történő helymeghatározás engedélyezése lehetővé teszi, hogy értesítést kapj, amikor egy partner helyszín közelében vagy.'
-        );
-      }
-
       return true;
     } catch (error) {
       console.log('[Location] Permission request failed:', error);
@@ -314,125 +295,14 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
   }, []);
 
   const startTracking = useCallback(async () => {
-    if (!hasPermission) {
-      const granted = await requestPermission();
-      if (!granted) return;
-    }
-
-    try {
-      if (Platform.OS === 'web') {
-        const current = await getWebLocationOnce();
-        setLocation(current);
-        setIsTracking(true);
-
-        if (typeof navigator !== 'undefined' && navigator.geolocation) {
-          if (webWatchIdRef.current != null) {
-            navigator.geolocation.clearWatch(webWatchIdRef.current);
-          }
-          webWatchIdRef.current = navigator.geolocation.watchPosition(
-            (pos) => {
-              setLocation({
-                coords: {
-                  latitude: pos.coords.latitude,
-                  longitude: pos.coords.longitude,
-                },
-                timestamp: pos.timestamp,
-              });
-            },
-            (err) => {
-              console.log('[Location] Web watch error:', err);
-            },
-            { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
-          );
-        }
-
-        console.log('[Location] Tracking started (web)');
-        return;
-      }
-
-      const Location = await getExpoLocationModule();
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      setLocation({
-        coords: {
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-        },
-        timestamp: currentLocation.timestamp,
-      });
-
-      setIsTracking(true);
-
-      try {
-        const TaskManager = await getTaskManagerModule();
-        TaskManager.defineTask(
-          LOCATION_TASK_NAME,
-          async ({ data, error }: { data: unknown; error: unknown }) => {
-            if (error) {
-              console.error('[Location Task] Error:', error);
-              return;
-            }
-            if (!data) return;
-
-            try {
-              const { locations } = data as { locations: { coords: LocationCoords; timestamp: number }[] };
-              const latest = locations?.[0];
-              if (latest?.coords) {
-                console.log('[Location Task] New location:', latest.coords);
-              }
-            } catch (e) {
-              console.error('[Location Task] Parse error:', e);
-            }
-          }
-        );
-      } catch (e) {
-        console.error('[Location Task] Failed to register background task:', e);
-      }
-
-      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.Balanced,
-        timeInterval: 60000,
-        distanceInterval: 100,
-        foregroundService: {
-          notificationTitle: 'Come Get It',
-          notificationBody: 'Helymeghatározás aktív',
-        },
-      });
-
-      console.log('[Location] Tracking started (native)');
-    } catch (error) {
-      console.log('[Location] Failed to start tracking:', error);
-    }
-  }, [hasPermission, requestPermission]);
+    await startWatching();
+    setIsTracking(true);
+  }, [startWatching]);
 
   const stopTracking = useCallback(async () => {
-    try {
-      if (Platform.OS === 'web') {
-        if (typeof navigator !== 'undefined' && navigator.geolocation && webWatchIdRef.current != null) {
-          navigator.geolocation.clearWatch(webWatchIdRef.current);
-          webWatchIdRef.current = null;
-        }
-        nativeSubscriptionRef.current?.remove();
-        nativeSubscriptionRef.current = null;
-        setIsTracking(false);
-        console.log('[Location] Tracking stopped (web)');
-        return;
-      }
-
-      const Location = await getExpoLocationModule();
-      const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-      if (hasStarted) {
-        await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-      }
-
-      setIsTracking(false);
-      console.log('[Location] Tracking stopped (native)');
-    } catch (error) {
-      console.log('[Location] Failed to stop tracking:', error);
-    }
-  }, []);
+    stopWatching();
+    setIsTracking(false);
+  }, [stopWatching]);
 
   const checkProximityToVenues = useCallback(
     (venues: Venue[]): Venue[] => {

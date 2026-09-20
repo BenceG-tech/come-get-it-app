@@ -5,21 +5,11 @@ import { useRouter, type Href } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   ChevronRight,
-  Coins,
-  CreditCard,
-  Crown,
   Gift,
   Heart,
   HelpCircle,
-  History,
   LogOut,
-  Martini,
-  MapPin,
-  Sparkles,
-  Ticket,
   User,
-  UserPlus,
-  Wallet,
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -30,8 +20,6 @@ import { useFavorites } from "@/context/FavoritesContext";
 const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
 
-const NEXT_REWARD_TARGET = 5000;
-
 type MenuGridItem = {
   title: string;
   subtitle: string;
@@ -41,40 +29,10 @@ type MenuGridItem = {
 
 const menuGrid: MenuGridItem[] = [
   {
-    title: "Kreditek és tokenek",
-    subtitle: "Egyenleg és beváltások",
-    route: "/credits-tokens",
-    icon: Wallet,
-  },
-  {
-    title: "Barátok meghívása",
-    subtitle: "+500 pont barátonként",
-    route: "/invite-friends",
-    icon: UserPlus,
-  },
-  {
-    title: "Fizetési módok",
-    subtitle: "Kártyák kezelése",
-    route: "/payment-methods",
-    icon: CreditCard,
-  },
-  {
-    title: "Látogatási előzmények",
-    subtitle: "Korábbi helyek",
-    route: "/visit-history",
-    icon: History,
-  },
-  {
-    title: "Hatásom",
-    subtitle: "Közösségi eredményeid",
-    route: "/my-impact",
+    title: "Kedvencek",
+    subtitle: "Mentett partnerhelyek",
+    route: "/favorites",
     icon: Heart,
-  },
-  {
-    title: "Kuponkód",
-    subtitle: "Partner ajánlat aktiválása",
-    route: "/redeem-coupon",
-    icon: Ticket,
   },
   {
     title: "Fiók",
@@ -90,22 +48,6 @@ const menuGrid: MenuGridItem[] = [
   },
 ];
 
-type ActivityItem = {
-  id: string;
-  title: string;
-  place: string;
-  when: string;
-  delta: number;
-  icon: LucideIcon;
-};
-
-const recentActivity: ActivityItem[] = [
-  { id: "a1", title: "Pontszerzés", place: "Blue Fox Bar", when: "Ma, 21:14", delta: 240, icon: Sparkles },
-  { id: "a2", title: "Ital beváltva", place: "Vinozza Budapest", when: "Tegnap, 19:02", delta: -800, icon: Martini },
-  { id: "a3", title: "Pontszerzés", place: "Ruin Garden", when: "Kedd, 22:41", delta: 180, icon: Sparkles },
-  { id: "a4", title: "Meghívás jóváírás", place: "Barát csatlakozott", when: "Múlt héten", delta: 500, icon: UserPlus },
-];
-
 type StatChip = {
   label: string;
   value: string;
@@ -115,7 +57,7 @@ type StatChip = {
 export default function ProfileScreen() {
   const router = useRouter();
   const { points } = useAppContext();
-  const { signOut } = useAuth();
+  const { session, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState<boolean>(false);
   const { favoriteVenues } = useFavorites();
 
@@ -140,17 +82,22 @@ export default function ProfileScreen() {
     ]);
   }, [router, signOut]);
 
-  const progress = useMemo<number>(() => {
-    const raw = points / NEXT_REWARD_TARGET;
-    return Math.max(0.04, Math.min(1, raw));
-  }, [points]);
+  const profileName = useMemo(() => {
+    const metadata = session?.user.user_metadata as Record<string, unknown> | undefined;
+    const candidate = metadata?.full_name ?? metadata?.name;
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+    return session?.user.email?.split('@')[0] || 'Come Get It tag';
+  }, [session?.user.email, session?.user.user_metadata]);
 
-  const missing = Math.max(0, NEXT_REWARD_TARGET - points);
+  const memberSince = useMemo(() => {
+    const createdAt = session?.user.created_at;
+    if (!createdAt) return 'Come Get It tag';
+    return `Come Get It tag · ${new Intl.DateTimeFormat('hu-HU', { year: 'numeric', month: 'long' }).format(new Date(createdAt))} óta`;
+  }, [session?.user.created_at]);
 
   const stats: StatChip[] = [
-    { label: "Látogatás", value: "200+", icon: MapPin },
     { label: "Kedvenc", value: String(favoriteVenues.length), icon: Heart },
-    { label: "Token", value: "12", icon: Coins },
+    { label: "Pont", value: points.toLocaleString("hu-HU"), icon: Gift },
   ];
 
   return (
@@ -160,13 +107,12 @@ export default function ProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerCompact}>
           <View style={styles.headerNameRow}>
-            <Text style={styles.profileName}>Bence</Text>
+            <Text style={styles.profileName}>{profileName}</Text>
             <View style={styles.tierBadge}>
-              <Crown size={11} color="#0A1114" />
-              <Text style={styles.tierBadgeText}>Platina</Text>
+              <Text style={styles.tierBadgeText}>TAG</Text>
             </View>
           </View>
-          <Text style={styles.memberSince}>Come Get It tag · 2024. január óta</Text>
+          <Text style={styles.memberSince}>{memberSince}</Text>
         </View>
 
         <View style={styles.balanceCard} testID="balance-card">
@@ -183,31 +129,14 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.progressBlock}>
-            <View style={styles.progressLabelsRow}>
-              <Text style={styles.progressLabel}>Következő jutalom</Text>
-              <Text style={styles.progressValue}>
-                {missing > 0 ? `még ${missing.toLocaleString("hu-HU")} pont` : "beváltható!"}
-              </Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <LinearGradient
-                colors={["#00E0FF", "#0090B8"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]}
-              />
-            </View>
-          </View>
-
-          <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/rewards-missions")} testID="open-rewards-card">
+          <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/(tabs)/rewards")} testID="open-rewards-card">
             <LinearGradient
               colors={["#00E0FF", "#0090B8"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.balanceCta}
             >
-              <Text style={styles.balanceCtaText}>Küldetések és jutalmak</Text>
+              <Text style={styles.balanceCtaText}>Jutalmak megtekintése</Text>
               <ChevronRight size={17} color="#001014" />
             </LinearGradient>
           </TouchableOpacity>
@@ -226,36 +155,6 @@ export default function ProfileScreen() {
               </View>
             );
           })}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Legutóbbi aktivitás</Text>
-          <View style={styles.timelineCard}>
-            {recentActivity.map((item: ActivityItem, index: number) => {
-              const Icon = item.icon;
-              const isLast = index === recentActivity.length - 1;
-              const positive = item.delta > 0;
-              return (
-                <View key={item.id} style={styles.timelineRow}>
-                  <View style={styles.timelineLeft}>
-                    <View style={[styles.timelineDot, positive ? styles.timelineDotEarn : styles.timelineDotSpend]}>
-                      <Icon size={11} color={positive ? CYAN : "#F6B17A"} />
-                    </View>
-                    {!isLast ? <View style={styles.timelineLine} /> : null}
-                  </View>
-                  <View style={[styles.timelineBody, !isLast && styles.timelineBodyBorder]}>
-                    <View style={styles.timelineTextBlock}>
-                      <Text style={styles.timelineTitle}>{item.title}</Text>
-                      <Text style={styles.timelineMeta}>{item.place} · {item.when}</Text>
-                    </View>
-                    <Text style={[styles.timelineDelta, positive ? styles.deltaEarn : styles.deltaSpend]}>
-                      {positive ? "+" : ""}{item.delta.toLocaleString("hu-HU")} p
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
         </View>
 
         <View style={styles.section}>

@@ -21,7 +21,6 @@ import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 import { rest } from "@/lib/supabaseRest";
 import type { Reward } from "@/types/reward";
-import { getMockRewardById } from "@/data/mockRewards";
 
 const CYAN = "#00C8E8" as const;
 
@@ -66,9 +65,6 @@ export default function RewardDetailScreen() {
     queryKey: ["reward", rewardId],
     enabled: rewardId.length > 0,
     queryFn: async () => {
-      const mockReward = getMockRewardById(rewardId);
-      if (mockReward) return mockReward;
-
       console.log("[RewardDetail] Fetch reward", { rewardId });
       const res = await rest(`/rewards?id=eq.${encodeURIComponent(rewardId)}&select=*`);
       const json = (await res.json()) as unknown;
