@@ -14,6 +14,7 @@ Last verified: 2026-09-20
 - Production redemption no longer falls back to demo success. Demo behavior is restricted to development builds with an explicit environment flag.
 - The consumer app no longer exposes the legacy admin editor or unfinished mock payment, card, referral, coupon, address, visit-history, mission, and token screens.
 - The app shows only real backend rewards and profile data. CSR impact is shown only when a real donation was created.
+- Venue cards use separate accessible controls for card navigation and favorite toggling, avoiding nested interactive elements in the web preview while preserving native behavior.
 - Public venue reads are limited to active venues. Sensitive helper functions reject cross-user lookups.
 - Legal links point to the repository's public privacy policy and Apple's standard EULA.
 - Legacy prototype routes (`landing`, template modal, and the fake Cock & Pye venue/card-linking screen) have been removed, so stale deep links cannot expose unfinished product claims.
@@ -24,9 +25,10 @@ Last verified: 2026-09-20
 - Supabase project: `nrxfiblssxwzeziomlvc` (EU North).
 - 5 active venues out of 11 total; all 11 have coordinates.
 - 18 venue drinks, 19 free-drink windows, 1 active reward, and 25 redemption records.
-- `create-redemption-window` version 6, `confirm-redemption` version 6, and `delete-account` version 2 are deployed with JWT verification enabled.
+- `create-redemption-window` version 6, `confirm-redemption` version 6, `delete-account` version 2, and `redeem-reward` version 36 are deployed with JWT verification enabled.
 - Anonymous callers cannot use the protected redemption or account-deletion functions.
 - The production redemption flow was exercised end to end with an authenticated App Review account: token creation and confirmation both succeeded against live venue/drink data.
+- Rork automatically synchronized the release-hardening commits from GitHub. Its current web preview was retested with the App Review account through sign-in, live venue loading, favorite add/remove, venue details, the review redemption handoff, rewards, profile, and the account-management screen.
 - Normal accounts must pass the server-side 100 m venue and active-offer-window checks. The dedicated App Review account is service-role allowlisted to bypass only those two environmental checks; authentication, token expiry, and single-use consumption remain enforced.
 - A database unique index and server check enforce at most one successful free-drink redemption per normal user per Budapest calendar day. A controlled duplicate-insert test was rejected and its test rows were removed.
 - Review transactions are marked separately and never create CSR donation records.
