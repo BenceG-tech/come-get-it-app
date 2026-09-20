@@ -66,8 +66,11 @@ function AuthScreen() {
       if (mode === 'login') {
         await signInWithEmail(normalizedEmail, password);
       } else {
-        await signUpWithEmail(normalizedEmail, password);
-        await signInWithEmail(normalizedEmail, password);
+        // Ha a megerősítés kikapcsolt, a regisztráció azonnal session-t ad — nincs külön bejelentkezés.
+        const signedIn = await signUpWithEmail(normalizedEmail, password);
+        if (!signedIn) {
+          await signInWithEmail(normalizedEmail, password);
+        }
       }
     } finally {
       setLoading(false);
@@ -163,6 +166,7 @@ function AuthScreen() {
                   value={email}
                   onChangeText={setEmail}
                   placeholder="E-mail cím"
+                  autoFocus
                   leftIcon={<Mail size={17} color={focusedField === 'email' ? CYAN : TEXT_SOFT} />}
                   focused={focusedField === 'email'}
                   onFocus={focusEmail}

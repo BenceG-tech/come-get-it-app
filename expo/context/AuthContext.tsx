@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
-import * as AuthSession from 'expo-auth-session';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
@@ -14,7 +14,7 @@ type AuthContextType = {
   session: Session | null;
   isAuthReady: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<boolean>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -29,6 +29,74 @@ function toUserMessage(err: unknown): string {
   } catch {
     return 'Ismeretlen hiba történt.';
   }
+}
+
+/** Gyakori auth-hibák fordítása érthető, teendőt adó magyar üzenetre. */
+function mapAuthError(err: unknown): string {
+  const raw = toUserMessage(err);
+  const msg = raw.toLowerCase();
+  if (msg.includes('email_not_confirmed') || msg.includes('email not confirmed')) {
+    return 'Az e-mail cím még nincs megerősítve. Két megoldás:\n1) Kattints a regisztrációs e-mailben kapott megerősítő linkre.\n2) Vagy kapcsold ki a kötelező megerősítést: Supabase → Authentication → Sign In / Up → Email → “Confirm email” kikapcsolása.';
+  }
+  if (msg.includes('invalid login credentials')) {
+    return 'Hibás e-mail cím vagy jelszó.';
+  }
+  if (msg.includes('user already registered') || msg.includes('already exists')) {
+    return 'Ezzel az e-mail címmel már van fiókod — jelentkezz be.';
+  }
+  if (msg.includes('password should be')) {
+    return 'A jelszó túl rövid — legalább 6 karakter legyen.';
+  }
+  if (msg.includes('fetch') || msg.includes('network') || msg.includes('unable to connect')) {
+    return 'Nem sikerült elérni a szervert. Ellenőrizd az internetkapcsolatot, és próbáld újra.';
+  }
+  return raw;
+}
+
+type OAuthCallbackParams = {
+  code?: string;
+  accessToken?: string;
+  refreshToken?: string;
+};
+
+/** A visszatérési URL-ből kinyeri a PKCE code-ot vagy az implicit tokeneket (query + fragment). */
+function parseOAuthCallbackParams(urlString: string): OAuthCallbackParams {
+  const result: OAuthCallbackParams = {};
+
+  const collect = (segment: string): void => {
+    for (const pair of segment.split('&')) {
+      if (!pair) continue;
+      const eq = pair.indexOf('=');
+      if (eq < 0) continue;
+      const key = pair.slice(0, eq);
+      let value = pair.slice(eq + 1);
+      try {
+        value = decodeURIComponent(value);
+      } catch {
+        // ha nem dekódolható, nyers értéket használunk
+      }
+      if (key === 'code') result.code = value;
+      else if (key === 'access_token') result.accessToken = value;
+      else if (key === 'refresh_token') result.refreshToken = value;
+    }
+  };
+
+  try {
+    const hashIndex = urlString.indexOf('#');
+    const queryIndex = urlString.indexOf('?');
+
+    if (queryIndex >= 0) {
+      const queryEnd = hashIndex > queryIndex ? hashIndex : urlString.length;
+      collect(urlString.slice(queryIndex + 1, queryEnd));
+    }
+    if (hashIndex >= 0) {
+      collect(urlString.slice(hashIndex + 1));
+    }
+  } catch (e) {
+    console.warn('[Auth] parseOAuthCallbackParams failed', e);
+  }
+
+  return result;
 }
 
 export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => {
@@ -121,7 +189,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         if (error) throw error;
       } catch (e) {
         console.error('[Auth] signInWithEmail failed', e);
-        Alert.alert('Nem sikerült bejelentkezni', toUserMessage(e));
+        Alert.alert('Nem sikerült bejelentkezni', mapAuthError(e));
         throw e;
       }
     },
@@ -129,58 +197,53 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   );
 
   const signUpWithEmail = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string): Promise<boolean> => {
       try {
         console.log('[Auth] signUpWithEmail');
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        Alert.alert('Sikeres regisztráció', 'Ellenőrizd az emailed a megerősítéshez (ha szükséges).');
+        // Ha a megerősítés kikapcsolt, signUp azonnal session-t ad — így azonnal be tudunk lépni.
+        return Boolean(data?.session);
       } catch (e) {
         console.error('[Auth] signUpWithEmail failed', e);
-        Alert.alert('Nem sikerült regisztrálni', toUserMessage(e));
+        Alert.alert('Nem sikerült regisztrálni', mapAuthError(e));
         throw e;
       }
     },
     [supabase]
   );
 
+  /**
+   * Környezetenként pontos visszatérési cím:
+   * - web: az oldal origin-je (a session a URL-ből detektálva)
+   * - Expo Go / preview: az aktuális exp:// URL (Supabase Redirect URLs-be ezt kell felvenni)
+   * - önálló build: myapp:// sémás cím
+   */
   const getRedirectTo = useCallback((): string => {
-    const redirectTo = AuthSession.makeRedirectUri({ scheme: 'myapp' });
-    console.log('[Auth] computed redirectTo', { redirectTo, platform: Platform.OS });
-    return redirectTo;
+    if (Platform.OS === 'web') {
+      const origin = typeof window !== 'undefined' && window.location ? window.location.origin : '';
+      console.log('[Auth] web redirectTo', origin);
+      return origin;
+    }
+    const url = Linking.createURL('');
+    console.log('[Auth] native redirectTo', { url, appOwnership: Constants.appOwnership });
+    return url;
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
+    let redirectTo = '';
     try {
       const appOwnership = Constants.appOwnership ?? 'unknown';
-      const useProxy = appOwnership === 'expo';
-      console.log('[Auth] signInWithGoogle start', { platform: Platform.OS, appOwnership, useProxy });
+      console.log('[Auth] signInWithGoogle start', { platform: Platform.OS, appOwnership });
 
-      const redirectTo = getRedirectTo();
-
-      if (Platform.OS === 'web') {
-        console.log('[Auth] web redirectTo', redirectTo);
-
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo,
-            skipBrowserRedirect: false,
-          },
-        });
-
-        if (error) throw error;
-        console.log('[Auth] web signInWithOAuth started', { hasUrl: Boolean(data?.url) });
-        return;
-      }
-
-      console.log('[Auth] native redirectTo', { redirectTo, appOwnership, useProxy });
+      redirectTo = getRedirectTo();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
-          skipBrowserRedirect: true,
+          // natívan magunk nyitjuk meg és zárjuk le a folyamatot
+          skipBrowserRedirect: Platform.OS !== 'web',
         },
       });
 
@@ -188,29 +251,56 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       const authUrl = data?.url;
       if (!authUrl) throw new Error('Hiányzó OAuth URL');
 
+      if (Platform.OS === 'web') {
+        console.log('[Auth] web signInWithOAuth started, redirecting browser', { hasUrl: Boolean(authUrl) });
+        return;
+      }
+
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
       console.log('[Auth] openAuthSessionAsync result', { type: result.type });
 
       if (result.type !== 'success') {
-        if (result.type === 'cancel' || result.type === 'dismiss') return;
-        throw new Error(`OAuth flow failed (${result.type})`);
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          console.log('[Auth] Google sign-in cancelled by user');
+          return;
+        }
+        throw new Error(`A bejelentkezési ablak nem fejeződött be (${result.type})`);
       }
 
       const callbackUrl = result.url;
       console.log('[Auth] OAuth callback url received', { hasUrl: Boolean(callbackUrl) });
 
-      const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(callbackUrl);
-      if (exchangeError) throw exchangeError;
+      const params = parseOAuthCallbackParams(callbackUrl);
 
-      console.log('[Auth] exchangeCodeForSession ok', { hasSession: Boolean(exchangeData?.session) });
+      if (params.code) {
+        // PKCE flow: code cseréje session-re
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.code);
+        if (exchangeError) throw exchangeError;
+        console.log('[Auth] exchangeCodeForSession ok');
+        return;
+      }
+
+      if (params.accessToken && params.refreshToken) {
+        // implicit flow fallback
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: params.accessToken,
+          refresh_token: params.refreshToken,
+        });
+        if (sessionError) throw sessionError;
+        console.log('[Auth] setSession ok (implicit fallback)');
+        return;
+      }
+
+      throw new Error('A bejelentkezés válaszában nem volt munkamenet-adat. Ellenőrizd a Supabase redirect beállításokat.');
     } catch (e) {
       console.error('[Auth] signInWithGoogle failed', e);
 
-      const redirectTo = getRedirectTo();
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+      const callbackHint = supabaseUrl ? `${supabaseUrl}/auth/v1/callback` : '<projekt>.supabase.co/auth/v1/callback';
 
       Alert.alert(
-        'Nem sikerült Google bejelentkezés',
-        `${toUserMessage(e)}\n\n1) Supabase → Authentication → Providers → Google: legyen Enabled.\n2) Supabase → Authentication → URL Configuration → Redirect URLs: add hozzá ezt: ${redirectTo}`
+        'Nem sikerült a Google bejelentkezés',
+        `${mapAuthError(e)}\n\nBeállítási teendőlista:\n1) Supabase → Authentication → Providers → Google: legyen engedélyezve, Client ID + Client Secret megadva.\n2) Google Cloud Console-ban a kliens „Authorized redirect URI”-je: ${callbackHint}\n3) Supabase → Authentication → URL Configuration → Redirect URLs: add hozzá ezt:\n${redirectTo || getRedirectTo()}`
       );
       throw e;
     }
@@ -265,7 +355,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       }
 
       console.error('[Auth] signInWithApple failed', e);
-      Alert.alert('Nem sikerült Apple bejelentkezés', toUserMessage(e));
+      Alert.alert('Nem sikerült Apple bejelentkezés', mapAuthError(e));
       throw e;
     }
   }, [supabase]);

@@ -23,6 +23,7 @@ export interface TextInputFieldProps {
   onFocus: () => void;
   onBlur: () => void;
   secureTextEntry?: boolean;
+  autoFocus?: boolean;
   keyboardType?: RNTextInput['props']['keyboardType'];
   autoComplete?: RNTextInput['props']['autoComplete'];
   textContentType?: RNTextInput['props']['textContentType'];
@@ -44,6 +45,7 @@ const TextInputField = forwardRef<RNTextInput, TextInputFieldProps>(
       onFocus,
       onBlur,
       secureTextEntry,
+      autoFocus,
       keyboardType,
       autoComplete,
       textContentType,
@@ -65,6 +67,7 @@ const TextInputField = forwardRef<RNTextInput, TextInputFieldProps>(
           placeholderTextColor="rgba(255,255,255,0.44)"
           autoCapitalize="none"
           secureTextEntry={secureTextEntry}
+          autoFocus={autoFocus}
           keyboardType={keyboardType}
           autoComplete={autoComplete}
           textContentType={textContentType}

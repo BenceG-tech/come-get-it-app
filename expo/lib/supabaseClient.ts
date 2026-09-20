@@ -87,6 +87,8 @@ export function getSupabase(): SupabaseClient {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: Platform.OS === 'web',
+      // PKCE flow: a Google OAuth után a code csak így cserélhető session-re
+      flowType: 'pkce',
       storage,
     },
   });
