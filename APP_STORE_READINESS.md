@@ -20,6 +20,8 @@ Last verified: 2026-09-20
 - Legal links point to the repository's public privacy policy and Apple's standard EULA.
 - Legacy prototype routes (`landing`, template modal, and the fake Cock & Pye venue/card-linking screen) have been removed, so stale deep links cannot expose unfinished product claims.
 - App Store metadata, privacy answers, review notes, support content, and a screenshot acceptance audit are prepared in the repository.
+- The separate Lovable Venue Hub admin surface now uses live Supabase sessions only: forged browser storage and mock/demo providers no longer grant access, password reset is implemented, Google sign-in is hidden while unconfigured, and protected routes wait for authoritative session hydration.
+- Venue Hub dashboards no longer show fabricated percentage changes or describe redeemed-drink value as transaction revenue. Reward management shows the exact mobile-app visibility state and prevents publishing against a paused venue.
 
 ## Verified live backend state
 
@@ -39,8 +41,9 @@ Last verified: 2026-09-20
 - Supabase Auth uses the production Rork URL as the Site URL and allowlists the HTTPS preview URL, Expo URL, and `comegetit://` deep links.
 - Email confirmation links/OTPs expire after 3,600 seconds. Leaked-password protection, secure password change, and an eight-character minimum are enabled.
 - The production test-data endpoint is disabled. Legacy token issuance now requires a valid user JWT and ignores a caller-supplied user ID outside authenticated admin test mode.
-- Geocoding, AI recommendation, user-directory, and dashboard-stat endpoints now require JWTs; dashboard statistics additionally enforce administrator or venue membership/ownership access.
-- Live platform status and anomaly reports now require an authenticated administrator. Venue revenue/free-drink analytics require administrator or venue-membership access.
+- Geocoding, AI recommendation, user-directory, and dashboard-stat endpoints now require JWTs; dashboard statistics additionally derive the effective role server-side and enforce administrator or venue membership/ownership access. `get-dashboard-stats` version 37 rejects client-forged administrator scope and has gateway JWT verification enabled.
+- Live platform status and anomaly reports now require an authenticated administrator. `get-live-platform-status` version 32 uses the production redemption schema (`redeemed_at`, `drink`), performs its own administrator check, and has gateway JWT verification enabled. Venue revenue/free-drink analytics require administrator or venue-membership access.
+- Direct `venues.owner_profile_id` ownership is included alongside `venue_memberships` in the shared venue-authorization helper, keeping mobile/backend RLS and Venue Hub session scope consistent.
 - Scheduled notification processing requires the internal service key. Loyalty milestone detection and transaction matching accept only a valid internal key or a scoped authenticated caller.
 - Salt Edge transaction callbacks now reject unsigned or invalidly signed payloads before parsing or awarding points. The verifier uses Salt Edge's documented Account Information v5 callback key and supports `SALTEDGE_CALLBACK_PUBLIC_KEY` and `SALTEDGE_CALLBACK_URL` overrides for key rotation or an explicitly configured callback URL.
 - Public venue RPC returns only the 5 active venues and caps requested result size.
@@ -57,6 +60,8 @@ These require owner credentials or commercial decisions and cannot be completed 
 6. **App Store Connect and final media:** create the app record, enter the prepared metadata/privacy answers/review notes, and upload fresh screenshots from the signed release/TestFlight build. A stable auto-confirmed review account and server-side review path now exist; its password is stored only in the local Git-ignored `.private` directory.
 7. **Public website and legal identity:** `come-get-it.app` currently has no A, AAAA, or MX record, while the published Lovable URL redirects to that broken domain. The app therefore uses the public GitHub privacy policy and the verified connected Gmail address as reliable interim privacy/support contacts. Restore the domain, add the legal entity's full name/address/registration details to the policy, publish the updated policy there, then switch the app URL and support mailbox back before final submission if possible.
 8. **Salt Edge operations:** before enabling linked-card rewards, confirm that Salt Edge's configured callback URL exactly matches the deployed function URL. If Salt Edge rotates its callback signing key, set the current PEM as `SALTEDGE_CALLBACK_PUBLIC_KEY` before processing production callbacks.
+9. **Venue Hub partner access:** production currently has no `venue_memberships` rows. Before onboarding venue staff, provision their Supabase Auth accounts and assign explicit venue memberships (or a direct `owner_profile_id` for owners), then test each role against only its assigned venue.
+10. **Venue Hub password-reset redirect:** add the final published Lovable Venue Hub URL and its `/reset-password` return path to Supabase Auth's allowed redirect URLs before relying on password recovery in production.
 
 ## Release gate
 
