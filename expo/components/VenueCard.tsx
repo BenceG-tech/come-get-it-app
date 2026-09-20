@@ -103,17 +103,6 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
           <Text style={styles.cityPillText}>Budapest</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={handleFavoritePress}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={favorite ? `${venue.name} eltávolítása a kedvencekből` : `${venue.name} hozzáadása a kedvencekhez`}
-          testID={`favorite-toggle-${venue.id}`}
-        >
-          <Heart size={20} color="#00D1FF" fill={favorite ? "#00D1FF" : "transparent"} />
-        </TouchableOpacity>
-        
         {/* Free drink badge - overhangs the bottom edge of the image */}
         <View style={styles.freeDrinkBadge}>
           <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
@@ -163,6 +152,16 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         </View>
       </View>
     </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.favoriteButton}
+        onPress={handleFavoritePress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={favorite ? `${venue.name} eltávolítása a kedvencekből` : `${venue.name} hozzáadása a kedvencekhez`}
+        testID={`favorite-toggle-${venue.id}`}
+      >
+        <Heart size={20} color="#00D1FF" fill={favorite ? "#00D1FF" : "transparent"} />
+      </TouchableOpacity>
     </Animated.View>
   );
 }
