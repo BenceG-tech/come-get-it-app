@@ -22,6 +22,7 @@ Last verified: 2026-09-20
 - App Store metadata, privacy answers, review notes, support content, and a screenshot acceptance audit are prepared in the repository.
 - The separate Lovable Venue Hub admin surface now uses live Supabase sessions only: forged browser storage and mock/demo providers no longer grant access, password reset is implemented, Google sign-in is hidden while unconfigured, and protected routes wait for authoritative session hydration.
 - Venue Hub dashboards no longer show fabricated percentage changes or describe redeemed-drink value as transaction revenue. Reward management shows the exact mobile-app visibility state and prevents publishing against a paused venue.
+- Venue Hub is published at `https://come-get-it-venue-hub.lovable.app`. Its production login, password-recovery screen, reset route, protected-route redirect, access-denied flow, and logout were exercised in the browser; an authenticated non-partner is correctly sent to `/no-access`.
 
 ## Verified live backend state
 
