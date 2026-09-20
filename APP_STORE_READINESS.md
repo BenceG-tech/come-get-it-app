@@ -26,6 +26,9 @@ Last verified: 2026-09-20
 - Anonymous callers cannot use the protected redemption or account-deletion functions.
 - The production test-data endpoint is disabled. Legacy token issuance now requires a valid user JWT and ignores a caller-supplied user ID outside authenticated admin test mode.
 - Geocoding, AI recommendation, user-directory, and dashboard-stat endpoints now require JWTs; dashboard statistics additionally enforce administrator or venue membership/ownership access.
+- Live platform status and anomaly reports now require an authenticated administrator. Venue revenue/free-drink analytics require administrator or venue-membership access.
+- Scheduled notification processing requires the internal service key. Loyalty milestone detection and transaction matching accept only a valid internal key or a scoped authenticated caller.
+- Salt Edge transaction callbacks now reject unsigned or invalidly signed payloads before parsing or awarding points. The verifier uses Salt Edge's documented Account Information v5 callback key and supports `SALTEDGE_CALLBACK_PUBLIC_KEY` and `SALTEDGE_CALLBACK_URL` overrides for key rotation or an explicitly configured callback URL.
 - Public venue RPC returns only the 5 active venues and caps requested result size.
 
 ## External release blockers
@@ -39,6 +42,7 @@ These require owner credentials or commercial decisions and cannot be completed 
 5. **CSR activation:** all five active venues currently have CSR disabled and no default charity. Configure real charity records and venue donation settings before promoting impact claims.
 6. **App Store Connect:** provide final screenshots, subtitle/description/keywords, privacy questionnaire, support and privacy URLs, age rating, review notes, and a stable review account with sample data. Email sign-up testing is temporarily rate-limited in Supabase, so a new review account was not created during this audit.
 7. **Public website and legal identity:** `come-get-it.app` currently has no working DNS record, while the published Lovable URL redirects to that broken domain. The app therefore uses the public GitHub privacy policy as a reliable interim URL. Restore the domain, add the legal entity's full name/address/registration details to the policy, publish the updated policy there, then switch the app URL back before final submission if possible.
+8. **Salt Edge operations:** before enabling linked-card rewards, confirm that Salt Edge's configured callback URL exactly matches the deployed function URL. If Salt Edge rotates its callback signing key, set the current PEM as `SALTEDGE_CALLBACK_PUBLIC_KEY` before processing production callbacks.
 
 ## Release gate
 
