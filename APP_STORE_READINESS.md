@@ -16,14 +16,23 @@ Last verified: 2026-09-20
 - The app shows only real backend rewards and profile data. CSR impact is shown only when a real donation was created.
 - Public venue reads are limited to active venues. Sensitive helper functions reject cross-user lookups.
 - Legal links point to the repository's public privacy policy and Apple's standard EULA.
+- Legacy prototype routes (`landing`, template modal, and the fake Cock & Pye venue/card-linking screen) have been removed, so stale deep links cannot expose unfinished product claims.
+- App Store metadata, privacy answers, review notes, support content, and a screenshot acceptance audit are prepared in the repository.
 
 ## Verified live backend state
 
 - Supabase project: `nrxfiblssxwzeziomlvc` (EU North).
 - 5 active venues out of 11 total; all 11 have coordinates.
 - 18 venue drinks, 19 free-drink windows, 1 active reward, and 25 redemption records.
-- `create-redemption-window` version 4, `confirm-redemption` version 5, and `delete-account` version 2 are deployed with JWT verification enabled.
+- `create-redemption-window` version 6, `confirm-redemption` version 6, and `delete-account` version 2 are deployed with JWT verification enabled.
 - Anonymous callers cannot use the protected redemption or account-deletion functions.
+- The production redemption flow was exercised end to end with an authenticated App Review account: token creation and confirmation both succeeded against live venue/drink data.
+- Normal accounts must pass the server-side 100 m venue and active-offer-window checks. The dedicated App Review account is service-role allowlisted to bypass only those two environmental checks; authentication, token expiry, and single-use consumption remain enforced.
+- A database unique index and server check enforce at most one successful free-drink redemption per normal user per Budapest calendar day. A controlled duplicate-insert test was rejected and its test rows were removed.
+- Review transactions are marked separately and never create CSR donation records.
+- Points-reward redemption now uses an authenticated Edge Function and one atomic database transaction, preventing negative balances, partial point deductions, and reward-cap races.
+- Supabase Auth uses the production Rork URL as the Site URL and allowlists the HTTPS preview URL, Expo URL, and `comegetit://` deep links.
+- Email confirmation links/OTPs expire after 3,600 seconds. Leaked-password protection, secure password change, and an eight-character minimum are enabled.
 - The production test-data endpoint is disabled. Legacy token issuance now requires a valid user JWT and ignores a caller-supplied user ID outside authenticated admin test mode.
 - Geocoding, AI recommendation, user-directory, and dashboard-stat endpoints now require JWTs; dashboard statistics additionally enforce administrator or venue membership/ownership access.
 - Live platform status and anomaly reports now require an authenticated administrator. Venue revenue/free-drink analytics require administrator or venue-membership access.
@@ -36,14 +45,14 @@ Last verified: 2026-09-20
 These require owner credentials or commercial decisions and cannot be completed from source code alone:
 
 1. **Expo/EAS and Apple signing:** log in to the intended Expo account, register/confirm the bundle identifier `app.comegetit.mobile`, create iOS signing credentials, initialize the EAS project, then run the production build and submit it to App Store Connect. The local environment is not logged in to EAS.
-2. **Supabase Auth console:** add production redirect URLs for `comegetit://`, `comegetit://reset-password`, and the exact Rork/Expo preview URL; finish Google and Apple provider credentials; reduce email OTP expiry to 60 minutes or less; enable leaked-password protection.
+2. **Optional social sign-in credentials:** Google and Apple providers are still disabled because the required provider credentials have not been supplied. Their buttons are hidden by default; email/password registration, confirmation, reset, and sign-in are the release-safe path. Only set `EXPO_PUBLIC_ENABLE_GOOGLE_AUTH=true` or `EXPO_PUBLIC_ENABLE_APPLE_AUTH=true` after the corresponding Supabase provider and native credentials are complete.
 3. **Database maintenance:** schedule the Supabase Postgres security-patch upgrade. The current production version reports outstanding security patches.
 4. **Monetization decision:** the source material describes Plus at 990 Ft/week or 2,990 Ft/month, but the app has no App Store subscription products or RevenueCat configuration. Either launch this build as a free beta or create StoreKit products, RevenueCat entitlements, a paywall, restore-purchases flow, and subscription terms before charging users.
 5. **CSR activation:** all five active venues currently have CSR disabled and no default charity. Configure real charity records and venue donation settings before promoting impact claims.
-6. **App Store Connect:** provide final screenshots, subtitle/description/keywords, privacy questionnaire, support and privacy URLs, age rating, review notes, and a stable review account with sample data. Email sign-up testing is temporarily rate-limited in Supabase, so a new review account was not created during this audit.
-7. **Public website and legal identity:** `come-get-it.app` currently has no working DNS record, while the published Lovable URL redirects to that broken domain. The app therefore uses the public GitHub privacy policy as a reliable interim URL. Restore the domain, add the legal entity's full name/address/registration details to the policy, publish the updated policy there, then switch the app URL back before final submission if possible.
+6. **App Store Connect and final media:** create the app record, enter the prepared metadata/privacy answers/review notes, and upload fresh screenshots from the signed release/TestFlight build. A stable auto-confirmed review account and server-side review path now exist; its password is stored only in the local Git-ignored `.private` directory.
+7. **Public website and legal identity:** `come-get-it.app` currently has no A, AAAA, or MX record, while the published Lovable URL redirects to that broken domain. The app therefore uses the public GitHub privacy policy and the verified connected Gmail address as reliable interim privacy/support contacts. Restore the domain, add the legal entity's full name/address/registration details to the policy, publish the updated policy there, then switch the app URL and support mailbox back before final submission if possible.
 8. **Salt Edge operations:** before enabling linked-card rewards, confirm that Salt Edge's configured callback URL exactly matches the deployed function URL. If Salt Edge rotates its callback signing key, set the current PEM as `SALTEDGE_CALLBACK_PUBLIC_KEY` before processing production callbacks.
 
 ## Release gate
 
-Do not submit a paid or CSR-marketed version until items 2, 4, and 5 above are complete. A free beta can proceed after items 1, 2, 3, and 6 are completed and the signed TestFlight build passes device testing.
+Do not submit a paid or CSR-marketed version until items 4 and 5 above are complete. A free beta can proceed after item 1, the maintenance in item 3, and the App Store Connect work in item 6 are completed and the signed TestFlight build passes device testing. Item 2 is optional because unconfigured social sign-in is not exposed.

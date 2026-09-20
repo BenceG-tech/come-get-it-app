@@ -32,6 +32,8 @@ const BG_SOURCE = require('@/assets/images/login-bg-budapest-arcs.png');
 const CYAN = '#00C8E8' as const;
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.68)' as const;
 const TEXT_SOFT = 'rgba(255, 255, 255, 0.44)' as const;
+const ENABLE_GOOGLE_AUTH = process.env.EXPO_PUBLIC_ENABLE_GOOGLE_AUTH === 'true';
+const ENABLE_APPLE_AUTH = process.env.EXPO_PUBLIC_ENABLE_APPLE_AUTH === 'true';
 
 type Mode = 'login' | 'signup';
 type FocusedField = 'email' | 'password' | null;
@@ -131,6 +133,8 @@ function AuthScreen() {
 
   const primaryLabel = mode === 'login' ? 'Bejelentkezés' : 'Regisztráció';
   const secondaryLabel = mode === 'login' ? 'Regisztráció' : 'Bejelentkezés';
+  const showAppleAuth = Platform.OS === 'ios' && ENABLE_APPLE_AUTH;
+  const showSocialAuth = showAppleAuth || ENABLE_GOOGLE_AUTH;
 
   return (
     <View style={styles.root} testID="auth-root">
@@ -249,26 +253,34 @@ function AuthScreen() {
               </View>
               </BlurView>
 
-              <View style={styles.dividerBlock}>
-                <AuthDivider />
-              </View>
+              {showSocialAuth ? (
+                <>
+                  <View style={styles.dividerBlock}>
+                    <AuthDivider />
+                  </View>
 
-              <View style={styles.socialBlock}>
-                <SocialButton
-                  testID="auth-apple"
-                  icon={<Apple size={19} color="#FFFFFF" />}
-                  label="Folytatás az Apple-lel"
-                  onPress={onApple}
-                  disabled={loading}
-                />
-                <SocialButton
-                  testID="auth-google"
-                  icon={<Chrome size={19} color="#00C8E8" />}
-                  label="Folytatás a Google-lel"
-                  onPress={onGoogle}
-                  disabled={loading}
-                />
-              </View>
+                  <View style={styles.socialBlock}>
+                    {showAppleAuth ? (
+                      <SocialButton
+                        testID="auth-apple"
+                        icon={<Apple size={19} color="#FFFFFF" />}
+                        label="Folytatás az Apple-lel"
+                        onPress={onApple}
+                        disabled={loading}
+                      />
+                    ) : null}
+                    {ENABLE_GOOGLE_AUTH ? (
+                      <SocialButton
+                        testID="auth-google"
+                        icon={<Chrome size={19} color="#00C8E8" />}
+                        label="Folytatás a Google-lel"
+                        onPress={onGoogle}
+                        disabled={loading}
+                      />
+                    ) : null}
+                  </View>
+                </>
+              ) : null}
 
               <View style={styles.legalBlock}>
                 <AuthLegalText />

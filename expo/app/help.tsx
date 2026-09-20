@@ -10,7 +10,7 @@ export default function HelpScreen() {
   const handleContact = (method: string) => {
     switch (method) {
       case "email":
-        Linking.openURL("mailto:hello@come-get-it.app?subject=Come%20Get%20It%20seg%C3%ADts%C3%A9g");
+        Linking.openURL("mailto:gataibence@gmail.com?subject=Come%20Get%20It%20seg%C3%ADts%C3%A9g");
         break;
       case "phone":
         Linking.openURL("tel:+36705852053");
@@ -59,7 +59,7 @@ export default function HelpScreen() {
               </View>
               <View style={styles.contactInfo}>
                 <Text style={styles.contactTitle}>Email</Text>
-                <Text style={styles.contactSubtitle}>hello@come-get-it.app</Text>
+                <Text style={styles.contactSubtitle}>gataibence@gmail.com</Text>
               </View>
             </TouchableOpacity>
 

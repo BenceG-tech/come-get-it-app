@@ -42,6 +42,56 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function zonedDayBounds(date: Date, timeZone: string): { start: string; end: string } {
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const part = (type: string) => Number(dateParts.find((item) => item.type === type)?.value ?? '0');
+  const year = part('year');
+  const month = part('month');
+  const day = part('day');
+
+  const offsetAt = (instantMs: number): number => {
+    const instant = new Date(instantMs);
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(instant);
+    const value = (type: string) => Number(parts.find((item) => item.type === type)?.value ?? '0');
+    const representedAsUtc = Date.UTC(
+      value('year'),
+      value('month') - 1,
+      value('day'),
+      value('hour'),
+      value('minute'),
+      value('second'),
+    );
+    return representedAsUtc - Math.trunc(instantMs / 1000) * 1000;
+  };
+
+  const localMidnightToUtc = (localEpochMs: number): number => {
+    let result = localEpochMs - offsetAt(localEpochMs);
+    result = localEpochMs - offsetAt(result);
+    return result;
+  };
+
+  const startLocal = Date.UTC(year, month - 1, day);
+  const endLocal = Date.UTC(year, month - 1, day + 1);
+  return {
+    start: new Date(localMidnightToUtc(startLocal)).toISOString(),
+    end: new Date(localMidnightToUtc(endLocal)).toISOString(),
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -56,6 +106,16 @@ Deno.serve(async (req: Request) => {
 
   const { data: userData, error: userError } = await userClient.auth.getUser();
   if (userError || !userData.user) return json({ error: 'Unauthorized' }, 401);
+
+  const { data: reviewAccess, error: reviewAccessError } = await admin
+    .from('app_review_testers')
+    .select('enabled')
+    .eq('user_id', userData.user.id)
+    .maybeSingle<{ enabled: boolean }>();
+  if (reviewAccessError) {
+    console.warn('[confirm-redemption] App Review allowlist lookup failed', reviewAccessError.message);
+  }
+  const appReviewMode = reviewAccess?.enabled === true;
 
   const body = await req.json().catch(() => ({})) as JsonRecord;
   const token = typeof body.token === 'string' ? body.token.trim() : '';
@@ -73,6 +133,21 @@ Deno.serve(async (req: Request) => {
   if (tokenRow.user_id !== userData.user.id) return json({ error: 'Token belongs to another user' }, 403);
   if (tokenRow.status !== 'issued') return json({ error: 'Token already used' }, 409);
   if (new Date(tokenRow.expires_at).getTime() <= Date.now()) return json({ error: 'Token expired' }, 410);
+
+  if (!appReviewMode) {
+    const { start, end } = zonedDayBounds(new Date(), 'Europe/Budapest');
+    const { data: alreadyRedeemed, error: dailyLimitError } = await admin
+      .from('redemptions')
+      .select('id')
+      .eq('user_id', userData.user.id)
+      .eq('status', 'success')
+      .gte('redeemed_at', start)
+      .lt('redeemed_at', end)
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+    if (dailyLimitError) return json({ error: 'Daily limit lookup failed', detail: dailyLimitError.message }, 500);
+    if (alreadyRedeemed) return json({ error: 'DAILY_LIMIT_REACHED', next_available_at: end }, 429);
+  }
 
   const { data: drink } = tokenRow.drink_id
     ? await admin.from('venue_drinks').select('id,drink_name').eq('id', tokenRow.drink_id).maybeSingle<DrinkRow>()
@@ -102,7 +177,7 @@ Deno.serve(async (req: Request) => {
       token_id: tokenRow.id,
       redeemed_at: new Date().toISOString(),
       status: 'success',
-      metadata: { flow: 'guest_button' },
+      metadata: { flow: appReviewMode ? 'app_review' : 'guest_button' },
     })
     .select('id')
     .single<{ id: string }>();
@@ -114,6 +189,9 @@ Deno.serve(async (req: Request) => {
       .update({ status: 'issued', consumed_at: null })
       .eq('id', tokenRow.id)
       .eq('status', 'consumed');
+    if (redemptionError.code === '23505') {
+      return json({ error: 'DAILY_LIMIT_REACHED' }, 429);
+    }
     return json({ error: 'Redemption insert failed', detail: redemptionError.message }, 500);
   }
 
@@ -124,7 +202,7 @@ Deno.serve(async (req: Request) => {
     .maybeSingle<VenueRow>();
 
   let impactDelta = 0;
-  if (venue?.csr_enabled && venue.default_charity_id) {
+  if (!appReviewMode && venue?.csr_enabled && venue.default_charity_id) {
     const amountHuf = typeof venue.donation_per_redemption === 'number' && venue.donation_per_redemption > 0
       ? venue.donation_per_redemption
       : 250;

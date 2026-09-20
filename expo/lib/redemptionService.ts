@@ -160,6 +160,12 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
   }
 
   if (status === 429) {
+    if (rawMessage === 'DAILY_LIMIT_REACHED') {
+      return {
+        error: 'A mai ingyen italodat már beváltottad. Holnap újra várunk!',
+        code: 'RATE_LIMITED',
+      };
+    }
     return {
       error: errorMessage || 'Túl sok kérés. Kérjük, várj egy kicsit.',
       code: 'RATE_LIMITED',

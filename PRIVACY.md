@@ -8,7 +8,7 @@ A Come Get It mobilalkalmazás és kapcsolódó szolgáltatások üzemeltetőjek
 
 Adatkezelő: Come Get It
 
-E-mail: hello@come-get-it.app
+E-mail: gataibence@gmail.com
 
 Telefon: +36 70 585 2053
 
@@ -50,7 +50,7 @@ A fiókhoz tartozó személyes adatokat a fiók fennállásáig, illetve a szük
 
 ## 6. Adatbiztonság
 
-Hozzáférés-szabályozást, titkosított adatátvitelt, jogosultság-ellenőrzést és szerveroldali beváltás-ellenőrzést alkalmazunk. Egyetlen internetes szolgáltatás sem garantálhat teljes kockázatmentességet; biztonsági esemény gyanúját a hello@come-get-it.app címen lehet jelezni.
+Hozzáférés-szabályozást, titkosított adatátvitelt, jogosultság-ellenőrzést és szerveroldali beváltás-ellenőrzést alkalmazunk. Egyetlen internetes szolgáltatás sem garantálhat teljes kockázatmentességet; biztonsági esemény gyanúját a gataibence@gmail.com címen lehet jelezni.
 
 ## 7. Felhasználói jogok
 

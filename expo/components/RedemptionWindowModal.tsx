@@ -68,7 +68,6 @@ type FlowState =
   | 'error';
 
 const DEMO_MODE = __DEV__ && process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
-const MAX_DISTANCE_METERS = 100;
 const WINDOW_SECONDS = 120;
 const CYAN = '#00C8E8' as const;
 
@@ -323,40 +322,17 @@ export default function RedemptionWindowModal({
       let userCoordinates: Coordinates | null = null;
       setLocationWarning(null);
 
-      if (!DEMO_MODE) {
-        if (!venueCoordinates) {
-          setErrorMessage('Ennél a partnerhelynél még hiányzik a beváltási helyzet. Kérj segítséget a személyzettől.');
-          setState('not_eligible');
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          return;
-        } else {
-          const current = await getCurrentLocation().catch(() => null);
-          if (!current?.coords) {
-            setErrorMessage('A beváltáshoz engedélyezd a helymeghatározást, hogy ellenőrizni tudjuk: a partnerhelynél vagy.');
-            setState('not_eligible');
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            return;
-          } else {
-            userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
-            const measured = distanceMeters(userCoordinates, venueCoordinates);
-            setDistance(measured);
-            if (measured > MAX_DISTANCE_METERS) {
-              setErrorMessage(`Most kb. ${Math.round(measured)} méterre vagy. A beváltáshoz 100 méteren belül kell lenned.`);
-              setState('not_eligible');
-              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              return;
-            }
-          }
+      if (!DEMO_MODE && venueCoordinates) {
+        const current = await getCurrentLocation().catch(() => null);
+        if (current?.coords) {
+          userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
+          setDistance(distanceMeters(userCoordinates, venueCoordinates));
         }
       }
 
-      const localEligibility = checkLocalEligibility(freeDrinkWindows, drink.id);
-      if (!DEMO_MODE && !localEligibility.eligible) {
-        setErrorMessage('Most nincs aktív ingyen ital idősáv ezen a helyen.');
-        setState('not_eligible');
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        return;
-      }
+      // The server is authoritative for distance and offer-window checks. This
+      // also lets a service-role allowlisted App Review account exercise the
+      // complete flow without weakening checks for normal users.
 
       const response = await createRedemptionWindow({
         venue_id: venueId,
@@ -400,7 +376,7 @@ export default function RedemptionWindowModal({
       setState('error');
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [drink, freeDrinkWindows, getCurrentLocation, startCountdown, venueCoordinates, venueId]);
+  }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId]);
 
   const handleConfirm = useCallback(async () => {
     if (!windowToken) return;

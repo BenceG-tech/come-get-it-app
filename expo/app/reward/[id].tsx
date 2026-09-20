@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,6 +19,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
+import { redeemReward } from "@/lib/rewardService";
 import { rest } from "@/lib/supabaseRest";
 import type { Reward } from "@/types/reward";
 
@@ -59,7 +60,8 @@ export default function RewardDetailScreen() {
   const params = useLocalSearchParams();
   const rewardId = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const insets = useSafeAreaInsets();
-  const { points } = useAppContext();
+  const { points, addPoints } = useAppContext();
+  const [redeeming, setRedeeming] = useState(false);
 
   const rewardQuery = useQuery({
     queryKey: ["reward", rewardId],
@@ -79,6 +81,28 @@ export default function RewardDetailScreen() {
   const canRedeem = Boolean(reward && points >= reward.points_required);
   const missingPoints = reward ? Math.max(reward.points_required - points, 0) : 0;
   const meta = useMemo(() => categoryMeta(reward?.category), [reward?.category]);
+
+  const handleRedeem = useCallback(async () => {
+    if (!reward || redeeming) return;
+    if (!canRedeem) {
+      Alert.alert("Nincs elég pont", `Ehhez még ${missingPoints.toLocaleString("hu-HU")} pont hiányzik.`);
+      return;
+    }
+
+    setRedeeming(true);
+    try {
+      const result = await redeemReward(reward.id);
+      addPoints(result.new_balance - points);
+      Alert.alert(
+        "Sikeres beváltás",
+        `${result.reward_name}\n\nBeváltási kód: ${result.redemption_code}\n\nMutasd meg ezt a kódot a személyzetnek.`
+      );
+    } catch (error) {
+      Alert.alert("Nem sikerült beváltani", error instanceof Error ? error.message : "Próbáld újra.");
+    } finally {
+      setRedeeming(false);
+    }
+  }, [addPoints, canRedeem, missingPoints, points, redeeming, reward]);
 
   const unlockSteps = useMemo<UnlockStep[]>(
     () => [
@@ -227,21 +251,19 @@ export default function RewardDetailScreen() {
 
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <TouchableOpacity
-          style={[styles.redeemButton, !canRedeem && styles.redeemButtonDisabled]}
+          style={[styles.redeemButton, (!canRedeem || redeeming) && styles.redeemButtonDisabled]}
           activeOpacity={0.88}
-          onPress={() => {
-            console.log("[RewardDetail] redeem pressed", { rewardId: reward.id, canRedeem, points });
-            if (!canRedeem) {
-              Alert.alert("Nincs elég pont", `Ehhez még ${missingPoints.toLocaleString("hu-HU")} pont hiányzik.`);
-              return;
-            }
-            Alert.alert("Beváltás előkészítve", "Mutasd meg ezt az ajánlatot a partnerhelyen, és a személyzet aktiválja.");
-          }}
+          onPress={handleRedeem}
+          disabled={redeeming}
         >
-          <Text style={[styles.redeemButtonText, !canRedeem && styles.redeemButtonTextDisabled]}>
-            {canRedeem ? "Jutalom beváltása" : `${reward.points_required.toLocaleString("hu-HU")} pont szükséges`}
-          </Text>
-          {canRedeem && <ArrowRight size={18} color="#001014" />}
+          {redeeming ? <ActivityIndicator color="#001014" /> : (
+            <>
+              <Text style={[styles.redeemButtonText, !canRedeem && styles.redeemButtonTextDisabled]}>
+                {canRedeem ? "Jutalom beváltása" : `${reward.points_required.toLocaleString("hu-HU")} pont szükséges`}
+              </Text>
+              {canRedeem && <ArrowRight size={18} color="#001014" />}
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </View>

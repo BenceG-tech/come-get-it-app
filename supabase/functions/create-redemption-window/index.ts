@@ -17,8 +17,6 @@ type VenueRow = {
   name: string;
   is_paused?: boolean | null;
   coordinates?: { lat?: number | string; lng?: number | string } | null;
-  latitude?: number | string | null;
-  longitude?: number | string | null;
 };
 
 type DrinkRow = {
@@ -51,8 +49,8 @@ function numeric(value: unknown): number | null {
 }
 
 function venueCoordinates(venue: VenueRow): { latitude: number; longitude: number } | null {
-  const latitude = numeric(venue.latitude ?? venue.coordinates?.lat);
-  const longitude = numeric(venue.longitude ?? venue.coordinates?.lng);
+  const latitude = numeric(venue.coordinates?.lat);
+  const longitude = numeric(venue.coordinates?.lng);
   if (latitude === null || longitude === null || (latitude === 0 && longitude === 0)) return null;
   return { latitude, longitude };
 }
@@ -125,12 +123,23 @@ Deno.serve(async (req: Request) => {
   const clientDemoMode = body.demo_mode === true;
   const demoMode = serverDemoMode && clientDemoMode;
 
+  const { data: reviewAccess, error: reviewAccessError } = await admin
+    .from('app_review_testers')
+    .select('enabled')
+    .eq('user_id', userData.user.id)
+    .maybeSingle<{ enabled: boolean }>();
+  if (reviewAccessError) {
+    console.warn('[create-redemption-window] App Review allowlist lookup failed', reviewAccessError.message);
+  }
+  const appReviewMode = reviewAccess?.enabled === true;
+  const bypassVenueChecks = demoMode || appReviewMode;
+
   if (!isUuid(venueId)) return json({ error: 'Missing or invalid venue_id' }, 400);
   if (drinkId !== null && drinkId !== undefined && !isUuid(drinkId)) return json({ error: 'Invalid drink_id' }, 400);
 
   const { data: venue, error: venueError } = await admin
     .from('venues')
-    .select('id,name,is_paused,coordinates,latitude,longitude')
+    .select('id,name,is_paused,coordinates')
     .eq('id', venueId)
     .maybeSingle<VenueRow>();
 
@@ -138,7 +147,7 @@ Deno.serve(async (req: Request) => {
   if (!venue) return json({ error: 'Venue not found' }, 404);
   if (venue.is_paused) return json({ error: 'Venue is paused' }, 403);
 
-  if (!demoMode) {
+  if (!bypassVenueChecks) {
     const venueCoords = venueCoordinates(venue);
     const userLatitude = numeric(body.user_latitude);
     const userLongitude = numeric(body.user_longitude);
@@ -156,7 +165,7 @@ Deno.serve(async (req: Request) => {
   const drink = drinks?.[0];
   if (!drink) return json({ error: 'No free drink configured' }, 400);
 
-  if (!demoMode) {
+  if (!bypassVenueChecks) {
     const { data: windows, error: windowError } = await admin
       .from('free_drink_windows')
       .select('id,days,start_time,end_time,timezone')
@@ -222,5 +231,6 @@ Deno.serve(async (req: Request) => {
     venue: { id: venue.id, name: venue.name },
     drink: { id: drink.id, name: drink.drink_name },
     demo_mode: demoMode,
+    app_review_mode: appReviewMode,
   });
 });
