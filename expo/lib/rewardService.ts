@@ -15,6 +15,7 @@ function friendlyRewardError(code: string): string {
   if (code === 'INSUFFICIENT_POINTS') return 'Nincs elég pontod ehhez a jutalomhoz.';
   if (code === 'REWARD_NOT_FOUND') return 'A jutalom már nem található.';
   if (code === 'REWARD_INACTIVE') return 'Ez a jutalom jelenleg nem váltható be.';
+  if (code === 'REWARD_VENUE_INACTIVE') return 'A jutalom partnerhelye jelenleg nem elérhető.';
   if (code === 'REWARD_EXPIRED') return 'A jutalom érvényessége lejárt.';
   if (code === 'REWARD_LIMIT_REACHED') return 'Ez a jutalom elfogyott.';
   return 'A jutalom beváltása most nem sikerült. Próbáld újra.';

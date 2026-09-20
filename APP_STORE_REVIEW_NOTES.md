@@ -27,7 +27,7 @@ Suggested test flow:
 2. On the Venues tab, browse the map/list and open “Come Get It Restaurant”.
 3. Select the available drink “Midnight Tonic”.
 4. Tap “Kérd ingyen italod”, continue through the arrival/show steps, then tap “BEVÁLTOM”.
-5. Open the Rewards tab to view the live rewards catalog.
+5. Open the Rewards tab to view the live rewards availability state. This screen is backed by the production catalog and may show an empty state when participating venues have no currently active reward inventory.
 6. Open Profile → Favorites to view saved venues.
 7. Open Profile → Account to edit profile data, request a password reset, sign out, or initiate permanent account deletion.
 
