@@ -71,6 +71,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": "https://rork.com/"
+      },
+      "eas": {
+        "projectId": "204d3d0d-0284-4e03-aaad-d5a7b71b89aa"
+      }
+    },
+    "owner": "bencegatai"
   }
 }
