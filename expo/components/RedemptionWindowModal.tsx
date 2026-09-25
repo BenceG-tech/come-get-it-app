@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
+import QRCode from 'react-native-qrcode-svg';
 import {
   AlertCircle,
   ArrowLeft,
@@ -503,7 +504,7 @@ export default function RedemptionWindowModal({
                 <View style={styles.openWindowDot} />
                 <Text style={styles.openWindowChipText}>Ablak megnyitva</Text>
               </View>
-              <Text style={styles.countdownTitle}>Mutasd a pultosnak</Text>
+              <Text style={styles.countdownTitle}>Olvastasd be a pultossal</Text>
               {windowToken?.fallback_mode && (
                 <View style={styles.fallbackChip} testID="fallback-mode-chip">
                   <AlertCircle size={12} color="#FFB020" />
@@ -516,45 +517,59 @@ export default function RedemptionWindowModal({
             </View>
 
             <View style={styles.countdownMiddle}>
-              <View style={[styles.timerWrap, styles.timerGlow, lowTime && styles.timerGlowWarning]}>
-              <Svg width={RING_SIZE} height={RING_SIZE} style={styles.timerSvg}>
-                <Circle
-                  cx={RING_SIZE / 2}
-                  cy={RING_SIZE / 2}
-                  r={RING_RADIUS}
-                  stroke="rgba(255,255,255,0.08)"
-                  strokeWidth={RING_STROKE}
-                  fill="none"
-                />
-                <AnimatedCircle
-                  cx={RING_SIZE / 2}
-                  cy={RING_SIZE / 2}
-                  r={RING_RADIUS}
-                  stroke={ringColor}
-                  strokeWidth={RING_STROKE}
-                  strokeLinecap="round"
-                  fill="none"
-                  strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
-                  strokeDashoffset={ringProgress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [RING_CIRCUMFERENCE, 0],
-                  })}
-                  transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-                />
-              </Svg>
-                <View style={styles.timerInner} pointerEvents="none">
-                  <Clock3 size={20} color={ringColor} />
-                  <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
-                  <Text style={styles.timerLabel}>maradt</Text>
+              <View style={styles.redemptionCodeRow}>
+                <View style={[styles.timerWrap, styles.timerGlow, lowTime && styles.timerGlowWarning]}>
+                  <Svg width={RING_SIZE} height={RING_SIZE} style={styles.timerSvg}>
+                    <Circle
+                      cx={RING_SIZE / 2}
+                      cy={RING_SIZE / 2}
+                      r={RING_RADIUS}
+                      stroke="rgba(255,255,255,0.08)"
+                      strokeWidth={RING_STROKE}
+                      fill="none"
+                    />
+                    <AnimatedCircle
+                      cx={RING_SIZE / 2}
+                      cy={RING_SIZE / 2}
+                      r={RING_RADIUS}
+                      stroke={ringColor}
+                      strokeWidth={RING_STROKE}
+                      strokeLinecap="round"
+                      fill="none"
+                      strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
+                      strokeDashoffset={ringProgress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [RING_CIRCUMFERENCE, 0],
+                      })}
+                      transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+                    />
+                  </Svg>
+                  <View style={styles.timerInner} pointerEvents="none">
+                    <Clock3 size={20} color={ringColor} />
+                    <Text style={[styles.timerValue, lowTime && styles.timerValueWarning]}>{formatTimeRemaining(timeRemaining)}</Text>
+                    <Text style={styles.timerLabel}>maradt</Text>
+                  </View>
                 </View>
+                {windowToken && (
+                  <View style={styles.qrCard} testID="redemption-qr-code">
+                    <QRCode
+                      value={windowToken.qr_payload || windowToken.token}
+                      size={132}
+                      color="#071014"
+                      backgroundColor="#FFFFFF"
+                    />
+                  </View>
+                )}
               </View>
+
+              <Text style={styles.qrHelperText}>A partner a Venue Hub QR-szkennerével olvassa be.</Text>
 
               <Text style={styles.drinkName}>{selectedDrinkName}</Text>
               <Text style={styles.venueName}>{venueName}</Text>
             </View>
 
             <View style={styles.countdownBottom}>
-              <Text style={styles.confirmHint}>A pultos a te telefonodon nyomja meg a gombot.</Text>
+              <Text style={styles.confirmHint}>Ha a kamera nem használható, a pultos ezen a telefonon is jóváhagyhatja.</Text>
               <Pressable
                 onPress={handleConfirm}
                 testID="redeem-now-button"
@@ -568,7 +583,7 @@ export default function RedemptionWindowModal({
                   end={{ x: 1, y: 1 }}
                   style={styles.redeemButtonGradient}
                 >
-                  <Text style={styles.redeemButtonText}>BEVÁLTOM</Text>
+                  <Text style={styles.redeemButtonText}>KÉZI JÓVÁHAGYÁS</Text>
                 </LinearGradient>
               </Pressable>
 
@@ -1125,6 +1140,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
+  redemptionCodeRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  qrCard: {
+    width: 156,
+    height: 156,
+    padding: 12,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: CYAN,
+    shadowColor: CYAN,
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+  qrHelperText: {
+    color: 'rgba(255,255,255,0.62)',
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   countdownBottom: {
     width: '100%',
     maxWidth: 340,
@@ -1205,7 +1250,7 @@ const styles = StyleSheet.create({
   },
   redeemButtonGradient: {
     width: '100%',
-    minHeight: 72,
+    minHeight: 58,
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1218,7 +1263,7 @@ const styles = StyleSheet.create({
   },
   redeemButtonText: {
     color: '#001014',
-    fontSize: 24,
+    fontSize: 17,
     fontWeight: '900',
     letterSpacing: 1.4,
   },

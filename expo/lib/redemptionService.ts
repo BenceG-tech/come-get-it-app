@@ -4,17 +4,6 @@ import { getSupabase } from '@/lib/supabaseClient';
 const REDEMPTION_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export type IssueTokenRequest = {
-  venue_id: string;
-  drink_id: string;
-  user_id: string;
-  device_fingerprint: string;
-};
-
-export type IssueTokenResponse = 
-  | { success: true; data: RedemptionToken }
-  | { success: false; error: RedemptionError };
-
 export type RedemptionWindow = RedemptionToken & {
   expires_in_seconds: number;
   venue?: {
@@ -59,12 +48,6 @@ export type ConfirmRedemptionResponse =
       };
     }
   | { success: false; error: RedemptionError };
-
-function getDeviceFingerprint(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).replace(/[^a-zA-Z0-9-]/g, '').substring(2, 16);
-  return `device-${timestamp}-${random}`;
-}
 
 function getTodayISODay(): number {
   const jsDay = new Date().getDay();
@@ -497,62 +480,6 @@ export async function confirmRedemption(
       total_impact_units: typeof data.total_impact_units === 'number' ? data.total_impact_units : null,
     },
   };
-}
-
-export async function issueRedemptionToken(
-  venueId: string,
-  drinkId: string,
-  userId: string
-): Promise<IssueTokenResponse> {
-  console.log('[RedemptionService] Issuing legacy QR token for venue:', venueId, 'drink:', drinkId);
-  
-  const deviceFingerprint = getDeviceFingerprint();
-  
-  try {
-    const accessToken = await getAccessToken();
-    const response = await fetch(`${REDEMPTION_BASE_URL}/functions/v1/issue-redemption-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${accessToken ?? SUPABASE_ANON}`,
-      },
-      body: JSON.stringify({
-        venue_id: venueId,
-        drink_id: drinkId,
-        user_id: userId,
-        device_fingerprint: deviceFingerprint,
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
-      console.error('[RedemptionService] Server error:', response.status, JSON.stringify(errorData));
-      return { success: false, error: mapRedemptionError(response.status, errorData) };
-    }
-    
-    const data = await response.json();
-    console.log('[RedemptionService] Legacy QR token issued successfully:', data.token_id);
-    
-    return {
-      success: true,
-      data: {
-        token: data.token,
-        token_id: data.token_id,
-        expires_at: data.expires_at,
-        qr_payload: data.qr_payload,
-      },
-    };
-  } catch (error) {
-    console.error('[RedemptionService] Network error:', error);
-    return {
-      success: false,
-      error: {
-        error: 'Hálózati hiba. Ellenőrizd az internetkapcsolatod.',
-        code: 'NETWORK_ERROR',
-      },
-    };
-  }
 }
 
 export function generateMockToken(venueId: string, drinkId: string): RedemptionToken {

@@ -14,8 +14,8 @@ Deno.serve((req: Request) => {
   return new Response(
     JSON.stringify({
       success: false,
-      code: "ENDPOINT_DISABLED",
-      message: "Production test-data seeding is disabled.",
+      code: "LEGACY_ENDPOINT_DISABLED",
+      message: "Use create-redemption-window for authenticated redemption.",
     }),
     {
       status: 410,
