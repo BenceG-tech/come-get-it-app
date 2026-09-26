@@ -19,12 +19,6 @@ export type RedemptionWindow = RedemptionToken & {
   fallback_mode?: boolean;
 };
 
-export type FallbackConfirmContext = {
-  venue_id: string;
-  drink_id?: string | null;
-  drink_name: string;
-};
-
 export type CreateRedemptionWindowRequest = {
   venue_id: string;
   drink_id?: string | null;
@@ -37,15 +31,16 @@ export type CreateRedemptionWindowResponse =
   | { success: true; data: RedemptionWindow }
   | { success: false; error: RedemptionError };
 
-export type ConfirmRedemptionResponse =
+export type RedemptionWindowStatusResponse =
   | {
       success: true;
-      data: {
-        redemption_id?: string | null;
-        impact_delta: number;
-        impact_message: string;
-        total_impact_units?: number | null;
-      };
+      status: 'issued' | 'consumed' | 'expired' | 'revoked';
+      redemption?: {
+        id?: string | null;
+        drink_name?: string | null;
+        venue_name?: string | null;
+        redeemed_at?: string | null;
+      } | null;
     }
   | { success: false; error: RedemptionError };
 
@@ -398,87 +393,38 @@ export async function createRedemptionWindow(
   };
 }
 
-/**
- * Local fallback confirmation: best-effort writes the redemption directly to
- * the database (RLS may reject it — the flow still succeeds either way).
- */
-async function confirmRedemptionLocally(context?: FallbackConfirmContext): Promise<ConfirmRedemptionResponse> {
-  if (context) {
-    try {
-      const supabase = getSupabase();
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id ?? null;
-      if (userId) {
-        const { error } = await supabase.from('redemptions').insert({
-          venue_id: context.venue_id,
-          user_id: userId,
-          drink: context.drink_name,
-          drink_id: context.drink_id ?? null,
-          value: 0,
-          redeemed_at: new Date().toISOString(),
-          status: 'success',
-          metadata: { flow: 'local_fallback', impact_message: '+1 ember kap ma tiszta vizet' },
-        });
-        if (error) {
-          console.warn('[RedemptionService] Fallback redemption insert rejected (RLS?), continuing', { message: error.message });
-        } else {
-          console.log('[RedemptionService] Fallback redemption saved directly to database');
-        }
-      }
-    } catch (error) {
-      console.warn('[RedemptionService] Fallback redemption insert failed, continuing', error);
-    }
-  }
-
-  return {
-    success: true,
-    data: {
-      redemption_id: null,
-      impact_delta: 1,
-      impact_message: '+1 ember kap ma tiszta vizet',
-      total_impact_units: null,
-    },
-  };
-}
-
-export async function confirmRedemption(
-  token: string,
-  fallbackContext?: FallbackConfirmContext
-): Promise<ConfirmRedemptionResponse> {
+export async function getRedemptionWindowStatus(token: string): Promise<RedemptionWindowStatusResponse> {
   if (isLocalFallbackToken(token)) {
-    if (demoFallbackEnabled) {
-      console.log('[RedemptionService] Confirming local fallback token');
-      return confirmRedemptionLocally(fallbackContext);
-    }
-    return {
-      success: false,
-      error: { error: 'A demó token éles környezetben nem váltható be.', code: 'BAD_REQUEST' },
-    };
+    return { success: true, status: 'issued' };
   }
 
   const result = await postRedemptionFunction<{ token: string }, Record<string, unknown>>(
-    'confirm-redemption',
+    'get-redemption-window-status',
     { token },
     true
   );
 
   if (!result.ok) {
-    if (result.error.code === 'FUNCTION_NOT_DEPLOYED' && demoFallbackEnabled) {
-      console.warn('[RedemptionService] confirm-redemption not deployed — confirming locally');
-      return confirmRedemptionLocally(fallbackContext);
-    }
     return { success: false, error: result.error };
   }
 
   const data = result.data;
+  const status = data.status;
+  if (status !== 'issued' && status !== 'consumed' && status !== 'expired' && status !== 'revoked') {
+    return { success: false, error: { error: 'Ismeretlen beváltási állapot.', code: 'UNKNOWN' } };
+  }
+
   return {
     success: true,
-    data: {
-      redemption_id: typeof data.redemption_id === 'string' ? data.redemption_id : null,
-      impact_delta: typeof data.impact_delta === 'number' ? data.impact_delta : 0,
-      impact_message: typeof data.impact_message === 'string' ? data.impact_message : 'Sikeres beváltás',
-      total_impact_units: typeof data.total_impact_units === 'number' ? data.total_impact_units : null,
-    },
+    status,
+    redemption: data.redemption && typeof data.redemption === 'object'
+      ? data.redemption as {
+          id?: string | null;
+          drink_name?: string | null;
+          venue_name?: string | null;
+          redeemed_at?: string | null;
+        }
+      : null,
   };
 }
 

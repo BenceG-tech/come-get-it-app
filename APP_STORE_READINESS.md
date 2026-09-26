@@ -1,17 +1,18 @@
 # Come Get It — App Store readiness
 
-Last verified: 2026-09-25
+Last verified: 2026-09-26
 
 ## Ready in the repository
 
-- Expo SDK 54 project passes `expo-doctor` (18/18), TypeScript validation, public config generation, and web production export.
+- Expo SDK 54 project passes `expo-doctor` (18/18), TypeScript validation, public config generation, and the production iOS JavaScript/Hermes export.
 - iOS metadata is set for `app.comegetit.mobile`, build `1`, foreground-only location access, Sign in with Apple, and non-exempt encryption disabled.
 - The Expo project is linked to EAS as `@bencegatai/come-get-it-app`. Production Supabase URL/key variables are configured, while unfinished social-login and demo-mode feature flags are explicitly disabled.
 - The 1024×1024 App Store icon is opaque (no alpha channel).
 - Android uses the same application ID and explicitly blocks background location, foreground location service, and microphone access.
 - Authentication recovers from invalid stored refresh tokens, preserves existing profile points, handles confirmed-email registration, password reset, Google OAuth, and Sign in with Apple.
 - Users can edit their real profile, sign out, and delete their account in-app. Account deletion is implemented as an authenticated Supabase Edge Function.
-- Redemption confirmation is authenticated, consumes a token atomically, writes the database-supported `success` status, and restores the token when the redemption insert fails.
+- Redemption confirmation is partner-only and atomic: one database transaction locks the token, verifies the partner's venue scope, creates the redemption, and consumes the token. The customer app only polls its own token and shows success after the partner scan.
+- The former customer-side `confirm-redemption` path is permanently disabled with HTTP 410. Production contains no manual self-approval button.
 - Production redemption no longer falls back to demo success. Demo behavior is restricted to development builds with an explicit environment flag.
 - The consumer app no longer exposes the legacy admin editor or unfinished mock payment, card, referral, coupon, address, visit-history, mission, and token screens.
 - The app shows only real backend rewards and profile data. CSR impact is shown only when a real donation was created.
@@ -30,9 +31,9 @@ Last verified: 2026-09-25
 - Supabase project: `nrxfiblssxwzeziomlvc` (EU North).
 - 5 active venues out of 11 total; all 11 have coordinates.
 - 5 active venues out of 11 total, 18 venue drinks, 19 free-drink windows, 2 active reward rows, 1 customer-visible reward, 28 redemption records, and 1 explicitly scoped partner membership.
-- `create-redemption-window` version 9, `confirm-redemption` version 9, `delete-account` version 2, and `redeem-reward` version 40 are deployed. The active redemption and account-deletion functions use gateway JWT verification; `redeem-reward` validates the user token inside the function.
+- `create-redemption-window` version 16, `consume-redemption-token` version 50, `get-redemption-window-status` version 5, and the disabled `confirm-redemption` version 16 are deployed. The customer, partner, status, disabled compatibility, analytics, and account-management routes require authenticated JWTs at the gateway; the deliberate machine-to-machine/webhook exceptions perform their own key or signature checks.
 - Anonymous callers cannot use the protected redemption or account-deletion functions.
-- The production redemption flow was exercised end to end with an authenticated App Review account: token creation and confirmation both succeeded against live venue/drink data.
+- The production redemption flow was exercised end to end after the final Lovable redeploy: an authenticated App Review user created a correctly formatted `CGI-XXXXXX-<32-character secret>` token, the customer-only status route returned `issued`, the scoped partner consumed it, status changed to `consumed`, and a repeated scan returned HTTP 409 `ALREADY_CONSUMED`.
 - Rork automatically synchronized the release-hardening commits from GitHub. Its current web preview was retested with the App Review account through sign-in, live venue loading, favorite add/remove, venue details, the review redemption handoff, rewards, profile, and the account-management screen.
 - Normal accounts must pass the server-side 100 m venue and active-offer-window checks. The dedicated App Review account is service-role allowlisted to bypass only those two environmental checks; authentication, token expiry, and single-use consumption remain enforced.
 - A database unique index and server check enforce at most one successful free-drink redemption per normal user per Budapest calendar day. A controlled duplicate-insert test was rejected and its test rows were removed.
@@ -42,8 +43,9 @@ Last verified: 2026-09-25
 - All 21 previously uncovered foreign keys now have supporting indexes, all 41 per-row `auth.uid()` RLS advisor warnings are resolved, and identity-dependent policies no longer target every Postgres role. Remaining multiple-policy notices are performance-only overlaps between intentionally distinct public, owner, and administrator paths.
 - Supabase Auth uses the production Rork URL as the Site URL and allowlists the HTTPS preview URL, Expo URL, and `comegetit://` deep links.
 - Email confirmation links/OTPs expire after 3,600 seconds. Leaked-password protection, secure password change, and an eight-character minimum are enabled.
-- The production test-data endpoint and the obsolete `issue-redemption-token` endpoint are now permanently disabled with HTTP 410 responses and gateway JWT verification. The active mobile flow uses only `create-redemption-window` and the authenticated partner scanner uses `consume-redemption-token`.
-- The mobile redemption window now renders the real 120-second QR token locally on-device. Venue Hub's authenticated camera scanner consumed that token successfully; a repeated scan returned `ALREADY_CONSUMED`, and the same partner account was rejected with `VENUE_UNAUTHORIZED` for another venue's token.
+- The production test-data endpoint, obsolete `issue-redemption-token` endpoint, and former customer-side `confirm-redemption` endpoint are permanently disabled with HTTP 410 responses and gateway JWT verification. The active flow uses `create-redemption-window`, `consume-redemption-token`, and `get-redemption-window-status` only.
+- The mobile redemption window renders the real 120-second QR token locally and polls for a partner-confirmed result. A controlled concurrent double-scan test produced exactly one HTTP 200 success and one HTTP 409 `ALREADY_CONSUMED`; a later repeat was also rejected. The same scoped partner account was rejected with `VENUE_UNAUTHORIZED` for another venue's token. All audit rows were removed after verification.
+- The Lovable Venue Hub source now contains the same atomic redemption migration and hardened Edge Function sources as production. Its function configuration contains one entry per function, with 43 authenticated routes and 10 intentional public/custom-key routes; the configuration audit found no duplicate or mismatched blocks. All nine final corrected Edge Functions passed Deno checking, and the Venue Hub TypeScript check and production build passed.
 - Geocoding, AI recommendation, user-directory, and dashboard-stat endpoints now require JWTs; dashboard statistics additionally derive the effective role server-side and enforce administrator or venue membership/ownership access. `get-dashboard-stats` version 37 rejects client-forged administrator scope and has gateway JWT verification enabled.
 - Live platform status and anomaly reports now require an authenticated administrator. `get-live-platform-status` version 32 uses the production redemption schema (`redeemed_at`, `drink`), performs its own administrator check, and has gateway JWT verification enabled. Venue revenue/free-drink analytics require administrator or venue-membership access.
 - Direct `venues.owner_profile_id` ownership is included alongside `venue_memberships` in the shared venue-authorization helper, keeping mobile/backend RLS and Venue Hub session scope consistent.

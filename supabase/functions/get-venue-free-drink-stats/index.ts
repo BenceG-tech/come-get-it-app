@@ -130,6 +130,12 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { venue_id } = await req.json();
+    if (!venue_id) {
+      return new Response(
+        JSON.stringify({ error: "venue_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -148,22 +154,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const [{ data: profile }, { data: membership }] = await Promise.all([
+    const [{ data: profile }, { data: membership }, { data: ownedVenue }] = await Promise.all([
       supabase.from("profiles").select("is_admin").eq("id", user.id).single(),
       supabase.from("venue_memberships").select("venue_id").eq("profile_id", user.id).eq("venue_id", venue_id).maybeSingle(),
+      supabase.from("venues").select("id").eq("id", venue_id).eq("owner_profile_id", user.id).maybeSingle(),
     ]);
-    if (!profile?.is_admin && !membership) {
+    if (!profile?.is_admin && !membership && !ownedVenue) {
       return new Response(JSON.stringify({ error: "Venue access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    if (!venue_id) {
-      return new Response(
-        JSON.stringify({ error: "venue_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
     const now = new Date();
@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Error in get-venue-free-drink-stats:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unexpected error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -33,11 +33,11 @@ import { useLocation } from '@/context/LocationContext';
 import { VenueDrink, FreeDrinkWindow } from '@/types/venue';
 import {
   checkLocalEligibility,
-  confirmRedemption,
   createRedemptionWindow,
   formatTimeRemaining,
   generateMockRedemptionWindow,
   getDayLabel,
+  getRedemptionWindowStatus,
   getTimeRemainingMs,
   RedemptionWindow,
 } from '@/lib/redemptionService';
@@ -62,7 +62,6 @@ type FlowState =
   | 'step2_show'
   | 'checking'
   | 'countdown'
-  | 'confirming'
   | 'success'
   | 'not_eligible'
   | 'expired'
@@ -133,6 +132,7 @@ export default function RedemptionWindowModal({
   const [impactDelta, setImpactDelta] = useState<number>(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusCheckInFlightRef = useRef(false);
 
   // Animations
   const pulseScale = useRef(new Animated.Value(1)).current;
@@ -272,6 +272,42 @@ export default function RedemptionWindowModal({
     ]).start();
   }, [state, waterOpacity, waterScale, haloScale]);
 
+  useEffect(() => {
+    if (state !== 'countdown' || !windowToken || windowToken.demo_mode || windowToken.fallback_mode) return;
+
+    let cancelled = false;
+    const checkStatus = async () => {
+      if (statusCheckInFlightRef.current) return;
+      statusCheckInFlightRef.current = true;
+      try {
+        const response = await getRedemptionWindowStatus(windowToken.token);
+        if (cancelled || !response.success) return;
+        if (response.status === 'consumed') {
+          clearTimer();
+          setImpactDelta(0);
+          setImpactMessage('Sikeres partneri QR-beváltás');
+          setState('success');
+          queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else if (response.status === 'expired' || response.status === 'revoked') {
+          clearTimer();
+          setWindowToken(null);
+          setState('expired');
+        }
+      } finally {
+        statusCheckInFlightRef.current = false;
+      }
+    };
+
+    void checkStatus();
+    const interval = setInterval(() => void checkStatus(), 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      statusCheckInFlightRef.current = false;
+    };
+  }, [clearTimer, queryClient, state, windowToken]);
+
   const startCountdown = useCallback(
     (expiresAt: string) => {
       clearTimer();
@@ -379,49 +415,14 @@ export default function RedemptionWindowModal({
     }
   }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId]);
 
-  const handleConfirm = useCallback(async () => {
-    if (!windowToken) return;
+  const handleDemoConfirm = useCallback(async () => {
+    if (!DEMO_MODE) return;
     clearTimer();
-    setState('confirming');
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-    if (DEMO_MODE && windowToken.demo_mode) {
-      setImpactMessage('+1 ember kap ma tiszta vizet');
-      setImpactDelta(1);
-      setState('success');
-      queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    const response = await confirmRedemption(
-      windowToken.token,
-      windowToken.fallback_mode
-        ? { venue_id: venueId, drink_id: drink?.id ?? null, drink_name: selectedDrinkName }
-        : undefined
-    );
-    if (response.success) {
-      setImpactMessage(response.data.impact_message || 'Sikeres beváltás');
-      setImpactDelta(response.data.impact_delta);
-      setState('success');
-      queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    if (DEMO_MODE) {
-      setImpactMessage('+1 ember kap ma tiszta vizet');
-      setImpactDelta(1);
-      setState('success');
-      queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      return;
-    }
-
-    setErrorMessage(getFriendlyError(response.error.error));
-    setState(response.error.code === 'EXPIRED' ? 'expired' : 'error');
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  }, [clearTimer, queryClient, windowToken, selectedDrinkName, venueId, drink]);
+    setImpactMessage('Demó beváltás');
+    setImpactDelta(0);
+    setState('success');
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [clearTimer]);
 
   const renderDrinkImage = () => (
     <View style={[styles.drinkImageSection, { height: imageHeight }]}>
@@ -478,13 +479,13 @@ export default function RedemptionWindowModal({
   };
 
   const renderBody = () => {
-    if (state === 'checking' || state === 'confirming') {
+    if (state === 'checking') {
       return (
         <View style={styles.body}>
           {renderDrinkImage()}
           <View style={styles.bodyContent}>
             <ActivityIndicator size="large" color={CYAN} />
-            <Text style={styles.loadingTitle}>{state === 'checking' ? 'Beváltási ablak nyitása...' : 'Beváltás rögzítése...'}</Text>
+            <Text style={styles.loadingTitle}>Beváltási ablak nyitása...</Text>
             <Text style={styles.helperText}>Egy pillanat, ellenőrizzük az ingyen ital jogosultságot.</Text>
           </View>
         </View>
@@ -569,26 +570,10 @@ export default function RedemptionWindowModal({
             </View>
 
             <View style={styles.countdownBottom}>
-              <Text style={styles.confirmHint}>Ha a kamera nem használható, a pultos ezen a telefonon is jóváhagyhatja.</Text>
-              <Pressable
-                onPress={handleConfirm}
-                testID="redeem-now-button"
-                accessibilityRole="button"
-                accessibilityLabel="Beváltom"
-                style={({ pressed }) => [styles.redeemButtonWrap, pressed && styles.redeemButtonPressed]}
-              >
-                <LinearGradient
-                  colors={lowTime ? ['#FF8A7A', '#E8443A'] : ['#00E0FF', '#0090B8']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.redeemButtonGradient}
-                >
-                  <Text style={styles.redeemButtonText}>KÉZI JÓVÁHAGYÁS</Text>
-                </LinearGradient>
-              </Pressable>
+              <Text style={styles.confirmHint}>A siker automatikusan megjelenik, amikor a bejelentkezett partner beolvassa a QR-kódot.</Text>
 
               {DEMO_MODE && (
-                <TouchableOpacity style={styles.demoConfirmButton} onPress={handleConfirm} testID="demo-staff-confirm-button" activeOpacity={0.82}>
+                <TouchableOpacity style={styles.demoConfirmButton} onPress={handleDemoConfirm} testID="demo-staff-confirm-button" activeOpacity={0.82}>
                   <Text style={styles.demoConfirmText}>DEMO: Pultos confirmed</Text>
                 </TouchableOpacity>
               )}
