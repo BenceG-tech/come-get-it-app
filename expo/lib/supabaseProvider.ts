@@ -1,19 +1,13 @@
 import { rest } from '@/lib/supabaseRest';
 import { getSupabase } from '@/lib/supabaseClient';
-import { Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
+import { VENUE_PUBLIC_COLUMNS, Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
 import { Reward } from '@/types/reward';
-
-function uuid(): string {
-  try {
-    const u = (globalThis as any)?.crypto?.randomUUID?.();
-    if (typeof u === 'string') return u;
-  } catch {}
-  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-  return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-}
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+const VENUE_IMAGE_COLUMNS = 'id,venue_id,url,label,is_cover';
+const VENUE_DRINK_COLUMNS = 'id,venue_id,drink_name,image_url,is_free_drink,description';
+const FREE_DRINK_WINDOW_COLUMNS = 'id,venue_id,drink_id,days,start_time,end_time,timezone';
 
 async function invokeEdgeFunction<TResponse>(name: string, body: unknown): Promise<TResponse> {
   const url = `${SUPABASE_URL}/functions/v1/${name}`;
@@ -124,8 +118,8 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
 
   console.info('[Provider] getVenueWithDetails', normalizedId);
 
-  type ImageRow = { id: string; venue_id: string; image_url?: string | null; url?: string | null; label?: string | null; is_cover?: boolean | null };
-  type DrinkRow = { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; is_cover?: boolean | null; description?: string | null };
+  type ImageRow = { id: string; venue_id: string; url?: string | null; label?: string | null; is_cover?: boolean | null };
+  type DrinkRow = { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; description?: string | null };
   type WindowRow = {
     id: string;
     venue_id: string;
@@ -134,6 +128,7 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     days?: number[] | null;
     start_time: string;
     end_time: string;
+    timezone?: string | null;
   };
 
   let venueList: Venue[] = [];
@@ -144,24 +139,24 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   try {
     const supabase = getSupabase();
     const [{ data: venuesData, error: venueError }, imagesResult, drinksResult, windowsResult] = await Promise.all([
-      supabase.from('venues').select('*').eq('id', normalizedId).limit(1),
+      supabase.from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).limit(1),
       (async () => {
         try {
-          return await supabase.from('venue_images').select('*').eq('venue_id', normalizedId);
+          return await supabase.from('venue_images').select(VENUE_IMAGE_COLUMNS).eq('venue_id', normalizedId);
         } catch (error: unknown) {
           return { data: [], error };
         }
       })(),
       (async () => {
         try {
-          return await supabase.from('venue_drinks').select('*').eq('venue_id', normalizedId);
+          return await supabase.from('venue_drinks').select(VENUE_DRINK_COLUMNS).eq('venue_id', normalizedId);
         } catch (error: unknown) {
           return { data: [], error };
         }
       })(),
       (async () => {
         try {
-          return await supabase.from('free_drink_windows').select('*').eq('venue_id', normalizedId);
+          return await supabase.from('free_drink_windows').select(FREE_DRINK_WINDOW_COLUMNS).eq('venue_id', normalizedId);
         } catch (error: unknown) {
           return { data: [], error };
         }
@@ -170,10 +165,10 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
 
     if (venueError) throw venueError;
 
-    venueList = Array.isArray(venuesData) ? (venuesData as Venue[]) : [];
-    imagesRows = Array.isArray(imagesResult.data) ? (imagesResult.data as ImageRow[]) : [];
-    drinksRows = Array.isArray(drinksResult.data) ? (drinksResult.data as DrinkRow[]) : [];
-    windowsRows = Array.isArray(windowsResult.data) ? (windowsResult.data as WindowRow[]) : [];
+    venueList = Array.isArray(venuesData) ? (venuesData as unknown as Venue[]) : [];
+    imagesRows = Array.isArray(imagesResult.data) ? (imagesResult.data as unknown as ImageRow[]) : [];
+    drinksRows = Array.isArray(drinksResult.data) ? (drinksResult.data as unknown as DrinkRow[]) : [];
+    windowsRows = Array.isArray(windowsResult.data) ? (windowsResult.data as unknown as WindowRow[]) : [];
 
     if (imagesResult.error) console.warn('[Provider] venue_images Supabase fetch failed', imagesResult.error);
     if (drinksResult.error) console.warn('[Provider] venue_drinks Supabase fetch failed', drinksResult.error);
@@ -183,10 +178,10 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
 
     const encodedId = encodeURIComponent(normalizedId);
     const [venueRes, imagesRes, drinksRes, windowsRes] = await Promise.all([
-      rest(`/venues?id=eq.${encodedId}&select=*`),
-      rest(`/venue_images?venue_id=eq.${encodedId}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-      rest(`/venue_drinks?venue_id=eq.${encodedId}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-      rest(`/free_drink_windows?venue_id=eq.${encodedId}&select=*`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
+      rest(`/venues?id=eq.${encodedId}&select=${encodeURIComponent(VENUE_PUBLIC_COLUMNS)}`),
+      rest(`/venue_images?venue_id=eq.${encodedId}&select=${encodeURIComponent(VENUE_IMAGE_COLUMNS)}`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
+      rest(`/venue_drinks?venue_id=eq.${encodedId}&select=${encodeURIComponent(VENUE_DRINK_COLUMNS)}`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
+      rest(`/free_drink_windows?venue_id=eq.${encodedId}&select=${encodeURIComponent(FREE_DRINK_WINDOW_COLUMNS)}`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
     ]);
 
     let responseText: string = '';
@@ -214,6 +209,10 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
   
   if (!Array.isArray(venueList) || venueList.length === 0) return null;
   let venue = venueList[0];
+
+  if (venue.price_level == null && venue.price_tier != null) {
+    venue = { ...venue, price_level: venue.price_tier };
+  }
   
   if (venue.opening_hours && typeof venue.opening_hours === 'string') {
     try {
@@ -225,17 +224,13 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     }
   }
   
-  console.info('[Provider] Venue opening_hours from DB:', JSON.stringify(venue.opening_hours, null, 2));
-  console.info('[Provider] Full venue object keys:', Object.keys(venue));
-  console.info('[Provider] Venue object:', JSON.stringify(venue, null, 2));
-
   const drinks: VenueDrink[] = (drinksRows ?? []).map((d) => ({
     id: String(d.id),
     venueId: String(d.venue_id),
     drinkName: d.drink_name,
     imageUrl: d.image_url ?? null,
     isFreeDrink: d.is_free_drink ?? null,
-    isCover: d.is_cover ?? null,
+    isCover: null,
     description: typeof d.description === 'string' && d.description.trim().length > 0 ? d.description.trim() : null,
   }));
 
@@ -247,11 +242,12 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     days: Array.isArray(w.days) ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d)) : undefined,
     start: w.start_time,
     end: w.end_time,
+    timezone: w.timezone ?? undefined,
   }));
 
   const urls = (imagesRows ?? [])
     .map((r) => ({
-      url: (r.image_url ?? r.url ?? '') as string,
+      url: (r.url ?? '') as string,
       isCover: Boolean(r.is_cover ?? false),
     }))
     .filter((r) => typeof r.url === 'string' && r.url.trim().length > 0 && r.url.trim().length <= 2000);
@@ -267,137 +263,4 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
     });
 
   return { ...venue, images, drinks, freeDrinkWindows: windows };
-}
-
-export type VenueUpdateInput = Partial<Venue> & {
-  drinks?: VenueDrink[];
-  freeDrinkWindows?: FreeDrinkWindow[];
-};
-
-export async function updateVenueWithDetails(id: string, updates: VenueUpdateInput): Promise<VenueWithDetails> {
-  console.info('[Provider] updateVenueWithDetails', id, JSON.stringify(Object.keys(updates)));
-
-  if (updates && (updates.name || updates.address || updates.description || updates.image_url || updates.hero_image_url || updates.tags !== undefined)) {
-    const res = await rest(`/venues?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
-    await res.json();
-  }
-
-  // Build mapping from temp drink IDs to new UUIDs BEFORE processing
-  const tempToNewDrinkId: Record<string, string> = {};
-  
-  if (updates.drinks) {
-    const incoming = updates.drinks.map((d) => {
-      const oldId = String(d.id);
-      const newId = oldId.startsWith('drink-') ? uuid() : oldId;
-      tempToNewDrinkId[oldId] = newId;
-      
-      return {
-        id: newId,
-        venue_id: id,
-        drink_name: d.drinkName,
-        image_url: d.imageUrl ?? null,
-        is_free_drink: d.isFreeDrink ?? null,
-        is_cover: d.isCover ?? null,
-      };
-    });
-    
-    console.log('[Provider] Temp to new drink ID mapping:', tempToNewDrinkId);
-
-    const existingRes = await rest(`/venue_drinks?venue_id=eq.${id}&select=id`);
-    const existing: { id: string }[] = await existingRes.json();
-    const keepIds = new Set(incoming.map((i) => i.id));
-    const toDelete = (existing || []).map((e) => String(e.id)).filter((eid) => !keepIds.has(eid));
-
-    if (incoming.length > 0) {
-      await rest('/venue_drinks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' },
-        body: JSON.stringify(incoming),
-      });
-    }
-
-    if (toDelete.length > 0) {
-      for (const delId of toDelete) {
-        await rest(`/venue_drinks?id=eq.${delId}`, { method: 'DELETE' });
-      }
-    }
-
-    updates.drinks = incoming.map((i) => ({
-      id: String(i.id),
-      venueId: String(i.venue_id),
-      drinkName: i.drink_name,
-      imageUrl: i.image_url ?? null,
-      isFreeDrink: i.is_free_drink ?? null,
-      isCover: i.is_cover ?? null,
-    }));
-  }
-
-  if (updates.freeDrinkWindows) {
-    console.log('[Provider] Free drink windows to save:', updates.freeDrinkWindows.map(w => ({
-      drinkId: w.drinkId,
-      days: w.days,
-      dayOfWeek: w.dayOfWeek,
-      start: w.start,
-      end: w.end
-    })));
-    console.log('[Provider] Using temp to new drink ID mapping:', tempToNewDrinkId);
-
-    const incomingW = updates.freeDrinkWindows.map((w) => {
-      // Use the mapping from temp IDs to new UUIDs
-      const mappedDrinkId = tempToNewDrinkId[String(w.drinkId)] ?? String(w.drinkId);
-      const dayOfWeek = w.dayOfWeek === undefined || w.dayOfWeek === null ? null : Number(w.dayOfWeek);
-      // Canonical DB format is ISO days (1=Monday...7=Sunday). The legacy
-      // dayOfWeek field is a 0-based UI index (0=Monday), so convert it.
-      const days = Array.isArray(w.days) && w.days.length > 0
-        ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d) && d >= 1 && d <= 7)
-        : dayOfWeek !== null
-          ? [Math.min(Math.max(dayOfWeek + 1, 1), 7)]
-          : null;
-
-      console.log(`[Provider] Mapping window: drinkId ${w.drinkId} -> ${mappedDrinkId}, days: ${JSON.stringify(days)}`);
-
-      // NOTE: the free_drink_windows table has NO day_of_week column — only
-      // `days` (int array). Sending day_of_week makes the whole upsert fail.
-      return {
-        id: w.id && !String(w.id).startsWith('window-') ? w.id : uuid(),
-        venue_id: id,
-        drink_id: mappedDrinkId,
-        days: days,
-        start_time: w.start,
-        end_time: w.end,
-      };
-    });
-
-    const existingWRes = await rest(`/free_drink_windows?venue_id=eq.${id}&select=id`);
-    const existingW: { id: string }[] = await existingWRes.json();
-    const keepWIds = new Set(incomingW.map((i) => i.id));
-    const toDeleteW = (existingW || []).map((e) => String(e.id)).filter((eid) => !keepWIds.has(eid));
-
-    // Delete stale windows FIRST so setting a drink to "no time limit"
-    // always clears old windows, even if a later insert fails.
-    for (const delId of toDeleteW) {
-      try {
-        await rest(`/free_drink_windows?id=eq.${delId}`, { method: 'DELETE' });
-        console.log('[Provider] Deleted stale free drink window', delId);
-      } catch (deleteError) {
-        console.error('[Provider] Failed to delete free drink window (continuing)', { delId, deleteError });
-      }
-    }
-
-    if (incomingW.length > 0) {
-      await rest('/free_drink_windows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Prefer: 'return=representation,resolution=merge-duplicates' },
-        body: JSON.stringify(incomingW),
-      });
-    }
-  }
-
-  const refreshed = await getVenueWithDetails(id);
-  if (!refreshed) throw new Error('Failed to refresh venue after update');
-  return refreshed;
 }

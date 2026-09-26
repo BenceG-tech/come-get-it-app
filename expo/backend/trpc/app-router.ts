@@ -1,16 +1,7 @@
 import { createTRPCRouter } from "./create-context";
-import hiRoute from "./routes/example/hi/route";
-import { getAllVenuesRoute } from "./routes/venues/get-all/route";
-import { getVenueWithDrinksRoute } from "./routes/venues/get-with-drinks/route";
 
-export const appRouter = createTRPCRouter({
-  example: createTRPCRouter({
-    hi: hiRoute,
-  }),
-  venues: createTRPCRouter({
-    getAll: getAllVenuesRoute,
-    getWithDrinks: getVenueWithDrinksRoute,
-  }),
-});
+// The consumer app currently has no server-side tRPC procedures. Keeping the
+// router empty avoids shipping unused public example and venue endpoints.
+export const appRouter = createTRPCRouter({});
 
 export type AppRouter = typeof appRouter;

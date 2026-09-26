@@ -15,10 +15,12 @@ Last verified: 2026-09-26
 - The former customer-side `confirm-redemption` path is permanently disabled with HTTP 410. Production contains no manual self-approval button.
 - Production redemption no longer falls back to demo success. Demo behavior is restricted to development builds with an explicit environment flag.
 - The consumer app no longer exposes the legacy admin editor or unfinished mock payment, card, referral, coupon, address, visit-history, mission, and token screens.
+- Unused mock reward data, prototype tRPC example/venue endpoints, and the orphaned client-side venue editor were removed from the release source.
 - The app shows only real backend rewards and profile data. CSR impact is shown only when a real donation was created.
+- CSR service failures now show a retryable error state instead of being presented as a real zero-impact result.
 - Customer reward reads expose only active, unexpired, in-stock rewards from active venues (or explicitly global rewards). The write path enforces the same rule, so a paused venue's hidden reward cannot be redeemed by guessing its UUID.
 - Venue cards use separate accessible controls for card navigation and favorite toggling, avoiding nested interactive elements in the web preview while preserving native behavior.
-- Public venue reads are limited to active venues. Sensitive helper functions reject cross-user lookups.
+- Public venue reads are limited to active venues and an explicit consumer-safe column list rather than whole database rows. Sensitive helper functions reject cross-user lookups.
 - Legal links point to the repository's public privacy policy and Apple's standard EULA.
 - Legacy prototype routes (`landing`, template modal, and the fake Cock & Pye venue/card-linking screen) have been removed, so stale deep links cannot expose unfinished product claims.
 - App Store metadata, privacy answers, review notes, support content, and a screenshot acceptance audit are prepared in the repository.

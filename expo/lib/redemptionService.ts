@@ -451,11 +451,6 @@ export function generateMockRedemptionWindow(venueId: string, drinkId?: string |
   };
 }
 
-export function generateQRCodeUrl(payload: string, size: number = 300): string {
-  const encodedPayload = encodeURIComponent(payload);
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedPayload}&bgcolor=FFFFFF&color=000000&margin=10`;
-}
-
 export function getTimeRemainingMs(expiresAt: string): number {
   const expiryTime = new Date(expiresAt).getTime();
   const now = Date.now();

@@ -52,8 +52,7 @@ export default function MyImpactScreen() {
     queryFn: async () => {
       const result = await getUserCSRImpact();
       if (!result.success) {
-        console.warn('[MyImpact] Showing friendly fallback', { code: result.error.code });
-        return EMPTY_IMPACT;
+        throw new Error(result.error.message);
       }
       return result.data;
     },
@@ -176,7 +175,7 @@ export default function MyImpactScreen() {
             <Text style={styles.emptySubtitle}>
               Az első beváltásod után itt látszik majd, mennyi közösségi támogatást indítottál el a Come Get It-en keresztül.
             </Text>
-            <View style={styles.mockMilestoneCard}>
+            <View style={styles.emptyMilestoneCard}>
               <View style={styles.milestoneHeader}>
                 <TrendingUp size={18} color={CYAN} />
                 <Text style={styles.milestoneTitle}>Első mérföldkő: 5 támogatott adag</Text>
@@ -366,7 +365,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 200, 232, 0.18)',
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
-  mockMilestoneCard: {
+  emptyMilestoneCard: {
     width: '100%',
     marginTop: 2,
     marginBottom: 18,

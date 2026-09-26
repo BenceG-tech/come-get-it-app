@@ -3,6 +3,27 @@ export type VenueCoordinates = {
   lng: number;
 };
 
+/** Public fields the consumer app is allowed to request from `venues`. */
+export const VENUE_PUBLIC_COLUMNS = [
+  'id',
+  'name',
+  'address',
+  'description',
+  'phone_number',
+  'website_url',
+  'image_url',
+  'hero_image_url',
+  'plan',
+  'is_paused',
+  'created_at',
+  'participates_in_points',
+  'points_per_visit',
+  'opening_hours',
+  'tags',
+  'price_tier',
+  'coordinates',
+].join(',');
+
 export type Venue = {
   id: string;
   name: string;
@@ -21,6 +42,7 @@ export type Venue = {
   distance?: number | null; // in meters
   tags?: string[];
   price_level?: 1 | 2 | 3 | 4 | number | null;
+  price_tier?: 1 | 2 | 3 | 4 | number | null;
   priceLevel?: 1 | 2 | 3 | 4 | number | null;
   latitude?: number | null;
   longitude?: number | null;

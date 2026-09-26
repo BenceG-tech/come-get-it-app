@@ -1,6 +1,6 @@
 import { getSupabase } from '@/lib/supabaseClient';
 import { rest } from '@/lib/supabaseRest';
-import type { Venue } from '@/types/venue';
+import { VENUE_PUBLIC_COLUMNS, type Venue } from '@/types/venue';
 
 type FetchVenuesOptions = {
   columns?: string;
@@ -18,7 +18,6 @@ export function isVenueVisible(venue: Pick<Venue, 'is_paused'>): boolean {
 
 type VenueImageRow = {
   url?: string | null;
-  image_url?: string | null;
   is_cover?: boolean | null;
   created_at?: string | null;
 };
@@ -33,20 +32,24 @@ function logError(error: unknown): string {
 }
 
 function normalizeVenue(venue: Venue): Venue {
-  if (venue.opening_hours && typeof venue.opening_hours === 'string') {
+  const normalized = venue.price_level == null && venue.price_tier != null
+    ? { ...venue, price_level: venue.price_tier }
+    : venue;
+
+  if (normalized.opening_hours && typeof normalized.opening_hours === 'string') {
     try {
-      return { ...venue, opening_hours: JSON.parse(venue.opening_hours) } as Venue;
+      return { ...normalized, opening_hours: JSON.parse(normalized.opening_hours) } as Venue;
     } catch (error) {
-      console.warn('[VenueService] Failed to parse opening_hours', { venueId: venue.id, error: logError(error) });
-      return { ...venue, opening_hours: null };
+      console.warn('[VenueService] Failed to parse opening_hours', { venueId: normalized.id, error: logError(error) });
+      return { ...normalized, opening_hours: null };
     }
   }
 
-  return venue;
+  return normalized;
 }
 
 function buildVenuesRestPath(options: FetchVenuesOptions): string {
-  const params: string[] = [`select=${encodeURIComponent(options.columns ?? '*')}`];
+  const params: string[] = [`select=${encodeURIComponent(options.columns ?? VENUE_PUBLIC_COLUMNS)}`];
 
   if (!(options.includeHidden ?? false)) params.push('is_paused=not.is.true');
   if (options.limit !== undefined) params.push(`limit=${options.limit}`);
@@ -61,7 +64,7 @@ function buildVenuesRestPath(options: FetchVenuesOptions): string {
  * This keeps the venue list working when RLS allows authenticated reads but blocks anon REST reads.
  */
 export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Venue[]> {
-  const columns = options.columns ?? '*';
+  const columns = options.columns ?? VENUE_PUBLIC_COLUMNS;
 
   const includeHidden = options.includeHidden ?? false;
 
@@ -109,7 +112,7 @@ export async function fetchVenueCoverUrl(venueId: string): Promise<string | null
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from('venue_images')
-      .select('url,image_url,is_cover,created_at')
+      .select('url,is_cover,created_at')
       .eq('venue_id', venueId)
       .order('is_cover', { ascending: false })
       .order('created_at', { ascending: true })
@@ -118,7 +121,7 @@ export async function fetchVenueCoverUrl(venueId: string): Promise<string | null
     if (error) throw error;
 
     const first = Array.isArray(data) ? (data[0] as VenueImageRow | undefined) : undefined;
-    const imageUrl = first?.url ?? first?.image_url ?? null;
+    const imageUrl = first?.url ?? null;
     if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) return imageUrl.trim();
   } catch (error) {
     console.warn('[VenueService] Supabase client cover image fetch failed, falling back to REST', {
@@ -129,13 +132,13 @@ export async function fetchVenueCoverUrl(venueId: string): Promise<string | null
 
   try {
     const imagesResponse = await rest(
-      `/venue_images?venue_id=eq.${encodeURIComponent(venueId)}&select=url,image_url,is_cover&order=is_cover.desc,created_at.asc&limit=1`
+      `/venue_images?venue_id=eq.${encodeURIComponent(venueId)}&select=url,is_cover&order=is_cover.desc,created_at.asc&limit=1`
     );
     const images = (await imagesResponse.json()) as unknown;
 
     if (Array.isArray(images) && images.length > 0) {
       const first = images[0] as VenueImageRow;
-      const imageUrl = first?.url ?? first?.image_url ?? null;
+      const imageUrl = first?.url ?? null;
       if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) return imageUrl.trim();
     }
   } catch (error) {
