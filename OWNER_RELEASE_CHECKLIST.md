@@ -22,21 +22,20 @@ The production Venue Hub reset route, protected-route redirect, access-denied fl
 - Repeat the same account, membership and scope verification for every real production partner before onboarding.
 - Configure a real charity/default donation rate before using CSR claims. Otherwise keep CSR disabled for the free beta.
 
-## 3. Expo and Apple signing — owner authentication in progress
+## 3. Expo and Apple signing — build completed
 
-EAS is initialized as `@bencegatai/come-get-it-app`, the production environment is configured, Apple Developer membership is active through 2027-09-29, and App ID `app.comegetit.mobile` exists with Sign in with Apple. The first Distribution Certificate and provisioning profile still require one interactive Apple ID authentication in the already opened Terminal. After successful authentication, run or allow the existing command to finish:
+EAS is initialized as `@bencegatai/come-get-it-app`, the production environment is configured, Apple Developer membership is active through 2027-09-29, and App ID `app.comegetit.mobile` exists with Sign in with Apple. The Distribution Certificate, provisioning profile, App Store Connect app record, and signed production build `1.0.0` (`8`) are complete. Build ID: `3a27b206-e9a2-4d37-9684-60355302c4fe`.
 
 ```bash
-pnpm dlx eas-cli build --platform ios --profile production
 pnpm dlx eas-cli submit --platform ios --profile production
 ```
 
-Use Apple Developer team `AMLH4RKNR8`. Confirm bundle identifier `app.comegetit.mobile`. Do not change it after the App Store Connect record is created. The App Store Connect app record must exist before upload; Apple currently requires iOS uploads to be built with Xcode 26 or later, which must be confirmed from the completed EAS build details.
+The first submission needs one interactive approval for EAS to create its App Store Connect API key. Use Apple Developer team `AMLH4RKNR8`; the App Store Connect app ID is `6817022464`. The downloaded IPA has a valid Apple Distribution signature and matching bundle ID, version, build number, entitlement set and provisioning profile.
 
-## 4. App Store Connect — waiting for owner agreement
+## 4. App Store Connect — record completed, upload pending
 
-- In the already opened App Store Connect tab, the Account Holder must personally accept the displayed Terms of Service.
-- After acceptance, create the iOS app record for `app.comegetit.mobile` with primary language Hungarian and SKU `COMEGETIT-IOS-1`.
+- The Terms of Service are accepted.
+- The iOS app record exists for `app.comegetit.mobile`, primary language Hungarian, SKU `COMEGETIT-IOS-1`, Apple ID `6817022464`.
 - Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
 - Copy metadata and reviewer instructions from `APP_STORE_METADATA_HU.md`, `APP_PRIVACY_QUESTIONNAIRE.md`, and `APP_STORE_REVIEW_NOTES.md`.
 - Copy the review password only from the Git-ignored `.private/app-review-credentials.txt` file.
