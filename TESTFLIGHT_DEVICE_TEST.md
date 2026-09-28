@@ -1,6 +1,6 @@
 # Come Get It — TestFlight készülékteszt
 
-Tesztelendő kiadás: **1.0.0 (9)**
+Tesztelendő kiadás: **1.0.0 (11)**
 TestFlight-csoport: **Come Get It belső teszt**
 Állapot: **telefonos ellenőrzésre kész**
 
@@ -8,9 +8,9 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 
 ## Előkészítés
 
-- [ ] Az iPhone-on a TestFlightba az `bence.gatai.gatai@gmail.com` Apple ID-val vagy belépve.
-- [ ] A telepített alkalmazás verziója **1.0.0 (9)**.
-- [ ] A Venue Hub meg van nyitva egy második eszközön: `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
+- [ ] Az iPhone-on a TestFlightba a fejlesztői fiókhoz tartozó Apple ID-val legyen belépve.
+- [ ] A telepített alkalmazás verziója **1.0.0 (11)**.
+- [ ] A Venue Hub meg van nyitva egy kamerás második eszközön (a Mac is megfelel): `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
 - [ ] A partnerellenőrző hozzáférés a helyi, Git által nem követett `.private/app-review-partner-credentials.txt` fájlból van használva. A jelszó nem kerül képernyőképre.
 - [ ] A telefonon működő internetkapcsolat és a kameraengedély elérhető.
 
@@ -42,24 +42,28 @@ Várt eredmény: létrejön egy valódi felhasználó, és az alkalmazás kezdő
 
 Várt eredmény: nincs végtelen betöltés, váratlan kijelentkezés vagy hibás profil.
 
-## D. Helyszín és reward
+## D. Helyszín, térkép és pontos jutalom
 
 1. [ ] A helyengedélynél válaszd az „App használata közben” lehetőséget.
-2. [ ] Ellenőrizd, hogy a **Come Get It Bar** megjelenik.
-3. [ ] Nyisd meg a hely adatlapját, és ellenőrizd a címet, nyitvatartást, térképet és elérhető italt.
-4. [ ] Nyisd meg a Rewards lapot.
-5. [ ] Ellenőrizd, hogy a **Pilot ajándék ital** aktívként megjelenik, és az ital neve **Electric Blue Shot**.
-6. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
+2. [ ] Ellenőrizd, hogy a listaoldal felső térképe valódi Apple Térképet mutat; az „API KEY REQUIRED” felirat sehol nem látható.
+3. [ ] Ellenőrizd, hogy az öt helyjelölő látszik, a térkép mozgatható/nagyítható, és a saját helyzet gomb reagál.
+4. [ ] Ellenőrizd, hogy a **Come Get It Bar** megjelenik, majd nyisd meg.
+5. [ ] A hely adatlapján ellenőrizd a címet, nyitvatartást, térképet és az **Electric Blue Shot** italt.
+6. [ ] Nyisd meg a Jutalmak lapot.
+7. [ ] Ellenőrizd, hogy a **Pilot ajándék ital** saját képpel és 100 pontos árral jelenik meg.
+8. [ ] Nyisd meg és váltsd be a Pilot jutalmat. Várt eredmény: „Sikeres beváltás”, beváltási kód, és pontosan 100 pont levonása.
+9. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
 
 Bizonyítékok:
 
 - `TF-02-helyszinlista.png`
 - `TF-03-helyszin-reszletek.png`
 - `TF-04-rewards.png`
+- `TF-05-jutalom-bevaltas.png`
 
 ## E. QR-beváltás végponttól végpontig
 
-1. [ ] A telefonon indítsd el a Pilot ajándék ital beváltását.
+1. [ ] A **Come Get It Bar** adatlapján indítsd el az ingyen ital beváltását a „Kérd ingyen italod” gombbal.
 2. [ ] Ellenőrizd, hogy a QR-kód megjelenik és visszaszámlálás látható.
 3. [ ] A második eszközön jelentkezz be a Venue Hubba partnerként.
 4. [ ] Ellenőrizd, hogy csak a **Come Get It Bar** látható.
@@ -77,9 +81,11 @@ Várt eredmény:
 
 Bizonyítékok:
 
-- `TF-05-qr-atadas.png` — úgy vágva, hogy a teljes token ne legyen olvasható;
-- `TF-06-sikeres-bevaltas.png`;
-- `TF-07-ismetelt-bevaltas-elutasitva.png`.
+- `TF-06-qr-atadas.png` — úgy vágva, hogy a teljes token ne legyen olvasható;
+- `TF-07-sikeres-bevaltas.png`;
+- `TF-08-ismetelt-bevaltas-elutasitva.png`.
+
+Megjegyzés: a tulajdonosi tesztfiók csak a hely- és idősáv-ellenőrzés alól kap tesztkivételt. A bejelentkezés, a kétperces lejárat, a partner jogosultsága és az egyszer használhatóság változatlanul kötelező.
 
 ## F. Profil, kijelentkezés és jelszó-visszaállítás
 
