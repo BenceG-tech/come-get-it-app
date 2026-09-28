@@ -13,15 +13,17 @@
 | Másodlagos kategória | Lifestyle | opcionális |
 | Bundle ID | `app.comegetit.mobile` | egyeznie kell a builddel |
 | SKU | `COMEGETIT-IOS-1` | belső azonosító, létrehozás után nem módosítható |
-| Verzió | `1.0.0` | buildszám: `1` |
+| Verzió | `1.0.0` | a buildszámot az EAS távolról kezeli és minden production buildnél növeli |
 | Ár | Ingyenes | nincs előfizetés vagy IAP az 1.0-ban |
-| Korhatár | 18+ | „Alcohol, Tobacco, or Drug Use or References”: Frequent |
+| Korhatár | 18+ célkorhatár | töltsd ki a jelenlegi Apple-kérdőívet, jelöld az alkoholra vonatkozó gyakoriságot a tényleges tartalom szerint, majd használd az „Override to Higher Age Rating” lehetőséget, hogy az appban közölt 18+ korláttal egyezzen |
 | Kids kategória | Nem | |
 | Kiadás | Kézi kiadás jóváhagyás után | ajánlott az első verziónál |
 | Első elérhetőség | Magyarország | partnerkínálat jelenleg budapesti |
 | Copyright | © 2026 Come Get It | a jogi tulajdonos nevével egyeztesd beküldéskor |
 
 Az Apple jelenlegi mezőkorlátai: név és alcím legfeljebb 30 karakter, promóciós szöveg 170 karakter, leírás 4000 karakter, kulcsszavak 100 bájt. Lásd: [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information) és [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information).
+
+Az App Store Connect 2026-os korhatárfolyamata kérdőívből számít globális és régiónként eltérő értéket. Mivel a Come Get It saját felülete 18 éven felülieknek szól, a kiszámított értéket szükség esetén 18+-ra kell felülbírálni. Lásd: [Set an app age rating](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating).
 
 ## Promóciós szöveg
 
