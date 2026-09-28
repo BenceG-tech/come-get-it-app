@@ -1,6 +1,6 @@
 # Come Get It — App Store screenshot audit
 
-Audit date: 2026-09-20
+Audit date: 2026-09-28
 
 ## Result
 
