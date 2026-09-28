@@ -1,7 +1,7 @@
 # Come Get It — TestFlight készülékteszt
 
-Tesztelendő kiadás: **1.0.0 (8)**  
-TestFlight-csoport: **Come Get It belső teszt**  
+Tesztelendő kiadás: **1.0.0 (9)**
+TestFlight-csoport: **Come Get It belső teszt**
 Állapot: **telefonos ellenőrzésre kész**
 
 Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak akkor kész, ha a várt eredmény látható és a bizonyíték el van mentve. Hibánál ne menj tovább az App Review beküldéséig.
@@ -9,7 +9,7 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 ## Előkészítés
 
 - [ ] Az iPhone-on a TestFlightba az `bence.gatai.gatai@gmail.com` Apple ID-val vagy belépve.
-- [ ] A telepített alkalmazás verziója **1.0.0 (8)**.
+- [ ] A telepített alkalmazás verziója **1.0.0 (9)**.
 - [ ] A Venue Hub meg van nyitva egy második eszközön: `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
 - [ ] A partnerellenőrző hozzáférés a helyi, Git által nem követett `.private/app-review-partner-credentials.txt` fájlból van használva. A jelszó nem kerül képernyőképre.
 - [ ] A telefonon működő internetkapcsolat és a kameraengedély elérhető.
