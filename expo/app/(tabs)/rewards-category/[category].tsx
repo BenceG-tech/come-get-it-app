@@ -1,6 +1,9 @@
 import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { ArrowLeft } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import RewardListCard from "@/components/RewardListCard";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +12,8 @@ import type { Reward } from "@/types/reward";
 import { useAppContext } from "@/context/AppContext";
 
 export default function RewardsCategoryScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: string }>();
   const category = (params.category ?? "all") as string;
   const { points } = useAppContext();
@@ -64,14 +69,21 @@ export default function RewardsCategoryScreen() {
 
   return (
     <View style={styles.container} testID="rewards-category-screen">
-      <Stack.Screen
-        options={{
-          title,
-          headerShown: true,
-          headerStyle: { backgroundColor: "#000" },
-          headerTintColor: "#fff",
-        }}
-      />
+      <StatusBar style="light" />
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          onPress={() => router.replace("/(tabs)/rewards")}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Vissza a Jutalmakhoz"
+          testID="rewards-category-back"
+          hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
+        >
+          <ArrowLeft size={23} color={Colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
       {rewardsQuery.isLoading && normalizedRewards.length === 0 ? (
         <View style={styles.empty} testID="rewards-category-loading">
@@ -101,6 +113,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  header: {
+    minHeight: 62,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#242424",
+    backgroundColor: "#000000",
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+    backgroundColor: "#090909",
+  },
+  headerTitle: {
+    flex: 1,
+    marginHorizontal: 12,
+    textAlign: "center",
+    color: Colors.text,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  headerSpacer: {
+    width: 40,
+    height: 40,
   },
   verticalList: {
     paddingTop: 12,
