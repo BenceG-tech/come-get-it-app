@@ -24,11 +24,11 @@ The production Venue Hub reset route, protected-route redirect, access-denied fl
 - Repeat the same account, membership and scope verification for every real production partner before onboarding.
 - Configure a real charity/default donation rate before using CSR claims. Otherwise keep CSR disabled for the free beta.
 
-## 3. Expo and Apple signing — build 11 in TestFlight
+## 3. Expo and Apple signing — build 12 in TestFlight
 
-EAS is initialized as `@bencegatai/come-get-it-app`, the production environment is configured, Apple Developer membership is active through 2027-09-29, and App ID `app.comegetit.mobile` exists with Sign in with Apple. The Distribution Certificate, provisioning profile and App Store Connect app record are complete. The current signed production candidate is `1.0.0 (11)`, build ID `3352cbac-4dd9-4a44-820a-d7d1fec121e9`, from GitHub main commit `9f782118f3eee9aef06ac8a847394cca9457711e`.
+EAS is initialized as `@bencegatai/come-get-it-app`, the production environment is configured, Apple Developer membership is active through 2027-09-29, and App ID `app.comegetit.mobile` exists with Sign in with Apple. The Distribution Certificate, provisioning profile and App Store Connect app record are complete. The current signed production candidate is `1.0.0 (12)`, build ID `9769b4f0-e0f5-4a75-a3e6-0d9d7ffee8e5`, from GitHub main commit `0a3128778fea25bdb4d4fd4ac88fe2d29439e67b`.
 
-EAS submission `d3aa31e7-34d3-4949-8485-10113a423114` uploaded build 11 successfully. It replaces the broken venue-list CARTO tiles with native Apple MapKit; the venue-detail map and authenticated reward detail fixes from build 10 are also included. Apple reports `VALID`, and workflow `01a0ea44-4279-713f-9d68-182b8caa22e3` added it to the internal “Come Get It belső teszt” group. Build 9 remains selected on App Store version `1.0` only as the last release baseline; switch to build 11 after a full physical PASS.
+EAS submission `60948b56-2fba-4b03-bd1d-8a9d66157f98` uploaded build 12 successfully. It contains the native Apple MapKit list/detail maps and authenticated reward-detail fixes from builds 10–11, plus deterministic back navigation from every reward category and every reward-detail loading/error state. Apple reports `VALID` for App Store Connect build `857ee4f8-1f05-4b08-92c3-0c9669e99762`, and the build is assigned to the internal “Come Get It belső teszt” group. Build 9 remains selected on App Store version `1.0` only as the last release baseline; switch to build 12 after a full physical PASS.
 
 ## 4. App Store Connect — metadata and build saved
 
@@ -37,10 +37,10 @@ EAS submission `d3aa31e7-34d3-4949-8485-10113a423114` uploaded build 11 successf
 - The Hungarian subtitle, 131-character promotional text, 897-character description, keywords, live `come-get-it.app` support URL, primary/secondary categories, reviewer contact and login, English review notes, and manual-release mode are saved.
 - The live privacy-policy URL and all seven audited App Privacy data types are configured. The owner must make the final **Publish** click because Apple's confirmation includes an accuracy and legal-compliance declaration.
 - The free-beta price is set to 0 Ft with Hungary as the base region and all 175 App Store regions enabled. Apple Silicon Mac and Apple Vision Pro distribution are disabled because those platforms are not part of the tested launch scope.
-- The App Store version still selects processed build `1.0.0 (9)` while build 11 is being qualified. Do not submit for review until build 11 passes the physical-device checklist, is selected, and screenshots plus owner declarations are complete.
+- The App Store version still selects processed build `1.0.0 (9)` while build 12 is being qualified. Do not submit for review until build 12 passes the physical-device checklist, is selected, and screenshots plus owner declarations are complete.
 - Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
 - Enter the correct copyright holder, complete the current age-rating questionnaire, and override to 18+ when necessary so it matches the app's stated audience.
-- Upload fresh 6.9-inch screenshots from signed TestFlight build 11 and complete physical-device testing of registration, login, location permission, both map views, venue/reward display, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
+- Upload fresh 6.9-inch screenshots from signed TestFlight build 12 and complete physical-device testing of registration, login, location permission, both map views, venue/reward display, category/detail back navigation, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
 - Follow the step-by-step evidence checklist in [`TESTFLIGHT_DEVICE_TEST.md`](TESTFLIGHT_DEVICE_TEST.md); record a PASS/FAIL result and keep the named screenshots before App Review submission.
 
 ## 5. Infrastructure and legal
@@ -53,4 +53,4 @@ EAS submission `d3aa31e7-34d3-4949-8485-10113a423114` uploaded build 11 successf
 
 ## Release decision
 
-A free beta may be submitted after build 11 is processed, added to internal TestFlight, passes the signed-device checklist, and the final App Store screenshots and legal declarations are complete. Do not market paid Plus or CSR benefits until their corresponding commercial configuration and live content are complete.
+A free beta may be submitted after build 12 passes the signed-device checklist and the final App Store screenshots and legal declarations are complete. Do not market paid Plus or CSR benefits until their corresponding commercial configuration and live content are complete.
