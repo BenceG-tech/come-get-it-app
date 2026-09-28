@@ -38,7 +38,8 @@ The App Store Connect API key has been created and EAS submission `050bd28b-63da
 - The free-beta price is set to 0 Ft with Hungary as the base region and all 175 App Store regions enabled. Apple Silicon Mac and Apple Vision Pro distribution are disabled because those platforms are not part of the tested launch scope.
 - The App Store version now selects processed build `1.0.0 (9)`. Do not submit for review until the physical-device checklist, screenshots and owner declarations are complete.
 - Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
-- Enter the correct copyright holder, complete the current age-rating questionnaire, and override to 18+ when necessary so it matches the app's stated audience.
+- The current age-rating questionnaire is complete and verified: alcohol/tobacco/drug references are marked frequent or intense, unsupported content categories are none/false, and the release is overridden to 18+ (17+ on the legacy scale).
+- Enter and confirm the correct copyright holder.
 - Upload fresh 6.9-inch screenshots from the signed TestFlight build and complete physical-device testing of registration, login, location permission, venue/reward display, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
 - Follow the step-by-step evidence checklist in [`TESTFLIGHT_DEVICE_TEST.md`](TESTFLIGHT_DEVICE_TEST.md); record a PASS/FAIL result and keep the named screenshots before App Review submission.
 
@@ -50,6 +51,7 @@ The App Store Connect API key has been created and EAS submission `050bd28b-63da
 - No MX record was returned on 2026-09-28. Keep `gataibence@gmail.com` as the working support address until a branded mailbox is configured and its inbound delivery is verified; do not rely on `hello@come-get-it.app` yet.
 - The public website still advertises 990 Ft/week, 2,990 Ft/month and a CSR water-impact promise. Remove or clearly label those claims as future concepts while the App Store release remains a free beta and CSR is disabled.
 - Before linked-card rewards go live, confirm the Salt Edge callback URL exactly matches the deployed callback function and confirm the current callback signing key.
+- Rotate the current App Store Connect API key because its private material appeared in local diagnostic output: create and connect a replacement, verify EAS submission-status access, then revoke the old key. Never revoke the working key before the replacement passes verification.
 
 ## Release decision
 
