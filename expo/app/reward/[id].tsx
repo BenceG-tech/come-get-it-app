@@ -62,6 +62,14 @@ export default function RewardDetailScreen() {
   const { points, addPoints } = useAppContext();
   const [redeeming, setRedeeming] = useState(false);
 
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/(tabs)/rewards");
+  }, []);
+
   const rewardQuery = useQuery({
     queryKey: ["reward", rewardId],
     enabled: rewardId.length > 0,
@@ -132,6 +140,15 @@ export default function RewardDetailScreen() {
   if (rewardQuery.isLoading) {
     return (
       <View style={styles.centerContainer} testID="reward-detail-loading">
+        <StatusBar style="light" />
+        <TouchableOpacity
+          onPress={handleBack}
+          style={[styles.backButton, { top: insets.top + 12 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Vissza"
+        >
+          <ArrowLeft size={21} color={Colors.text} />
+        </TouchableOpacity>
         <Text style={styles.loadingText}>Jutalom betöltése…</Text>
       </View>
     );
@@ -140,6 +157,15 @@ export default function RewardDetailScreen() {
   if (rewardQuery.isError || !reward) {
     return (
       <View style={styles.centerContainer} testID="reward-detail-error">
+        <StatusBar style="light" />
+        <TouchableOpacity
+          onPress={handleBack}
+          style={[styles.backButton, { top: insets.top + 12 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Vissza"
+        >
+          <ArrowLeft size={21} color={Colors.text} />
+        </TouchableOpacity>
         <Text style={styles.errorText}>Ezt a jutalmat most nem találjuk.</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => rewardQuery.refetch()} testID="reward-detail-retry">
           <Text style={styles.retryBtnText}>Újrapróbálás</Text>
@@ -153,7 +179,7 @@ export default function RewardDetailScreen() {
       <StatusBar style="light" />
 
       <TouchableOpacity
-        onPress={() => router.back()}
+        onPress={handleBack}
         style={[styles.backButton, { top: insets.top + 12 }]}
         accessibilityRole="button"
         accessibilityLabel="Vissza"
