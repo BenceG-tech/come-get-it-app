@@ -20,8 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 import { redeemReward } from "@/lib/rewardService";
-import { rest } from "@/lib/supabaseRest";
-import type { Reward } from "@/types/reward";
+import { fetchRewardById } from "@/lib/supabaseProvider";
 
 const CYAN = "#00C8E8" as const;
 
@@ -68,10 +67,7 @@ export default function RewardDetailScreen() {
     enabled: rewardId.length > 0,
     queryFn: async () => {
       console.log("[RewardDetail] Fetch reward", { rewardId });
-      const res = await rest(`/rewards?id=eq.${encodeURIComponent(rewardId)}&select=*`);
-      const json = (await res.json()) as unknown;
-      const rows = Array.isArray(json) ? (json as Reward[]) : [];
-      return rows[0] ?? null;
+      return fetchRewardById(rewardId);
     },
     staleTime: 30_000,
     retry: 1,
