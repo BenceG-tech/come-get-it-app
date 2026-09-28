@@ -5,7 +5,7 @@ Last verified: 2026-09-28
 ## Ready in the repository
 
 - Expo SDK 54 project passes `expo-doctor` (18/18), TypeScript validation, public config generation, and the production iOS JavaScript/Hermes export.
-- iOS metadata is set for `app.comegetit.mobile`, build `1`, foreground-only location access, Sign in with Apple, and non-exempt encryption disabled.
+- iOS metadata is set for `app.comegetit.mobile`, EAS remotely manages and increments the build number, foreground-only location access is declared, Sign in with Apple is enabled, and non-exempt encryption is disabled.
 - The Expo project is linked to EAS as `@bencegatai/come-get-it-app`. Production Supabase URL/key variables are configured, while unfinished social-login and demo-mode feature flags are explicitly disabled.
 - The 1024×1024 App Store icon is opaque (no alpha channel).
 - Android uses the same application ID and explicitly blocks background location, foreground location service, and microphone access.
@@ -62,7 +62,7 @@ Last verified: 2026-09-28
 
 These require owner credentials or commercial decisions and cannot be completed from source code alone:
 
-1. **Apple paid membership and signing:** Expo/EAS is initialized as `@bencegatai/come-get-it-app`, the bundle identifier is `app.comegetit.mobile`, and the required production Supabase variables are configured in EAS. Activate the Apple Developer Program membership, then create the production signing credentials, build, and submit to App Store Connect.
+1. **Apple signing and upload:** the Apple Developer Program membership is active through 2027-09-29 (team `AMLH4RKNR8`), the explicit App ID `app.comegetit.mobile` is registered with Sign in with Apple, Expo/EAS is initialized as `@bencegatai/come-get-it-app`, and the production variables are configured. EAS now needs one interactive Apple-account authentication to generate the first Distribution Certificate and provisioning profile; after that it can build with the remotely managed credentials and submit to TestFlight.
 2. **Optional social sign-in credentials:** Google and Apple providers are still disabled because the required provider credentials have not been supplied. Their buttons are hidden by default; email/password registration, confirmation, reset, and sign-in are the release-safe path. Only set `EXPO_PUBLIC_ENABLE_GOOGLE_AUTH=true` or `EXPO_PUBLIC_ENABLE_APPLE_AUTH=true` after the corresponding Supabase provider and native credentials are complete.
 3. **Database maintenance:** schedule the Supabase Postgres security-patch upgrade. The current production version reports outstanding security patches.
 4. **Monetization decision:** the source material describes Plus at 990 Ft/week or 2,990 Ft/month, but the app has no App Store subscription products or RevenueCat configuration. Either launch this build as a free beta or create StoreKit products, RevenueCat entitlements, a paywall, restore-purchases flow, and subscription terms before charging users.
