@@ -17,7 +17,8 @@ jobs:
       internal_groups:
         - Come Get It belső teszt
       changelog: |
-        Friss release candidate a teljes iPhone-os végponttól végpontig teszthez.
-        Ellenőrizendő: regisztráció, belépés, venue és reward, QR-beváltás,
-        ismételt beváltás elutasítása, kijelentkezés, jelszó-visszaállítás és fióktörlés.
+        Build 11: natív Apple Maps a helylistán és a hely részletes oldalán,
+        hitelesített jutalomrészlet, Pilot jutalomkép és beváltási ellenőrzések.
+        Ellenőrizendő: lista- és részlettérkép, venue markerek; 100 pontos Pilot
+        jutalom; partneri QR-beolvasás; ismételt QR elutasítása; kijelentkezés és reset.
       submit_beta_review: false

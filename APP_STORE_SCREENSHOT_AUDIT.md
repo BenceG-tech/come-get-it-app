@@ -1,6 +1,6 @@
 # Come Get It — App Store screenshot audit
 
-Audit date: 2026-09-28
+Audit date: 2026-09-29
 
 ## Result
 
@@ -18,9 +18,9 @@ Apple currently accepts one to ten screenshots per device size, without alpha/tr
 
 ## Required fresh capture set
 
-Capture the signed release/TestFlight build at one consistent accepted 6.9-inch size, with the App Review account or a reset screenshot account:
+Capture signed TestFlight build **1.0.0 (11)** at one consistent accepted 6.9-inch size, with the App Review account or a reset screenshot account:
 
-1. Venue discovery — map/list with live Budapest partner data.
+1. Venue discovery — native Apple map/list with live Budapest partner data and no API-key watermark.
 2. Venue details — real venue, opening hours, map and available drink.
 3. Rewards — live reward catalog with no card-linking banner.
 4. Favorites or Profile — saved venues and account value, without personal email/phone visible.
@@ -35,4 +35,4 @@ Optional sixth image: search/filter view with a useful result.
 - Do not show the review password, personal contact details, full redemption token or internal IDs.
 - Do not claim Plus, card linking, CSR donations, push notifications or partner/user counts.
 - Reset review redemptions and favorites before the capture session if necessary.
-- Capture only after the signed iOS build passes device and TestFlight smoke tests.
+- Capture only after build 11 passes the signed-device and TestFlight smoke tests.
