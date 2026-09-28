@@ -1,50 +1,13 @@
-import { rest } from '@/lib/supabaseRest';
 import { getSupabase } from '@/lib/supabaseClient';
 import { VENUE_PUBLIC_COLUMNS, Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
 import { Reward } from '@/types/reward';
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
-const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+import { rest } from '@/lib/supabaseRest';
+
 const VENUE_IMAGE_COLUMNS = 'id,venue_id,url,label,is_cover';
 const VENUE_DRINK_COLUMNS = 'id,venue_id,drink_name,image_url,is_free_drink,description';
 const FREE_DRINK_WINDOW_COLUMNS = 'id,venue_id,drink_id,days,start_time,end_time,timezone';
-
-async function invokeEdgeFunction<TResponse>(name: string, body: unknown): Promise<TResponse> {
-  const url = `${SUPABASE_URL}/functions/v1/${name}`;
-  console.info('[Provider] invokeEdgeFunction', { name, url, body });
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: SUPABASE_ANON,
-      Authorization: `Bearer ${SUPABASE_ANON}`,
-    },
-    body: JSON.stringify(body ?? {}),
-  });
-
-  if (!res.ok) {
-    let payload: unknown = null;
-    try {
-      payload = await res.json();
-    } catch {
-      try {
-        payload = await res.text();
-      } catch {
-        payload = null;
-      }
-    }
-
-    console.error('[Provider] Edge function error', { name, status: res.status, payload });
-    throw new Error(
-      JSON.stringify({ name, status: res.status, statusText: res.statusText, payload }, null, 2)
-    );
-  }
-
-  const json = (await res.json()) as TResponse;
-  console.info('[Provider] Edge function ok', { name });
-  return json;
-}
+const REWARD_PUBLIC_COLUMNS = 'id,venue_id,name,description,points_required,valid_until,active,image_url,category,is_global,partner_id,priority,terms_conditions,max_redemptions,current_redemptions';
 
 function toYyyyMmDd(d: Date): string {
   const yyyy = d.getFullYear();
@@ -58,28 +21,30 @@ function isUuidLike(value: string | undefined): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-async function fetchRewardsRest(params: { venueId?: string; scope: 'app' | 'venue' }): Promise<Reward[]> {
+async function fetchRewardsQuery(params: { venueId?: string; scope: 'app' | 'venue' }): Promise<Reward[]> {
   const today = toYyyyMmDd(new Date());
-  const base = `/rewards?select=*`;
-  const active = `&active=eq.true`;
-  const valid = `&valid_until=gte.${today}`;
-  const order = `&order=${encodeURIComponent('priority.desc.nullslast,points_required.asc')}`;
-
   const venueId = params.venueId;
   const hasValidVenueId = isUuidLike(venueId);
   const globalOnly = params.scope === 'venue' && venueId && !hasValidVenueId;
-  const venueOrGlobal = params.scope === 'venue' && hasValidVenueId
-    ? `&or=${encodeURIComponent(`(venue_id.eq.${venueId},partner_id.eq.${venueId},is_global.eq.true)`)}`
-    : '';
-  const globalFilter = globalOnly ? '&is_global=eq.true' : '';
+  const supabase = getSupabase();
+  let query = supabase
+    .from('rewards')
+    .select(REWARD_PUBLIC_COLUMNS)
+    .eq('active', true)
+    .gte('valid_until', today)
+    .order('priority', { ascending: false, nullsFirst: false })
+    .order('points_required', { ascending: true });
 
-  const url = `${base}${active}${valid}${venueOrGlobal}${globalFilter}${order}`;
-  console.info('[Provider] fetchRewardsRest', { scope: params.scope, venueId, url });
+  if (params.scope === 'venue' && hasValidVenueId) {
+    query = query.or(`venue_id.eq.${venueId},partner_id.eq.${venueId},is_global.eq.true`);
+  } else if (globalOnly) {
+    query = query.eq('is_global', true);
+  }
 
-  const res = await rest(url);
-  const json = (await res.json()) as unknown;
-  const rewards = Array.isArray(json) ? (json as Reward[]) : [];
-  console.info('[Provider] fetchRewardsRest result', { count: rewards.length });
+  const { data, error } = await query;
+  if (error) throw error;
+  const rewards = Array.isArray(data) ? (data as unknown as Reward[]) : [];
+  console.info('[Provider] fetchRewardsQuery result', { count: rewards.length });
   return rewards;
 }
 
@@ -89,27 +54,13 @@ export async function fetchRewards(venueId: string): Promise<Reward[]> {
 
   if (!isUuidLike(normalizedVenueId)) {
     console.warn('[Provider] fetchRewards received non-UUID venueId; using global rewards fallback', { venueId: normalizedVenueId });
-    return fetchRewardsRest({ venueId: normalizedVenueId, scope: 'venue' });
+    return fetchRewardsQuery({ venueId: normalizedVenueId, scope: 'venue' });
   }
-
-  try {
-    const data = await invokeEdgeFunction<{ success?: boolean; rewards?: Reward[] }>('get-rewards', {
-      venue_id: normalizedVenueId,
-    });
-    const rewards = Array.isArray(data?.rewards) ? data.rewards : [];
-    console.info('[Provider] fetchRewards edge result', { count: rewards.length });
-    if (rewards.length > 0) return rewards;
-  } catch (e) {
-    console.error('[Provider] fetchRewards edge failed, falling back to REST', e);
-  }
-
-  return fetchRewardsRest({ venueId: normalizedVenueId, scope: 'venue' });
+  return fetchRewardsQuery({ venueId: normalizedVenueId, scope: 'venue' });
 }
 
 export async function fetchAppRewards(): Promise<Reward[]> {
-  console.info('[Provider] fetchAppRewards - using REST directly');
-  // Edge function doesn't support scope:'global', use REST directly
-  return fetchRewardsRest({ scope: 'app' });
+  return fetchRewardsQuery({ scope: 'app' });
 }
 
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {

@@ -15,7 +15,6 @@ import { Linking } from 'react-native';
 import { ArrowLeft, Search, MapPin, Navigation, AlertCircle, CheckCircle2, Crosshair } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
-import { rest } from '@/lib/supabaseRest';
 import { fetchVenues } from '@/lib/venueService';
 import DarkMapPreview from '@/components/DarkMapPreview';
 import VenueMiniCard from '@/components/VenueMiniCard';
@@ -79,10 +78,8 @@ export default function MapScreen() {
         const venuesData: Venue[] = await fetchVenues({ orderByCreated: true });
         console.log('[Map] Fetched venues:', venuesData.length);
         
-        // Geocode venues that don't have coordinates.
-        // IMPORTANT: Some Supabase schemas do not have latitude/longitude columns.
-        // In that case, PATCH will return PGRST204. We treat this as non-fatal and
-        // keep coordinates in-memory for the map.
+        // Geocode venues that don't have coordinates for this map session only.
+        // Venue data is managed in Venue Hub; the consumer app must never write it.
         const venuesWithCoords = await Promise.all(
           venuesData.map(async (venue) => {
             const latFromVenue = typeof (venue as any).latitude === 'number' ? (venue as any).latitude : null;
@@ -103,46 +100,6 @@ export default function MapScreen() {
 
                 if (coordinates) {
                   console.log('[Map] Geocoded venue', { id: venue.id, name: venue.name, coordinates });
-
-                  try {
-                    const patchRes = await rest(`/venues?id=eq.${venue.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ latitude: coordinates.lat, longitude: coordinates.lng }),
-                    });
-
-                    if (!patchRes.ok) {
-                      let errPayload: unknown = null;
-                      try {
-                        errPayload = await patchRes.json();
-                      } catch {
-                        try {
-                          errPayload = await patchRes.text();
-                        } catch {
-                          errPayload = null;
-                        }
-                      }
-
-                      const payloadStr = typeof errPayload === 'string' ? errPayload : JSON.stringify(errPayload);
-                      if (payloadStr.includes('PGRST204') && payloadStr.includes('latitude')) {
-                        console.warn('[Map] Skipping coordinates PATCH due to missing DB columns', {
-                          venueId: venue.id,
-                          payload: errPayload,
-                        });
-                      } else {
-                        console.warn('[Map] Venue PATCH failed (non-fatal)', {
-                          venueId: venue.id,
-                          status: patchRes.status,
-                          payload: errPayload,
-                        });
-                      }
-                    } else {
-                      console.log('[Map] Venue coordinates PATCH ok', { venueId: venue.id });
-                    }
-                  } catch (e) {
-                    console.warn('[Map] Venue PATCH threw (non-fatal)', { venueId: venue.id, e });
-                  }
-
                   return { ...venue, latitude: coordinates.lat, longitude: coordinates.lng };
                 }
               } catch (geocodeError) {

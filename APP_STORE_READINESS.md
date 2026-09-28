@@ -1,6 +1,6 @@
 # Come Get It — App Store readiness
 
-Last verified: 2026-09-26
+Last verified: 2026-09-28
 
 ## Ready in the repository
 
@@ -21,6 +21,8 @@ Last verified: 2026-09-26
 - Customer reward reads expose only active, unexpired, in-stock rewards from active venues (or explicitly global rewards). The write path enforces the same rule, so a paused venue's hidden reward cannot be redeemed by guessing its UUID.
 - Venue cards use separate accessible controls for card navigation and favorite toggling, avoiding nested interactive elements in the web preview while preserving native behavior.
 - Public venue reads are limited to active venues and an explicit consumer-safe column list rather than whole database rows. Sensitive helper functions reject cross-user lookups.
+- The map may geocode a missing venue coordinate only in memory; the consumer app has no venue write path. Persistent venue corrections remain a Venue Hub responsibility.
+- Reward lists use the authenticated Supabase session and RLS rather than an anonymous REST fallback. The compatibility Edge Function validates the user again, returns an explicit public column set, and excludes expired, exhausted, or paused-venue rewards.
 - Legal links point to the repository's public privacy policy and Apple's standard EULA.
 - Legacy prototype routes (`landing`, template modal, and the fake Cock & Pye venue/card-linking screen) have been removed, so stale deep links cannot expose unfinished product claims.
 - App Store metadata, privacy answers, review notes, support content, and a screenshot acceptance audit are prepared in the repository.
@@ -36,6 +38,7 @@ Last verified: 2026-09-26
 - `create-redemption-window` version 16, `consume-redemption-token` version 50, `get-redemption-window-status` version 5, and the disabled `confirm-redemption` version 16 are deployed. The customer, partner, status, disabled compatibility, analytics, and account-management routes require authenticated JWTs at the gateway; the deliberate machine-to-machine/webhook exceptions perform their own key or signature checks.
 - Anonymous callers cannot use the protected redemption or account-deletion functions.
 - The production redemption flow was exercised end to end after the final Lovable redeploy: an authenticated App Review user created a correctly formatted `CGI-XXXXXX-<32-character secret>` token, the customer-only status route returned `issued`, the scoped partner consumed it, status changed to `consumed`, and a repeated scan returned HTTP 409 `ALREADY_CONSUMED`.
+- `get-rewards` version 46 is deployed with gateway JWT verification and in-function user validation. Live checks returned HTTP 401 without authentication and HTTP 200 with the App Review account; the Come Get It Bar query returned only the active, in-stock pilot reward and no internal timestamp fields.
 - Rork automatically synchronized the release-hardening commits from GitHub. Its current web preview was retested with the App Review account through sign-in, live venue loading, favorite add/remove, venue details, the review redemption handoff, rewards, profile, and the account-management screen.
 - Normal accounts must pass the server-side 100 m venue and active-offer-window checks. The dedicated App Review account is service-role allowlisted to bypass only those two environmental checks; authentication, token expiry, and single-use consumption remain enforced.
 - A database unique index and server check enforce at most one successful free-drink redemption per normal user per Budapest calendar day. A controlled duplicate-insert test was rejected and its test rows were removed.
