@@ -22,23 +22,19 @@ The production Venue Hub reset route, protected-route redirect, access-denied fl
 - Repeat the same account, membership and scope verification for every real production partner before onboarding.
 - Configure a real charity/default donation rate before using CSR claims. Otherwise keep CSR disabled for the free beta.
 
-## 3. Expo and Apple signing — build completed
+## 3. Expo and Apple signing — build completed, submission queued
 
 EAS is initialized as `@bencegatai/come-get-it-app`, the production environment is configured, Apple Developer membership is active through 2027-09-29, and App ID `app.comegetit.mobile` exists with Sign in with Apple. The Distribution Certificate, provisioning profile, App Store Connect app record, and signed production build `1.0.0` (`8`) are complete. Build ID: `3a27b206-e9a2-4d37-9684-60355302c4fe`.
 
-```bash
-pnpm dlx eas-cli submit --platform ios --profile production
-```
+The App Store Connect API key has been created and EAS submission `6834af76-a861-41de-910f-edf33fb3acf3` is queued for upload. Do not rerun the submit command while that job is pending. Apple Developer team `AMLH4RKNR8` and App Store Connect app ID `6817022464` are linked. The downloaded IPA has a valid Apple Distribution signature and matching bundle ID, version, build number, entitlement set and provisioning profile.
 
-The first submission needs one interactive approval for EAS to create its App Store Connect API key. Use Apple Developer team `AMLH4RKNR8`; the App Store Connect app ID is `6817022464`. The downloaded IPA has a valid Apple Distribution signature and matching bundle ID, version, build number, entitlement set and provisioning profile.
-
-## 4. App Store Connect — record completed, upload pending
+## 4. App Store Connect — metadata saved, submission queued
 
 - The Terms of Service are accepted.
 - The iOS app record exists for `app.comegetit.mobile`, primary language Hungarian, SKU `COMEGETIT-IOS-1`, Apple ID `6817022464`.
+- The Hungarian subtitle, promotional text, description, keywords, support URL, primary/secondary categories, reviewer contact and login, English review notes, and manual-release mode are saved.
+- The privacy-policy URLs and all seven audited App Privacy data types are configured. The owner must make the final **Publish** click because Apple's confirmation includes an accuracy and legal-compliance declaration.
 - Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
-- Copy metadata and reviewer instructions from `APP_STORE_METADATA_HU.md`, `APP_PRIVACY_QUESTIONNAIRE.md`, and `APP_STORE_REVIEW_NOTES.md`.
-- Copy the review password only from the Git-ignored `.private/app-review-credentials.txt` file.
 - Complete the current age-rating questionnaire and override to 18+ when necessary so it matches the app's stated audience.
 - Upload fresh 6.9-inch screenshots from the signed TestFlight build and complete physical-device testing of registration, login, location permission, venue/reward display, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
 
