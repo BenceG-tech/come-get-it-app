@@ -65,6 +65,23 @@ export async function fetchAppRewards(): Promise<Reward[]> {
   return fetchRewardsQuery({ scope: 'app' });
 }
 
+export async function fetchRewardById(rewardId: string): Promise<Reward | null> {
+  const normalizedRewardId = String(rewardId ?? '').trim();
+  if (!isUuidLike(normalizedRewardId)) return null;
+
+  const today = toYyyyMmDd(new Date());
+  const { data, error } = await getSupabase()
+    .from('rewards')
+    .select(REWARD_PUBLIC_COLUMNS)
+    .eq('id', normalizedRewardId)
+    .eq('active', true)
+    .gte('valid_until', today)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? (data as unknown as Reward) : null;
+}
+
 export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {
   const normalizedId = decodeURIComponent(String(id)).trim();
   if (!normalizedId) return null;
