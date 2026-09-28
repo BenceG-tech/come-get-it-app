@@ -6,6 +6,7 @@ Last verified: 2026-09-28
 
 - Expo SDK 54 project previously passed `expo-doctor` (18/18). On 2026-09-28 the current source again passed TypeScript validation, public config generation, native iOS prebuild, dependency lockfile supply-chain validation, and the production iOS JavaScript/Hermes export. A later `expo-doctor` invocation completed 15/18 checks; its three incomplete checks were environment-only because the bundled runner had no standalone `npm` executable, not project compatibility failures.
 - The final pre-device audit on 2026-09-28 repeated TypeScript validation, public Expo config generation, and a production iOS Hermes export from the current working tree; all completed successfully.
+- The final binary/privacy dependency audit found PostHog bundled transitively by the Rork toolkit, then verified that the two identifiers required to initialize it are absent from the EAS production environment. Rork lifecycle/screen analytics therefore remain disabled in build 8; introducing either identifier is now documented as a mandatory privacy re-review trigger.
 - iOS metadata is set for `app.comegetit.mobile`, EAS remotely manages and increments the build number, foreground-only location access is declared, Sign in with Apple is enabled, and non-exempt encryption is disabled.
 - The Expo project is linked to EAS as `@bencegatai/come-get-it-app`. Production Supabase URL/key variables are configured, while unfinished social-login and demo-mode feature flags are explicitly disabled.
 - The 1024×1024 App Store icon is opaque (no alpha channel).
