@@ -34,8 +34,9 @@ The App Store Connect API key has been created and EAS submission `6834af76-a861
 - The iOS app record exists for `app.comegetit.mobile`, primary language Hungarian, SKU `COMEGETIT-IOS-1`, Apple ID `6817022464`.
 - The Hungarian subtitle, promotional text, description, keywords, support URL, primary/secondary categories, reviewer contact and login, English review notes, and manual-release mode are saved.
 - The privacy-policy URLs and all seven audited App Privacy data types are configured. The owner must make the final **Publish** click because Apple's confirmation includes an accuracy and legal-compliance declaration.
+- The free-beta price is set to 0 Ft with Hungary as the base region and all 175 App Store regions enabled. Apple Silicon Mac and Apple Vision Pro distribution are disabled because those platforms are not part of the tested launch scope.
 - Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
-- Complete the current age-rating questionnaire and override to 18+ when necessary so it matches the app's stated audience.
+- Enter the correct copyright holder, complete the current age-rating questionnaire, and override to 18+ when necessary so it matches the app's stated audience.
 - Upload fresh 6.9-inch screenshots from the signed TestFlight build and complete physical-device testing of registration, login, location permission, venue/reward display, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
 
 ## 5. Infrastructure and legal
