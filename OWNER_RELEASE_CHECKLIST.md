@@ -45,9 +45,10 @@ The App Store Connect API key has been created and EAS submission `6834af76-a861
 ## 5. Infrastructure and legal
 
 - Supabase was upgraded from `supabase-postgres-17.4.1.074` to stable `17.6.1.166`. The project returned to `ACTIVE_HEALTHY`, the vulnerable-version warning disappeared, and post-upgrade authentication, reward catalog, QR consume, status transition and repeated-use rejection checks passed.
-- Restore DNS for `come-get-it.app`; on 2026-09-20 it had no A, AAAA, CNAME, or MX response and did not resolve over HTTPS.
-- Publish the legal entity's full name, address, and registration details in the privacy policy on the restored domain.
-- Keep `gataibence@gmail.com` as the working support address until the domain's MX records and branded mailbox are verified.
+- `come-get-it.app` was successfully redeemed and restored on 2026-09-28. GoDaddy nameservers resolve, the apex has an A record, HTTPS returns 200, and `/adatvedelmi-szabalyzat` is public.
+- The restored privacy page still identifies the controller only as “Come Get It”. Publish the legal entity's full name, address, registration details, processing details for the mobile app, and a current effective date before using it as the App Store privacy URL.
+- No MX record was returned on 2026-09-28. Keep `gataibence@gmail.com` as the working support address until a branded mailbox is configured and its inbound delivery is verified; do not rely on `hello@come-get-it.app` yet.
+- The public website still advertises 990 Ft/week, 2,990 Ft/month and a CSR water-impact promise. Remove or clearly label those claims as future concepts while the App Store release remains a free beta and CSR is disabled.
 - Before linked-card rewards go live, confirm the Salt Edge callback URL exactly matches the deployed callback function and confirm the current callback signing key.
 
 ## Release decision
