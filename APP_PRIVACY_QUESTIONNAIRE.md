@@ -38,6 +38,7 @@ Apple requires the declaration to include third-party code as well as first-part
 ## SDK and feature audit
 
 - Supabase: authentication, database, storage and edge functions; included in the declarations above.
+- Rork toolkit: the dependency contains PostHog code and the production bundle therefore contains the SDK, but its client is disabled unless both `EXPO_PUBLIC_PROJECT_ID` and `EXPO_PUBLIC_TEAM_ID` are present. Neither variable exists in the EAS production environment, so the submitted build does not initialize the client or send Rork lifecycle/screen analytics. If either identifier is deliberately configured later, perform a new binary/privacy audit before rebuilding and update App Store Connect when collection begins.
 - Apple / Google sign-in: only declare the profile data actually returned and stored. Google and Apple provider secrets must be configured before their buttons are enabled in production.
 - Expo/EAS: build/distribution tooling; no advertising SDK is present.
 - Salt Edge, Fidel and Goorderz server integrations are not exposed as active consumer features in iOS 1.0. Do not declare financial data unless card linking is enabled in a later release.
@@ -48,3 +49,4 @@ Apple requires the declaration to include third-party code as well as first-part
 - The in-app privacy policy must match these answers.
 - If precise location remains transient and legal counsel confirms it meets Apple’s optional-disclosure exception, the location label can be reconsidered. The conservative submission choice above declares it.
 - Adding analytics, crash reporting, push notifications, IAP/subscriptions, card linking or marketing automation requires a new privacy review before release.
+- Treat adding the two Rork project/team analytics identifiers as enabling analytics for privacy-review purposes, even though the PostHog package is already present transitively.
