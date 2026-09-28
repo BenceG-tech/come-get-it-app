@@ -59,10 +59,10 @@ Az italajánlatok helyszínenként és időszakonként változhatnak. 18 éven f
 
 ## URL-ek
 
-- Support URL: `https://github.com/BenceG-tech/come-get-it-app/blob/main/SUPPORT.md`
-- Privacy Policy URL: `https://github.com/BenceG-tech/come-get-it-app/blob/main/PRIVACY.md`
-- Privacy Choices URL: ugyanaz a privacy URL használható átmenetileg; a fióktörlés az appon belül elérhető.
-- Marketing URL: hagyd üresen, amíg a `come-get-it.app` DNS és HTTPS nem működik megbízhatóan.
+- Support URL: `https://come-get-it.app/support/`
+- Privacy Policy URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
+- Privacy Choices URL: üres; a fióktörlés az appon belül elérhető.
+- Marketing URL: egyelőre üres.
 
 ## Nem szerepelhet az 1.0 metaadataiban
 
