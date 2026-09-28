@@ -18,7 +18,7 @@ The production Venue Hub reset route, protected-route redirect, access-denied fl
 
 - A genuine test-partner account and explicit `venue_memberships` scope exist for Come Get It Bar.
 - The partner-only Venue Hub view was verified: the test partner sees only the assigned venue.
-- A separate, auto-confirmed App Review partner account is configured as non-admin `venue_staff` for exactly one venue. Browser testing confirmed it can access only Dashboard and Beváltások and sees only Come Get It Bar redemption data.
+- A separate, auto-confirmed App Review partner account is configured as non-admin `venue_staff` for exactly one venue. Browser testing confirmed it can access only Dashboard, QR beváltás and Beváltások; the scanner and redemption data expose only Come Get It Bar.
 - A limited active pilot reward exists and is visible to the mobile app.
 - Repeat the same account, membership and scope verification for every real production partner before onboarding.
 - Configure a real charity/default donation rate before using CSR claims. Otherwise keep CSR disabled for the free beta.
@@ -42,7 +42,7 @@ The App Store Connect API key has been created and EAS submission `6834af76-a861
 
 ## 5. Infrastructure and legal
 
-- Schedule the Supabase Postgres security-patch upgrade and re-run the security advisor afterward. The 2026-09-28 advisor still reports `supabase-postgres-17.4.1.074` with outstanding security patches; its only other security findings are informational no-policy notices on two intentionally server-only RLS tables.
+- Supabase was upgraded from `supabase-postgres-17.4.1.074` to stable `17.6.1.166`. The project returned to `ACTIVE_HEALTHY`, the vulnerable-version warning disappeared, and post-upgrade authentication, reward catalog, QR consume, status transition and repeated-use rejection checks passed.
 - Restore DNS for `come-get-it.app`; on 2026-09-20 it had no A, AAAA, CNAME, or MX response and did not resolve over HTTPS.
 - Publish the legal entity's full name, address, and registration details in the privacy policy on the restored domain.
 - Keep `gataibence@gmail.com` as the working support address until the domain's MX records and branded mailbox are verified.
@@ -50,4 +50,4 @@ The App Store Connect API key has been created and EAS submission `6834af76-a861
 
 ## Release decision
 
-A free beta may be submitted only after the Supabase redirect, Apple/EAS signing, Postgres patch, App Store Connect setup, signed TestFlight device test, and final screenshots are complete. Do not market paid Plus or CSR benefits until their corresponding commercial configuration and live content are complete.
+A free beta may be submitted after the completed Supabase redirect, Apple/EAS signing and Postgres patch, once App Store Connect setup, the signed TestFlight device test and final screenshots are complete. Do not market paid Plus or CSR benefits until their corresponding commercial configuration and live content are complete.
