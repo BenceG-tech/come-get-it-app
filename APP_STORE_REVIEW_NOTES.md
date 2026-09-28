@@ -27,7 +27,7 @@ Suggested test flow:
 2. On the Venues tab, browse the map/list and open “Come Get It Bar”.
 3. Select the active, limited test reward “Pilot ajándék ital”.
 4. Tap “Kérd ingyen italod”, continue through the arrival/show steps, then tap “BEVÁLTOM”.
-5. On a second device or browser, open `https://come-get-it-venue-hub.lovable.app` and sign in with the restricted Venue Hub account supplied below. Open Beváltások and scan the customer's QR code. The customer app changes to the successful state only after this partner action.
+5. On a second device or browser, open `https://come-get-it-venue-hub.lovable.app` and sign in with the restricted Venue Hub account supplied below. Open **QR beváltás** (direct path: `/pos/redeem`), start the scanner, and scan the customer's QR code. The customer app changes to the successful state only after this partner action.
 6. Scan the same QR code again. The repeated redemption is rejected because tokens are single use.
 7. Open the Rewards tab to view the live rewards availability state. This screen is backed by the production catalog and may show an empty state when participating venues have no currently active reward inventory.
 8. Open Profile → Favorites to view saved venues.
@@ -38,7 +38,7 @@ Restricted Venue Hub review access:
 - URL: `https://come-get-it-venue-hub.lovable.app`
 - Username: copy from `.private/app-review-partner-credentials.txt`
 - Password: copy from `.private/app-review-partner-credentials.txt`
-- Scope: non-admin `venue_staff`, assigned only to “Come Get It Bar”
+- Scope: non-admin `venue_staff`, assigned only to “Come Get It Bar”; navigation is limited to Dashboard, QR beváltás and Beváltások
 
 Location access is optional for browsing. Normal accounts must grant When In Use location access and be within 100 meters of a participating venue to redeem. The app does not request background location.
 
