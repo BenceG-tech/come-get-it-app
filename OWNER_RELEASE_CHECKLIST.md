@@ -18,6 +18,7 @@ The production Venue Hub reset route, protected-route redirect, access-denied fl
 
 - A genuine test-partner account and explicit `venue_memberships` scope exist for Come Get It Bar.
 - The partner-only Venue Hub view was verified: the test partner sees only the assigned venue.
+- A separate, auto-confirmed App Review partner account is configured as non-admin `venue_staff` for exactly one venue. Browser testing confirmed it can access only Dashboard and Beváltások and sees only Come Get It Bar redemption data.
 - A limited active pilot reward exists and is visible to the mobile app.
 - Repeat the same account, membership and scope verification for every real production partner before onboarding.
 - Configure a real charity/default donation rate before using CSR claims. Otherwise keep CSR disabled for the free beta.
