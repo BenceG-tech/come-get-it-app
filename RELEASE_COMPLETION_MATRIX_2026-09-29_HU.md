@@ -28,7 +28,7 @@ Cél: **1.0.0 (15), ingyenes iPhone-béta**
 | Követelmény | Állapot | Bizonyíték | Következő lépés |
 |---|---|---|---|
 | Aláírt production iOS build | **BUILD 15 BIZONYÍTOTT** | EAS build `1a8db4bf-a7d2-4450-8ded-dfb952d4b58d`, verzió `1.0.0 (15)`, `FINISHED`, store distribution. | Nincs buildelési teendő. |
-| Feltöltés App Store Connectbe | **ÜTEMEZVE** | EAS submission `6b1c55d5-deb8-4b03-b40a-696f2d3445e2` létrejött; az Expo beküldési sorában várakozik. | Automatikusan befejeződik; utána Apple-feldolgozás. |
+| Feltöltés App Store Connectbe | **ÚJRAKÜLDVE · SORBAN** | Az első submission részletes napló nélkül hibára futott. Ugyanaz a változatlan, aláírt build az aktív `b5b74450-2d79-4d7c-87b3-88baa73b2301` submissionnel újraküldve; állapota `IN_QUEUE`. | Az EAS sor lefutása után ellenőrizni kell az Apple-feldolgozást és a TestFlight-megjelenést. |
 | Belső TestFlight elérhetőség | **BIZONYÍTOTT** | Apple/EAS aktuális státusz: build 13 belső béta tesztelésben; külső bétára előkészíthető. | TestFlightban mindig a 13-as buildet nyisd meg. |
 | Regisztráció és e-mail-megerősítés | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | A kiadási forrásban implementálva; statikus és export tesztek PASS. | Friss tesztcímmel végigjárni iPhone-on. |
 | Bejelentkezés, kijelentkezés, munkamenet-visszaállítás | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | Implementálva; hibás refresh token helyreállítása is bent van. | Kijelentkezés, újranyitás és ismételt belépés iPhone-on. |
