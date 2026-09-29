@@ -40,7 +40,7 @@ EAS submission `e0705b3a-2b9f-4a11-a451-5818e09515bd` uploaded build 13 successf
 - The App Store version still selects processed build `1.0.0 (9)` while build 13 is being qualified. Do not submit for review until build 13 passes the physical-device checklist, is selected, and screenshots plus owner declarations are complete.
 - Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
 - Enter the correct copyright holder, complete the current age-rating questionnaire, and override to 18+ when necessary so it matches the app's stated audience.
-- Upload fresh 6.9-inch screenshots from signed TestFlight build 13 and complete physical-device testing of registration, login, location permission, both map views, venue/reward display, category/detail back navigation, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
+- Upload fresh 6.9-inch screenshots from signed TestFlight build 13 by following [`APP_STORE_MEDIA_CAPTURE_HU.md`](APP_STORE_MEDIA_CAPTURE_HU.md), and complete physical-device testing of registration, login, location permission, both map views, venue/reward display, category/detail back navigation, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
 - Follow the step-by-step evidence checklist in [`TESTFLIGHT_DEVICE_TEST.md`](TESTFLIGHT_DEVICE_TEST.md); record a PASS/FAIL result and keep the named screenshots before App Review submission.
 
 ## 5. Infrastructure and legal
