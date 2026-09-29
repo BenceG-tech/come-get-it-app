@@ -1,6 +1,6 @@
 # Come Get It — TestFlight készülékteszt
 
-Tesztelendő kiadás: **1.0.0 (13)**
+Tesztelendő kiadás: **1.0.0 (17)**
 TestFlight-csoport: **Come Get It belső teszt**
 Állapot: **telefonos ellenőrzésre kész**
 
@@ -9,7 +9,7 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 ## Előkészítés
 
 - [ ] Az iPhone-on a TestFlightba a fejlesztői fiókhoz tartozó Apple ID-val legyen belépve.
-- [ ] A telepített alkalmazás verziója **1.0.0 (13)**.
+- [ ] A telepített alkalmazás verziója **1.0.0 (17)**.
 - [ ] A Venue Hub meg van nyitva egy kamerás második eszközön (a Mac is megfelel): `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
 - [ ] A partnerellenőrző hozzáférés a helyi, Git által nem követett `.private/app-review-partner-credentials.txt` fájlból van használva. A jelszó nem kerül képernyőképre.
 - [ ] A telefonon működő internetkapcsolat és a kameraengedély elérhető.
@@ -19,7 +19,8 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 1. [ ] Telepítsd vagy frissítsd a Come Get It alkalmazást a TestFlightból.
 2. [ ] Indítsd el teljesen bezárt állapotból.
 3. [ ] Ellenőrizd, hogy nincs fehér/fekete üres képernyő, összeomlás vagy fejlesztői hibaüzenet.
-4. [ ] Ellenőrizd az alkalmazás nevét, ikonját, splash képernyőjét és az olvasható magyar szövegeket.
+4. [ ] Ellenőrizd az alkalmazás nevét, ikonját, a márkázott splash/betöltő képernyőt és az olvasható magyar szövegeket.
+5. [ ] A bejelentkezési képernyőn ellenőrizd, hogy a Come Get It logó vízszintesen középen jelenik meg.
 
 Bizonyíték: `TF-01-elso-inditas.png`
 
@@ -51,7 +52,7 @@ Várt eredmény: nincs végtelen betöltés, váratlan kijelentkezés vagy hibá
 5. [ ] A hely adatlapján ellenőrizd a címet, nyitvatartást, térképet és az **Electric Blue Shot** italt.
 6. [ ] Nyisd meg a Jutalmak lapot.
 7. [ ] Ellenőrizd, hogy a **Pilot ajándék ital** saját képpel és 100 pontos árral jelenik meg.
-8. [ ] Nyisd meg egymás után az **Italok**, **Étel**, **Élmények** és **Összes** kategóriát. Minden kategória vissza gombjának a Jutalmak főoldalára kell vinnie.
+8. [ ] Nyisd meg az **Italok** és **Összes** kategóriát. Mindkettőn pontosan egyetlen látható vissza gomb lehet, amely közvetlenül a Jutalmak főoldalára visz. Az **Étel** és **Élmények** kártyák `Hamarosan` állapotban legyenek letiltva, ne nyíljanak meg.
 9. [ ] Nyiss meg egy jutalomrészletet. A normál, betöltési és hibaállapot vissza gombja sem vihet másik kategóriába vagy üres oldalra.
 10. [ ] Nyisd meg és váltsd be a Pilot jutalmat. Várt eredmény: „Sikeres beváltás”, beváltási kód, és pontosan 100 pont levonása.
 11. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
