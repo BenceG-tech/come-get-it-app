@@ -67,8 +67,8 @@ Kiadási szabály: bármely FAIL esetén nincs App Review-beküldés.
 - [x] Egységes friss forrásméret: `1206×2622` (Apple 6,3″-os elfogadott méret), PNG, alpha nélkül.
 - [x] Nincs TestFlight-, Rork-, Lovable-, böngésző- vagy fejlesztői keret.
 - [x] Nincs személyes adat vagy olvasható QR/token.
-- [ ] Nincs régi card-linking, automatikus pontgyűjtés, fizetős Plus vagy CSR-ígéret.
-- [x] Öt darab 6,9″ `1320×2868` PNG elkészült, egységes Come Get It marketingarculattal.
+- [x] Nincs régi card-linking, automatikus pontgyűjtés, fizetős Plus vagy CSR-ígéret; mind az öt végleges kép vizuálisan ellenőrizve.
+- [x] Öt darab 6,9″ `1320×2868` PNG elkészült, egységes Come Get It marketingarculattal; a tiszta ZIP pontosan ezt az öt fájlt tartalmazza, macOS-segédfájlok nélkül.
 - [ ] Az öt kész 6,9″ kép feltöltve az App Store Connectbe.
 - [ ] Az App Store Connect feltöltés utáni ellenőrzése PASS.
 
