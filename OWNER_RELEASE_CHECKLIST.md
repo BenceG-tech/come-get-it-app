@@ -26,39 +26,46 @@ Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készü
 - [x] Come Get It Venue Hub production build, TypeScript és célzott QR-szkenner lint PASS.
 - [x] A `come-get-it.app`, `/support`, `/adatvedelmi-szabalyzat` és `/felhasznalasi-feltetelek` HTTPS-en elérhető.
 - [x] A régi marketing-, TestFlight- és Rork-előnézeti médiakészlet auditálva és feltöltésből kizárva.
+- [x] Valódi iPhone → éles Venue Hub Mac-kamera → sikeres első optikai QR-beváltás: Come Get It Bistro / Azure Garden Spritz, 2026-09-29 13:19.
+- [x] Nyolc friss build-13 iPhone-kép technikailag ellenőrizve: mind `1206×2622`, PNG, átlátszóság nélkül; az öt legerősebb forráskép kiválasztva.
+- [x] A jutalomkategória duplikált natív fejléce eltávolítva; GitHub main `9a622ff`.
+- [x] Production EAS build `1.0.0 (14)` elkészült; build ID `564f465b-9468-4e51-9623-85ae9d65cb96`.
+- [x] Öt kész 6,9″ App Store-kép: mind `1320×2868`, PNG; feltöltési ZIP elkészült.
 
 ## 1. Fizikai TestFlight-kapu — Bence
 
-Telepítsd/frissítsd a TestFlightban a **Come Get It 1.0 (13)** verziót, majd a `TESTFLIGHT_DEVICE_TEST.md` sorrendjében ellenőrizd:
+Az Apple-feldolgozás után telepítsd/frissítsd a TestFlightban a **Come Get It 1.0 (14)** verziót, majd a `TESTFLIGHT_DEVICE_TEST.md` sorrendjében ellenőrizd:
 
 - [ ] regisztráció és e-mail-megerősítés;
 - [ ] kijelentkezés, bejelentkezés és munkamenet-visszaállítás;
-- [ ] helylista Apple Térképpel, vízjel nélkül;
-- [ ] Come Get It Bar részlet, nyitvatartás, térkép és Electric Blue Shot;
+- [x] helylista Apple Térképpel, vízjel nélkül;
+- [x] venue-részlet, nyitvatartás, működő Apple-térkép és elérhető ital;
 - [ ] Pilot jutalom képe, `drink` kategóriája és 100 pontos beváltása;
 - [ ] Italok, Étel, Élmények és Összes kategória következetes vissza gombja;
-- [ ] friss iPhone QR → éles Venue Hub Mac-kamera → sikeres első beolvasás;
+- [x] friss iPhone QR → éles Venue Hub Mac-kamera → sikeres első beolvasás;
 - [ ] ugyanaz a QR másodszor elutasítva;
 - [ ] jelszó-visszaállítás ugyanazon az iPhone-on;
 - [ ] tesztfiók végleges törlése.
 
 Kiadási szabály: bármely FAIL esetén nincs App Review-beküldés.
 
-## 2. Végleges App Store-képek — csak a fizikai PASS után
+## 2. Végleges App Store-képek
 
-Pontosan öt friss, ugyanazon 6,9 hüvelykes iPhone-on készült kép:
+Öt friss build-13 forráskép kiválasztva a 2026-09-29-i felvételből:
 
 1. helylista és működő natív térkép;
 2. Come Get It Bar részletes oldala;
-3. jutalomkatalógus;
-4. Pilot jutalom részletes, beváltás előtti állapota;
-5. italbeváltási átadóképernyő kitakart kóddal.
+3. partner részletes oldala;
+4. ingyenital-kártya működő térképpel;
+5. sikeres italbeváltás.
 
-- [ ] Egységes méret: 1260×2736, 1290×2796 vagy 1320×2868.
-- [ ] Nincs TestFlight-, Rork-, Lovable-, böngésző- vagy fejlesztői keret.
-- [ ] Nincs személyes adat vagy olvasható QR/token.
+- [x] Egységes friss forrásméret: `1206×2622` (Apple 6,3″-os elfogadott méret), PNG, alpha nélkül.
+- [x] Nincs TestFlight-, Rork-, Lovable-, böngésző- vagy fejlesztői keret.
+- [x] Nincs személyes adat vagy olvasható QR/token.
 - [ ] Nincs régi card-linking, automatikus pontgyűjtés, fizetős Plus vagy CSR-ígéret.
-- [ ] Az `audit:app-store-media` ellenőrző PASS.
+- [x] Öt darab 6,9″ `1320×2868` PNG elkészült, egységes Come Get It marketingarculattal.
+- [ ] Az öt kész 6,9″ kép feltöltve az App Store Connectbe.
+- [ ] Az App Store Connect feltöltés utáni ellenőrzése PASS.
 
 ## 3. App Store Connect biztonsági kulcs
 
@@ -84,7 +91,7 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## 5. Beküldés
 
-- [ ] A build 13 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
+- [ ] A build 14 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
 - [ ] Review login és angol review notes utolsó ellenőrzése.
 - [ ] Az öt friss screenshot feltöltve.
 - [ ] Minden kötelező mező zöld / hibamentes.
@@ -93,4 +100,4 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## Kiadási döntés
 
-Az ingyenes béta technikai alapja elkészült. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg a fizikai build-13 teszt, a friss médiacsomag, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+Az ingyenes béta technikai alapja elkészült, és az első valódi optikai QR-beváltás is sikeres. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg az ismételt fizikai QR-elutasítás, a hátralévő build-13 fiókfolyamatok, a kötelező 6,9″/6,5″ médiaslot, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
