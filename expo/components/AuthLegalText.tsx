@@ -2,7 +2,8 @@ import React, { memo } from 'react';
 import { Linking, StyleSheet, Text } from 'react-native';
 
 const CYAN = '#00C8E8' as const;
-const PRIVACY_URL = 'https://github.com/BenceG-tech/come-get-it-app/blob/main/PRIVACY.md';
+const TERMS_URL = 'https://come-get-it.app/felhasznalasi-feltetelek';
+const PRIVACY_URL = 'https://come-get-it.app/adatvedelmi-szabalyzat';
 
 function AuthLegalText() {
   return (
@@ -10,7 +11,7 @@ function AuthLegalText() {
       A folytatással elfogadod az{' '}
       <Text
         accessibilityRole="link"
-        onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+        onPress={() => Linking.openURL(TERMS_URL)}
         style={styles.link}
       >
         Használati Feltételeket
