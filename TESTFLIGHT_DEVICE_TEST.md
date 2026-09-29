@@ -119,8 +119,8 @@ A sikeres teszt után készíts egységes, 6.9 hüvelykes iPhone-képernyőképe
 - [ ] helyszínlista vagy térkép;
 - [ ] Come Get It Bar részletei;
 - [ ] Rewards lista;
-- [ ] Kedvencek vagy Profil személyes adatok nélkül;
-- [ ] beváltás előtti átadóképernyő teljes QR-token nélkül.
+- [ ] Pilot jutalom részletes, beváltás előtti állapota;
+- [ ] italbeváltás előtti átadóképernyő teljes QR-token nélkül.
 
 Elfogadott portréméretek közül használj egyet következetesen: **1260 × 2736**, **1290 × 2796** vagy **1320 × 2868**. Ne legyen látható értesítés, böngészőkeret, fejlesztői felület, jelszó, e-mail-cím vagy teljes QR-titok.
 

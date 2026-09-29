@@ -1,56 +1,93 @@
-# Come Get It — owner release checklist
+# Come Get It — tulajdonosi kiadási ellenőrzőlista
 
-Last verified: 2026-09-29
+Utolsó műszaki ellenőrzés: **2026. szeptember 29.**
+Célkiadás: **1.0.0 (13), ingyenes iPhone-béta**
 
-The code, live Supabase protections, Rork preview, and Lovable Venue Hub have completed the automated production-readiness pass. Completed owner actions are recorded below so this file can be used as the single release handoff.
+Ez az egyetlen aktuális tulajdonosi átadólap. A részletes műszaki bizonyíték az `APP_STORE_READINESS.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md`, a végleges képek szabályai az `APP_STORE_MEDIA_CAPTURE_HU.md` fájlban vannak.
 
-## 1. Supabase Auth redirect — completed
+## Már elkészült
 
-The following redirect URL is present in Supabase Authentication → URL Configuration:
+- [x] Supabase Auth engedélyezett átirányítás: `https://come-get-it-venue-hub.lovable.app/reset-password`.
+- [x] Valódi, nem-admin tesztpartner kizárólag a Come Get It Bar helyhez rendelve.
+- [x] Korlátozott Pilot jutalom és Electric Blue Shot ital aktív élő adatokkal.
+- [x] A Venue Hub és a mobilapp ugyanazt a production Supabase projektet használja.
+- [x] Partneres QR-backend: első beváltás sikeres, ismétlés `ALREADY_CONSUMED`, idegen venue `VENUE_UNAUTHORIZED`, párhuzamos dupla próbából csak egy sikeres.
+- [x] Venue Hub kamerajavítás éles: látható videókonténer, tényleges kameraválasztás, iframe-figyelmeztetés és közvetlen éles link.
+- [x] Supabase Postgres `17.6.1.166`, projektállapot `ACTIVE_HEALTHY`.
+- [x] Öt aktív venue mindegyike képpel és koordinátával; két aktív reward mindegyike képpel.
+- [x] Pilot reward kategória a mobilapp által használt `drink` kulcsra javítva.
+- [x] `user_qr_tokens` közvetlen anon/authenticated jogosultságai visszavonva.
+- [x] Production EAS build: `1.0.0 (13)`, build ID `7629d072-a18a-4e5e-ba2e-c72fc8667b4d`, állapot `FINISHED`.
+- [x] Apple-feldolgozás: build 13 `VALID`, belső TestFlight-csoporthoz rendelve.
+- [x] Build 13 IPA: aláírás, bundle ID, entitlement, privacy manifest és beágyazott titkok ellenőrzése PASS.
+- [x] Friss forrásellenőrzés: TypeScript PASS és teljes iOS Hermes export PASS, 3476 modul.
+- [x] Come Get It Venue Hub production build, TypeScript és célzott QR-szkenner lint PASS.
+- [x] A `come-get-it.app`, `/support`, `/adatvedelmi-szabalyzat` és `/felhasznalasi-feltetelek` HTTPS-en elérhető.
+- [x] A régi marketing-, TestFlight- és Rork-előnézeti médiakészlet auditálva és feltöltésből kizárva.
 
-```text
-https://come-get-it-venue-hub.lovable.app/reset-password
-```
+## 1. Fizikai TestFlight-kapu — Bence
 
-The production Venue Hub reset route, protected-route redirect, access-denied flow and logout were verified. The complete email-link round trip remains part of the signed TestFlight physical-device test.
+Telepítsd/frissítsd a TestFlightban a **Come Get It 1.0 (13)** verziót, majd a `TESTFLIGHT_DEVICE_TEST.md` sorrendjében ellenőrizd:
 
-## 2. Partner access and launch content — pilot completed
+- [ ] regisztráció és e-mail-megerősítés;
+- [ ] kijelentkezés, bejelentkezés és munkamenet-visszaállítás;
+- [ ] helylista Apple Térképpel, vízjel nélkül;
+- [ ] Come Get It Bar részlet, nyitvatartás, térkép és Electric Blue Shot;
+- [ ] Pilot jutalom képe, `drink` kategóriája és 100 pontos beváltása;
+- [ ] Italok, Étel, Élmények és Összes kategória következetes vissza gombja;
+- [ ] friss iPhone QR → éles Venue Hub Mac-kamera → sikeres első beolvasás;
+- [ ] ugyanaz a QR másodszor elutasítva;
+- [ ] jelszó-visszaállítás ugyanazon az iPhone-on;
+- [ ] tesztfiók végleges törlése.
 
-- A genuine test-partner account and explicit `venue_memberships` scope exist for Come Get It Bar.
-- The partner-only Venue Hub view was verified: the test partner sees only the assigned venue.
-- A separate, auto-confirmed App Review partner account is configured as non-admin `venue_staff` for exactly one venue. Browser testing confirmed it can access only Dashboard, QR beváltás and Beváltások; the scanner and redemption data expose only Come Get It Bar.
-- A limited active pilot reward exists and is visible to the mobile app.
-- The Pilot reward now has a live image. Its signed-device test succeeded: the reward count moved to 1/5 and the balance decreased atomically from 650 to 550.
-- Repeat the same account, membership and scope verification for every real production partner before onboarding.
-- Configure a real charity/default donation rate before using CSR claims. Otherwise keep CSR disabled for the free beta.
+Kiadási szabály: bármely FAIL esetén nincs App Review-beküldés.
 
-## 3. Expo and Apple signing — build 13 in TestFlight
+## 2. Végleges App Store-képek — csak a fizikai PASS után
 
-EAS is initialized as `@bencegatai/come-get-it-app`, the production environment is configured, Apple Developer membership is active through 2027-09-29, and App ID `app.comegetit.mobile` exists with Sign in with Apple. The Distribution Certificate, provisioning profile and App Store Connect app record are complete. The current signed production candidate is `1.0.0 (13)`, build ID `7629d072-a18a-4e5e-ba2e-c72fc8667b4d`, from GitHub main commit `90d6202b7bee71ccdbfa9cde1349aaa9099bf1c7`.
+Pontosan öt friss, ugyanazon 6,9 hüvelykes iPhone-on készült kép:
 
-EAS submission `e0705b3a-2b9f-4a11-a451-5818e09515bd` uploaded build 13 successfully. It contains all build-12 map, reward and deterministic-navigation fixes, plus complete first-party declarations in the iOS privacy manifest. Apple reports `VALID` for App Store Connect build `5eefbd16-dab8-47e0-bab9-b3ba4edd89be`, and the build is assigned to the internal “Come Get It belső teszt” group. Build 9 remains selected on App Store version `1.0` only as the last release baseline; switch to build 13 after a full physical PASS. See [`BUILD_13_BINARY_AUDIT.md`](BUILD_13_BINARY_AUDIT.md).
+1. helylista és működő natív térkép;
+2. Come Get It Bar részletes oldala;
+3. jutalomkatalógus;
+4. Pilot jutalom részletes, beváltás előtti állapota;
+5. italbeváltási átadóképernyő kitakart kóddal.
 
-## 4. App Store Connect — metadata and build saved
+- [ ] Egységes méret: 1260×2736, 1290×2796 vagy 1320×2868.
+- [ ] Nincs TestFlight-, Rork-, Lovable-, böngésző- vagy fejlesztői keret.
+- [ ] Nincs személyes adat vagy olvasható QR/token.
+- [ ] Nincs régi card-linking, automatikus pontgyűjtés, fizetős Plus vagy CSR-ígéret.
+- [ ] Az `audit:app-store-media` ellenőrző PASS.
 
-- The Terms of Service are accepted.
-- The iOS app record exists for `app.comegetit.mobile`, primary language Hungarian, SKU `COMEGETIT-IOS-1`, Apple ID `6817022464`.
-- The Hungarian subtitle, 131-character promotional text, 897-character description, keywords, live `come-get-it.app` support URL, primary/secondary categories, reviewer contact and login, English review notes, and manual-release mode are saved.
-- The live privacy-policy URL and all seven audited App Privacy data types are configured. The owner must make the final **Publish** click because Apple's confirmation includes an accuracy and legal-compliance declaration.
-- The free-beta price is set to 0 Ft with Hungary as the base region and all 175 App Store regions enabled. Apple Silicon Mac and Apple Vision Pro distribution are disabled because those platforms are not part of the tested launch scope.
-- The App Store version still selects processed build `1.0.0 (9)` while build 13 is being qualified. Do not submit for review until build 13 passes the physical-device checklist, is selected, and screenshots plus owner declarations are complete.
-- Choose the free-beta release path unless StoreKit products, RevenueCat entitlements, paywall, restore-purchases, and subscription terms are completed first.
-- Enter the correct copyright holder, complete the current age-rating questionnaire, and override to 18+ when necessary so it matches the app's stated audience.
-- Upload fresh 6.9-inch screenshots from signed TestFlight build 13 by following [`APP_STORE_MEDIA_CAPTURE_HU.md`](APP_STORE_MEDIA_CAPTURE_HU.md), and complete physical-device testing of registration, login, location permission, both map views, venue/reward display, category/detail back navigation, successful QR redemption, rejected repeated redemption, profile edit, password reset, logout, and account deletion.
-- Follow the step-by-step evidence checklist in [`TESTFLIGHT_DEVICE_TEST.md`](TESTFLIGHT_DEVICE_TEST.md); record a PASS/FAIL result and keep the named screenshots before App Review submission.
+## 3. App Store Connect biztonsági kulcs
 
-## 5. Infrastructure and legal
+- [ ] Hozz létre egy új App Manager API-kulcsot.
+- [ ] Ellenőrizd az új kulcs működését egy csak olvasó kiadási lekéréssel.
+- [ ] Csak ezután vond vissza a korábban diagnosztikai kimenetben megjelent kulcsot.
 
-- Supabase was upgraded from `supabase-postgres-17.4.1.074` to stable `17.6.1.166`. The project returned to `ACTIVE_HEALTHY`, the vulnerable-version warning disappeared, and post-upgrade authentication, reward catalog, QR consume, status transition and repeated-use rejection checks passed.
-- `come-get-it.app` was successfully redeemed and restored on 2026-09-28. GoDaddy nameservers resolve, the apex has an A record, HTTPS returns 200, and `/adatvedelmi-szabalyzat` is public.
-- The public website now reflects the free-beta release and exposes working support, privacy and terms pages. App Store Connect uses the live support and privacy URLs.
-- Confirm the exact legal-holder/copyright wording and every controller/business detail before the final legal declarations. Keep `gataibence@gmail.com` as the working support address until a branded mailbox has verified inbound delivery.
-- Before linked-card rewards go live, confirm the Salt Edge callback URL exactly matches the deployed callback function and confirm the current callback signing key.
+Ne vond vissza a régit az új kulcs igazolása előtt, mert ez megszakíthatja az automatizált feltöltést.
 
-## Release decision
+## 4. Tulajdonosi Apple-nyilatkozatok
 
-A free beta may be submitted after build 13 passes the signed-device checklist and the final App Store screenshots and legal declarations are complete. Do not market paid Plus or CSR benefits until their corresponding commercial configuration and live content are complete.
+Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
+
+- [ ] Tartalomjogok: minden élő partnerfotóhoz, logóhoz és védjegyhez van felhasználási jog.
+- [ ] Copyright: `2026 Gátai Bence`.
+- [ ] Age Rating: valós alkoholtartalom-válaszok és 18+ végeredmény.
+- [ ] App Privacy: hét build-13 adattípus, no tracking, élő saját domaines URL-ek.
+- [ ] App Privacy **Publish** jogi megerősítés elfogadva.
+- [ ] DSA trader/non-trader státusz a tényleges üzleti helyzet alapján kiválasztva; trader esetén publikus cím/postafiók, telefon és e-mail ellenőrizve.
+- [ ] Apple-szerződések, adó- és banki státusz nem jelez blokkot.
+- [ ] Tartalomjogok és export-compliance válasz mentve.
+
+## 5. Beküldés
+
+- [ ] A build 13 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
+- [ ] Review login és angol review notes utolsó ellenőrzése.
+- [ ] Az öt friss screenshot feltöltve.
+- [ ] Minden kötelező mező zöld / hibamentes.
+- [ ] Manuális kiadási mód maradjon bekapcsolva.
+- [ ] **Submit for Review** csak az 1–4. szakasz teljes lezárása után.
+
+## Kiadási döntés
+
+Az ingyenes béta technikai alapja elkészült. A kiadást jelenleg nem új funkció hiánya, hanem a fizikai build-13 teszt, a friss médiacsomag, az API-kulcscsere és az Account Holder jogi jóváhagyásai tartják vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.

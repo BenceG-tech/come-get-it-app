@@ -7,8 +7,8 @@ Scope: iOS 1.0.0, based on the currently shipped app and Supabase backend. Re-ch
 - Does this app or its third-party partners collect data? **Yes**
 - Is any collected data used for tracking across other companies’ apps or websites? **No**
 - Does the app show third-party advertising? **No**
-- Privacy Policy URL: `https://github.com/BenceG-tech/come-get-it-app/blob/main/PRIVACY.md`
-- Privacy Choices URL: the same URL is acceptable temporarily; users can delete the account inside the app.
+- Privacy Policy URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
+- Privacy Choices URL: `https://come-get-it.app/adatvedelmi-szabalyzat`; the page explains user rights and account deletion, and users can also delete the account inside the app.
 
 Apple requires the declaration to include third-party code as well as first-party handling. Reference: [Manage app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy) and [App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/).
 
@@ -21,19 +21,20 @@ Apple requires the declaration to include third-party code as well as first-part
 | Phone Number | Yes, optional | Yes | No | App Functionality | optional profile field |
 | User ID | Yes | Yes | No | App Functionality | Supabase account ID, authorization, fraud prevention |
 | Precise Location | Yes, only when permitted | Yes | No | App Functionality | sent during nearby search/redemption validation; no background access and redemption coordinates are not stored in the redemption record |
-| Product Interaction | Yes | Yes | No | App Functionality; Product Personalization | favorites, points, rewards and redemption history |
-| Other Diagnostic Data | Yes | Potentially | No | App Functionality | infrastructure request/error/security logs; disclose conservatively because authenticated requests can be correlated with an account |
+| Coarse Location | Yes, when the user grants approximate rather than precise location | Yes | No | App Functionality | iOS may provide reduced-accuracy coordinates under the same foreground permission; no background access |
+| Product Interaction | Yes | Yes | No | App Functionality | favorites, points, rewards and redemption history |
+
+These seven entries match the root privacy manifest embedded in signed build 13: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location and Product Interaction. Every entry is linked to the user, used for App Functionality and not used for tracking.
 
 ## Do not select for version 1.0
 
 - Payment Info, Credit Info, Other Financial Info: card linking is not exposed or active.
 - Purchase History: a free-drink redemption is not a purchase, and there is no IAP.
 - Device ID: the app does not use IDFA or a stable device-level identifier. The redemption token nonce is request-specific.
-- Coarse Location: the app requests precise foreground location; do not declare both unless the implementation changes.
 - Contacts, Photos or Videos, Audio Data, Health, Fitness, Sensitive Info.
 - Emails or Text Messages, User-Generated Content, Customer Support data: support opens the user’s external email/phone app and is not submitted inside Come Get It.
 - Search History: venue search text is not stored server-side.
-- Advertising Data, Browsing History, Crash Data, Performance Data: not intentionally collected by the current binary. Reassess if analytics/crash SDKs are added.
+- Advertising Data, Browsing History, Crash Data, Performance Data and Other Diagnostic Data: not intentionally collected as product analytics by the current binary. Infrastructure security/request logs are used only to operate and protect the service; if their use or retention grows beyond Apple's optional-disclosure conditions, add the appropriate diagnostic category before publishing an updated label.
 
 ## SDK and feature audit
 
@@ -47,6 +48,7 @@ Apple requires the declaration to include third-party code as well as first-part
 ## Consistency checks
 
 - The in-app privacy policy must match these answers.
+- Apple requires the answers to include third-party code and to be updated whenever practices change. The final **Publish** dialog is a legal accuracy/compliance certification and must be accepted by the Account Holder or another authorized owner role.
 - If precise location remains transient and legal counsel confirms it meets Apple’s optional-disclosure exception, the location label can be reconsidered. The conservative submission choice above declares it.
 - Adding analytics, crash reporting, push notifications, IAP/subscriptions, card linking or marketing automation requires a new privacy review before release.
 - Treat adding the two Rork project/team analytics identifiers as enabling analytics for privacy-review purposes, even though the PostHog package is already present transitively.
