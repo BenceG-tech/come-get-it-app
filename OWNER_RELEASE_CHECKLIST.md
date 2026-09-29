@@ -1,7 +1,7 @@
 # Come Get It — tulajdonosi kiadási ellenőrzőlista
 
 Utolsó műszaki ellenőrzés: **2026. szeptember 29.**
-Célkiadás: **1.0.0 (15), ingyenes iPhone-béta**
+Célkiadás: **1.0.0 (16), ingyenes iPhone-béta**
 
 Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készültség a `RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md`, a részletes műszaki bizonyíték az `APP_STORE_READINESS.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md`, a végleges képek szabályai az `APP_STORE_MEDIA_CAPTURE_HU.md` fájlban vannak.
 
@@ -32,7 +32,7 @@ Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készü
 - [x] Production EAS build `1.0.0 (14)` elkészült; build ID `564f465b-9468-4e51-9623-85ae9d65cb96`.
 - [x] A venue- és reward-betöltés helyreállítása elkészült: időkorlátos adatlekérés, egyszeri biztonságos munkamenet-frissítés, magyar újrapróbálási állapot és kizárólag fogyasztói reward-nézet.
 - [x] A jutalomkategóriák élő darabszámot mutatnak; az üres Étel/Élmények kategória `Hamarosan` állapotban le van tiltva; az Italok oldalon egyetlen vissza gomb maradt.
-- [x] Production EAS build `1.0.0 (15)` elkészült; build ID `1a8db4bf-a7d2-4450-8ded-dfb952d4b58d`. Az első feltöltés részletes napló nélkül hibára futott; ugyanaz a változatlan, aláírt build az aktív `b5b74450-2d79-4d7c-87b3-88baa73b2301` submissionnel újraküldve, jelenleg az EAS sorában vár.
+- [x] Production EAS build `1.0.0 (16)` elkészült; build ID `38ce3da4-982d-4a51-92c2-1e148b2f4283`, GitHub commit `c734be02d6ea43f105600b574f10557df5d68aa5`. Az aktív `67be7039-993d-4756-b802-b10c7eba930c` submission jelenleg az App Store Connect feltöltési sorában vár. Ez az egyetlen végleges kiadási jelölt; a build 15 leváltott változat.
 - [x] Öt kész 6,9″ App Store-kép: mind `1320×2868`, PNG; feltöltési ZIP elkészült.
 
 ## 1. Fizikai TestFlight-kapu — Bence
@@ -96,7 +96,7 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## 5. Beküldés
 
-- [ ] A build 15 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
+- [ ] A build 16 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
 - [ ] Review login és angol review notes utolsó ellenőrzése.
 - [ ] Az öt friss screenshot feltöltve.
 - [ ] Minden kötelező mező zöld / hibamentes.
@@ -105,4 +105,4 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## Kiadási döntés
 
-Az ingyenes béta technikai alapja elkészült, és az első valódi optikai QR-beváltás is sikeres. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg a build 15 fizikai regressziója, az ismételt fizikai QR-elutasítás, a hátralévő fiókfolyamatok, a kötelező médiaslot, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+Az ingyenes béta technikai alapja elkészült, és az első valódi optikai QR-beváltás is sikeres. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg a build 16 fizikai regressziója, az ismételt fizikai QR-elutasítás, a hátralévő fiókfolyamatok, a kötelező médiaslot, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
