@@ -12,7 +12,9 @@ Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készü
 - [x] Korlátozott Pilot jutalom és Electric Blue Shot ital aktív élő adatokkal.
 - [x] A Venue Hub és a mobilapp ugyanazt a production Supabase projektet használja.
 - [x] Partneres QR-backend: első beváltás sikeres, ismétlés `ALREADY_CONSUMED`, idegen venue `VENUE_UNAUTHORIZED`, párhuzamos dupla próbából csak egy sikeres.
-- [x] Venue Hub kamerajavítás éles: látható videókonténer, tényleges kameraválasztás, iframe-figyelmeztetés és közvetlen éles link.\n- [x] A mobilapp teljes `cgi://redeem?...` QR-hivatkozását a Venue Hub és a backend is biztonságosan normalizálja; a production Edge Function `consume-redemption-token` v52 és a Lovable éles kiadás frissítve.
+- [x] Venue Hub kamerajavítás éles: látható videókonténer, tényleges kameraválasztás, iframe-figyelmeztetés és közvetlen éles link.
+- [x] A mobilapp teljes `cgi://redeem?...` QR-hivatkozását a Venue Hub és a backend is biztonságosan normalizálja; a production Edge Function `consume-redemption-token` v52 és a Lovable éles kiadás frissítve.
+- [x] Hitelesített production E2E: vendég és scoped partner belépett, teljes deep-link QR kiadva, első consume HTTP 200, ismétlés HTTP 409 `ALREADY_CONSUMED`, vendégstátusz `consumed`; a tesztrekordok eltávolítva.
 - [x] Supabase Postgres `17.6.1.166`, projektállapot `ACTIVE_HEALTHY`.
 - [x] Öt aktív venue mindegyike képpel és koordinátával; két aktív reward mindegyike képpel.
 - [x] Pilot reward kategória a mobilapp által használt `drink` kulcsra javítva.
