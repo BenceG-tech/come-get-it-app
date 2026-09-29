@@ -12,7 +12,7 @@ Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készü
 - [x] Korlátozott Pilot jutalom és Electric Blue Shot ital aktív élő adatokkal.
 - [x] A Venue Hub és a mobilapp ugyanazt a production Supabase projektet használja.
 - [x] Partneres QR-backend: első beváltás sikeres, ismétlés `ALREADY_CONSUMED`, idegen venue `VENUE_UNAUTHORIZED`, párhuzamos dupla próbából csak egy sikeres.
-- [x] Venue Hub kamerajavítás éles: látható videókonténer, tényleges kameraválasztás, iframe-figyelmeztetés és közvetlen éles link.
+- [x] Venue Hub kamerajavítás éles: látható videókonténer, tényleges kameraválasztás, iframe-figyelmeztetés és közvetlen éles link.\n- [x] A mobilapp teljes `cgi://redeem?...` QR-hivatkozását a Venue Hub és a backend is biztonságosan normalizálja; a production Edge Function `consume-redemption-token` v52 és a Lovable éles kiadás frissítve.
 - [x] Supabase Postgres `17.6.1.166`, projektállapot `ACTIVE_HEALTHY`.
 - [x] Öt aktív venue mindegyike képpel és koordinátával; két aktív reward mindegyike képpel.
 - [x] Pilot reward kategória a mobilapp által használt `drink` kulcsra javítva.
@@ -90,4 +90,4 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## Kiadási döntés
 
-Az ingyenes béta technikai alapja elkészült. A kiadást jelenleg nem új funkció hiánya, hanem a fizikai build-13 teszt, a friss médiacsomag, az API-kulcscsere és az Account Holder jogi jóváhagyásai tartják vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+Az ingyenes béta technikai alapja elkészült. A tulajdonosi nyilatkozatcsomag szöveges jóváhagyása megtörtént; a kiadást jelenleg a fizikai build-13 teszt, a friss médiacsomag, az API-kulcscsere, a DSA tényalapú választása és az Apple-mezők igazolt mentése tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
