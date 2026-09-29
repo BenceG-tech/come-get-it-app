@@ -50,11 +50,11 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 | Build 13 kiválasztása az 1.0 verzióhoz | **NYITOTT** | Build 13 feltöltve és érvényes; a verzióhoz korábban szándékosan a build 9 maradt kiválasztva a fizikai tesztig. | Teljes fizikai PASS után build 13 kiválasztása. |
 | Öt friss App Store-kép | **NYITOTT** | A régi készlet auditálva és elutasítva; pontos öt képes capture-runbook elkészült. | Fizikai PASS után öt natív, 6,9 hüvelykes képet készíteni és auditálni. |
 | Privacy label hét adattípussal | **JÓVÁHAGYVA · APPLE-MENTÉS HÁTRA** | A hét adattípus és a no-tracking csomag tulajdonosi jóváhagyása 2026-09-29-én rögzítve. | A végső **Publish** párbeszédet Apple-ben elfogadni, majd visszaellenőrizni. |
-| Korhatár | **JÓVÁHAGYVA · APPLE-MENTÉS HÁTRA** | A 18+ alkoholtartalom-válaszok tulajdonosi jóváhagyása rögzítve. | Az Apple mezőit kitölteni, menteni és a 18+ eredményt visszaellenőrizni. |
-| Copyright | **JÓVÁHAGYVA · APPLE-MENTÉS HÁTRA** | A `2026 Gátai Bence` érték tulajdonosi jóváhagyása rögzítve. | Apple-ben menteni és visszaellenőrizni. |
-| Tartalomjogok | **JÓVÁHAGYVA · APPLE-MENTÉS HÁTRA** | A nyilatkozatcsomag tulajdonosi jóváhagyása rögzítve; a partnerengedélyek megőrzése továbbra is szükséges. | Apple-ben menteni; bizonytalan eredetű anyagot nem szabad publikálni. |
+| Korhatár | **BIZONYÍTOTT** | A 18+ alkoholtartalom-válaszok elmentve és App Store Connectből visszaolvasva. | Csak a tartalom változásakor kell újraértékelni. |
+| Copyright | **BIZONYÍTOTT** | A `2026 Gátai Bence` érték elmentve és App Store Connectből visszaolvasva. | Nincs további teendő az 1.0-hoz. |
+| Tartalomjogok | **BIZONYÍTOTT** | Az Apple API `USES_THIRD_PARTY_CONTENT` értéket adott vissza; a partnerengedélyeket továbbra is meg kell őrizni. | Bizonytalan eredetű anyagot nem szabad publikálni. |
 | DSA státusz | **TULAJDONOSI MŰVELET** | A szükséges döntési útmutató elkészült. | Valós üzleti helyzet szerint trader/non-trader választás; trader esetén elérhetőségek ellenőrzése. |
-| Export compliance | **JÓVÁHAGYVA · APPLE-MENTÉS HÁTRA** | A build `ITSAppUsesNonExemptEncryption=false`; a prepared owner declaration is approved. | Apple-ben megerősíteni és menteni. |
+| Export compliance | **BIZONYÍTOTT** | Az Apple API szerint build 13 `VALID` és `usesNonExemptEncryption=false`. | Csak a titkosítási működés változásakor kell újranyilatkozni. |
 | App Store Connect API-kulcs cseréje | **NYITOTT** | A jelenlegi EAS-kulcs működik, de korábban diagnosztikai kimenetben megjelent. | Új App Manager kulcs létrehozása, olvasási próba, majd csak utána a régi visszavonása. |
 | Beküldés App Review-ra | **NYITOTT** | EAS aktuális státusz: nincs live, in-review vagy pending-release verzió. | Csak minden fenti fizikai, média-, kulcs- és tulajdonosi kapu lezárása után. |
 
@@ -65,9 +65,9 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 3. A QR-t ne a Lovable beágyazott előnézetében, hanem a közvetlen `https://come-get-it-venue-hub.lovable.app/pos/redeem` oldalon olvasd be.
 4. Ha az első és ismételt scan is megfelelő, készítsd el az öt App Store-képet.
 5. Cseréld az App Store Connect API-kulcsot biztonságos sorrendben.
-6. Mentsd el Apple-ben a már jóváhagyott privacy-, korhatár-, copyright-, tartalomjogi- és export-válaszokat; a DSA-státuszt a valós üzleti helyzet alapján külön válaszd ki.
+6. Fogadd el az App Privacy végső **Publish** párbeszédét, és a valós üzleti helyzet alapján válaszd ki a DSA-státuszt. A korhatár, copyright, tartalomjog és export-válasz már igazoltan mentve van.
 7. Válaszd ki a build 13-at, ellenőrizd a review login adatokat, majd küldd App Review-ra manuális kiadással.
 
 ## Kiadási döntés
 
-Az alkalmazás és az adminrendszer műszaki alapja működőképes. A szkenner- és navigációs javítások telepítve vannak; a kiadás jelenlegi kapuja a fizikai kamerás QR-teszt, a teljes build-13 iPhone regresszió, az öt friss kép, a kulcscsere, a DSA tényalapú választása és a jóváhagyott Apple-mezők igazolt mentése.
+Az alkalmazás és az adminrendszer műszaki alapja működőképes. A szkenner- és navigációs javítások telepítve vannak; a kiadás jelenlegi kapuja a fizikai kamerás QR-teszt, a teljes build-13 iPhone regresszió, az öt friss kép, a kulcscsere, az App Privacy Publish és a DSA tényalapú választása.
