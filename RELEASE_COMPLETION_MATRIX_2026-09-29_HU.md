@@ -21,7 +21,7 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 | Aktív, korlátozott Pilot jutalom | **BIZONYÍTOTT** | Élő, készlet- és felhasználókorlátos Pilot reward; `drink` kategória; kép beállítva. | Nincs teendő. |
 | Mobilapp és admin ugyanazt az adatot használja | **BIZONYÍTOTT** | Mindkét felület ugyanahhoz a production Supabase projekthez kapcsolódik; venue- és reward-módosítások onnan töltődnek. | Tartalmat a Venue Hubban szerkessz; alkalmazásfrissítés csak funkció- vagy dizájnváltozáshoz kell. |
 | QR-backend egyszer használható | **BIZONYÍTOTT** | Első consume 200; ismétlés 409 `ALREADY_CONSUMED`; idegen venue `VENUE_UNAUTHORIZED`; párhuzamos próbából csak egy siker. | Nincs backend-teendő. |
-| Venue Hub kamerás szkenner javítása | **JAVÍTVA · FIZIKAI ÚJRATESZT KELL** | A kamera productionben megjelent. Az első valódi scan feltárta, hogy a mobil teljes `cgi://redeem?...` deep linket ad, miközben a POS nyers tokent várt; a Venue Hub parser és a backend `consume-redemption-token` v52 ezt már mindkét oldalon kezeli. Parser tesztek, TypeScript, célzott lint, production build és élő formátum-smoke teszt PASS. | Új kétperces QR-t olvass be egyszer, majd ugyanazt azonnal másodszor. |
+| Venue Hub kamerás szkenner javítása | **JAVÍTVA · OPTIKAI KAMERATESZT KELL** | A kamera productionben megjelent. A Venue Hub parser és a backend `consume-redemption-token` v52 kezeli a mobil teljes `cgi://redeem?...` deep linkjét. A hitelesített production E2E pontosan ezt a teljes payloadot használta: első consume 200, ismétlés 409 `ALREADY_CONSUMED`, vendégstátusz `consumed`. | Új kétperces QR-t olvass be kamerával egyszer, majd ugyanazt azonnal másodszor; már csak a kép-felismerés/UI bizonyítandó. |
 
 ## 2. iPhone alkalmazás és TestFlight
 
@@ -38,8 +38,8 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 | Pontos reward beváltás | **BIZONYÍTOTT** | A Pilot reward beváltása 650 → 550 ponttal, 1/5 számlálóval, atomi tranzakcióban megtörtént. | Build 13-ban egyszer vizuálisan ismét ellenőrizni. |
 | Reward kategóriák visszanavigációja | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | A build 13 forrásában determinisztikus visszalépés van: kategóriából a Jutalmak főoldalára, részletből az előző képernyőre vagy biztonságos fallbackre. | Italok, Étel, Élmények és Összes kategóriából egyenként visszalépni. |
 | Italbeváltási QR létrehozása és lejárata | **BIZONYÍTOTT** | Érvényes kétperces token létrejött, státusza lekérdezhető, fel nem használt token lejárt. | A teljes kamerás folyamatot lezárni. |
-| QR első fizikai kamerás beolvasása | **ÚJRATESZT NYITOTT** | A Mac-kamera már olvasott QR-t; az első próbát a most javított teljes-deep-link/nyers-token eltérés állította meg. A backend automatizált consume tesztje PASS. | Friss QR megnyitása iPhone-on, beolvasás a közvetlen éles Venue Hubban. |
-| Ugyanazon QR ismételt fizikai beolvasása | **NYITOTT** | Backend szinten 409 igazolt; a felületi hibaüzenet fizikai kamerával még nincs dokumentálva. | Ugyanazt a QR-t másodszor is beolvasni, képernyőeredményt rögzíteni. |
+| QR első fizikai kamerás beolvasása | **OPTIKAI TESZT NYITOTT** | A teljes hitelesített vendég→deep-link→scoped partner→consume lánc HTTP 200-zal PASS; a Mac-kamera már képet adott. | Friss QR megnyitása iPhone-on, optikai beolvasás a közvetlen éles Venue Hubban. |
+| Ugyanazon QR ismételt fizikai beolvasása | **UI-TESZT NYITOTT** | Ugyanazon teljes deep-link production ismétlése 409 `ALREADY_CONSUMED`; a felületi hibaüzenet fizikai kamerával még nincs dokumentálva. | Ugyanazt a QR-t másodszor is beolvasni, képernyőeredményt rögzíteni. |
 | Jelszó-visszaállítás | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | Mobil és Venue Hub reset útvonal implementálva, Supabase URL engedélyezett. | A levél-linket ugyanazon az iPhone-on megnyitni és új jelszót beállítani. |
 | Fióktörlés | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | Authentikált Edge Function és mobil kezelőfelület elkészült. | Külön tesztfiókkal véglegesen kipróbálni. |
 
