@@ -1,9 +1,9 @@
 # Come Get It — App Store Connect nyilatkozatok
 
 Állapotdátum: **2026. szeptember 29.**
-Célkiadás: **Come Get It 1.0.0 (13), ingyenes iPhone-béta**
+Célkiadás: **Come Get It 1.0.0 (15), ingyenes iPhone-béta**
 
-Ez a lap a build 13 forrása, aláírt binárisa, privacy manifestje, élő Supabase-funkciói és a `come-get-it.app` publikus jogi oldalai alapján készült. A technikai válaszokat előkészíti, de a tulajdonjogi és jogi állításokat az Account Holdernek a saját nevében kell végleg elfogadnia.
+Ez a lap a build 15 kiadási forrása, aláírt binárisa, privacy manifestje, élő Supabase-funkciói és a `come-get-it.app` publikus jogi oldalai alapján készült. A technikai válaszokat előkészíti, de a tulajdonjogi és jogi állításokat az Account Holdernek a saját nevében kell végleg elfogadnia.
 
 ## 1. Korhatár
 
@@ -48,7 +48,7 @@ Felső szintű válaszok:
 - Privacy Policy URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
 - Privacy Choices URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
 
-A build 13 privacy manifestjével egyező hét adattípus:
+A build 15 kiadási forrásában rögzített privacy manifesttel egyező hét adattípus:
 
 | Apple adattípus | Felhasználóhoz kötött | Tracking | Cél |
 |---|---:|---:|---|
@@ -98,12 +98,12 @@ Ha **non-trader**, az EU-s termékoldalon Apple jelzi, hogy a fogyasztóvédelmi
 - [ ] Minden élő partnerképhez, logóhoz és védjegyhez igazolt felhasználási jog tartozik.
 - [ ] Copyright: `2026 Gátai Bence`.
 - [ ] Korhatárválaszok pontosak, és a végső globális érték 18+.
-- [ ] A hét privacy adattípus és a no-tracking válasz megfelel a build 13-nak.
+- [ ] A hét privacy adattípus és a no-tracking válasz megfelel a build 15-nek.
 - [ ] Privacy Publish nyilatkozat elfogadva.
 - [ ] DSA trader/non-trader státusz a valós működés alapján kiválasztva és szükség esetén ellenőrizve.
 - [ ] Az Apple szerződéses, adó- és banki státuszán nincs blokkoló figyelmeztetés.
 - [ ] Az öt friss 6,9 hüvelykes screenshot feltöltve.
-- [ ] Build 13 fizikai TestFlight-tesztje PASS.
+- [ ] Build 15 fizikai TestFlight-tesztje PASS.
 - [ ] Csak ezután: **Submit for Review**.
 
 Hivatalos Apple-források:
