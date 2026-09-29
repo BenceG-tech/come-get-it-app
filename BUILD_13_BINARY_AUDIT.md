@@ -62,6 +62,22 @@ The production JavaScript bundle contains the expected public Supabase project U
 
 The bundle contains the build-12 deterministic reward-navigation markers (`rewards-category-back`, `Vissza a Jutalmakhoz`). It contains neither the old `API KEY REQUIRED` marker nor the retired CARTO basemap endpoint.
 
+## Post-submission regression — 2026-09-29
+
+The current `main` branch at `6aab394178d0177d96ed7d03d49cdaed6c2d3d7c` was rechecked after the media-runbook merge. The application source and native configuration are unchanged from build-13 source commit `90d6202b7bee71ccdbfa9cde1349aaa9099bf1c7`; the only package change adds the standalone App Store media-audit command.
+
+- TypeScript `tsc --noEmit`: passed.
+- Clean iOS Metro/Hermes export: passed, 3,476 modules bundled and an 8.8 MB `.hbc` bundle produced.
+- Expo dependency compatibility check: dependencies are up to date.
+- Expo Doctor: 15 of 18 checks passed; the other three could not execute because this audit runtime does not include `npm`, rather than because of a detected project incompatibility.
+- Production Venue Hub build and TypeScript project build: passed.
+- The changed `src/pages/pos/POSRedeem.tsx` scanner file passes ESLint.
+- The live Venue Hub deployment returns HTTP 200, does not emit a camera-blocking `Permissions-Policy` header, and its deployed JavaScript contains the new active-camera, direct-production-tab and missing-camera handling.
+- The public home, support, privacy and terms endpoints all return HTTP 200.
+- App Store Connect still reports build `1.0.0 (13)` as internal beta testing / ready for external beta submission, with no live, in-review or pending-release version.
+
+The full legacy Venue Hub lint baseline is not clean (203 errors and 19 warnings, primarily historical `no-explicit-any` findings). This does not contradict the successful production/type checks above, but it remains technical debt and must not be represented as a repository-wide green lint result.
+
 ## Remaining release gates
 
 This audit proves packaging, signing and static binary configuration. It does not replace the physical TestFlight acceptance test. Before selecting build 13 for App Store version 1.0:
@@ -71,4 +87,3 @@ This audit proves packaging, signing and static binary configuration. It does no
 3. capture fresh build-13 App Store screenshots;
 4. rotate the previously exposed App Store Connect API key;
 5. have the account holder confirm privacy publication, copyright and final legal declarations.
-
