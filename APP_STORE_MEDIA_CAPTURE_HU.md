@@ -5,6 +5,8 @@ Célbuild: **1.0.0 (13)**, TestFlight
 
 Ez a dokumentum a végleges App Store-média elkészítésének egyetlen ellenőrzőlistája. Felvételt csak akkor készíts, amikor a build 13 fizikai iPhone-on végigment a `TESTFLIGHT_DEVICE_TEST.md` ellenőrzésein.
 
+> **Aktuális állapot:** a 2026. szeptember 29-én megtalált régi marketing-, TestFlight- és Rork-előnézeti képek nem feltölthetők. A részletes indoklás az [`APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md`](APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md) auditban található.
+
 ## 1. Felvétel előtti állapot
 
 - A TestFlightban a **Come Get It 1.0.0 (13)** legyen telepítve.
