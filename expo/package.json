@@ -9,7 +9,8 @@
     "android": "bunx expo start --android",
     "ios": "bunx expo start --ios",
     "web": "bunx expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audit:app-store-media": "node scripts/audit-app-store-media.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
