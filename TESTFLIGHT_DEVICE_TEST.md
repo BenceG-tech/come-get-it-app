@@ -1,6 +1,6 @@
 # Come Get It — TestFlight készülékteszt
 
-Tesztelendő kiadás: **1.0.0 (11)**
+Tesztelendő kiadás: **1.0.0 (13)**
 TestFlight-csoport: **Come Get It belső teszt**
 Állapot: **telefonos ellenőrzésre kész**
 
@@ -9,7 +9,7 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 ## Előkészítés
 
 - [ ] Az iPhone-on a TestFlightba a fejlesztői fiókhoz tartozó Apple ID-val legyen belépve.
-- [ ] A telepített alkalmazás verziója **1.0.0 (11)**.
+- [ ] A telepített alkalmazás verziója **1.0.0 (13)**.
 - [ ] A Venue Hub meg van nyitva egy kamerás második eszközön (a Mac is megfelel): `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
 - [ ] A partnerellenőrző hozzáférés a helyi, Git által nem követett `.private/app-review-partner-credentials.txt` fájlból van használva. A jelszó nem kerül képernyőképre.
 - [ ] A telefonon működő internetkapcsolat és a kameraengedély elérhető.
@@ -51,8 +51,10 @@ Várt eredmény: nincs végtelen betöltés, váratlan kijelentkezés vagy hibá
 5. [ ] A hely adatlapján ellenőrizd a címet, nyitvatartást, térképet és az **Electric Blue Shot** italt.
 6. [ ] Nyisd meg a Jutalmak lapot.
 7. [ ] Ellenőrizd, hogy a **Pilot ajándék ital** saját képpel és 100 pontos árral jelenik meg.
-8. [ ] Nyisd meg és váltsd be a Pilot jutalmat. Várt eredmény: „Sikeres beváltás”, beváltási kód, és pontosan 100 pont levonása.
-9. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
+8. [ ] Nyisd meg egymás után az **Italok**, **Étel**, **Élmények** és **Összes** kategóriát. Minden kategória vissza gombjának a Jutalmak főoldalára kell vinnie.
+9. [ ] Nyiss meg egy jutalomrészletet. A normál, betöltési és hibaállapot vissza gombja sem vihet másik kategóriába vagy üres oldalra.
+10. [ ] Nyisd meg és váltsd be a Pilot jutalmat. Várt eredmény: „Sikeres beváltás”, beváltási kód, és pontosan 100 pont levonása.
+11. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
 
 Bizonyítékok:
 
@@ -68,9 +70,10 @@ Bizonyítékok:
 3. [ ] A második eszközön jelentkezz be a Venue Hubba partnerként.
 4. [ ] Ellenőrizd, hogy csak a **Come Get It Bar** látható.
 5. [ ] Nyisd meg a **QR beváltás** menüpontot, majd indítsd el a szkennert.
-6. [ ] Olvasd be a telefon QR-kódját.
-7. [ ] Ellenőrizd a partneroldali sikeres visszajelzést és a telefon sikerállapotát.
-8. [ ] Olvasd be ugyanazt a QR-kódot ismét.
+6. [ ] Ellenőrizd, hogy a kamerakép valóban megjelenik: nem marad fekete/üres a videófelület, és a kiválasztott kamera neve látható. Kameratesztre a közvetlen éles oldalt használd, ne a Lovable beágyazott előnézetét.
+7. [ ] Olvasd be a telefon QR-kódját.
+8. [ ] Ellenőrizd a partneroldali sikeres visszajelzést és a telefon sikerállapotát.
+9. [ ] Olvasd be ugyanazt a QR-kódot ismét.
 
 Várt eredmény:
 
