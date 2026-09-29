@@ -18,7 +18,7 @@ Apple currently accepts one to ten screenshots per device size, without alpha/tr
 
 ## Required fresh capture set
 
-Capture signed TestFlight build **1.0.0 (12)** at one consistent accepted 6.9-inch size, with the App Review account or a reset screenshot account:
+Capture signed TestFlight build **1.0.0 (13)** at one consistent accepted 6.9-inch size, with the App Review account or a reset screenshot account:
 
 1. Venue discovery — native Apple map/list with live Budapest partner data and no API-key watermark.
 2. Venue details — real venue, opening hours, map and available drink.
@@ -35,4 +35,4 @@ Optional sixth image: search/filter view with a useful result.
 - Do not show the review password, personal contact details, full redemption token or internal IDs.
 - Do not claim Plus, card linking, CSR donations, push notifications or partner/user counts.
 - Reset review redemptions and favorites before the capture session if necessary.
-- Capture only after build 12 passes the signed-device and TestFlight smoke tests.
+- Capture only after build 13 passes the signed-device and TestFlight smoke tests.
