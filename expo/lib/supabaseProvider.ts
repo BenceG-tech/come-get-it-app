@@ -1,6 +1,7 @@
 import { getSupabase } from '@/lib/supabaseClient';
 import { VENUE_PUBLIC_COLUMNS, Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
 import { Reward } from '@/types/reward';
+import { runSupabaseRead } from '@/lib/supabaseRequest';
 
 import { rest } from '@/lib/supabaseRest';
 
@@ -30,7 +31,7 @@ async function fetchRewardsQuery(params: { venueId?: string; scope: 'app' | 'ven
   const globalOnly = params.scope === 'venue' && venueId && !hasValidVenueId;
   const supabase = getSupabase();
   let query = supabase
-    .from('rewards')
+    .from('consumer_rewards')
     .select(REWARD_PUBLIC_COLUMNS)
     .eq('active', true)
     .gte('valid_until', today)
@@ -43,8 +44,10 @@ async function fetchRewardsQuery(params: { venueId?: string; scope: 'app' | 'ven
     query = query.eq('is_global', true);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
+  const data = await runSupabaseRead<unknown[]>(
+    params.scope === 'app' ? 'Jutalmak betöltése' : 'Helyszín jutalmainak betöltése',
+    () => query,
+  );
   const rewards = Array.isArray(data) ? (data as unknown as Reward[]) : [];
   console.info('[Provider] fetchRewardsQuery result', { count: rewards.length });
   return rewards;
@@ -70,15 +73,16 @@ export async function fetchRewardById(rewardId: string): Promise<Reward | null> 
   if (!isUuidLike(normalizedRewardId)) return null;
 
   const today = toYyyyMmDd(new Date());
-  const { data, error } = await getSupabase()
-    .from('rewards')
-    .select(REWARD_PUBLIC_COLUMNS)
-    .eq('id', normalizedRewardId)
-    .eq('active', true)
-    .gte('valid_until', today)
-    .maybeSingle();
-
-  if (error) throw error;
+  const data = await runSupabaseRead<Record<string, unknown>>(
+    'Jutalom részleteinek betöltése',
+    () => getSupabase()
+      .from('consumer_rewards')
+      .select(REWARD_PUBLIC_COLUMNS)
+      .eq('id', normalizedRewardId)
+      .eq('active', true)
+      .gte('valid_until', today)
+      .maybeSingle(),
+  );
   return data ? (data as unknown as Reward) : null;
 }
 
@@ -108,41 +112,38 @@ export async function getVenueWithDetails(id: string): Promise<VenueWithDetails 
 
   try {
     const supabase = getSupabase();
-    const [{ data: venuesData, error: venueError }, imagesResult, drinksResult, windowsResult] = await Promise.all([
-      supabase.from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).limit(1),
-      (async () => {
-        try {
-          return await supabase.from('venue_images').select(VENUE_IMAGE_COLUMNS).eq('venue_id', normalizedId);
-        } catch (error: unknown) {
-          return { data: [], error };
-        }
-      })(),
-      (async () => {
-        try {
-          return await supabase.from('venue_drinks').select(VENUE_DRINK_COLUMNS).eq('venue_id', normalizedId);
-        } catch (error: unknown) {
-          return { data: [], error };
-        }
-      })(),
-      (async () => {
-        try {
-          return await supabase.from('free_drink_windows').select(FREE_DRINK_WINDOW_COLUMNS).eq('venue_id', normalizedId);
-        } catch (error: unknown) {
-          return { data: [], error };
-        }
-      })(),
+    const venuesData = await runSupabaseRead<unknown[]>(
+      'Vendéglátóhely betöltése',
+      () => supabase.from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).limit(1),
+    );
+    venueList = Array.isArray(venuesData) ? (venuesData as unknown as Venue[]) : [];
+    const [imagesData, drinksData, windowsData] = await Promise.all([
+      runSupabaseRead<unknown[]>(
+        'Helyszínképek betöltése',
+        () => supabase.from('venue_images').select(VENUE_IMAGE_COLUMNS).eq('venue_id', normalizedId),
+      ).catch((error) => {
+        console.warn('[Provider] venue_images Supabase fetch failed', error);
+        return [];
+      }),
+      runSupabaseRead<unknown[]>(
+        'Italok betöltése',
+        () => supabase.from('venue_drinks').select(VENUE_DRINK_COLUMNS).eq('venue_id', normalizedId),
+      ).catch((error) => {
+        console.warn('[Provider] venue_drinks Supabase fetch failed', error);
+        return [];
+      }),
+      runSupabaseRead<unknown[]>(
+        'Beváltási idősávok betöltése',
+        () => supabase.from('free_drink_windows').select(FREE_DRINK_WINDOW_COLUMNS).eq('venue_id', normalizedId),
+      ).catch((error) => {
+        console.warn('[Provider] free_drink_windows Supabase fetch failed', error);
+        return [];
+      }),
     ]);
 
-    if (venueError) throw venueError;
-
-    venueList = Array.isArray(venuesData) ? (venuesData as unknown as Venue[]) : [];
-    imagesRows = Array.isArray(imagesResult.data) ? (imagesResult.data as unknown as ImageRow[]) : [];
-    drinksRows = Array.isArray(drinksResult.data) ? (drinksResult.data as unknown as DrinkRow[]) : [];
-    windowsRows = Array.isArray(windowsResult.data) ? (windowsResult.data as unknown as WindowRow[]) : [];
-
-    if (imagesResult.error) console.warn('[Provider] venue_images Supabase fetch failed', imagesResult.error);
-    if (drinksResult.error) console.warn('[Provider] venue_drinks Supabase fetch failed', drinksResult.error);
-    if (windowsResult.error) console.warn('[Provider] free_drink_windows Supabase fetch failed', windowsResult.error);
+    imagesRows = Array.isArray(imagesData) ? (imagesData as unknown as ImageRow[]) : [];
+    drinksRows = Array.isArray(drinksData) ? (drinksData as unknown as DrinkRow[]) : [];
+    windowsRows = Array.isArray(windowsData) ? (windowsData as unknown as WindowRow[]) : [];
   } catch (supabaseError) {
     console.warn('[Provider] Supabase detail fetch failed, falling back to REST', supabaseError instanceof Error ? supabaseError.message : String(supabaseError));
 
