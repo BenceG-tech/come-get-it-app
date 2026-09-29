@@ -18,8 +18,8 @@ import { useAuth } from '@/context/AuthContext';
 import { getSupabase } from '@/lib/supabaseClient';
 
 const CYAN = '#00C8E8' as const;
-const PRIVACY_URL = 'https://github.com/BenceG-tech/come-get-it-app/blob/main/PRIVACY.md';
-const TERMS_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+const PRIVACY_URL = 'https://come-get-it.app/adatvedelmi-szabalyzat';
+const TERMS_URL = 'https://come-get-it.app/felhasznalasi-feltetelek';
 
 export default function AccountScreen() {
   const router = useRouter();
