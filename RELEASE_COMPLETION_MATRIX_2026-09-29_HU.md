@@ -1,7 +1,7 @@
 # Come Get It — kiadási készültségi mátrix
 
 Utolsó ellenőrzés: **2026. szeptember 29.**  
-Cél: **1.0.0 (13), ingyenes iPhone-béta**
+Cél: **1.0.0 (15), ingyenes iPhone-béta**
 
 ## Jelmagyarázat
 
@@ -27,16 +27,16 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 
 | Követelmény | Állapot | Bizonyíték | Következő lépés |
 |---|---|---|---|
-| Aláírt production iOS build | **BUILD 14 BIZONYÍTOTT** | EAS build `564f465b-9468-4e51-9623-85ae9d65cb96`, verzió `1.0.0 (14)`, `FINISHED`, store distribution. | Nincs buildelési teendő. |
-| Feltöltés App Store Connectbe | **ÜTEMEZVE** | EAS submission `114d643f-40c0-4ebc-bcb8-e8343dafaf4d` létrejött; az Expo beküldési sorában várakozik. | Automatikusan befejeződik; utána Apple-feldolgozás. |
+| Aláírt production iOS build | **BUILD 15 BIZONYÍTOTT** | EAS build `1a8db4bf-a7d2-4450-8ded-dfb952d4b58d`, verzió `1.0.0 (15)`, `FINISHED`, store distribution. | Nincs buildelési teendő. |
+| Feltöltés App Store Connectbe | **ÜTEMEZVE** | EAS submission `6b1c55d5-deb8-4b03-b40a-696f2d3445e2` létrejött; az Expo beküldési sorában várakozik. | Automatikusan befejeződik; utána Apple-feldolgozás. |
 | Belső TestFlight elérhetőség | **BIZONYÍTOTT** | Apple/EAS aktuális státusz: build 13 belső béta tesztelésben; külső bétára előkészíthető. | TestFlightban mindig a 13-as buildet nyisd meg. |
 | Regisztráció és e-mail-megerősítés | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | A kiadási forrásban implementálva; statikus és export tesztek PASS. | Friss tesztcímmel végigjárni iPhone-on. |
 | Bejelentkezés, kijelentkezés, munkamenet-visszaállítás | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | Implementálva; hibás refresh token helyreállítása is bent van. | Kijelentkezés, újranyitás és ismételt belépés iPhone-on. |
 | Helylista natív térképe | **FIZIKAI PASS** | A friss build-13 iPhone-képen az Apple-térkép és mind az öt marker vízjel nélkül megjelenik. | Nincs teendő. |
 | Venue-részlet térképe és italai | **FIZIKAI PASS** | A friss iPhone-képeken a venue-részlet, nyitvatartás, Azure Garden Spritz és az Apple-térkép megjelenik. | Nincs teendő. |
-| Reward-lista, Pilot kép és kategória | **FORRÁSBÓL IGAZOLT · ESZKÖZTESZT KELL** | Két aktív rewardnak van képe; Pilot kategória `drink`; a mobil kliens authentikált élő adatot használ. | Build 13-ban vizuális ellenőrzés. |
+| Reward-lista, Pilot kép és kategória | **BUILD 15-BEN JAVÍTVA · ESZKÖZTESZT KELL** | A kliens a `consumer_rewards` nézetet használja, csak az aktív venue aktív rewardját mutatja, időkorlát és újrapróbálás védi a betöltést. A hitelesített böngészős regresszióban a Pilot jutalom képpel betöltött. | Build 15-ben vizuálisan ellenőrizni. |
 | Pontos reward beváltás | **BIZONYÍTOTT** | A Pilot reward beváltása 650 → 550 ponttal, 1/5 számlálóval, atomi tranzakcióban megtörtént. | Build 13-ban egyszer vizuálisan ismét ellenőrizni. |
-| Reward kategóriák visszanavigációja | **BUILD 14-BEN JAVÍTVA · ESZKÖZTESZT KELL** | Az Expo Router duplikált natív fejléce kikapcsolva; a kategóriaoldalon egyetlen saját vissza gomb maradt, amely közvetlenül a Jutalmak főoldalára visz. GitHub main `9a622ff`; TypeScript és iOS-export PASS. | Build 14-ben Italok, Étel, Élmények és Összes kategóriából egyenként visszalépni. |
+| Reward kategóriák visszanavigációja | **BUILD 15-BEN JAVÍTVA · ESZKÖZTESZT KELL** | A kategóriaoldalon egyetlen saját vissza gomb maradt, amely közvetlenül a Jutalmak főoldalára visz. Az üres Étel és Élmények kártyák `Hamarosan` állapotban le vannak tiltva; az Italok és Összes az élő darabszámot mutatja. Hitelesített böngészős teszt, TypeScript, web- és iOS-export PASS. | Build 15-ben Italok → vissza, Étel/Élmények letiltás és Összes lista ellenőrzése. |
 | Italbeváltási QR létrehozása és lejárata | **BIZONYÍTOTT** | Érvényes kétperces token létrejött, státusza lekérdezhető, fel nem használt token lejárt. | A teljes kamerás folyamatot lezárni. |
 | QR első fizikai kamerás beolvasása | **FIZIKAI PASS** | A 2026-09-29 13:19-kor készült iPhone- és Venue Hub-képek a teljes Azure Garden Spritz beváltást és a partneroldali `SIKERES!` eredményt mutatják. | Nincs teendő. |
 | Ugyanazon QR ismételt fizikai beolvasása | **UI-TESZT NYITOTT** | Ugyanazon teljes deep-link production ismétlése 409 `ALREADY_CONSUMED`; a felületi hibaüzenet fizikai kamerával még nincs dokumentálva. | Ugyanazt a QR-t másodszor is beolvasni, képernyőeredményt rögzíteni. |
@@ -47,7 +47,7 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 
 | Követelmény | Állapot | Bizonyíték | Következő lépés |
 |---|---|---|---|
-| Build 14 kiválasztása az 1.0 verzióhoz | **APPLE-FELDOLGOZÁSRA VÁR** | A build 14 aláírt production csomagja elkészült; App Store Connect feltöltése ütemezve. | Feltöltés és feldolgozás után build 14 kiválasztása, teljes fizikai PASS esetén. |
+| Build 15 kiválasztása az 1.0 verzióhoz | **APPLE-FELDOLGOZÁSRA VÁR** | A build 15 aláírt production csomagja elkészült; App Store Connect feltöltése ütemezve. | Feltöltés és feldolgozás után build 15 kiválasztása, teljes fizikai PASS esetén. |
 | Öt friss App Store-kép | **6,9″ CSOMAG KÉSZ** | Öt egységes Come Get It marketingkép készült: térkép, helylista, helyadatlap, ingyenital és sikeres beváltás. Mind `1320×2868`, PNG. | Az öt képet a 6,9″ iPhone slotba feltölteni, majd App Store Connectben vizuálisan ellenőrizni. |
 | Privacy label hét adattípussal | **JÓVÁHAGYVA · APPLE-MENTÉS HÁTRA** | A hét adattípus és a no-tracking csomag tulajdonosi jóváhagyása 2026-09-29-én rögzítve. | A végső **Publish** párbeszédet Apple-ben elfogadni, majd visszaellenőrizni. |
 | Korhatár | **BIZONYÍTOTT** | A 18+ alkoholtartalom-válaszok elmentve és App Store Connectből visszaolvasva. | Csak a tartalom változásakor kell újraértékelni. |
@@ -60,14 +60,14 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 
 ## Következő pontos sorrend
 
-1. Várd meg a build 14 Apple-feldolgozását, majd frissíts a TestFlight **1.0.0 (14)** buildre.
+1. Várd meg a build 15 Apple-feldolgozását, majd frissíts a TestFlight **1.0.0 (15)** buildre.
 2. Futtasd végig a `TESTFLIGHT_DEVICE_TEST.md` teljes listáját.
 3. A sikeres első fizikai QR-beváltás után ugyanazt a QR-t olvasd be még egyszer, és rögzítsd az elutasítást.
 4. Töltsd fel az elkészült öt darab `1320×2868` PNG-t a 6,9″ iPhone slotba.
 5. Cseréld az App Store Connect API-kulcsot biztonságos sorrendben.
 6. Fogadd el az App Privacy végső **Publish** párbeszédét, és a valós üzleti helyzet alapján válaszd ki a DSA-státuszt. A korhatár, copyright, tartalomjog és export-válasz már igazoltan mentve van.
-7. Válaszd ki a build 14-et, ellenőrizd a review login adatokat, majd küldd App Review-ra manuális kiadással.
+7. Válaszd ki a build 15-öt, ellenőrizd a review login adatokat, majd küldd App Review-ra manuális kiadással.
 
 ## Kiadási döntés
 
-Az alkalmazás és az adminrendszer műszaki alapja működőképes. Az első valódi iPhone→Mac kamerás QR-beváltás és a natív térképek fizikai PASS-t kaptak. A kategória-vissza javítása és az öt kötelező 6,9″ App Store-kép elkészült. A kiadás jelenlegi kapuja a build 14 Apple-feldolgozása és fizikai regressziója, az ismételt QR felületi elutasítás, a fiókfolyamatok, a kulcscsere, az App Privacy Publish és a DSA tényalapú választása.
+Az alkalmazás és az adminrendszer műszaki alapja működőképes. Az első valódi iPhone→Mac kamerás QR-beváltás és a natív térképek fizikai PASS-t kaptak. A venue/reward betöltési helyreállítás, a végleges kategória-viselkedés és az öt kötelező 6,9″ App Store-kép elkészült. A kiadás jelenlegi kapuja a build 15 Apple-feldolgozása és fizikai regressziója, az ismételt QR felületi elutasítás, a fiókfolyamatok, a kulcscsere, az App Privacy Publish és a DSA tényalapú választása.
