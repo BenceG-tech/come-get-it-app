@@ -3,7 +3,7 @@
 Utolsó műszaki ellenőrzés: **2026. szeptember 29.**
 Célkiadás: **1.0.0 (13), ingyenes iPhone-béta**
 
-Ez az egyetlen aktuális tulajdonosi átadólap. A részletes műszaki bizonyíték az `APP_STORE_READINESS.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md`, a végleges képek szabályai az `APP_STORE_MEDIA_CAPTURE_HU.md` fájlban vannak.
+Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készültség a `RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md`, a részletes műszaki bizonyíték az `APP_STORE_READINESS.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md`, a végleges képek szabályai az `APP_STORE_MEDIA_CAPTURE_HU.md` fájlban vannak.
 
 ## Már elkészült
 
