@@ -71,13 +71,14 @@ Ne vond vissza a régit az új kulcs igazolása előtt, mert ez megszakíthatja 
 Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 - [ ] Tartalomjogok: minden élő partnerfotóhoz, logóhoz és védjegyhez van felhasználási jog.
-- [ ] Copyright: `2026 Gátai Bence`.
-- [ ] Age Rating: valós alkoholtartalom-válaszok és 18+ végeredmény.
+- [x] Copyright: `2026 Gátai Bence` — App Store Connectből visszaolvasva.
+- [x] Age Rating: valós alkoholtartalom-válaszok és 18+ végeredmény — App Store Connectből visszaolvasva.
 - [ ] App Privacy: hét build-13 adattípus, no tracking, élő saját domaines URL-ek.
 - [ ] App Privacy **Publish** jogi megerősítés elfogadva.
 - [ ] DSA trader/non-trader státusz a tényleges üzleti helyzet alapján kiválasztva; trader esetén publikus cím/postafiók, telefon és e-mail ellenőrizve.
 - [ ] Apple-szerződések, adó- és banki státusz nem jelez blokkot.
-- [ ] Tartalomjogok és export-compliance válasz mentve.
+- [x] Tartalomjogok: `USES_THIRD_PARTY_CONTENT` mentve és az Apple API válaszából igazolva.
+- [x] Export compliance: build 13 `usesNonExemptEncryption=false`, `VALID` állapotban, Apple API-ból visszaolvasva.
 
 ## 5. Beküldés
 
@@ -90,4 +91,4 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## Kiadási döntés
 
-Az ingyenes béta technikai alapja elkészült. A tulajdonosi nyilatkozatcsomag szöveges jóváhagyása megtörtént; a kiadást jelenleg a fizikai build-13 teszt, a friss médiacsomag, az API-kulcscsere, a DSA tényalapú választása és az Apple-mezők igazolt mentése tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+Az ingyenes béta technikai alapja elkészült. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg a fizikai build-13 teszt, a friss médiacsomag, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
