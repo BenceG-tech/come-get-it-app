@@ -6,6 +6,7 @@ import {
   BadgePercent,
   ChevronRight,
   Martini,
+  RefreshCw,
   Sparkles,
   UtensilsCrossed,
   type LucideIcon,
@@ -17,6 +18,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
+import { getAvailableRewards } from "@/lib/rewardUtils";
 
 const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
@@ -24,7 +26,6 @@ const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
 type RewardCategoryItem = {
   key: string;
   title: string;
-  subtitle: string;
   icon: LucideIcon;
   accent: string;
   imageUri: string;
@@ -34,7 +35,6 @@ const rewardCategories: RewardCategoryItem[] = [
   {
     key: "drink",
     title: "Italok",
-    subtitle: "Koktélok, sörök, napi ajándékok",
     icon: Martini,
     accent: "#00C8E8",
     imageUri: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=900&q=80",
@@ -42,7 +42,6 @@ const rewardCategories: RewardCategoryItem[] = [
   {
     key: "food",
     title: "Étel",
-    subtitle: "Falak, vacsorák és partner ajánlatok",
     icon: UtensilsCrossed,
     accent: "#F6B17A",
     imageUri: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80",
@@ -50,7 +49,6 @@ const rewardCategories: RewardCategoryItem[] = [
   {
     key: "experience",
     title: "Élmények",
-    subtitle: "VIP belépők és különleges esték",
     icon: Sparkles,
     accent: "#7DD3FC",
     imageUri: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=900&q=80",
@@ -58,7 +56,6 @@ const rewardCategories: RewardCategoryItem[] = [
   {
     key: "all",
     title: "Összes",
-    subtitle: "Minden elérhető jutalom egy helyen",
     icon: BadgePercent,
     accent: "#1D6DFF",
     imageUri: "https://images.unsplash.com/photo-1541849546-216549ae216d?w=900&q=80",
@@ -80,29 +77,22 @@ export default function RewardsScreen() {
 
   const normalizedRewards = useMemo(() => {
     const raw = (rewardsQuery.data ?? []) as Reward[];
-    const today = new Date();
-    const cleaned = raw
-      .filter((r) => {
-        if (!r) return false;
-        if (r.active === false) return false;
-        const until = new Date(r.valid_until);
-        if (!Number.isNaN(until.getTime()) && until.getTime() < today.getTime()) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        const ap = a.priority ?? 0;
-        const bp = b.priority ?? 0;
-        if (bp !== ap) return bp - ap;
-        return a.points_required - b.points_required;
-      });
-
-    return cleaned;
+    return getAvailableRewards(raw);
   }, [rewardsQuery.data]);
 
   const editorPicks = useMemo(() => normalizedRewards.slice(0, 5), [normalizedRewards]);
   const newRewards = useMemo(() => {
     const remaining = normalizedRewards.slice(5);
     return remaining.slice(0, 5);
+  }, [normalizedRewards]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: normalizedRewards.length };
+    normalizedRewards.forEach((reward) => {
+      const category = reward.category ?? "";
+      if (category) counts[category] = (counts[category] ?? 0) + 1;
+    });
+    return counts;
   }, [normalizedRewards]);
 
   const { points } = useAppContext();
@@ -159,6 +149,21 @@ export default function RewardsScreen() {
               <View style={styles.inlineState} testID="rewards-loading">
                 <Text style={styles.inlineStateText}>Jutalmak betöltése...</Text>
               </View>
+            ) : rewardsQuery.isError && editorPicks.length === 0 ? (
+              <View style={styles.inlineState} testID="rewards-error">
+                <Text style={styles.inlineStateTitle}>Most nem sikerült betölteni</Text>
+                <Text style={styles.inlineStateText}>Ellenőrizd a kapcsolatot, majd próbáld újra.</Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={() => rewardsQuery.refetch()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Jutalmak újrapróbálása"
+                  testID="rewards-retry"
+                >
+                  <RefreshCw size={15} color="#001014" />
+                  <Text style={styles.retryButtonText}>Újrapróbálás</Text>
+                </TouchableOpacity>
+              </View>
             ) : editorPicks.length === 0 ? (
               <View style={styles.inlineState} testID="rewards-empty">
                 <Text style={styles.inlineStateText}>Jelenleg nincsenek elérhető jutalmak.</Text>
@@ -199,13 +204,19 @@ export default function RewardsScreen() {
           <View style={styles.categoriesGrid}>
             {rewardCategories.map((category: RewardCategoryItem) => {
               const Icon = category.icon;
+              const count = categoryCounts[category.key] ?? 0;
+              const isAvailable = count > 0;
               return (
                 <TouchableOpacity
                   key={category.key}
-                  style={styles.categoryCard}
+                  style={[styles.categoryCard, !isAvailable && styles.categoryCardDisabled]}
                   onPress={() => goToCategory(category.key)}
+                  disabled={!isAvailable}
+                  accessibilityState={{ disabled: !isAvailable }}
                   accessibilityRole="button"
-                  accessibilityLabel={`${category.title} kategória`}
+                  accessibilityLabel={isAvailable
+                    ? `${category.title} kategória, ${count} elérhető jutalom`
+                    : `${category.title} kategória, hamarosan`}
                   testID={`cat-${category.key}`}
                   activeOpacity={0.86}
                 >
@@ -220,7 +231,9 @@ export default function RewardsScreen() {
                   <View style={styles.categoryBottomBar}>
                     <View style={styles.categoryTextBlock}>
                       <Text style={styles.categoryTitle}>{category.title}</Text>
-                      <Text style={styles.categorySubtitle} numberOfLines={2}>{category.subtitle}</Text>
+                      <Text style={styles.categorySubtitle} numberOfLines={2}>
+                        {isAvailable ? `${count} elérhető jutalom` : "Hamarosan"}
+                      </Text>
                     </View>
                     <View style={[styles.categoryIconWrap, { borderColor: `${category.accent}55`, backgroundColor: `${category.accent}22` }]}>
                       <Icon size={17} color={category.accent} />
@@ -471,6 +484,29 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: "center",
   },
+  inlineStateTitle: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  retryButton: {
+    minHeight: 42,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: CYAN,
+  },
+  retryButtonText: {
+    color: "#001014",
+    fontSize: 13,
+    fontWeight: "900",
+  },
   referButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -532,6 +568,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.11)",
     overflow: "hidden",
+  },
+  categoryCardDisabled: {
+    opacity: 0.48,
   },
   categoryImageWrap: {
     width: "100%",

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import RewardListCard from "@/components/RewardListCard";
@@ -10,12 +10,16 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAppRewards } from "@/lib/supabaseProvider";
 import type { Reward } from "@/types/reward";
 import { useAppContext } from "@/context/AppContext";
+import { getAvailableRewards } from "@/lib/rewardUtils";
+
+const SUPPORTED_CATEGORIES = new Set(["drink", "food", "vip", "discount", "experience", "partner", "all"]);
 
 export default function RewardsCategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: string }>();
-  const category = (params.category ?? "all") as string;
+  const requestedCategory = (params.category ?? "all") as string;
+  const category = SUPPORTED_CATEGORIES.has(requestedCategory) ? requestedCategory : "all";
   const { points } = useAppContext();
 
   const rewardsQuery = useQuery({
@@ -30,21 +34,7 @@ export default function RewardsCategoryScreen() {
 
   const normalizedRewards = useMemo(() => {
     const raw = (rewardsQuery.data ?? []) as Reward[];
-    const today = new Date();
-    const cleaned = raw
-      .filter((r) => {
-        if (!r) return false;
-        if (r.active === false) return false;
-        const until = new Date(r.valid_until);
-        if (!Number.isNaN(until.getTime()) && until.getTime() < today.getTime()) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        const ap = a.priority ?? 0;
-        const bp = b.priority ?? 0;
-        if (bp !== ap) return bp - ap;
-        return a.points_required - b.points_required;
-      });
+    const cleaned = getAvailableRewards(raw);
 
     console.log("[RewardsCategory] normalizedRewards", { category, rawCount: raw.length, cleanedCount: cleaned.length });
     return cleaned;
@@ -60,7 +50,7 @@ export default function RewardsCategoryScreen() {
     food: "Étel",
     vip: "VIP",
     discount: "Kedvezmény",
-    experience: "Élmény",
+    experience: "Élmények",
     partner: "Partnerek",
     all: "Összes jutalom",
   };
@@ -89,6 +79,21 @@ export default function RewardsCategoryScreen() {
         <View style={styles.empty} testID="rewards-category-loading">
           <Text style={styles.emptyText}>Jutalmak betöltése...</Text>
         </View>
+      ) : rewardsQuery.isError && normalizedRewards.length === 0 ? (
+        <View style={styles.empty} testID="rewards-category-error">
+          <Text style={styles.emptyTitle}>A jutalmak most nem tölthetők be</Text>
+          <Text style={styles.emptyText}>Ellenőrizd a kapcsolatot, majd próbáld újra.</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => rewardsQuery.refetch()}
+            accessibilityRole="button"
+            accessibilityLabel="Jutalmak újrapróbálása"
+            testID="rewards-category-retry"
+          >
+            <RefreshCw size={15} color="#001014" />
+            <Text style={styles.retryButtonText}>Újrapróbálás</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -100,7 +105,8 @@ export default function RewardsCategoryScreen() {
           ))}
           {filtered.length === 0 && (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>Nincs jutalom ebben a kategóriában.</Text>
+              <Text style={styles.emptyTitle}>Ebben a kategóriában még nincs aktív jutalom</Text>
+              <Text style={styles.emptyText}>Nézz vissza később, vagy válassz másik kategóriát.</Text>
             </View>
           )}
         </ScrollView>
@@ -157,5 +163,30 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: Colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  emptyTitle: {
+    color: Colors.text,
+    fontSize: 17,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  retryButton: {
+    minHeight: 42,
+    marginTop: 16,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: "#00C8E8",
+  },
+  retryButtonText: {
+    color: "#001014",
+    fontSize: 13,
+    fontWeight: "900",
   },
 });

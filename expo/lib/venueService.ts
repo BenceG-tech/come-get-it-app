@@ -1,6 +1,7 @@
 import { getSupabase } from '@/lib/supabaseClient';
 import { rest } from '@/lib/supabaseRest';
 import { VENUE_PUBLIC_COLUMNS, type Venue } from '@/types/venue';
+import { runSupabaseRead } from '@/lib/supabaseRequest';
 
 type FetchVenuesOptions = {
   columns?: string;
@@ -88,8 +89,7 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
       query = query.range(options.offset, options.offset + (options.limit ?? 50) - 1);
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
+    const data = await runSupabaseRead<unknown[]>('Vendéglátóhelyek betöltése', () => query);
 
     const rows = Array.isArray(data) ? (data as unknown as Venue[]) : [];
     const visible = includeHidden ? rows : rows.filter(isVenueVisible);
@@ -110,15 +110,16 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
 export async function fetchVenueCoverUrl(venueId: string): Promise<string | null> {
   try {
     const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('venue_images')
-      .select('url,is_cover,created_at')
-      .eq('venue_id', venueId)
-      .order('is_cover', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(1);
-
-    if (error) throw error;
+    const data = await runSupabaseRead<unknown[]>(
+      'Helyszín borítóképének betöltése',
+      () => supabase
+        .from('venue_images')
+        .select('url,is_cover,created_at')
+        .eq('venue_id', venueId)
+        .order('is_cover', { ascending: false })
+        .order('created_at', { ascending: true })
+        .limit(1),
+    );
 
     const first = Array.isArray(data) ? (data[0] as VenueImageRow | undefined) : undefined;
     const imageUrl = first?.url ?? null;

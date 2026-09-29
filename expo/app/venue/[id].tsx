@@ -56,58 +56,60 @@ export default function VenueModalScreen() {
     return () => loop.stop();
   }, [glowPulse]);
 
-  useEffect(() => {
-    const fetchVenue = async () => {
-      if (!id) {
-        setError('No venue ID provided');
-        setLoading(false);
+  const fetchVenue = useCallback(async () => {
+    if (!id) {
+      setError('Hiányzik a vendéglátóhely azonosítója.');
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      console.info('[VenueDetail] Loading venue', id);
+      let v = await getVenueWithDetails(String(id));
+      if (!v) {
+        setError('A vendéglátóhely nem található vagy jelenleg nem elérhető.');
         return;
       }
-      try {
-        setLoading(true);
-        console.info('[VenueDetail] Loading venue', id);
-        let v = await getVenueWithDetails(String(id));
-        if (!v) {
-          setError('Venue not found');
-          return;
-        }
-        if (v.is_paused === true) {
-          console.info('[VenueDetail] Venue is hidden by admin, blocking detail view', id);
-          setError('Ez a helyszín jelenleg nem elérhető');
-          return;
-        }
-        console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
-        
-        const latRaw = v.coordinates?.lat ?? v.latitude;
-        const lngRaw = v.coordinates?.lng ?? v.longitude;
-        const lat = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN;
-        const lng = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? Number(lngRaw) : NaN;
-        const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
-
-        if (!hasCoords && v.address) {
-          setGeocoding(true);
-          try {
-            const coordinates = await geocodeVenueAddress(v.name, v.address);
-            if (coordinates) {
-              v = { ...v, coordinates };
-            }
-          } catch (geocodeError) {
-            console.error('[VenueDetail] Failed to geocode venue address:', geocodeError);
-          } finally {
-            setGeocoding(false);
-          }
-        }
-        
-        setVenue(v);
-      } catch (e) {
-        console.error('[VenueDetail] Failed to load', e);
-        setError('Failed to load venue');
-      } finally {
-        setLoading(false);
+      if (v.is_paused === true) {
+        console.info('[VenueDetail] Venue is hidden by admin, blocking detail view', id);
+        setError('Ez a helyszín jelenleg nem elérhető.');
+        return;
       }
-    };
-    fetchVenue();
+      console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
+        
+      const latRaw = v.coordinates?.lat ?? v.latitude;
+      const lngRaw = v.coordinates?.lng ?? v.longitude;
+      const lat = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN;
+      const lng = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? Number(lngRaw) : NaN;
+      const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+
+      if (!hasCoords && v.address) {
+        setGeocoding(true);
+        try {
+          const coordinates = await geocodeVenueAddress(v.name, v.address);
+          if (coordinates) {
+            v = { ...v, coordinates };
+          }
+        } catch (geocodeError) {
+          console.error('[VenueDetail] Failed to geocode venue address:', geocodeError);
+        } finally {
+          setGeocoding(false);
+        }
+      }
+
+      setVenue(v);
+    } catch (e) {
+      console.error('[VenueDetail] Failed to load', e);
+      setError('A helyszín most nem tölthető be. Ellenőrizd a kapcsolatot, majd próbáld újra.');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchVenue();
+  }, [fetchVenue]);
 
   const galleryImages = useMemo(() => {
     const arr: string[] = [];
@@ -267,7 +269,7 @@ export default function VenueModalScreen() {
       <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.dark.primary} />
-          <Text style={styles.loadingText}>Loading venue...</Text>
+          <Text style={styles.loadingText}>Vendéglátóhely betöltése...</Text>
         </View>
       </View>
     );
@@ -275,10 +277,14 @@ export default function VenueModalScreen() {
 
   if (error || !venue) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}> 
-        <Text style={[styles.loadingText, { color: 'red' }]}>{error || 'Venue not found'}</Text>
-        <TouchableOpacity style={styles.directionsButton} onPress={() => router.back()}>
-          <Text style={styles.directionsText}>Back</Text>
+      <View style={[styles.container, styles.errorContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <Text style={styles.errorTitle}>Nem sikerült megnyitni a helyszínt</Text>
+        <Text style={styles.errorText}>{error || 'A vendéglátóhely nem található.'}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchVenue} testID="venue-detail-retry">
+          <Text style={styles.retryButtonText}>Újrapróbálás</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.backLinkButton} onPress={() => router.back()}>
+          <Text style={styles.backLinkText}>Vissza a helyszínekhez</Text>
         </TouchableOpacity>
       </View>
     );
@@ -838,6 +844,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginTop: 20,
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  errorTitle: {
+    color: Colors.dark.text,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  errorText: {
+    color: Colors.dark.subtext,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  retryButton: {
+    minHeight: 48,
+    minWidth: 180,
+    marginTop: 24,
+    paddingHorizontal: 22,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.primary,
+  },
+  retryButtonText: {
+    color: '#001014',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  backLinkButton: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  backLinkText: {
+    color: Colors.dark.subtext,
+    fontSize: 14,
+    fontWeight: '700',
   },
   imageContainer: {
     position: 'relative',
