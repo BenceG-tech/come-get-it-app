@@ -26,7 +26,7 @@ import SocialButton from '@/components/SocialButton';
 import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
-const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
+const LOGO_SOURCE = require('@/assets/images/come-get-it-logo-white.png');
 const BG_SOURCE = require('@/assets/images/login-bg-budapest-arcs.png');
 
 const CYAN = '#00C8E8' as const;
@@ -172,8 +172,10 @@ function AuthScreen() {
                 source={LOGO_SOURCE}
                 style={styles.logo}
                 contentFit="contain"
+                contentPosition="center"
                 cachePolicy="memory-disk"
                 accessibilityLabel="Come Get It"
+                testID="auth-logo"
               />
             </View>
 
@@ -327,8 +329,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 285,
-    height: 126,
+    width: 236,
+    height: 119,
+    alignSelf: 'center',
   },
   heroTextBlock: {
     alignItems: 'center',

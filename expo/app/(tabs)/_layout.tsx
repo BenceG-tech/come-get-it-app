@@ -40,6 +40,7 @@ export default function TabLayout() {
         name="rewards-category"
         options={{
           href: null,
+          headerShown: false,
         }}
       />
     </Tabs>

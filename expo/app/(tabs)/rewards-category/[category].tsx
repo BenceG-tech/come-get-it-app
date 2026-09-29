@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ArrowLeft, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -58,60 +58,69 @@ export default function RewardsCategoryScreen() {
   const title = titleMap[category] ?? category;
 
   return (
-    <View style={styles.container} testID="rewards-category-screen">
-      <StatusBar style="light" />
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)/rewards")}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Vissza a Jutalmakhoz"
-          testID="rewards-category-back"
-          hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
-        >
-          <ArrowLeft size={23} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {rewardsQuery.isLoading && normalizedRewards.length === 0 ? (
-        <View style={styles.empty} testID="rewards-category-loading">
-          <Text style={styles.emptyText}>Jutalmak betöltése...</Text>
-        </View>
-      ) : rewardsQuery.isError && normalizedRewards.length === 0 ? (
-        <View style={styles.empty} testID="rewards-category-error">
-          <Text style={styles.emptyTitle}>A jutalmak most nem tölthetők be</Text>
-          <Text style={styles.emptyText}>Ellenőrizd a kapcsolatot, majd próbáld újra.</Text>
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          title,
+          gestureEnabled: true,
+        }}
+      />
+      <View style={styles.container} testID="rewards-category-screen">
+        <StatusBar style="light" />
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => rewardsQuery.refetch()}
+            onPress={() => router.replace("/(tabs)/rewards")}
+            style={styles.backButton}
             accessibilityRole="button"
-            accessibilityLabel="Jutalmak újrapróbálása"
-            testID="rewards-category-retry"
+            accessibilityLabel="Vissza a Jutalmakhoz"
+            testID="rewards-category-back"
+            hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
           >
-            <RefreshCw size={15} color="#001014" />
-            <Text style={styles.retryButtonText}>Újrapróbálás</Text>
+            <ArrowLeft size={23} color={Colors.text} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
+          <View style={styles.headerSpacer} />
         </View>
-      ) : (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.verticalList}
-          testID="rewards-category-list"
-        >
-          {filtered.map((item) => (
-            <RewardListCard key={item.id} reward={item} points={points} />
-          ))}
-          {filtered.length === 0 && (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>Ebben a kategóriában még nincs aktív jutalom</Text>
-              <Text style={styles.emptyText}>Nézz vissza később, vagy válassz másik kategóriát.</Text>
-            </View>
-          )}
-        </ScrollView>
-      )}
-    </View>
+
+        {rewardsQuery.isLoading && normalizedRewards.length === 0 ? (
+          <View style={styles.empty} testID="rewards-category-loading">
+            <Text style={styles.emptyText}>Jutalmak betöltése...</Text>
+          </View>
+        ) : rewardsQuery.isError && normalizedRewards.length === 0 ? (
+          <View style={styles.empty} testID="rewards-category-error">
+            <Text style={styles.emptyTitle}>A jutalmak most nem tölthetők be</Text>
+            <Text style={styles.emptyText}>Ellenőrizd a kapcsolatot, majd próbáld újra.</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => rewardsQuery.refetch()}
+              accessibilityRole="button"
+              accessibilityLabel="Jutalmak újrapróbálása"
+              testID="rewards-category-retry"
+            >
+              <RefreshCw size={15} color="#001014" />
+              <Text style={styles.retryButtonText}>Újrapróbálás</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.verticalList}
+            testID="rewards-category-list"
+          >
+            {filtered.map((item) => (
+              <RewardListCard key={item.id} reward={item} points={points} />
+            ))}
+            {filtered.length === 0 && (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>Ebben a kategóriában még nincs aktív jutalom</Text>
+                <Text style={styles.emptyText}>Nézz vissza később, vagy válassz másik kategóriát.</Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
+      </View>
+    </>
   );
 }
 
