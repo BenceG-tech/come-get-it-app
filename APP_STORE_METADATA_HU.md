@@ -19,7 +19,7 @@
 | Kids kategória | Nem | |
 | Kiadás | Kézi kiadás jóváhagyás után | ajánlott az első verziónál |
 | Első elérhetőség | Magyarország | partnerkínálat jelenleg budapesti |
-| Copyright | © 2026 Come Get It | a jogi tulajdonos nevével egyeztesd beküldéskor |
+| Copyright | 2026 Gátai Bence | egyéni Apple Developer-fiók esetén a természetes személy jogi neve; Bence végleges jóváhagyása szükséges |
 
 Az Apple jelenlegi mezőkorlátai: név és alcím legfeljebb 30 karakter, promóciós szöveg 170 karakter, leírás 4000 karakter, kulcsszavak 100 bájt. Lásd: [App information](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information) és [Platform version information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information).
 
@@ -59,10 +59,12 @@ Az italajánlatok helyszínenként és időszakonként változhatnak. 18 éven f
 
 ## URL-ek
 
-- Support URL: `https://come-get-it.app/support/`
+- Support URL: `https://come-get-it.app/support`
 - Privacy Policy URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
-- Privacy Choices URL: üres; a fióktörlés az appon belül elérhető.
-- Marketing URL: egyelőre üres.
+- Privacy Choices URL: `https://come-get-it.app/adatvedelmi-szabalyzat` — a jogok és a fióktörlés módja is szerepel rajta; a fióktörlés az appon belül is elérhető.
+- Marketing URL: `https://come-get-it.app`
+
+Mindhárom publikus URL HTTPS-en elérhető. App Store Connectben ne a GitHub-dokumentumokra mutató korábbi címeket használd.
 
 ## Nem szerepelhet az 1.0 metaadataiban
 
