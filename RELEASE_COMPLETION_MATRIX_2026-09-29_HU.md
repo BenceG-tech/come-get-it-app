@@ -21,7 +21,7 @@ Cél: **1.0.0 (13), ingyenes iPhone-béta**
 | Aktív, korlátozott Pilot jutalom | **BIZONYÍTOTT** | Élő, készlet- és felhasználókorlátos Pilot reward; `drink` kategória; kép beállítva. | Nincs teendő. |
 | Mobilapp és admin ugyanazt az adatot használja | **BIZONYÍTOTT** | Mindkét felület ugyanahhoz a production Supabase projekthez kapcsolódik; venue- és reward-módosítások onnan töltődnek. | Tartalmat a Venue Hubban szerkessz; alkalmazásfrissítés csak funkció- vagy dizájnváltozáshoz kell. |
 | QR-backend egyszer használható | **BIZONYÍTOTT** | Első consume 200; ismétlés 409 `ALREADY_CONSUMED`; idegen venue `VENUE_UNAUTHORIZED`; párhuzamos próbából csak egy siker. | Nincs backend-teendő. |
-| Venue Hub kamerás szkenner javítása | **JAVÍTVA · OPTIKAI KAMERATESZT KELL** | A kamera productionben megjelent. A Venue Hub parser és a backend `consume-redemption-token` v52 kezeli a mobil teljes `cgi://redeem?...` deep linkjét. A hitelesített production E2E pontosan ezt a teljes payloadot használta: első consume 200, ismétlés 409 `ALREADY_CONSUMED`, vendégstátusz `consumed`. | Új kétperces QR-t olvass be kamerával egyszer, majd ugyanazt azonnal másodszor; már csak a kép-felismerés/UI bizonyítandó. |
+| Venue Hub kamerás szkenner javítása | **JAVÍTVA · OPTIKAI KAMERATESZT KELL** | A kamera productionben megjelent. A Venue Hub parser és az `ACTIVE`, JWT-védett backend `consume-redemption-token` v53 kezeli a mobil teljes `cgi://redeem?...` deep linkjét. A hitelesített production E2E pontosan ezt a teljes payloadot használta: első consume 200, ismétlés 409 `ALREADY_CONSUMED`, vendégstátusz `consumed`. | Új kétperces QR-t olvass be kamerával egyszer, majd ugyanazt azonnal másodszor; már csak a kép-felismerés/UI bizonyítandó. |
 
 ## 2. iPhone alkalmazás és TestFlight
 
