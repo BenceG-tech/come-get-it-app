@@ -18,6 +18,8 @@ Apple currently accepts one to ten screenshots per device size, without alpha/tr
 
 ## Required fresh capture set
 
+Use the Hungarian step-by-step capture and video runbook in [`APP_STORE_MEDIA_CAPTURE_HU.md`](APP_STORE_MEDIA_CAPTURE_HU.md). It also contains the final filenames, marketing captions and the automated dimension check.
+
 Capture signed TestFlight build **1.0.0 (13)** at one consistent accepted 6.9-inch size, with the App Review account or a reset screenshot account:
 
 1. Venue discovery — native Apple map/list with live Budapest partner data and no API-key watermark.
