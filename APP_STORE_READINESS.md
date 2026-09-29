@@ -2,6 +2,8 @@
 
 Last verified: 2026-09-29
 
+For the requirement-by-requirement release status and exact next actions, see [`RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md`](RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md).
+
 ## Ready in the repository
 
 - Expo SDK 54 project previously passed `expo-doctor` (18/18). On 2026-09-28 the current source again passed TypeScript validation, public config generation, native iOS prebuild, dependency lockfile supply-chain validation, and the production iOS JavaScript/Hermes export. A later `expo-doctor` invocation completed 15/18 checks; its three incomplete checks were environment-only because the bundled runner had no standalone `npm` executable, not project compatibility failures.
