@@ -32,7 +32,7 @@ Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készü
 - [x] Production EAS build `1.0.0 (14)` elkészült; build ID `564f465b-9468-4e51-9623-85ae9d65cb96`.
 - [x] A venue- és reward-betöltés helyreállítása elkészült: időkorlátos adatlekérés, egyszeri biztonságos munkamenet-frissítés, magyar újrapróbálási állapot és kizárólag fogyasztói reward-nézet.
 - [x] A jutalomkategóriák élő darabszámot mutatnak; az üres Étel/Élmények kategória `Hamarosan` állapotban le van tiltva; az Italok oldalon egyetlen vissza gomb maradt.
-- [x] Production EAS build `1.0.0 (15)` elkészült; build ID `1a8db4bf-a7d2-4450-8ded-dfb952d4b58d`, App Store Connect submission `6b1c55d5-deb8-4b03-b40a-696f2d3445e2` elindítva.
+- [x] Production EAS build `1.0.0 (15)` elkészült; build ID `1a8db4bf-a7d2-4450-8ded-dfb952d4b58d`. Az első feltöltés részletes napló nélkül hibára futott; ugyanaz a változatlan, aláírt build az aktív `b5b74450-2d79-4d7c-87b3-88baa73b2301` submissionnel újraküldve, jelenleg az EAS sorában vár.
 - [x] Öt kész 6,9″ App Store-kép: mind `1320×2868`, PNG; feltöltési ZIP elkészült.
 
 ## 1. Fizikai TestFlight-kapu — Bence
