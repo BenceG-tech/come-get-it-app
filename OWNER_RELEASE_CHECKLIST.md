@@ -1,7 +1,7 @@
 # Come Get It — tulajdonosi kiadási ellenőrzőlista
 
 Utolsó műszaki ellenőrzés: **2026. szeptember 29.**
-Célkiadás: **1.0.0 (13), ingyenes iPhone-béta**
+Célkiadás: **1.0.0 (15), ingyenes iPhone-béta**
 
 Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készültség a `RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md`, a részletes műszaki bizonyíték az `APP_STORE_READINESS.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md`, a végleges képek szabályai az `APP_STORE_MEDIA_CAPTURE_HU.md` fájlban vannak.
 
@@ -30,18 +30,23 @@ Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készü
 - [x] Nyolc friss build-13 iPhone-kép technikailag ellenőrizve: mind `1206×2622`, PNG, átlátszóság nélkül; az öt legerősebb forráskép kiválasztva.
 - [x] A jutalomkategória duplikált natív fejléce eltávolítva; GitHub main `9a622ff`.
 - [x] Production EAS build `1.0.0 (14)` elkészült; build ID `564f465b-9468-4e51-9623-85ae9d65cb96`.
+- [x] A venue- és reward-betöltés helyreállítása elkészült: időkorlátos adatlekérés, egyszeri biztonságos munkamenet-frissítés, magyar újrapróbálási állapot és kizárólag fogyasztói reward-nézet.
+- [x] A jutalomkategóriák élő darabszámot mutatnak; az üres Étel/Élmények kategória `Hamarosan` állapotban le van tiltva; az Italok oldalon egyetlen vissza gomb maradt.
+- [x] Production EAS build `1.0.0 (15)` elkészült; build ID `1a8db4bf-a7d2-4450-8ded-dfb952d4b58d`, App Store Connect submission `6b1c55d5-deb8-4b03-b40a-696f2d3445e2` elindítva.
 - [x] Öt kész 6,9″ App Store-kép: mind `1320×2868`, PNG; feltöltési ZIP elkészült.
 
 ## 1. Fizikai TestFlight-kapu — Bence
 
-Az Apple-feldolgozás után telepítsd/frissítsd a TestFlightban a **Come Get It 1.0 (14)** verziót, majd a `TESTFLIGHT_DEVICE_TEST.md` sorrendjében ellenőrizd:
+Az Apple-feldolgozás után telepítsd/frissítsd a TestFlightban a **Come Get It 1.0 (15)** verziót, majd a `TESTFLIGHT_DEVICE_TEST.md` sorrendjében ellenőrizd:
 
 - [ ] regisztráció és e-mail-megerősítés;
 - [ ] kijelentkezés, bejelentkezés és munkamenet-visszaállítás;
 - [x] helylista Apple Térképpel, vízjel nélkül;
 - [x] venue-részlet, nyitvatartás, működő Apple-térkép és elérhető ital;
-- [ ] Pilot jutalom képe, `drink` kategóriája és 100 pontos beváltása;
-- [ ] Italok, Étel, Élmények és Összes kategória következetes vissza gombja;
+- [ ] a helyszínkártyáról megnyílik a részletes oldal, és hiba esetén az Újrapróbálás működik;
+- [ ] Pilot jutalom képe, `drink` kategóriája és 100 pontos beváltása betölt;
+- [ ] az Italok kategóriában pontosan egy vissza gomb van, amely közvetlenül a Jutalmak oldalra visz;
+- [ ] az üres Étel és Élmények kártyák `Hamarosan` felirattal le vannak tiltva; az Összes kategória csak az élő rewardot mutatja;
 - [x] friss iPhone QR → éles Venue Hub Mac-kamera → sikeres első beolvasás;
 - [ ] ugyanaz a QR másodszor elutasítva;
 - [ ] jelszó-visszaállítás ugyanazon az iPhone-on;
@@ -82,7 +87,7 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 - [ ] Tartalomjogok: minden élő partnerfotóhoz, logóhoz és védjegyhez van felhasználási jog.
 - [x] Copyright: `2026 Gátai Bence` — App Store Connectből visszaolvasva.
 - [x] Age Rating: valós alkoholtartalom-válaszok és 18+ végeredmény — App Store Connectből visszaolvasva.
-- [ ] App Privacy: hét build-13 adattípus, no tracking, élő saját domaines URL-ek.
+- [ ] App Privacy: hét auditált adattípus, no tracking, élő saját domaines URL-ek.
 - [ ] App Privacy **Publish** jogi megerősítés elfogadva.
 - [ ] DSA trader/non-trader státusz a tényleges üzleti helyzet alapján kiválasztva; trader esetén publikus cím/postafiók, telefon és e-mail ellenőrizve.
 - [ ] Apple-szerződések, adó- és banki státusz nem jelez blokkot.
@@ -91,7 +96,7 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## 5. Beküldés
 
-- [ ] A build 14 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
+- [ ] A build 15 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
 - [ ] Review login és angol review notes utolsó ellenőrzése.
 - [ ] Az öt friss screenshot feltöltve.
 - [ ] Minden kötelező mező zöld / hibamentes.
@@ -100,4 +105,4 @@ Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
 
 ## Kiadási döntés
 
-Az ingyenes béta technikai alapja elkészült, és az első valódi optikai QR-beváltás is sikeres. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg az ismételt fizikai QR-elutasítás, a hátralévő build-13 fiókfolyamatok, a kötelező 6,9″/6,5″ médiaslot, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+Az ingyenes béta technikai alapja elkészült, és az első valódi optikai QR-beváltás is sikeres. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. A kiadást jelenleg a build 15 fizikai regressziója, az ismételt fizikai QR-elutasítás, a hátralévő fiókfolyamatok, a kötelező médiaslot, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
