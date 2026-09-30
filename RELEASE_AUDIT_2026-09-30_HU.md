@@ -26,6 +26,7 @@ A build 19 tartalmazza:
 | EAS production build | **PASS** | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, `FINISHED` |
 | App Store Connect feltöltés | **PASS** | submission `f2fc269a-6db6-4647-a313-82897ccf78fe`, `FINISHED` |
 | Apple-feldolgozás | **PASS** | `VALID`, `READY_FOR_BETA_TESTING`, nem lejárt |
+| Aláírt Build 19 bináris | **PASS** | bundle/build, App Store provisioning, entitlements és privacy manifest ellenőrizve; `BUILD_19_BINARY_AUDIT.md` |
 | Belső TestFlight-terjesztés | **PASS** | workflow `01a0f016-0ce3-762a-9138-770cc31c242d`; Build 19 `IN_BETA_TESTING` a `Come Get It belső teszt` csoportban |
 | Supabase | **ACTIVE_HEALTHY** | az app és a Venue Hub ugyanazt a production projektet használja |
 | Jutalomkatalógus | **PASS** | 4 aktív jutalom; drink, food és experience lefedve |
