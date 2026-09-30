@@ -1,0 +1,22 @@
+name: Distribute Come Get It after App Store Connect upload
+
+on:
+  app_store_connect:
+    build_upload:
+      states:
+        - complete
+
+jobs:
+  distribute_to_internal_testers:
+    name: Add uploaded build to internal TestFlight group
+    type: testflight
+    params:
+      asc_build_id: ${{ app_store_connect.build_upload.build.id }}
+      internal_groups:
+        - Come Get It belső teszt
+      changelog: |
+        Friss Come Get It bétaverzió.
+        Ellenőrizendő: vendéglátóhelyek és jutalmak betöltése; jutalomkategória
+        egyetlen vissza gombbal; bejelentkezési logó és betöltőképernyő;
+        QR-beváltás és ismételt kód elutasítása; kijelentkezés és jelszó-visszaállítás.
+      submit_beta_review: false
