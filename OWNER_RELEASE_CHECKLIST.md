@@ -23,7 +23,7 @@ Ez az aktuális tulajdonosi átadólap. A részletes állapot a `RELEASE_COMPLET
 - [x] Az eredeti Come Get It logó visszaállítva és középre igazítva a login képernyőn.
 - [x] A fölösleges külön márkázott runtime loading képernyő eltávolítva; csak a natív indítóképernyő és rövid semleges átmenet maradt.
 - [x] TypeScript-ellenőrzés és Expo iOS-export PASS.
-- [x] GitHub main: `1563ac06341534653493901c3659005bf617f3a8`.
+- [x] A Build 19 futtatott forráscommitja: `1563ac06341534653493901c3659005bf617f3a8`; a jelenlegi GitHub main a dokumentációs PR #29-cel: `210c1a76ae864d7a561106107b87f4bbb203ea66`.
 - [x] Production EAS build `1.0.0 (19)` elkészült: `67ce044b-0327-44f6-a6d1-34f71576ec7e`.
 - [x] App Store Connect-feltöltés sikeres: `f2fc269a-6db6-4647-a313-82897ccf78fe`.
 - [x] Az App Review fogyasztói fiók 500 szinkronizált tesztponttal rendelkezik; a pontjutalom és a venue QR-folyamat külön, helyesen dokumentált.
