@@ -19,7 +19,8 @@ Canonical current documents:
 
 | Item | Result |
 |---|---|
-| GitHub main | `1563ac06341534653493901c3659005bf617f3a8` |
+| Build 19 runtime source | `1563ac06341534653493901c3659005bf617f3a8` |
+| Current GitHub main | `210c1a76ae864d7a561106107b87f4bbb203ea66` (PR #29, release documentation only) |
 | EAS production build | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, version `1.0.0 (19)`, `FINISHED` |
 | App Store submission | `f2fc269a-6db6-4647-a313-82897ccf78fe`, `FINISHED` |
 | Apple processing | `VALID`, external `READY_FOR_BETA_SUBMISSION`, not expired |

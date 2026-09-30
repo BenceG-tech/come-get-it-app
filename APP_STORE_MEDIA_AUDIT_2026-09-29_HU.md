@@ -1,5 +1,7 @@
 # Come Get It — App Store média audit
 
+> **Történeti audit, felülírva 2026. szeptember 30-án.** A végleges, jóváhagyott öt fájl neve és tartalma az `APP_STORE_SCREENSHOT_AUDIT.md` és az `APP_STORE_MEDIA_CAPTURE_HU.md` dokumentumban található. Az alábbi előzetes képsorrendet ne használd feltöltéshez.
+
 Ellenőrzés dátuma: **2026. szeptember 29.**  
 Célkiadás: **Come Get It 1.0.0 (13)**
 

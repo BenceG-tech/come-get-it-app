@@ -7,7 +7,7 @@ Ez a mátrix a jelenlegi egyetlen rövid állapotforrás. A részletes bizonyít
 
 | Kapu | Állapot | Bizonyíték / következő lépés |
 |---|---|---|
-| Produkciós mobilforrás | **KÉSZ** | GitHub main `1563ac06341534653493901c3659005bf617f3a8` |
+| Produkciós mobilforrás | **KÉSZ** | Build 19 runtime source `1563ac06341534653493901c3659005bf617f3a8`; current main `210c1a76ae864d7a561106107b87f4bbb203ea66` (PR #29, csak dokumentáció) |
 | TypeScript + iOS export | **PASS** | build 19 forrásán hibamentes |
 | Supabase és Venue Hub kapcsolat | **PASS** | közös production projekt, partner csak saját venue-t lát |
 | Partneri QR-folyamat | **PASS, újraellenőrzendő build 19-en** | első valós iPhone → Mac beváltás sikeres; ismételt QR elutasítva |

@@ -118,11 +118,11 @@ Várt eredmény: a törölt fiók többé nem használható.
 
 Az öt 6,9 hüvelykes promóciós kép már elkészült és technikai QC-n átment. A Build 19 sikeres készüléktesztje után vizuálisan ellenőrizd, hogy továbbra is a valós működést mutatják; csak eltérés esetén kell őket újragyártani.
 
-- [ ] helyszínlista vagy térkép;
-- [ ] Come Get It Bar részletei;
-- [ ] Rewards lista;
-- [ ] Pilot jutalom részletes, beváltás előtti állapota;
-- [ ] italbeváltás előtti átadóképernyő teljes QR-token nélkül.
+- [ ] `01-fedezd-fel-budapestet.png` — működő natív térkép és helylista;
+- [ ] `02-valassz-helyet.png` — görgethető helylista, ingyenital-jelzésekkel;
+- [ ] `03-minden-reszlet-egy-helyen.png` — partner részletes oldala, nyitvatartás és ajánlat;
+- [ ] `04-kerd-az-ingyen-italod.png` — ital, térkép és beváltási belépési pont;
+- [ ] `05-sikeres-bevaltas.png` — sikeres, partner által jóváhagyott beváltási végállapot.
 
 Elfogadott portréméretek közül használj egyet következetesen: **1260 × 2736**, **1290 × 2796** vagy **1320 × 2868**. Ne legyen látható értesítés, böngészőkeret, fejlesztői felület, jelszó, e-mail-cím vagy teljes QR-titok.
 

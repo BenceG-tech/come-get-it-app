@@ -29,11 +29,11 @@ Az ajánlott öt kép, ebben a sorrendben:
 
 | # | Fájlnév | Felvétel | Marketing-felirat |
 |---|---|---|---|
-| 1 | `01-fedezd-fel-budapestet.png` | Vendéglátóhely-lista, működő térkép, valós partnerkártyák | **Fedezd fel Budapest legjobb helyeit** |
-| 2 | `02-hely-reszletek.png` | Egy valós hely részletes oldala, nyitvatartás és elérhető ital | **Minden, amit egy helyről tudnod kell** |
-| 3 | `03-jutalmak.png` | Jutalomkatalógus képekkel, pontigénnyel és kategóriákkal | **Jutalmak, amelyekért megéri elindulni** |
-| 4 | `04-pilot-jutalom.png` | Aktív jutalom részletes oldala, a beváltás előtti állapotban | **Váltsd be a pontjaid különleges élményekre** |
-| 5 | `05-ital-bevaltas.png` | Helyszíni italbeváltás átadóképernyője, a kód kitakarva | **Gyors, biztonságos beváltás a helyszínen** |
+| 1 | `01-fedezd-fel-budapestet.png` | Működő natív térkép és valós partnerkártyák | **Fedezd fel Budapestet — Közeli helyek, élő térképen.** |
+| 2 | `02-valassz-helyet.png` | Görgethető budapesti helylista, ingyenital-jelzésekkel | **Válassz helyet — Bárok és bisztrók egy helyen.** |
+| 3 | `03-minden-reszlet-egy-helyen.png` | Partner részletes oldala, nyitvatartás, távolság és ajánlat | **Minden részlet egy helyen — Nyitvatartás, italok, útvonal.** |
+| 4 | `04-kerd-az-ingyen-italod.png` | Elérhető ital, nyitvatartás, térkép és beváltási belépési pont | **Kérd az ingyen italod — Pár lépés, és a tiéd.** |
+| 5 | `05-sikeres-bevaltas.png` | Sikeres, partner által jóváhagyott beváltási végállapot | **Sikeres beváltás — Gyors, biztonságos, egyszerű.** |
 
 Opcionális hatodik kép: keresés/szűrés valós találatokkal. Az App Store-ba eszközméretenként 1–10 kép tölthető fel.
 

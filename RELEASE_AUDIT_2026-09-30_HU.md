@@ -20,7 +20,7 @@ A build 19 tartalmazza:
 
 | Terület | Állapot | Bizonyíték |
 |---|---|---|
-| GitHub forrás | **PASS** | main `1563ac06341534653493901c3659005bf617f3a8`; PR #27 és #28 merged |
+| GitHub forrás | **PASS** | Build 19 runtime source `1563ac06341534653493901c3659005bf617f3a8` (PR #27 és #28); current main `210c1a76ae864d7a561106107b87f4bbb203ea66` (PR #29, csak dokumentáció) |
 | TypeScript | **PASS** | teljes forrásellenőrzés hiba nélkül |
 | Expo iOS-export | **PASS** | production forrásból sikeres export |
 | EAS production build | **PASS** | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, `FINISHED` |
