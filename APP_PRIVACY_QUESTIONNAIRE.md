@@ -24,7 +24,7 @@ Apple requires the declaration to include third-party code as well as first-part
 | Coarse Location | Yes, when the user grants approximate rather than precise location | Yes | No | App Functionality | iOS may provide reduced-accuracy coordinates under the same foreground permission; no background access |
 | Product Interaction | Yes | Yes | No | App Functionality | favorites, points, rewards and redemption history |
 
-These seven entries match the root privacy manifest configured for signed build 19: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location and Product Interaction. Every entry is linked to the user, used for App Functionality and not used for tracking.
+These seven entries match the root privacy manifest extracted from signed build 19 and documented in `BUILD_19_BINARY_AUDIT.md`: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location and Product Interaction. Every entry is linked to the user, used for App Functionality and not used for tracking.
 
 ## Do not select for version 1.0
 

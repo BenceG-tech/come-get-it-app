@@ -3,7 +3,7 @@
 Állapotdátum: **2026. szeptember 30.**
 Célkiadás: **Come Get It 1.0.0 (19), ingyenes iPhone-béta**
 
-Ez a lap a build 19 kiadási forrása, aláírt binárisa, privacy manifestje, élő Supabase-funkciói és a `come-get-it.app` publikus jogi oldalai alapján készült. A technikai válaszokat előkészíti, de a tulajdonjogi és jogi állításokat az Account Holdernek a saját nevében kell végleg elfogadnia.
+Ez a lap a build 19 kiadási forrása, a `BUILD_19_BINARY_AUDIT.md` szerint ellenőrzött aláírt binárisa és privacy manifestje, az élő Supabase-funkciók és a `come-get-it.app` publikus jogi oldalai alapján készült. A technikai válaszokat előkészíti, de a tulajdonjogi és jogi állításokat az Account Holdernek a saját nevében kell végleg elfogadnia.
 
 ## 1. Korhatár
 

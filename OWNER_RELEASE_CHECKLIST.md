@@ -26,6 +26,7 @@ Ez az aktuális tulajdonosi átadólap. A részletes állapot a `RELEASE_COMPLET
 - [x] A Build 19 futtatott forráscommitja: `1563ac06341534653493901c3659005bf617f3a8`; a jelenlegi GitHub main a dokumentációs PR #29-cel: `210c1a76ae864d7a561106107b87f4bbb203ea66`.
 - [x] Production EAS build `1.0.0 (19)` elkészült: `67ce044b-0327-44f6-a6d1-34f71576ec7e`.
 - [x] App Store Connect-feltöltés sikeres: `f2fc269a-6db6-4647-a313-82897ccf78fe`.
+- [x] A feltöltött Build 19 IPA bundle-, entitlement-, provisioning- és privacy-manifest auditja PASS; részletek: `BUILD_19_BINARY_AUDIT.md`.
 - [x] Az App Review fogyasztói fiók 500 szinkronizált tesztponttal rendelkezik; a pontjutalom és a venue QR-folyamat külön, helyesen dokumentált.
 - [x] Öt darab 6,9 hüvelykes, `1320×2868` méretű, alpha nélküli App Store-kép és tiszta feltöltési ZIP elkészült.
 - [x] A `come-get-it.app` főoldala, support-, privacy- és terms-oldala HTTPS-en elérhető.

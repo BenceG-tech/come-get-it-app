@@ -17,6 +17,7 @@ Ez a mátrix a jelenlegi egyetlen rövid állapotforrás. A részletes bizonyít
 | EAS build 19 | **PASS** | `67ce044b-0327-44f6-a6d1-34f71576ec7e` |
 | App Store Connect-feltöltés | **PASS** | `f2fc269a-6db6-4647-a313-82897ccf78fe` |
 | Apple-feldolgozás | **PASS** | `VALID`, nem lejárt |
+| Aláírt Build 19 bináris/privacy audit | **PASS** | helyes bundle/build, App Store provisioning, hét privacy adattípus, no tracking; `BUILD_19_BINARY_AUDIT.md` |
 | Belső TestFlight-csoport | **PASS** | Build 19 `IN_BETA_TESTING`; workflow `01a0f016-0ce3-762a-9138-770cc31c242d` |
 | Build 19 fizikai iPhone-regresszió | **TEENDŐ** | teljes `TESTFLIGHT_DEVICE_TEST.md` PASS szükséges |
 | App Store-képek | **KÉSZ, FELTÖLTENDŐ** | 5 × `1320×2868`, alpha nélkül, QC PASS |
