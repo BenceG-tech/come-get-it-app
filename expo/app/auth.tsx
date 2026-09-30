@@ -332,7 +332,6 @@ const styles = StyleSheet.create({
     width: 285,
     height: 126,
     alignSelf: 'center',
-    transform: [{ translateX: 5 }, { translateY: 8 }],
   },
   heroTextBlock: {
     alignItems: 'center',

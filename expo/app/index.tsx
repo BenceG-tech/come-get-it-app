@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '@/context/AuthContext';
 import Colors from '@/constants/colors';
 
@@ -23,16 +24,21 @@ export default function EntryScreen() {
         console.log('[Entry] no session -> go /auth');
         router.replace('/auth');
       }
+
+      if (Platform.OS !== 'web') {
+        requestAnimationFrame(() => {
+          SplashScreen.hideAsync().catch((error) => {
+            console.warn('[SplashScreen] hideAsync failed:', error);
+          });
+        });
+      }
     }, 100);
 
     return () => clearTimeout(timer);
   }, [isAuthReady, router, session]);
 
   return (
-    <View style={styles.container} testID="entry-loading">
-      <ActivityIndicator size="large" color={Colors.primary} />
-      <Text style={styles.text}>Betöltés…</Text>
-    </View>
+    <View style={styles.container} testID="entry-loading" />
   );
 }
 
@@ -40,13 +46,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  text: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
