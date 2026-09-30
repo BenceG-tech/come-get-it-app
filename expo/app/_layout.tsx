@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -13,6 +13,12 @@ import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 const BACK_TITLE = "Vissza";
+
+if (Platform.OS !== "web") {
+  SplashScreen.preventAutoHideAsync().catch((error) => {
+    console.warn("[SplashScreen] preventAutoHideAsync failed:", error);
+  });
+}
 
 function RootLayoutNav() {
   return (
@@ -66,14 +72,6 @@ export default function RootLayout() {
       },
     });
   });
-
-  useEffect(() => {
-    if (Platform.OS !== "web") {
-      SplashScreen.hideAsync().catch((e) => {
-        console.warn("[SplashScreen] hideAsync failed:", e);
-      });
-    }
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
