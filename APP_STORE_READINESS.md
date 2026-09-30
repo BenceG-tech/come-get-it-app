@@ -14,6 +14,7 @@ Canonical current documents:
 - `OWNER_RELEASE_CHECKLIST.md` — exact owner actions;
 - `TESTFLIGHT_DEVICE_TEST.md` — physical iPhone regression;
 - `APP_STORE_RELEASE_DECLARATIONS_HU.md` — privacy, age, rights and DSA answers.
+- `BUILD_19_BINARY_AUDIT.md` — signed IPA, entitlements and privacy-manifest evidence.
 
 ## Verified release evidence
 
@@ -26,6 +27,7 @@ Canonical current documents:
 | Apple processing | `VALID`, external `READY_FOR_BETA_SUBMISSION`, not expired |
 | Internal TestFlight | `IN_BETA_TESTING`; workflow `01a0f016-0ce3-762a-9138-770cc31c242d` succeeded |
 | TypeScript and iOS export | PASS |
+| Signed Build 19 binary/privacy audit | PASS; see `BUILD_19_BINARY_AUDIT.md` |
 | Supabase / Venue Hub | production-connected and healthy |
 | App Store media | five `1320×2868` alpha-free promotional PNG files, QC PASS; upload pending |
 | App Review fixture | consumer review account has 500 synchronized test points; venue QR and points-reward instructions are separated |
