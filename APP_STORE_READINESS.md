@@ -1,11 +1,11 @@
 # Come Get It — App Store readiness
 
-Current candidate: **iOS 1.0.0 (19)**
+Current candidate: **iOS 1.0.0 (20)**
 Status date: **2026-09-30**
 
 ## Executive status
 
-Build 19 is signed, uploaded, accepted by Apple as `VALID`, and distributed to the `Come Get It belső teszt` internal TestFlight group with state `IN_BETA_TESTING`. Do not submit for App Review until it passes the complete physical-device checklist.
+Build 20 is signed, uploaded and processed by Apple. A direct App Store Connect API readback reports `processingState = VALID`, `internalBuildState = IN_BETA_TESTING` and `externalBuildState = READY_FOR_BETA_SUBMISSION`. The `Come Get It belső teszt` group directly contains Build 20. Do not submit for App Review until it passes the complete physical-device checklist.
 
 Canonical current documents:
 
@@ -14,27 +14,26 @@ Canonical current documents:
 - `OWNER_RELEASE_CHECKLIST.md` — exact owner actions;
 - `TESTFLIGHT_DEVICE_TEST.md` — physical iPhone regression;
 - `APP_STORE_RELEASE_DECLARATIONS_HU.md` — privacy, age, rights and DSA answers.
-- `BUILD_19_BINARY_AUDIT.md` — signed IPA, entitlements and privacy-manifest evidence.
+- `BUILD_20_BINARY_AUDIT.md` — signed IPA, privacy-manifest and original-logo package evidence.
 
 ## Verified release evidence
 
 | Item | Result |
 |---|---|
-| Build 19 runtime source | `1563ac06341534653493901c3659005bf617f3a8` |
-| Current GitHub main | `210c1a76ae864d7a561106107b87f4bbb203ea66` (PR #29, release documentation only) |
-| EAS production build | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, version `1.0.0 (19)`, `FINISHED` |
-| App Store submission | `f2fc269a-6db6-4647-a313-82897ccf78fe`, `FINISHED` |
-| Apple processing | `VALID`, external `READY_FOR_BETA_SUBMISSION`, not expired |
-| Internal TestFlight | `IN_BETA_TESTING`; workflow `01a0f016-0ce3-762a-9138-770cc31c242d` succeeded |
+| Build 20 runtime source / current GitHub main | `2d81b1184d46193b0d04a0ddd69fe73de189214b` |
+| EAS production build | `07fb063e-bfaf-4680-865a-512b1ab06def`, version `1.0.0 (20)` |
+| Apple upload | EAS submission `5703b7e4-6fcc-49ca-88b1-06e9c4a62a51`, successful |
+| Apple processing | ASC build `616698d1-1207-46d8-a78e-f67d6040830f`; `VALID`, external `READY_FOR_BETA_SUBMISSION` |
+| Internal TestFlight | direct ASC state `IN_BETA_TESTING`; `Come Get It belső teszt` reports `containsBuild20 = true`, build count `8 → 9` |
 | TypeScript and iOS export | PASS |
-| Signed Build 19 binary/privacy audit | PASS; see `BUILD_19_BINARY_AUDIT.md` |
+| Signed Build 20 binary/privacy/logo audit | PASS; see `BUILD_20_BINARY_AUDIT.md` |
 | Supabase / Venue Hub | production-connected and healthy |
 | App Store media | five `1320×2868` alpha-free promotional PNG files, QC PASS; upload pending |
 | App Review fixture | consumer review account has 500 synchronized test points; venue QR and points-reward instructions are separated |
 
-## Product state included in build 19
+## Product state included in Build 20
 
-- Original Come Get It logo restored and horizontally centered on login.
+- The same original Come Get It logo asset is packaged for the horizontally centered login logo and native splash.
 - Redundant branded runtime loading screen removed; native launch and only a brief neutral transition remain.
 - Venue list and venue detail use native Apple Maps.
 - Venue and reward requests include bounded loading, retry and safe session recovery.
@@ -68,12 +67,12 @@ Saved Apple facts include `2026 Gátai Bence` copyright, 18+ alcohol-related age
 
 ## Remaining release gates
 
-1. Install build 19 from TestFlight and complete every item in `TESTFLIGHT_DEVICE_TEST.md`, including all four categories, duplicate reward rejection, QR success/repeat rejection, password reset and account deletion.
+1. Install Build 20 from TestFlight and complete every item in `TESTFLIGHT_DEVICE_TEST.md`, including the original login/splash logo, all four categories, duplicate reward rejection, QR success/repeat rejection, password reset and account deletion.
 2. Upload and visually verify the five prepared screenshots.
 3. Rotate the exposed App Store Connect API key safely and change both App Review account passwords.
 4. Complete App Privacy Publish, DSA status and partner-content-rights confirmation.
-5. Select build 19, verify reviewer credentials/notes and submit only after every gate passes, with manual release retained.
+5. Select Build 20, verify reviewer credentials/notes and submit only after every gate passes, with manual release retained.
 
 ## Release rule
 
-No version is known to be live, in review or pending public release. Build 19 is the only current release candidate. Paid subscription, linked-card rewards and CSR marketing are outside this 1.0 free-beta scope and must not be advertised as active features.
+No version is known to be live, in review or pending public release. Build 20 is the only current release candidate. Paid subscription, linked-card rewards and CSR marketing are outside this 1.0 free-beta scope and must not be advertised as active features.

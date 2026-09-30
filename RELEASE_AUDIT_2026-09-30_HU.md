@@ -1,15 +1,15 @@
 # Come Get It — végső kiadási audit
 
 Állapotdátum: **2026. szeptember 30.**
-Célkiadás: **iOS 1.0.0 (19), ingyenes béta**
+Célkiadás: **iOS 1.0.0 (20), ingyenes béta**
 
 ## Vezetői eredmény
 
-A build 19 a jelenlegi kiadási jelölt. Az aláírt iOS build elkészült, az App Store Connect feltöltése sikeres, az Apple `VALID` állapotig feldolgozta, és a build a belső TestFlight-csoportban `IN_BETA_TESTING`. A fizikai Build 19-regresszió és a tulajdonosi kapuk lezárásáig az alkalmazás még nem küldhető App Review-ra.
+A Build 20 a jelenlegi kiadási jelölt. Az aláírt iOS build elkészült, az Apple-feltöltés és -feldolgozás sikeres. A közvetlen App Store Connect-visszaolvasás szerint `VALID`, `IN_BETA_TESTING`, és ténylegesen a `Come Get It belső teszt` csoport tagja. A fizikai Build 20-regresszió és a tulajdonosi kapuk lezárásáig az alkalmazás nem küldhető App Review-ra.
 
-A build 19 tartalmazza:
+A Build 20 tartalmazza:
 
-- az eredeti, középre igazított Come Get It login logót;
+- ugyanazt az eredeti, középre igazított Come Get It logót a login és a natív indítóképernyő számára;
 - a fölösleges külön runtime loading képernyő eltávolítását;
 - az egységes jutalomkategória-visszanavigációt;
 - négy élő jutalmat, amelyek lefedik az Italok, Étel és Élmények kategóriát;
@@ -20,14 +20,14 @@ A build 19 tartalmazza:
 
 | Terület | Állapot | Bizonyíték |
 |---|---|---|
-| GitHub forrás | **PASS** | Build 19 runtime source `1563ac06341534653493901c3659005bf617f3a8` (PR #27 és #28); current main `210c1a76ae864d7a561106107b87f4bbb203ea66` (PR #29, csak dokumentáció) |
+| GitHub forrás | **PASS** | Build 20 runtime source és current main: `2d81b1184d46193b0d04a0ddd69fe73de189214b` |
 | TypeScript | **PASS** | teljes forrásellenőrzés hiba nélkül |
 | Expo iOS-export | **PASS** | production forrásból sikeres export |
-| EAS production build | **PASS** | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, `FINISHED` |
-| App Store Connect feltöltés | **PASS** | submission `f2fc269a-6db6-4647-a313-82897ccf78fe`, `FINISHED` |
-| Apple-feldolgozás | **PASS** | `VALID`, `READY_FOR_BETA_TESTING`, nem lejárt |
-| Aláírt Build 19 bináris | **PASS** | bundle/build, App Store provisioning, entitlements és privacy manifest ellenőrizve; `BUILD_19_BINARY_AUDIT.md` |
-| Belső TestFlight-terjesztés | **PASS** | workflow `01a0f016-0ce3-762a-9138-770cc31c242d`; Build 19 `IN_BETA_TESTING` a `Come Get It belső teszt` csoportban |
+| EAS production build | **PASS** | `07fb063e-bfaf-4680-865a-512b1ab06def`, `1.0.0 (20)` |
+| Apple-feltöltés | **PASS** | EAS submission `5703b7e4-6fcc-49ca-88b1-06e9c4a62a51`; feltöltés sikeres |
+| Apple-feldolgozás | **PASS** | ASC build `616698d1-1207-46d8-a78e-f67d6040830f`; `processingState = VALID`, external `READY_FOR_BETA_SUBMISSION` |
+| Aláírt Build 20 bináris | **HELYI AUDIT PASS** | bundle/build, App Store provisioning, privacy manifest és eredetilogó-csomag ellenőrizve; `BUILD_20_BINARY_AUDIT.md` |
+| Belső TestFlight-terjesztés | **PASS** | közvetlen ASC-visszaolvasás: `internalBuildState = IN_BETA_TESTING`, `containsBuild20 = true`; csoport buildszám `8 → 9` |
 | Supabase | **ACTIVE_HEALTHY** | az app és a Venue Hub ugyanazt a production projektet használja |
 | Jutalomkatalógus | **PASS** | 4 aktív jutalom; drink, food és experience lefedve |
 | Egyszeri jutalombeváltás | **PASS** | egyedi `(user_id, reward_id)` igény, trigger/RPC védelem, Edge Function v49, duplikációs teszt PASS |
@@ -77,14 +77,14 @@ Publikus URL-ek:
 
 ## Pontos hátralévő sorrend
 
-1. Telepítsd a TestFlightból az **1.0.0 (19)** buildet, és futtasd végig a `TESTFLIGHT_DEVICE_TEST.md` listát.
+1. A belső TestFlight-csoportból telepítsd az **1.0.0 (20)** buildet, és futtasd végig a `TESTFLIGHT_DEVICE_TEST.md` listát.
 2. Külön igazold az eredeti középre igazított login logót, a rövid semleges betöltést, mind a négy jutalmat és minden kategória visszanavigációját.
 3. Próbáld ugyanazt a jutalmat másodszor beváltani, majd ugyanazt a QR-t másodszor beolvasni; mindkettő legyen elutasított.
 4. Ellenőrizd a kijelentkezést, jelszó-visszaállítást és külön tesztfiókkal a fióktörlést.
 5. Töltsd fel az öt kész 6,9 hüvelykes képet.
 6. Hozz létre és igazolj egy új App Manager API-kulcsot, majd vond vissza a régit; cseréld a review-fiókok jelszavát is.
 7. Fogadd el az App Privacy **Publish** nyilatkozatát, és válaszd ki a tényalapú DSA-státuszt.
-8. Válaszd ki a build 19-et, ellenőrizd a review notes és login adatokat, majd minden PASS után küldd App Review-ra kézi kiadással.
+8. Válaszd ki a Build 20-at, ellenőrizd a review notes és login adatokat, majd minden PASS után küldd App Review-ra kézi kiadással.
 
 ## Kiadási szabály
 

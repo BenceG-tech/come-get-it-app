@@ -1,15 +1,15 @@
 # Come Get It — TestFlight készülékteszt
 
-Tesztelendő kiadás: **1.0.0 (19)**
+Tesztelendő kiadás: **1.0.0 (20)**
 TestFlight-csoport: **Come Get It belső teszt**
-Állapot: **Build 19 belső TestFlight-tesztelésre elérhető**
+Állapot: **Build 20 közvetlenül igazoltan `IN_BETA_TESTING` a `Come Get It belső teszt` csoportban**
 
 Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak akkor kész, ha a várt eredmény látható és a bizonyíték el van mentve. Hibánál ne menj tovább az App Review beküldéséig.
 
 ## Előkészítés
 
 - [ ] Az iPhone-on a TestFlightba a fejlesztői fiókhoz tartozó Apple ID-val legyen belépve.
-- [ ] A telepített alkalmazás verziója **1.0.0 (19)**.
+- [ ] A telepített alkalmazás verziója **1.0.0 (20)**.
 - [ ] A Venue Hub meg van nyitva egy kamerás második eszközön (a Mac is megfelel): `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
 - [ ] A partnerellenőrző hozzáférés a helyi, Git által nem követett `.private/app-review-partner-credentials.txt` fájlból van használva. A jelszó nem kerül képernyőképre.
 - [ ] A telefonon működő internetkapcsolat és a kameraengedély elérhető.
@@ -19,8 +19,8 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 1. [ ] Telepítsd vagy frissítsd a Come Get It alkalmazást a TestFlightból.
 2. [ ] Indítsd el teljesen bezárt állapotból.
 3. [ ] Ellenőrizd, hogy nincs fehér/fekete üres képernyő, összeomlás vagy fejlesztői hibaüzenet.
-4. [ ] Ellenőrizd az alkalmazás nevét, ikonját, a natív indítóképernyőt és az olvasható magyar szövegeket. A gyors indítás miatt külön hosszú, márkázott köztes betöltőképernyőnek nem kell megjelennie; rövid semleges töltés elfogadható.
-5. [ ] A bejelentkezési képernyőn ellenőrizd, hogy az eredeti fehér Come Get It logó vízszintesen középen jelenik meg, nem újrarajzolt vagy helyettesítő embléma.
+4. [ ] Ellenőrizd az alkalmazás nevét, ikonját és a natív indítóképernyőt. A splash ugyanazt az eredeti fehér Come Get It logót használja, mint a login; külön runtime spinner vagy „Betöltés…” oldal nem jelenhet meg.
+5. [ ] A bejelentkezési képernyőn ellenőrizd, hogy ugyanez az eredeti fehér Come Get It logó vízszintesen középen jelenik meg, nincs eltolva, újrarajzolva vagy helyettesítve.
 
 Bizonyíték: `TF-01-elso-inditas.png`
 
@@ -116,7 +116,7 @@ Várt eredmény: a törölt fiók többé nem használható.
 
 ## H. App Store-képernyőképek
 
-Az öt 6,9 hüvelykes promóciós kép már elkészült és technikai QC-n átment. A Build 19 sikeres készüléktesztje után vizuálisan ellenőrizd, hogy továbbra is a valós működést mutatják; csak eltérés esetén kell őket újragyártani.
+Az öt 6,9 hüvelykes promóciós kép már elkészült és technikai QC-n átment. A Build 20 sikeres készüléktesztje után vizuálisan ellenőrizd, hogy továbbra is a valós működést mutatják; csak eltérés esetén kell őket újragyártani.
 
 - [ ] `01-fedezd-fel-budapestet.png` — működő natív térkép és helylista;
 - [ ] `02-valassz-helyet.png` — görgethető helylista, ingyenital-jelzésekkel;

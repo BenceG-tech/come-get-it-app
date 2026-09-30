@@ -1,7 +1,7 @@
 # Come Get It — App Store screenshot audit
 
 Audit date: **2026-09-30**
-Target release: **iOS 1.0.0 (19)**
+Target release: **iOS 1.0.0 (20)**
 
 ## Result
 
@@ -23,7 +23,7 @@ The older 1206 × 2622 source and prototype images remain rejected for final sub
 
 ## Final upload checks
 
-- [ ] Build 19 completes the physical iPhone regression.
+- [ ] Build 20 completes the physical iPhone regression.
 - [ ] All five images still truthfully match the released behavior and licensed content.
 - [ ] Upload the set to the 6.9-inch iPhone slot in App Store Connect.
 - [ ] Open every uploaded image at full preview and check order, crop, text and colour.

@@ -1,7 +1,7 @@
 # Come Get It — tulajdonosi kiadási ellenőrzőlista
 
 Utolsó műszaki ellenőrzés: **2026. szeptember 30.**
-Célkiadás: **iOS 1.0.0 (19), ingyenes iPhone-béta**
+Célkiadás: **iOS 1.0.0 (20), ingyenes iPhone-béta**
 
 Ez az aktuális tulajdonosi átadólap. A részletes állapot a `RELEASE_COMPLETION_MATRIX_2026-09-30_HU.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md` fájlban találhatók.
 
@@ -21,23 +21,24 @@ Ez az aktuális tulajdonosi átadólap. A részletes állapot a `RELEASE_COMPLET
 - [x] Ugyanaz a felhasználó ugyanazt a jutalmat csak egyszer válthatja be. Az adatbázis-korlát, trigger, RPC és `redeem-reward` Edge Function v49 együtt védi; a duplikációs tesztek PASS eredményűek.
 - [x] A jutalomkategória-oldalakon egyetlen saját vissza gomb marad.
 - [x] Az eredeti Come Get It logó visszaállítva és középre igazítva a login képernyőn.
+- [x] A natív indítóképernyő ugyanazt az eredeti logófájlt használja; a becsomagolt asset egyezése és mérete auditálva.
 - [x] A fölösleges külön márkázott runtime loading képernyő eltávolítva; csak a natív indítóképernyő és rövid semleges átmenet maradt.
 - [x] TypeScript-ellenőrzés és Expo iOS-export PASS.
-- [x] A Build 19 futtatott forráscommitja: `1563ac06341534653493901c3659005bf617f3a8`; a jelenlegi GitHub main a dokumentációs PR #29-cel: `210c1a76ae864d7a561106107b87f4bbb203ea66`.
-- [x] Production EAS build `1.0.0 (19)` elkészült: `67ce044b-0327-44f6-a6d1-34f71576ec7e`.
-- [x] App Store Connect-feltöltés sikeres: `f2fc269a-6db6-4647-a313-82897ccf78fe`.
-- [x] A feltöltött Build 19 IPA bundle-, entitlement-, provisioning- és privacy-manifest auditja PASS; részletek: `BUILD_19_BINARY_AUDIT.md`.
+- [x] A Build 20 futtatott GitHub-forráscommitja: `2d81b1184d46193b0d04a0ddd69fe73de189214b`.
+- [x] Production EAS build `1.0.0 (20)` elkészült: `07fb063e-bfaf-4680-865a-512b1ab06def`.
+- [x] Az Apple-feltöltés sikeres: EAS submission `5703b7e4-6fcc-49ca-88b1-06e9c4a62a51`; az Apple feldolgozása befejeződött.
+- [x] A Build 20 IPA helyi bundle-, provisioning-, privacy-manifest- és logócsomag-auditja PASS; részletek: `BUILD_20_BINARY_AUDIT.md`.
 - [x] Az App Review fogyasztói fiók 500 szinkronizált tesztponttal rendelkezik; a pontjutalom és a venue QR-folyamat külön, helyesen dokumentált.
 - [x] Öt darab 6,9 hüvelykes, `1320×2868` méretű, alpha nélküli App Store-kép és tiszta feltöltési ZIP elkészült.
 - [x] A `come-get-it.app` főoldala, support-, privacy- és terms-oldala HTTPS-en elérhető.
 
 ## 1. TestFlight-terjesztés
 
-- [x] Az Apple utófeldolgozása befejeződött: `VALID`, `READY_FOR_BETA_TESTING`.
-- [x] Az **1.0.0 (19)** a `Come Get It belső teszt` TestFlight-csoportban van: `IN_BETA_TESTING`.
-- [ ] Az iPhone-ra telepített verzió valóban **1.0.0 (19)**.
+- [x] Az Apple utófeldolgozása befejeződött: `processingState = VALID`; az ASC buildazonosító `616698d1-1207-46d8-a78e-f67d6040830f`.
+- [x] A Build 20 ténylegesen benne van a `Come Get It belső teszt` csoportban: `internalBuildState = IN_BETA_TESTING`, `containsBuild20 = true`, csoport buildszám `8 → 9`.
+- [ ] Az iPhone-ra telepített verzió valóban **1.0.0 (20)**.
 
-Bizonyíték: manuális EAS workflow `01a0f016-0ce3-762a-9138-770cc31c242d`, job `SUCCESS`, ASC build `6fd8af6a-77e3-4de3-af88-1fa4228e3030`.
+Bizonyíték: EAS build `07fb063e-bfaf-4680-865a-512b1ab06def`; EAS submission `5703b7e4-6fcc-49ca-88b1-06e9c4a62a51`; közvetlen ASC-visszaolvasás: build `616698d1-1207-46d8-a78e-f67d6040830f`, `VALID`, `IN_BETA_TESTING`, external `READY_FOR_BETA_SUBMISSION`, `containsBuild20 = true`.
 
 ## 2. Fizikai iPhone-kapu
 
@@ -78,12 +79,12 @@ Kiadási szabály: bármely FAIL esetén nincs App Review-beküldés.
 
 ## 5. Beküldés
 
-- [ ] A build **19** kiválasztva az App Store 1.0 verzióhoz.
-- [ ] Mindkét Review login ellenőrizve; az angol review notes két külön folyamatát (venue QR és pontjutalom) a Build 19-en végigjártuk.
+- [ ] A build **20** kiválasztva az App Store 1.0 verzióhoz.
+- [ ] Mindkét Review login ellenőrizve; az angol review notes két külön folyamatát (venue QR és pontjutalom) a Build 20-on végigjártuk.
 - [ ] Minden kötelező mező zöld és hibamentes.
 - [ ] Manuális kiadási mód marad bekapcsolva.
 - [ ] **Submit for Review** csak az 1–4. szakasz teljes lezárása után.
 
 ## Kiadási döntés
 
-A technikai kiadási jelölt elkészült, az Apple feldolgozta és belső TestFlight-tesztelésre kiadta. Az app még nincs App Review-ra beküldve. A fennmaradó kapuk: build 19 fizikai PASS, screenshotfeltöltés, API-kulcscsere, App Privacy Publish és DSA. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+A technikai Build 20 kiadási jelölt elkészült, az Apple `VALID` állapotig feldolgozta, és közvetlenül igazoltan `IN_BETA_TESTING` a belső TestFlight-csoportban. Az app nincs App Review-ra beküldve. A fennmaradó kapuk: Build 20 fizikai PASS, screenshotfeltöltés, API-kulcscsere, App Privacy Publish és DSA. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
