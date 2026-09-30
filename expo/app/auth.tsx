@@ -26,7 +26,7 @@ import SocialButton from '@/components/SocialButton';
 import TextInputField from '@/components/TextInputField';
 import { useAuth } from '@/context/AuthContext';
 
-const LOGO_SOURCE = require('@/assets/images/come-get-it-logo-white.png');
+const LOGO_SOURCE = require('@/assets/images/login-logo-attached.png');
 const BG_SOURCE = require('@/assets/images/login-bg-budapest-arcs.png');
 
 const CYAN = '#00C8E8' as const;
@@ -329,9 +329,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 236,
-    height: 119,
+    width: 285,
+    height: 126,
     alignSelf: 'center',
+    transform: [{ translateX: 5 }, { translateY: 8 }],
   },
   heroTextBlock: {
     alignItems: 'center',
