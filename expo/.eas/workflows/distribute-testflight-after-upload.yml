@@ -15,8 +15,9 @@ jobs:
       internal_groups:
         - Come Get It belső teszt
       changelog: |
-        Friss Come Get It bétaverzió.
-        Ellenőrizendő: vendéglátóhelyek és jutalmak betöltése; jutalomkategória
-        egyetlen vissza gombbal; bejelentkezési logó és betöltőképernyő;
-        QR-beváltás és ismételt kód elutasítása; kijelentkezés és jelszó-visszaállítás.
+        Friss Come Get It bétaverzió: eredeti középre igazított bejelentkezési logó,
+        egyszerűsített gyors indítás, négy kategóriafeltöltött jutalom és felhasználónként
+        egyszeri jutalombeváltás. Ellenőrizendő: vendéglátóhelyek és jutalmak betöltése;
+        minden jutalomkategórián egyetlen vissza gomb; második azonos jutalombeváltás
+        elutasítása; QR-beváltás és ismételt kód elutasítása; kijelentkezés és jelszó-visszaállítás.
       submit_beta_review: false

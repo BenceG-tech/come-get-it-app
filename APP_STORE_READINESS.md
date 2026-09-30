@@ -1,100 +1,76 @@
 # Come Get It — App Store readiness
 
-Last verified: 2026-09-30
+Current candidate: **iOS 1.0.0 (19)**
+Status date: **2026-09-30**
 
-For the requirement-by-requirement release status and exact next actions, see [`RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md`](RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md).
+## Executive status
 
-## Ready in the repository
+Build 19 is signed, uploaded, accepted by Apple as `VALID`, and distributed to the `Come Get It belső teszt` internal TestFlight group with state `IN_BETA_TESTING`. Do not submit for App Review until it passes the complete physical-device checklist.
 
-- Expo SDK 54 project previously passed `expo-doctor` (18/18). On 2026-09-28 the current source again passed TypeScript validation, public config generation, native iOS prebuild, dependency lockfile supply-chain validation, and the production iOS JavaScript/Hermes export. A later `expo-doctor` invocation completed 15/18 checks; its three incomplete checks were environment-only because the bundled runner had no standalone `npm` executable, not project compatibility failures.
-- The final pre-device audit on 2026-09-28 repeated TypeScript validation, public Expo config generation, and a production iOS Hermes export from the current working tree; all completed successfully.
-- The final binary/privacy dependency audit found PostHog bundled transitively by the Rork toolkit, then verified that the two identifiers required to initialize it are absent from the EAS production environment. Rork lifecycle/screen analytics therefore remain disabled in build 17; introducing either identifier is now documented as a mandatory privacy re-review trigger.
-- iOS metadata is set for `app.comegetit.mobile`, EAS remotely manages and increments the build number, foreground-only location access is declared, Sign in with Apple is enabled, and non-exempt encryption is disabled.
-- The Expo project is linked to EAS as `@bencegatai/come-get-it-app`. Production Supabase URL/key variables are configured, while unfinished social-login and demo-mode feature flags are explicitly disabled.
-- The 1024×1024 App Store icon is opaque (no alpha channel).
-- Android uses the same application ID and explicitly blocks background location, foreground location service, and microphone access.
-- Authentication recovers from invalid stored refresh tokens, preserves existing profile points, handles confirmed-email registration, password reset, Google OAuth, and Sign in with Apple.
-- Users can edit their real profile, sign out, and delete their account in-app. Account deletion is implemented as an authenticated Supabase Edge Function.
-- Redemption confirmation is partner-only and atomic: one database transaction locks the token, verifies the partner's venue scope, creates the redemption, and consumes the token. The customer app only polls its own token and shows success after the partner scan.
-- The former customer-side `confirm-redemption` path is permanently disabled with HTTP 410. Production contains no manual self-approval button.
-- Production redemption no longer falls back to demo success. Demo behavior is restricted to development builds with an explicit environment flag.
-- The consumer app no longer exposes the legacy admin editor or unfinished mock payment, card, referral, coupon, address, visit-history, mission, and token screens.
-- Unused mock reward data, prototype tRPC example/venue endpoints, and the orphaned client-side venue editor were removed from the release source.
-- The app shows only real backend rewards and profile data. CSR impact is shown only when a real donation was created.
-- CSR service failures now show a retryable error state instead of being presented as a real zero-impact result.
-- Customer reward reads expose only active, unexpired, in-stock rewards from active venues (or explicitly global rewards). The write path enforces the same rule, so a paused venue's hidden reward cannot be redeemed by guessing its UUID.
-- Venue cards use separate accessible controls for card navigation and favorite toggling, avoiding nested interactive elements in the web preview while preserving native behavior.
-- Public venue reads are limited to active venues and an explicit consumer-safe column list rather than whole database rows. Sensitive helper functions reject cross-user lookups.
-- The map may geocode a missing venue coordinate only in memory; the consumer app has no venue write path. Persistent venue corrections remain a Venue Hub responsibility.
-- Reward lists use the authenticated Supabase session and RLS rather than an anonymous REST fallback. The compatibility Edge Function validates the user again, returns an explicit public column set, and excludes expired, exhausted, or paused-venue rewards.
-- The consumer app now reads rewards through the security-invoker `consumer_rewards` view, so administrator accounts cannot accidentally see rewards belonging to paused venues. Venue and reward requests have a bounded timeout, one safe session-refresh retry, and a visible Hungarian retry state instead of an endless loader.
-- Reward categories are derived from the currently visible live rewards. Empty categories are disabled and labelled `Hamarosan`; the category screen has one custom back button that always returns directly to the Rewards home screen.
-- App Store support, privacy and in-app terms links point to the live `come-get-it.app` pages; App Store Connect continues to use Apple's standard EULA unless a custom license is later added.
-- Legacy prototype routes (`landing`, template modal, and the fake Cock & Pye venue/card-linking screen) have been removed, so stale deep links cannot expose unfinished product claims.
-- App Store metadata, privacy answers, review notes, support content, and a screenshot acceptance audit are prepared in the repository.
-- The App Store Connect app record exists as Apple ID `6817022464` for bundle ID `app.comegetit.mobile`, primary language Hungarian, and SKU `COMEGETIT-IOS-1`.
-- EAS production build `7629d072-a18a-4e5e-ba2e-c72fc8667b4d` completed successfully as version `1.0.0` build `13` from GitHub main commit `90d6202b7bee71ccdbfa9cde1349aaa9099bf1c7`. It retains the native Apple MapKit venue-list/detail maps and deterministic reward back navigation, and adds first-party privacy-manifest declarations matching the audited account, location and interaction data. Submission `e0705b3a-2b9f-4a11-a451-5818e09515bd` uploaded it successfully; Apple reports `VALID` for build `5eefbd16-dab8-47e0-bab9-b3ba4edd89be`, and it is assigned to the “Come Get It belső teszt” group. The downloaded IPA passed direct signing, entitlement, privacy-manifest and embedded-secret checks.
-- EAS production build `f73e1c33-ed39-4f8b-b238-c8cf835839d2` completed successfully as version `1.0.0` build `17` from GitHub main commit `5371af254ff36e3d0f713ae2bb1b40bf9903150f`. It contains the venue/reward loading recovery, consumer-only reward view, date-safe reward availability, retry states, live category counts, disabled empty categories, direct native-header suppression on reward categories, one deterministic custom back action, centered login logo, branded launch/loading UI and production `come-get-it.app` privacy/terms links. Submission `1b79e305-f24c-4b69-b9a0-3dd62fe76a68` finished successfully on 2026-09-29 at 21:57 CEST. TypeScript, web export, iOS export and 7/7 static navigation checks passed.
-- Builds 10 and 11 fixed the venue-detail map, authenticated reward details and the venue-list map issue. Build 12 added the first reward-navigation correction. Build 13 added the audited privacy manifest; build 15 added production loading recovery; build 16 added final production legal links; build 17 supersedes them with the direct category-header fix and launch UI polish and is the only current release candidate.
-- The App Store Connect API key is created, the EAS project-level App Store Connect integration is configured, and submission `050bd28b-63da-467d-a156-854c16949669` uploaded build `1.0.0 (9)` successfully. Apple processing completed, and EAS workflow `01a0e9d7-cfc7-7493-9f06-b2bcdb88858b` added the build to the internal “Come Get It belső teszt” group. The Account Holder's Apple ID is linked to that group as the internal tester. App Store Connect reports `processingState: VALID` and `internalState: IN_BETA_TESTING`; App Store version `1.0` now selects build 9 and remains in `PREPARE_FOR_SUBMISSION` with manual release. Build 8 is superseded because its `b60511f` source predates the final stored-session recovery and venue-detail synchronization changes.
-- The Hungarian subtitle, 131-character promotional text, 897-character description, keywords, live-domain support URL, Food & Drink/Lifestyle categories, reviewer contact and login, English review notes, and manual-release mode are saved in App Store Connect.
-- The App Privacy form is fully configured with the live `https://come-get-it.app/adatvedelmi-szabalyzat` policy URL and the seven audited data types, purposes, identity-linkage answers, and no-tracking answers. The final Publish confirmation remains for the owner because it includes a legal accuracy/compliance declaration.
-- App Store Connect now confirms the saved `2026 Gátai Bence` copyright, the 18+ alcohol age-rating answers, and `USES_THIRD_PARTY_CONTENT`. Apple also reports build 13 as `VALID` with `usesNonExemptEncryption=false`, so the content-rights and export-compliance gates are closed.
-- App Store pricing is configured for the free-beta path at 0 Ft with Hungary as the base region and availability in all 175 App Store countries/regions. Untested Apple Silicon Mac and Apple Vision Pro distribution are disabled; the release remains iPhone-only.
-- The separate Lovable Venue Hub admin surface now uses live Supabase sessions only: forged browser storage and mock/demo providers no longer grant access, password reset is implemented, Google sign-in is hidden while unconfigured, and protected routes wait for authoritative session hydration.
-- A separate auto-confirmed App Review partner account is configured as a non-admin `venue_staff` member of exactly one venue, Come Get It Bar. Browser verification confirmed that its navigation is restricted to Dashboard, QR beváltás and Beváltások; the POS scanner and redemption list expose only Come Get It Bar.
-- Venue Hub dashboards no longer show fabricated percentage changes or describe redeemed-drink value as transaction revenue. Reward management shows the exact mobile-app visibility state and prevents publishing against a paused venue.
-- Venue Hub is published at `https://come-get-it-venue-hub.lovable.app`. Its production login, password-recovery screen, reset route, protected-route redirect, access-denied flow, and logout were exercised in the browser; an authenticated non-partner is correctly sent to `/no-access`.
-- The production Venue Hub QR/POS scanner now renders its video target before camera startup, selects an actual rear camera when available and falls back to the first camera on desktop. The Lovable embedded preview explains its iframe camera limitation and links directly to the production scanner. A real Mac camera scan exposed a payload mismatch: the mobile app encoded a full `cgi://redeem?...` deep link while the POS expected a raw token. The Venue Hub now extracts and validates the canonical token, and `consume-redemption-token` independently accepts either representation. Parser tests, TypeScript, targeted lint and the production build pass. A fresh authenticated production E2E then sent the full mobile deep link: first consume returned HTTP 200, repeat returned HTTP 409 `ALREADY_CONSUMED`, and customer status became `consumed`. Only the optical camera/UI pass remains physical.
-- Supabase was upgraded successfully from `supabase-postgres-17.4.1.074` to the stable `17.6.1.166` release. The project returned to `ACTIVE_HEALTHY`, and the security advisor no longer reports a vulnerable Postgres version.
+Canonical current documents:
 
-## Verified live backend state
+- `RELEASE_COMPLETION_MATRIX_2026-09-30_HU.md` — concise gate status;
+- `RELEASE_AUDIT_2026-09-30_HU.md` — evidence-backed audit;
+- `OWNER_RELEASE_CHECKLIST.md` — exact owner actions;
+- `TESTFLIGHT_DEVICE_TEST.md` — physical iPhone regression;
+- `APP_STORE_RELEASE_DECLARATIONS_HU.md` — privacy, age, rights and DSA answers.
 
-- Supabase project: `nrxfiblssxwzeziomlvc` (EU North).
-- 5 active venues out of 11 total; all 11 have coordinates.
-- 5 active venues out of 11 total, 18 venue drinks, 19 free-drink windows, 2 active reward rows, 1 customer-visible reward, 28 redemption records, and 1 explicitly scoped partner membership.
-- `create-redemption-window` version 17, `consume-redemption-token` version 53, `get-redemption-window-status` version 5, and the disabled `confirm-redemption` version 16 are deployed. The customer, partner, status, disabled compatibility, analytics, and account-management routes require authenticated JWTs at the gateway; the deliberate machine-to-machine/webhook exceptions perform their own key or signature checks.
-- Anonymous callers cannot use the protected redemption or account-deletion functions.
-- The production redemption flow was exercised end to end after the final Lovable redeploy: an authenticated App Review user created a correctly formatted `CGI-XXXXXX-<32-character secret>` token, the customer-only status route returned `issued`, the scoped partner consumed it, status changed to `consumed`, and a repeated scan returned HTTP 409 `ALREADY_CONSUMED`.
-- The same authenticated end-to-end sequence was repeated after the Postgres 17.6.1.166 upgrade: both rotated review accounts signed in, token creation succeeded, status changed from `issued` to `consumed`, the first partner consume returned HTTP 200, and the repeat returned HTTP 409 `ALREADY_CONSUMED`. The audit token/redemption rows were removed afterward.
-- After deploying the QR payload normalization, another authenticated production E2E used the exact full `cgi://redeem?t=...&v=...` payload emitted by the mobile app. The App Review customer and venue-scoped partner both authenticated; issuance returned HTTP 200 in App Review mode; the first partner consume returned HTTP 200; the repeat returned HTTP 409 `ALREADY_CONSUMED`; and the customer status endpoint returned `consumed`. The exact audit token and redemption were removed, and both test sessions were revoked.
-- `get-rewards` version 46 is deployed with gateway JWT verification and in-function user validation. Live checks returned HTTP 401 without authentication and HTTP 200 with the App Review account; the Come Get It Bar query returned only the active, in-stock pilot reward and no internal timestamp fields.
-- Rork automatically synchronized the release-hardening commits from GitHub. Its current web preview was retested with the App Review account through sign-in, live venue loading, favorite add/remove, venue details, the review redemption handoff, rewards, profile, and the account-management screen.
-- Normal accounts must pass the server-side 100 m venue and active-offer-window checks. The dedicated App Review account is service-role allowlisted to bypass only those two environmental checks; authentication, token expiry, and single-use consumption remain enforced.
-- A database unique index and server check enforce at most one successful free-drink redemption per normal user per Budapest calendar day. A controlled duplicate-insert test was rejected and its test rows were removed.
-- Review transactions are marked separately and never create CSR donation records.
-- Points-reward redemption now uses an authenticated Edge Function and one atomic database transaction, preventing negative balances, partial point deductions, and reward-cap races.
-- The signed-device test redeemed the 100-point Pilot reward successfully: one reward-redemption row was created, the reward counter increased to 1/5, and the balance decreased atomically from 650 to 550. The Pilot reward now has a live image managed from the shared Venue Hub/Supabase data.
-- The signed-device free-drink test created a valid two-minute token for Electric Blue Shot. It expired unconsumed because the partner POS scanner was not used; this correctly proves issuance/expiry but the build-13 pass must still prove partner consumption and repeated-use rejection on the physical flow.
-- Privileged authorization lookups now live in a non-exposed `private` schema. Their public wrappers run as `SECURITY INVOKER`; anonymous execution and cross-user lookups are rejected.
-- All 21 previously uncovered foreign keys now have supporting indexes, all 41 per-row `auth.uid()` RLS advisor warnings are resolved, and identity-dependent policies no longer target every Postgres role. Remaining multiple-policy notices are performance-only overlaps between intentionally distinct public, owner, and administrator paths.
-- Supabase Auth uses the production Rork URL as the Site URL and allowlists the HTTPS preview URL, Expo URL, and `comegetit://` deep links.
-- Email confirmation links/OTPs expire after 3,600 seconds. Leaked-password protection, secure password change, and an eight-character minimum are enabled.
-- The production test-data endpoint, obsolete `issue-redemption-token` endpoint, and former customer-side `confirm-redemption` endpoint are permanently disabled with HTTP 410 responses and gateway JWT verification. The active flow uses `create-redemption-window`, `consume-redemption-token`, and `get-redemption-window-status` only.
-- The mobile redemption window renders the real 120-second QR token locally and polls for a partner-confirmed result. A controlled concurrent double-scan test produced exactly one HTTP 200 success and one HTTP 409 `ALREADY_CONSUMED`; a later repeat was also rejected. The same scoped partner account was rejected with `VENUE_UNAUTHORIZED` for another venue's token. All audit rows were removed after verification.
-- The Lovable Venue Hub source now contains the same atomic redemption migration and hardened Edge Function sources as production. Its function configuration contains one entry per function, with 43 authenticated routes and 10 intentional public/custom-key routes; the configuration audit found no duplicate or mismatched blocks. All nine final corrected Edge Functions passed Deno checking, and the Venue Hub TypeScript check and production build passed.
-- Geocoding, AI recommendation, user-directory, and dashboard-stat endpoints now require JWTs; dashboard statistics additionally derive the effective role server-side and enforce administrator or venue membership/ownership access. `get-dashboard-stats` version 37 rejects client-forged administrator scope and has gateway JWT verification enabled.
-- Live platform status and anomaly reports now require an authenticated administrator. `get-live-platform-status` version 32 uses the production redemption schema (`redeemed_at`, `drink`), performs its own administrator check, and has gateway JWT verification enabled. Venue revenue/free-drink analytics require administrator or venue-membership access.
-- Direct `venues.owner_profile_id` ownership is included alongside `venue_memberships` in the shared venue-authorization helper, keeping mobile/backend RLS and Venue Hub session scope consistent.
-- Scheduled notification processing requires the internal service key. Loyalty milestone detection and transaction matching accept only a valid internal key or a scoped authenticated caller.
-- Salt Edge transaction callbacks now reject unsigned or invalidly signed payloads before parsing or awarding points. The verifier uses Salt Edge's documented Account Information v5 callback key and supports `SALTEDGE_CALLBACK_PUBLIC_KEY` and `SALTEDGE_CALLBACK_URL` overrides for key rotation or an explicitly configured callback URL.
-- Public venue RPC returns only the 5 active venues and caps requested result size.
+## Verified release evidence
 
-## External release blockers
+| Item | Result |
+|---|---|
+| GitHub main | `1563ac06341534653493901c3659005bf617f3a8` |
+| EAS production build | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, version `1.0.0 (19)`, `FINISHED` |
+| App Store submission | `f2fc269a-6db6-4647-a313-82897ccf78fe`, `FINISHED` |
+| Apple processing | `VALID`, external `READY_FOR_BETA_SUBMISSION`, not expired |
+| Internal TestFlight | `IN_BETA_TESTING`; workflow `01a0f016-0ce3-762a-9138-770cc31c242d` succeeded |
+| TypeScript and iOS export | PASS |
+| Supabase / Venue Hub | production-connected and healthy |
+| App Store media | five `1320×2868` alpha-free promotional PNG files, QC PASS; upload pending |
+| App Review fixture | consumer review account has 500 synchronized test points; venue QR and points-reward instructions are separated |
 
-These require owner credentials or commercial decisions and cannot be completed from source code alone:
+## Product state included in build 19
 
-1. **Physical TestFlight qualification:** build 13 passed the native venue-list map, venue-detail map, free-drink flow and the first real iPhone-to-Mac optical QR redemption. Build 17 (`f73e1c33-ed39-4f8b-b238-c8cf835839d2`) is the final release candidate with production loading recovery, direct reward-category native-header suppression, one deterministic back path, own-domain legal links, centered login logo and branded launch/loading UI. Its App Store Connect submission `1b79e305-f24c-4b69-b9a0-3dd62fe76a68` is `FINISHED`; the remaining Apple gate is confirming TestFlight processing/visibility. Once visible, verify venue detail, reward loading, the single Drinks-category back path, disabled Food/Experiences `Hamarosan` cards, legal links, repeated-scan UI rejection, logout, password reset and test-account deletion on build 17.
-2. **Optional social sign-in credentials:** Google and Apple providers are still disabled because the required provider credentials have not been supplied. Their buttons are hidden by default; email/password registration, confirmation, reset, and sign-in are the release-safe path. Only set `EXPO_PUBLIC_ENABLE_GOOGLE_AUTH=true` or `EXPO_PUBLIC_ENABLE_APPLE_AUTH=true` after the corresponding Supabase provider and native credentials are complete.
-3. **Database maintenance:** completed on 2026-09-28. Production now runs stable Supabase Postgres `17.6.1.166`; the post-upgrade security and redemption regression checks passed.
-4. **Monetization decision:** the source material describes Plus at 990 Ft/week or 2,990 Ft/month, but the app has no App Store subscription products or RevenueCat configuration. Either launch this build as a free beta or create StoreKit products, RevenueCat entitlements, a paywall, restore-purchases flow, and subscription terms before charging users.
-5. **CSR content:** all five active venues currently have CSR disabled and no default charity. Configure real charity records and venue donation settings before promoting impact claims. A limited active test reward now exists at Come Get It Bar and is visible to the mobile app.
-6. **App Store Connect and final media:** the Terms of Service are accepted, the app record exists, and the descriptive metadata, categories, reviewer access/notes, live-domain support/privacy URLs, manual-release mode, free worldwide availability, factual privacy-label answers, copyright, 18+ age rating, third-party content-rights declaration and export-compliance state are saved and read back from Apple. Five new Come Get It promotional screenshots are complete at the primary 6.9-inch `1320×2868` alpha-free PNG size, have passed visual and technical QC, and are packaged in a clean five-file ZIP: map discovery, venue selection, venue detail, free drink and successful redemption. The remaining owner-facing Apple gates are uploading that set, the App Privacy final Publish dialog and the factual DSA trader/non-trader choice. Both rotated review passwords are stored only in the local Git-ignored `.private` directory.
-7. **Public website and legal identity:** `come-get-it.app` is restored, resolves over HTTPS and now presents the free-beta launch state with working support, privacy and terms pages. The App Store record uses the live support and privacy URLs. Before final legal approval, the owner must still confirm the exact copyright/legal-holder wording and that every published controller/business detail is accurate.
-8. **Salt Edge operations:** before enabling linked-card rewards, confirm that Salt Edge's configured callback URL exactly matches the deployed function URL. If Salt Edge rotates its callback signing key, set the current PEM as `SALTEDGE_CALLBACK_PUBLIC_KEY` before processing production callbacks.
-9. **Venue onboarding:** one real test partner and one separate App Review partner are assigned only to Come Get It Bar; both scoped Venue Hub views are verified. The App Review partner is non-admin, has exactly one `venue_staff` membership, and can access only Dashboard, QR beváltás and Beváltások. Repeat the same explicit membership-and-scope test for every production partner before onboarding them.
-10. **Venue Hub password reset:** the final Lovable `/reset-password` URL is allowlisted in Supabase. Repeat the email-link flow on a physical device during the signed TestFlight pass.
+- Original Come Get It logo restored and horizontally centered on login.
+- Redundant branded runtime loading screen removed; native launch and only a brief neutral transition remain.
+- Venue list and venue detail use native Apple Maps.
+- Venue and reward requests include bounded loading, retry and safe session recovery.
+- Reward category navigation has one deterministic back action and no exposed native duplicate header.
+- Four active, imaged rewards cover Drinks, Food and Experiences, plus the All view.
+- A user can redeem a specific reward only once. Database constraints, triggers, the atomic RPC and `redeem-reward` Edge Function v49 enforce the rule; repeats return HTTP 409 and the app explains the rejection in Hungarian.
+- Partner QR tokens remain short-lived, venue-scoped and single-use.
+- Account deletion, password reset and production legal links are implemented.
 
-## Release gate
+## Live reward catalog
 
-Do not submit a paid or CSR-marketed version until items 4 and 5 above are complete. Build 17 is signed and its App Store Connect upload completed successfully; no version is known to be live, in review, or pending release. A free beta can proceed after build 17 appears in TestFlight, passes the remaining physical-device checks, and the App Store Connect screenshot, privacy and DSA gates in item 6 are completed. Item 2 is optional because unconfigured social sign-in is not exposed.
+1. Pilot ajándék ital;
+2. Blue Hour koktél — 300 points;
+3. Séf ajánlata – főétel — 900 points;
+4. VIP lounge élmény — 1400 points.
+
+Consumer reads expose only active, non-expired, in-stock rewards belonging to active venues or explicitly global rewards. Venue Hub edits use the same production backend as the mobile app.
+
+## Privacy and legal state
+
+The release privacy manifest declares Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location and Product Interaction. All are linked to the user, used for App Functionality and not used for tracking. Rork's transitive PostHog package is not initialized because the required production project/team identifiers are absent.
+
+Public production URLs:
+
+- `https://come-get-it.app`
+- `https://come-get-it.app/support`
+- `https://come-get-it.app/adatvedelmi-szabalyzat`
+- `https://come-get-it.app/felhasznalasi-feltetelek`
+
+Saved Apple facts include `2026 Gátai Bence` copyright, 18+ alcohol-related age answers, third-party-content declaration and `usesNonExemptEncryption=false`. The owner must still confirm content rights, publish the privacy answers and choose the truthful DSA trader/non-trader status.
+
+## Remaining release gates
+
+1. Install build 19 from TestFlight and complete every item in `TESTFLIGHT_DEVICE_TEST.md`, including all four categories, duplicate reward rejection, QR success/repeat rejection, password reset and account deletion.
+2. Upload and visually verify the five prepared screenshots.
+3. Rotate the exposed App Store Connect API key safely and change both App Review account passwords.
+4. Complete App Privacy Publish, DSA status and partner-content-rights confirmation.
+5. Select build 19, verify reviewer credentials/notes and submit only after every gate passes, with manual release retained.
+
+## Release rule
+
+No version is known to be live, in review or pending public release. Build 19 is the only current release candidate. Paid subscription, linked-card rewards and CSR marketing are outside this 1.0 free-beta scope and must not be advertised as active features.

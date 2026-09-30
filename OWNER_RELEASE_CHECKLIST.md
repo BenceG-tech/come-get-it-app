@@ -1,110 +1,88 @@
 # Come Get It — tulajdonosi kiadási ellenőrzőlista
 
-Utolsó műszaki ellenőrzés: **2026. szeptember 29.**
-Célkiadás: **1.0.0 (17), ingyenes iPhone-béta**
+Utolsó műszaki ellenőrzés: **2026. szeptember 30.**
+Célkiadás: **iOS 1.0.0 (19), ingyenes iPhone-béta**
 
-Ez az egyetlen aktuális tulajdonosi átadólap. A követelményenkénti készültség a `RELEASE_COMPLETION_MATRIX_2026-09-29_HU.md`, a részletes műszaki bizonyíték az `APP_STORE_READINESS.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md`, a végleges képek szabályai az `APP_STORE_MEDIA_CAPTURE_HU.md` fájlban vannak.
+Ez az aktuális tulajdonosi átadólap. A részletes állapot a `RELEASE_COMPLETION_MATRIX_2026-09-30_HU.md`, a fizikai teszt a `TESTFLIGHT_DEVICE_TEST.md`, a jogi válaszok az `APP_STORE_RELEASE_DECLARATIONS_HU.md` fájlban találhatók.
 
-## Már elkészült
+## Bizonyítottan elkészült
 
-- [x] Supabase Auth engedélyezett átirányítás: `https://come-get-it-venue-hub.lovable.app/reset-password`.
-- [x] Valódi, nem-admin tesztpartner kizárólag a Come Get It Bar helyhez rendelve.
-- [x] Korlátozott Pilot jutalom és Electric Blue Shot ital aktív élő adatokkal.
-- [x] A Venue Hub és a mobilapp ugyanazt a production Supabase projektet használja.
-- [x] Partneres QR-backend: első beváltás sikeres, ismétlés `ALREADY_CONSUMED`, idegen venue `VENUE_UNAUTHORIZED`, párhuzamos dupla próbából csak egy sikeres.
-- [x] Venue Hub kamerajavítás éles: látható videókonténer, tényleges kameraválasztás, iframe-figyelmeztetés és közvetlen éles link.
-- [x] A mobilapp teljes `cgi://redeem?...` QR-hivatkozását a Venue Hub és a backend is biztonságosan normalizálja; a production Edge Function `consume-redemption-token` v53 `ACTIVE`, JWT-ellenőrzéssel, és a Lovable éles kiadás frissítve.
-- [x] Hitelesített production E2E: vendég és scoped partner belépett, teljes deep-link QR kiadva, első consume HTTP 200, ismétlés HTTP 409 `ALREADY_CONSUMED`, vendégstátusz `consumed`; a tesztrekordok eltávolítva.
-- [x] Supabase Postgres `17.6.1.166`, projektállapot `ACTIVE_HEALTHY`.
-- [x] Öt aktív venue mindegyike képpel és koordinátával; két aktív reward mindegyike képpel.
-- [x] Pilot reward kategória a mobilapp által használt `drink` kulcsra javítva.
-- [x] `user_qr_tokens` közvetlen anon/authenticated jogosultságai visszavonva.
-- [x] Production EAS build: `1.0.0 (13)`, build ID `7629d072-a18a-4e5e-ba2e-c72fc8667b4d`, állapot `FINISHED`.
-- [x] Apple-feldolgozás: build 13 `VALID`, belső TestFlight-csoporthoz rendelve.
-- [x] Build 13 IPA: aláírás, bundle ID, entitlement, privacy manifest és beágyazott titkok ellenőrzése PASS.
-- [x] Friss forrásellenőrzés: TypeScript PASS és teljes iOS Hermes export PASS, 3476 modul.
-- [x] Come Get It Venue Hub production build, TypeScript és célzott QR-szkenner lint PASS.
-- [x] A `come-get-it.app`, `/support`, `/adatvedelmi-szabalyzat` és `/felhasznalasi-feltetelek` HTTPS-en elérhető.
-- [x] A régi marketing-, TestFlight- és Rork-előnézeti médiakészlet auditálva és feltöltésből kizárva.
-- [x] Valódi iPhone → éles Venue Hub Mac-kamera → sikeres első optikai QR-beváltás: Come Get It Bistro / Azure Garden Spritz, 2026-09-29 13:19.
-- [x] Nyolc friss build-13 iPhone-kép technikailag ellenőrizve: mind `1206×2622`, PNG, átlátszóság nélkül; az öt legerősebb forráskép kiválasztva.
-- [x] A jutalomkategória duplikált natív fejléce eltávolítva; GitHub main `9a622ff`.
-- [x] Production EAS build `1.0.0 (14)` elkészült; build ID `564f465b-9468-4e51-9623-85ae9d65cb96`.
-- [x] A venue- és reward-betöltés helyreállítása elkészült: időkorlátos adatlekérés, egyszeri biztonságos munkamenet-frissítés, magyar újrapróbálási állapot és kizárólag fogyasztói reward-nézet.
-- [x] A jutalomkategóriák élő darabszámot mutatnak; az üres Étel/Élmények kategória `Hamarosan` állapotban le van tiltva; az Italok oldalon egyetlen vissza gomb maradt.
-- [x] Production EAS build `1.0.0 (16)` elkészült; build ID `38ce3da4-982d-4a51-92c2-1e148b2f4283`, GitHub commit `c734be02d6ea43f105600b574f10557df5d68aa5`. A build 17 elkészültével ez a változat leváltott előzmény.
-- [x] A kategóriaoldal natív fejlécének közvetlen tiltása, a középre igazított login logó és a márkázott induló/betöltő képernyő GitHub mainre került; commit `5371af254ff36e3d0f713ae2bb1b40bf9903150f`.
-- [x] Production EAS build `1.0.0 (17)` elkészült; build ID `f73e1c33-ed39-4f8b-b238-c8cf835839d2`. Az Apple-feltöltés `1b79e305-f24c-4b69-b9a0-3dd62fe76a68` submissionnel 2026-09-29 21:57 CEST-kor `FINISHED` állapotban lezárult. Ez a végleges kiadási jelölt; a build 16 leváltott változat.
-- [x] Öt kész 6,9″ App Store-kép: mind `1320×2868`, PNG; feltöltési ZIP elkészült.
+- [x] Supabase Auth reset redirect: `https://come-get-it-venue-hub.lovable.app/reset-password`.
+- [x] Valódi, nem-admin partnerfiók kizárólag a saját helyszínéhez rendelve.
+- [x] A Venue Hub és a mobilapp ugyanazt a produkciós Supabase projektet használja.
+- [x] A valódi iPhone → éles Venue Hub Mac-kamera első QR-beváltása sikeres volt.
+- [x] A QR-token első használata sikeres; ismétlés `ALREADY_CONSUMED`; idegen venue `VENUE_UNAUTHORIZED`.
+- [x] Négy aktív, képpel rendelkező fogyasztói jutalom van az élő adatbázisban:
+  - Pilot ajándék ital;
+  - Blue Hour koktél — 300 pont;
+  - Séf ajánlata – főétel — 900 pont;
+  - VIP lounge élmény — 1400 pont.
+- [x] Az Italok, Étel és Élmények fő kategória mindegyike rendelkezik legalább egy aktív jutalommal.
+- [x] Ugyanaz a felhasználó ugyanazt a jutalmat csak egyszer válthatja be. Az adatbázis-korlát, trigger, RPC és `redeem-reward` Edge Function v49 együtt védi; a duplikációs tesztek PASS eredményűek.
+- [x] A jutalomkategória-oldalakon egyetlen saját vissza gomb marad.
+- [x] Az eredeti Come Get It logó visszaállítva és középre igazítva a login képernyőn.
+- [x] A fölösleges külön márkázott runtime loading képernyő eltávolítva; csak a natív indítóképernyő és rövid semleges átmenet maradt.
+- [x] TypeScript-ellenőrzés és Expo iOS-export PASS.
+- [x] GitHub main: `1563ac06341534653493901c3659005bf617f3a8`.
+- [x] Production EAS build `1.0.0 (19)` elkészült: `67ce044b-0327-44f6-a6d1-34f71576ec7e`.
+- [x] App Store Connect-feltöltés sikeres: `f2fc269a-6db6-4647-a313-82897ccf78fe`.
+- [x] Az App Review fogyasztói fiók 500 szinkronizált tesztponttal rendelkezik; a pontjutalom és a venue QR-folyamat külön, helyesen dokumentált.
+- [x] Öt darab 6,9 hüvelykes, `1320×2868` méretű, alpha nélküli App Store-kép és tiszta feltöltési ZIP elkészült.
+- [x] A `come-get-it.app` főoldala, support-, privacy- és terms-oldala HTTPS-en elérhető.
 
-## 1. Fizikai TestFlight-kapu — Bence
+## 1. TestFlight-terjesztés
 
-Az Apple-feldolgozás után telepítsd/frissítsd a TestFlightban a **Come Get It 1.0 (17)** verziót, majd a `TESTFLIGHT_DEVICE_TEST.md` sorrendjében ellenőrizd:
+- [x] Az Apple utófeldolgozása befejeződött: `VALID`, `READY_FOR_BETA_TESTING`.
+- [x] Az **1.0.0 (19)** a `Come Get It belső teszt` TestFlight-csoportban van: `IN_BETA_TESTING`.
+- [ ] Az iPhone-ra telepített verzió valóban **1.0.0 (19)**.
 
-- [ ] regisztráció és e-mail-megerősítés;
-- [ ] kijelentkezés, bejelentkezés és munkamenet-visszaállítás;
-- [x] helylista Apple Térképpel, vízjel nélkül;
-- [x] venue-részlet, nyitvatartás, működő Apple-térkép és elérhető ital;
-- [ ] a helyszínkártyáról megnyílik a részletes oldal, és hiba esetén az Újrapróbálás működik;
-- [ ] Pilot jutalom képe, `drink` kategóriája és 100 pontos beváltása betölt;
-- [ ] az Italok kategóriában pontosan egy vissza gomb van, amely közvetlenül a Jutalmak oldalra visz;
-- [ ] az üres Étel és Élmények kártyák `Hamarosan` felirattal le vannak tiltva; az Összes kategória csak az élő rewardot mutatja;
-- [x] friss iPhone QR → éles Venue Hub Mac-kamera → sikeres első beolvasás;
-- [ ] ugyanaz a QR másodszor elutasítva;
-- [ ] jelszó-visszaállítás ugyanazon az iPhone-on;
-- [ ] tesztfiók végleges törlése.
+Bizonyíték: manuális EAS workflow `01a0f016-0ce3-762a-9138-770cc31c242d`, job `SUCCESS`, ASC build `6fd8af6a-77e3-4de3-af88-1fa4228e3030`.
+
+## 2. Fizikai iPhone-kapu
+
+A `TESTFLIGHT_DEVICE_TEST.md` sorrendjében:
+
+- [ ] első indítás stabil, nincs üres képernyő vagy összeomlás;
+- [ ] az eredeti Come Get It logó középen jelenik meg a login képernyőn;
+- [ ] nincs külön villanó márkázott runtime loading képernyő;
+- [ ] regisztráció, bejelentkezés, kijelentkezés és munkamenet-visszaállítás PASS;
+- [ ] a helylista Apple Térképe, a venue-részlet és az újrapróbálás PASS;
+- [ ] mind a négy jutalom képpel és helyes pontértékkel betölt;
+- [ ] Italok, Étel, Élmények és Összes megnyílik, és mindegyikből egyetlen vissza gomb vezet a Jutalmak főoldalára;
+- [ ] ugyanazon jutalom második beváltása elutasított: `Ezt a jutalmat már beváltottad.`;
+- [ ] friss QR első beolvasása sikeres, ugyanaz a QR másodszor elutasított;
+- [ ] jelszó-visszaállítás ugyanazon az iPhone-on PASS;
+- [ ] külön tesztfiók végleges törlése PASS.
 
 Kiadási szabály: bármely FAIL esetén nincs App Review-beküldés.
 
-## 2. Végleges App Store-képek
+## 3. App Store Connect biztonsági kapu
 
-Öt friss build-13 forráskép kiválasztva a 2026-09-29-i felvételből:
+- [ ] Új App Manager API-kulcs létrehozva.
+- [ ] Az új kulcs működése olvasási próbával igazolva.
+- [ ] A korábban diagnosztikai kimenetben megjelent régi kulcs csak ezután visszavonva.
+- [ ] Az App Review fogyasztói és partneri tesztfiók jelszava közvetlenül a beadás előtt újra cserélve.
 
-1. helylista és működő natív térkép;
-2. Come Get It Bar részletes oldala;
-3. partner részletes oldala;
-4. ingyenital-kártya működő térképpel;
-5. sikeres italbeváltás.
+## 4. App Store-adatlap és tulajdonosi nyilatkozatok
 
-- [x] Egységes friss forrásméret: `1206×2622` (Apple 6,3″-os elfogadott méret), PNG, alpha nélkül.
-- [x] Nincs TestFlight-, Rork-, Lovable-, böngésző- vagy fejlesztői keret.
-- [x] Nincs személyes adat vagy olvasható QR/token.
-- [x] Nincs régi card-linking, automatikus pontgyűjtés, fizetős Plus vagy CSR-ígéret; mind az öt végleges kép vizuálisan ellenőrizve.
-- [x] Öt darab 6,9″ `1320×2868` PNG elkészült, egységes Come Get It marketingarculattal; a tiszta ZIP pontosan ezt az öt fájlt tartalmazza, macOS-segédfájlok nélkül.
-- [ ] Az öt kész 6,9″ kép feltöltve az App Store Connectbe.
-- [ ] Az App Store Connect feltöltés utáni ellenőrzése PASS.
-
-## 3. App Store Connect biztonsági kulcs
-
-- [ ] Hozz létre egy új App Manager API-kulcsot.
-- [ ] Ellenőrizd az új kulcs működését egy csak olvasó kiadási lekéréssel.
-- [ ] Csak ezután vond vissza a korábban diagnosztikai kimenetben megjelent kulcsot.
-
-Ne vond vissza a régit az új kulcs igazolása előtt, mert ez megszakíthatja az automatizált feltöltést.
-
-## 4. Tulajdonosi Apple-nyilatkozatok
-
-Az `APP_STORE_RELEASE_DECLARATIONS_HU.md` alapján:
-
-- [ ] Tartalomjogok: minden élő partnerfotóhoz, logóhoz és védjegyhez van felhasználási jog.
-- [x] Copyright: `2026 Gátai Bence` — App Store Connectből visszaolvasva.
-- [x] Age Rating: valós alkoholtartalom-válaszok és 18+ végeredmény — App Store Connectből visszaolvasva.
-- [ ] App Privacy: hét auditált adattípus, no tracking, élő saját domaines URL-ek.
-- [ ] App Privacy **Publish** jogi megerősítés elfogadva.
-- [ ] DSA trader/non-trader státusz a tényleges üzleti helyzet alapján kiválasztva; trader esetén publikus cím/postafiók, telefon és e-mail ellenőrizve.
+- [x] Copyright: `2026 Gátai Bence`.
+- [x] Korhatár: 18+ és az alkoholreferenciák valósan kitöltve.
+- [x] Tartalomjog-nyilatkozat: `USES_THIRD_PARTY_CONTENT`.
+- [x] Export compliance: `usesNonExemptEncryption=false`.
+- [ ] Minden élő partnerfotóhoz, logóhoz és védjegyhez igazolt felhasználási jog tartozik.
+- [ ] Az öt kész kép feltöltve a 6,9 hüvelykes iPhone képkészlethez, és a feltöltés utáni vizuális ellenőrzés PASS.
+- [ ] App Privacy: hét auditált adattípus, no tracking, majd a végső **Publish** jogi megerősítés elfogadva.
+- [ ] DSA trader/non-trader státusz a tényleges üzleti helyzet alapján kiválasztva; trader esetén a publikus elérhetőségek ellenőrizve.
 - [ ] Apple-szerződések, adó- és banki státusz nem jelez blokkot.
-- [x] Tartalomjogok: `USES_THIRD_PARTY_CONTENT` mentve és az Apple API válaszából igazolva.
-- [x] Export compliance: build 13 `usesNonExemptEncryption=false`, `VALID` állapotban, Apple API-ból visszaolvasva.
 
 ## 5. Beküldés
 
-- [ ] A build 17 legyen kiválasztva az App Store 1.0 verzióhoz a korábbi build 9 helyett.
-- [ ] Review login és angol review notes utolsó ellenőrzése.
-- [ ] Az öt friss screenshot feltöltve.
-- [ ] Minden kötelező mező zöld / hibamentes.
-- [ ] Manuális kiadási mód maradjon bekapcsolva.
+- [ ] A build **19** kiválasztva az App Store 1.0 verzióhoz.
+- [ ] Mindkét Review login ellenőrizve; az angol review notes két külön folyamatát (venue QR és pontjutalom) a Build 19-en végigjártuk.
+- [ ] Minden kötelező mező zöld és hibamentes.
+- [ ] Manuális kiadási mód marad bekapcsolva.
 - [ ] **Submit for Review** csak az 1–4. szakasz teljes lezárása után.
 
 ## Kiadási döntés
 
-Az ingyenes béta technikai alapja elkészült, és az első valódi optikai QR-beváltás is sikeres. A copyright, 18+ korhatár, tartalomjogok és export-compliance Apple-ben mentve és visszaellenőrizve. Az Apple a build 17 feltöltését sikeresen átvette. A kiadást jelenleg a build 17 TestFlight-feldolgozásának igazolása és fizikai regressziója, az ismételt fizikai QR-elutasítás, a hátralévő fiókfolyamatok, a kötelező médiaslot, az API-kulcscsere, az App Privacy végső Publish megerősítése és a DSA tényalapú választása tartja vissza. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.
+A technikai kiadási jelölt elkészült, az Apple feldolgozta és belső TestFlight-tesztelésre kiadta. Az app még nincs App Review-ra beküldve. A fennmaradó kapuk: build 19 fizikai PASS, screenshotfeltöltés, API-kulcscsere, App Privacy Publish és DSA. Fizetős előfizetés, linked-card és CSR-kommunikáció nem része az 1.0 kiadásnak.

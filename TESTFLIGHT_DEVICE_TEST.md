@@ -1,15 +1,15 @@
 # Come Get It — TestFlight készülékteszt
 
-Tesztelendő kiadás: **1.0.0 (17)**
+Tesztelendő kiadás: **1.0.0 (19)**
 TestFlight-csoport: **Come Get It belső teszt**
-Állapot: **telefonos ellenőrzésre kész**
+Állapot: **Build 19 belső TestFlight-tesztelésre elérhető**
 
 Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak akkor kész, ha a várt eredmény látható és a bizonyíték el van mentve. Hibánál ne menj tovább az App Review beküldéséig.
 
 ## Előkészítés
 
 - [ ] Az iPhone-on a TestFlightba a fejlesztői fiókhoz tartozó Apple ID-val legyen belépve.
-- [ ] A telepített alkalmazás verziója **1.0.0 (17)**.
+- [ ] A telepített alkalmazás verziója **1.0.0 (19)**.
 - [ ] A Venue Hub meg van nyitva egy kamerás második eszközön (a Mac is megfelel): `https://come-get-it-venue-hub.lovable.app/pos/redeem`.
 - [ ] A partnerellenőrző hozzáférés a helyi, Git által nem követett `.private/app-review-partner-credentials.txt` fájlból van használva. A jelszó nem kerül képernyőképre.
 - [ ] A telefonon működő internetkapcsolat és a kameraengedély elérhető.
@@ -19,8 +19,8 @@ Ezt a lapot sorrendben kell végigjárni egy valódi iPhone-on. Egy lépés csak
 1. [ ] Telepítsd vagy frissítsd a Come Get It alkalmazást a TestFlightból.
 2. [ ] Indítsd el teljesen bezárt állapotból.
 3. [ ] Ellenőrizd, hogy nincs fehér/fekete üres képernyő, összeomlás vagy fejlesztői hibaüzenet.
-4. [ ] Ellenőrizd az alkalmazás nevét, ikonját, a márkázott splash/betöltő képernyőt és az olvasható magyar szövegeket.
-5. [ ] A bejelentkezési képernyőn ellenőrizd, hogy a Come Get It logó vízszintesen középen jelenik meg.
+4. [ ] Ellenőrizd az alkalmazás nevét, ikonját, a natív indítóképernyőt és az olvasható magyar szövegeket. A gyors indítás miatt külön hosszú, márkázott köztes betöltőképernyőnek nem kell megjelennie; rövid semleges töltés elfogadható.
+5. [ ] A bejelentkezési képernyőn ellenőrizd, hogy az eredeti fehér Come Get It logó vízszintesen középen jelenik meg, nem újrarajzolt vagy helyettesítő embléma.
 
 Bizonyíték: `TF-01-elso-inditas.png`
 
@@ -51,11 +51,12 @@ Várt eredmény: nincs végtelen betöltés, váratlan kijelentkezés vagy hibá
 4. [ ] Ellenőrizd, hogy a **Come Get It Bar** megjelenik, majd nyisd meg.
 5. [ ] A hely adatlapján ellenőrizd a címet, nyitvatartást, térképet és az **Electric Blue Shot** italt.
 6. [ ] Nyisd meg a Jutalmak lapot.
-7. [ ] Ellenőrizd, hogy a **Pilot ajándék ital** saját képpel és 100 pontos árral jelenik meg.
-8. [ ] Nyisd meg az **Italok** és **Összes** kategóriát. Mindkettőn pontosan egyetlen látható vissza gomb lehet, amely közvetlenül a Jutalmak főoldalára visz. Az **Étel** és **Élmények** kártyák `Hamarosan` állapotban legyenek letiltva, ne nyíljanak meg.
+7. [ ] Ellenőrizd a négy aktív jutalmat: **Pilot ajándék ital**, **Blue Hour koktél**, **Séf ajánlata – főétel** és **VIP lounge élmény**. Mindegyikhez kép, pontigény és helyes kategória tartozzon.
+8. [ ] Nyisd meg az **Italok**, **Étel**, **Élmények** és **Összes** kategóriát. Mindegyiken pontosan egyetlen látható vissza gomb lehet, amely közvetlenül a Jutalmak főoldalára visz; a címben se `[category]`, se más technikai helyőrző ne jelenjen meg.
 9. [ ] Nyiss meg egy jutalomrészletet. A normál, betöltési és hibaállapot vissza gombja sem vihet másik kategóriába vagy üres oldalra.
-10. [ ] Nyisd meg és váltsd be a Pilot jutalmat. Várt eredmény: „Sikeres beváltás”, beváltási kód, és pontosan 100 pont levonása.
-11. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
+10. [ ] Nyisd meg és váltsd be a Pilot jutalmat egy olyan tesztfiókkal, amely még nem váltotta be. Várt eredmény: „Sikeres beváltás”, beváltási kód, és pontosan 100 pont levonása.
+11. [ ] Próbáld ugyanazzal a felhasználóval másodszor beváltani ugyanazt a jutalmat. Várt eredmény: elutasítás és az érthető **„Ezt a jutalmat már beváltottad.”** üzenet; újabb pontlevonás vagy második beváltási rekord nem keletkezhet.
+12. [ ] Próbáld ki a kedvencek hozzáadását és eltávolítását.
 
 Bizonyítékok:
 
@@ -115,7 +116,7 @@ Várt eredmény: a törölt fiók többé nem használható.
 
 ## H. App Store-képernyőképek
 
-A sikeres teszt után készíts egységes, 6.9 hüvelykes iPhone-képernyőképeket a következőkről:
+Az öt 6,9 hüvelykes promóciós kép már elkészült és technikai QC-n átment. A Build 19 sikeres készüléktesztje után vizuálisan ellenőrizd, hogy továbbra is a valós működést mutatják; csak eltérés esetén kell őket újragyártani.
 
 - [ ] helyszínlista vagy térkép;
 - [ ] Come Get It Bar részletei;

@@ -1,73 +1,90 @@
 # Come Get It — végső kiadási audit
 
 Állapotdátum: **2026. szeptember 30.**
-
-Célkiadás: **iOS 1.0.0 (17), ingyenes béta**
+Célkiadás: **iOS 1.0.0 (19), ingyenes béta**
 
 ## Vezetői eredmény
 
-A build 17 a jelenlegi egyetlen kiadási jelölt. Az aláírt iOS build elkészült, és az App Store Connect feltöltése sikeresen befejeződött. A kategóriaoldalak forrásoldali hibajavítása, a középre igazított login logó, a márkázott induló/betöltő képernyő, a venue- és reward-betöltés helyreállítása, valamint a saját domaines jogi linkek ebben a buildben vannak.
+A build 19 a jelenlegi kiadási jelölt. Az aláírt iOS build elkészült, az App Store Connect feltöltése sikeres, az Apple `VALID` állapotig feldolgozta, és a build a belső TestFlight-csoportban `IN_BETA_TESTING`. A fizikai Build 19-regresszió és a tulajdonosi kapuk lezárásáig az alkalmazás még nem küldhető App Review-ra.
 
-Az alkalmazás még nem küldhető App Review-ra. A fennmaradó kapuk: a build 17 TestFlight-megjelenésének igazolása, a rövid fizikai iPhone-regresszió, az ismételt QR-beolvasás felületi elutasítása, a jelszó-visszaállítás és fióktörlés készüléktesztje, az öt kép feltöltése, az App Privacy Publish, a DSA-választás és a korábban megjelent App Store Connect API-kulcs biztonságos cseréje.
+A build 19 tartalmazza:
 
-## Bizonyított technikai állapot
+- az eredeti, középre igazított Come Get It login logót;
+- a fölösleges külön runtime loading képernyő eltávolítását;
+- az egységes jutalomkategória-visszanavigációt;
+- négy élő jutalmat, amelyek lefedik az Italok, Étel és Élmények kategóriát;
+- a felhasználónként és jutalmanként egyszeri beváltás szerveroldali védelmét;
+- a korábbi venue-, reward- és jogi link javításokat.
 
-- GitHub main commit: `5371af254ff36e3d0f713ae2bb1b40bf9903150f`.
-- EAS build: `f73e1c33-ed39-4f8b-b238-c8cf835839d2`, `FINISHED`.
-- App Store submission: `1b79e305-f24c-4b69-b9a0-3dd62fe76a68`, `FINISHED` 2026-09-29 21:57 CEST.
-- Verzió: `1.0.0 (17)`; bundle ID: `app.comegetit.mobile`.
-- TypeScript: PASS.
-- Expo web export: PASS.
-- Expo iOS/Hermes export: PASS.
-- Jutalomkategória navigációs statikus ellenőrzés: 7/7 PASS.
-- A kategóriaoldal natív fejléce közvetlenül tiltott; egyetlen saját vissza gomb marad, amely a Jutalmak főoldalára visz.
-- Az Étel és Élmények üres kategóriák `Hamarosan` állapotban le vannak tiltva.
-- A login logó középre igazított; a statikus splash és az alkalmazáson belüli betöltő márkázott.
-- A production Supabase és a Venue Hub ugyanazt az élő adatforrást használja.
-- Az első valódi iPhone → éles Venue Hub kamera QR-beváltás sikeres volt; az egyszer használható backend ismétléskor `ALREADY_CONSUMED` eredményt ad.
+## Bizonyított műszaki állapot
+
+| Terület | Állapot | Bizonyíték |
+|---|---|---|
+| GitHub forrás | **PASS** | main `1563ac06341534653493901c3659005bf617f3a8`; PR #27 és #28 merged |
+| TypeScript | **PASS** | teljes forrásellenőrzés hiba nélkül |
+| Expo iOS-export | **PASS** | production forrásból sikeres export |
+| EAS production build | **PASS** | `67ce044b-0327-44f6-a6d1-34f71576ec7e`, `FINISHED` |
+| App Store Connect feltöltés | **PASS** | submission `f2fc269a-6db6-4647-a313-82897ccf78fe`, `FINISHED` |
+| Apple-feldolgozás | **PASS** | `VALID`, `READY_FOR_BETA_TESTING`, nem lejárt |
+| Belső TestFlight-terjesztés | **PASS** | workflow `01a0f016-0ce3-762a-9138-770cc31c242d`; Build 19 `IN_BETA_TESTING` a `Come Get It belső teszt` csoportban |
+| Supabase | **ACTIVE_HEALTHY** | az app és a Venue Hub ugyanazt a production projektet használja |
+| Jutalomkatalógus | **PASS** | 4 aktív jutalom; drink, food és experience lefedve |
+| Egyszeri jutalombeváltás | **PASS** | egyedi `(user_id, reward_id)` igény, trigger/RPC védelem, Edge Function v49, duplikációs teszt PASS |
+| Partneres QR | **ELSŐ FIZIKAI ÚT PASS** | iPhone → éles Mac-kamera → sikeres partneri beváltás |
+| App Store médiacsomag | **KÉSZ · FELTÖLTÉS KELL** | 5 × `1320×2868` alpha nélküli PNG és tiszta ZIP |
+| App Review tesztadat | **ELŐKÉSZÍTVE** | fogyasztói review-fiók 500 szinkronizált ponttal; review notes külön kezeli a venue QR-t és a pontjutalmat |
+
+## Élő jutalmak
+
+1. Pilot ajándék ital;
+2. Blue Hour koktél — 300 pont;
+3. Séf ajánlata – főétel — 900 pont;
+4. VIP lounge élmény — 1400 pont.
+
+A `consumer_rewards` nézet csak aktív, érvényes, készleten lévő, aktív helyhez tartozó jutalmat ad vissza. Az adminban végzett módosítások appfrissítés vagy újranyitás után jelennek meg.
+
+## Ismételt beváltás elleni védelem
+
+- A `reward_redemption_claims` elsődleges kulcsa `(user_id, reward_id)`.
+- A beváltás elején lefoglalt igény kizárja a párhuzamos és későbbi duplikációt.
+- Az adatbázis-trigger a közvetlen duplikált beszúrást is blokkolja.
+- A `redeem-reward` Edge Function v49 ismétléskor HTTP 409 választ ad.
+- Az app felhasználói üzenete: **„Ezt a jutalmat már beváltottad.”**
+- A korábbi három történeti beváltási sor változatlan maradt.
 
 ## App Store-képek
 
-Az öt végleges kép automatikus technikai auditja PASS:
+Az öt elkészült kép technikai és vizuális QC-je PASS:
 
 - darabszám: 5;
 - méret: egységesen `1320×2868`;
 - formátum: PNG;
-- átlátszósági csatorna: nincs;
-- mappa: `/Users/bencegatai/Documents/Codex/Come Get It App Store Screenshots 6.9-inch`;
-- tiszta ZIP: `/Users/bencegatai/Documents/Codex/Come-Get-It-App-Store-Screenshots-6.9-inch-CLEAN-2026-09-29.zip`.
+- alpha/átlátszóság: nincs;
+- nincs olvasható QR/token, személyes adat vagy fejlesztői keret;
+- nincs nem élő card-linking, fizetős Plus vagy CSR-ígéret.
 
-## Adatvédelem és nyilvános URL-ek
+## Adatvédelem és publikus URL-ek
 
-A build 17 privacy manifestje hét adattípust jelöl: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location és Product Interaction. Mindegyik App Functionality célú, felhasználóhoz kötött és nem tracking célú.
+A jelenlegi kiadási forrás privacy manifestje hét adattípust jelöl: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location és Product Interaction. Mindegyik App Functionality célú, felhasználóhoz kötött és nem tracking célú.
 
-2026-09-30-i élő ellenőrzés:
+Publikus URL-ek:
 
-- `https://come-get-it.app` — HTTP 200;
-- `https://come-get-it.app/support` — HTTP 200;
-- `https://come-get-it.app/adatvedelmi-szabalyzat` — HTTP 200;
-- `https://come-get-it.app/felhasznalasi-feltetelek` — HTTP 200.
-
-A forrásellenőrzés nem talált beégetett service-role kulcsot, privát kulcsot vagy kliens titkot. A mobilapp csak az EAS környezeti változóiból kapott publikus Supabase URL-t és anon kulcsot használja; a jogosultságot Supabase Auth, RLS és Edge Function ellenőrzések adják.
-
-## Függőségi megállapítás
-
-A csomagvizsgálat több tranzitív figyelmeztetést jelez az Expo/Metro buildeszközökben (`postcss`, `image-size`, `uuid`) és a Rork/Router függőségi fában (`@ai-sdk/provider-utils`, `decode-uri-component`). A buildeszköz-találatok nem kerülnek önállóan futó szolgáltatásként az iPhone-ra. A Rork analitikai kliens production azonosítók hiányában nem inicializálódik. A jelenlegi Expo SDK 54 csomagválasztása konzisztens, az `expo install --check` PASS eredményt adott.
-
-Ezeket nem javítjuk kockázatos, kiadás előtti főverzió-kényszerítéssel. A biztonságos út egy külön Expo SDK/frissítési ág teljes regresszióval a 1.0 után. Ha bármely érintett csomaghoz távolról kihasználható, mobil-futásidejű probléma igazolódik, új build szükséges a beadás előtt.
+- `https://come-get-it.app`
+- `https://come-get-it.app/support`
+- `https://come-get-it.app/adatvedelmi-szabalyzat`
+- `https://come-get-it.app/felhasznalasi-feltetelek`
 
 ## Pontos hátralévő sorrend
 
-1. Igazold, hogy a TestFlightban megjelent a **Come Get It 1.0.0 (17)**, és telepítsd.
-2. Futtasd végig a `TESTFLIGHT_DEVICE_TEST.md` listát; különösen: venue-részlet, jutalomlista, Italok és Összes kategória egyetlen vissza gombja, letiltott Étel/Élmények, középre igazított login logó és márkázott betöltő.
-3. Olvasd be ugyanazt a QR-t másodszor is, és rögzítsd a felületi elutasítást.
-4. Ellenőrizd iPhone-on a kijelentkezést, jelszó-visszaállítást és külön tesztfiókkal a végleges fióktörlést.
-5. Töltsd fel az öt `1320×2868` képet a 6,9″ iPhone képkészlethez.
-6. Hozz létre új App Manager API-kulcsot, olvasási próbával igazold, majd vond vissza a korábban megjelent kulcsot.
-7. Fogadd el az App Privacy **Publish** nyilatkozatát, és a tényleges üzleti működés szerint válaszd ki a DSA trader/non-trader státuszt.
-8. Válaszd ki a build 17-et az App Store 1.0 verzióhoz, ellenőrizd a review-fiókot és az angol review notes szöveget.
-9. Csak minden kapu PASS eredménye után: **Submit for Review**, kézi kiadással.
+1. Telepítsd a TestFlightból az **1.0.0 (19)** buildet, és futtasd végig a `TESTFLIGHT_DEVICE_TEST.md` listát.
+2. Külön igazold az eredeti középre igazított login logót, a rövid semleges betöltést, mind a négy jutalmat és minden kategória visszanavigációját.
+3. Próbáld ugyanazt a jutalmat másodszor beváltani, majd ugyanazt a QR-t másodszor beolvasni; mindkettő legyen elutasított.
+4. Ellenőrizd a kijelentkezést, jelszó-visszaállítást és külön tesztfiókkal a fióktörlést.
+5. Töltsd fel az öt kész 6,9 hüvelykes képet.
+6. Hozz létre és igazolj egy új App Manager API-kulcsot, majd vond vissza a régit; cseréld a review-fiókok jelszavát is.
+7. Fogadd el az App Privacy **Publish** nyilatkozatát, és válaszd ki a tényalapú DSA-státuszt.
+8. Válaszd ki a build 19-et, ellenőrizd a review notes és login adatokat, majd minden PASS után küldd App Review-ra kézi kiadással.
 
-## Reális készültség
+## Kiadási szabály
 
-Műszaki kiadási készültség: **kb. 90%**. A fennmaradó rész döntően Apple-felületi és fizikai készülékes igazolás, nem új funkciófejlesztés. App Store-megjelenés a beküldés után az Apple felülvizsgálati idejétől függ; dátumot csak a sikeres Submit for Review után lehet érdemben becsülni.
+Az EAS-build és a sikeres App Store Connect-feltöltés nem helyettesíti a valós iPhone-tesztet vagy az Apple jogi nyilatkozatait. App Review-beküldés csak a teljes fizikai PASS és minden tulajdonosi kapu lezárása után történhet.

@@ -17,10 +17,9 @@ jobs:
       internal_groups:
         - Come Get It belső teszt
       changelog: |
-        Build 12: natív Apple Maps a helylistán és a hely részletes oldalán,
-        hitelesített jutalomrészlet, Pilot jutalomkép, beváltási ellenőrzések és
-        következetes visszanavigáció minden jutalomkategóriából.
-        Ellenőrizendő: lista- és részlettérkép, venue markerek; kategória-vissza;
-        100 pontos Pilot jutalom; partneri QR-beolvasás; ismételt QR elutasítása;
-        kijelentkezés és jelszó-visszaállítás.
+        Build 19: natív Apple Maps, eredeti középre igazított login logó, gyors indítás,
+        négy aktív kategóriafeltöltött jutalom és felhasználónként egyszeri beváltás.
+        Ellenőrizendő: lista- és részlettérkép; minden kategórián egyetlen vissza gomb;
+        második azonos jutalombeváltás elutasítása; partneri QR-beolvasás és ismételt
+        QR elutasítása; kijelentkezés, jelszó-visszaállítás és fióktörlés.
       submit_beta_review: false

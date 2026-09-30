@@ -6,8 +6,8 @@ Paste the following into App Store Connect. Copy the consumer-app login credenti
 
 - First name: Bence
 - Last name: Gátai
-- Email: gataibence@gmail.com
-- Phone: +36 70 585 2053
+- Email: enter the verified App Store Connect review contact; do not commit it here.
+- Phone: enter the verified App Store Connect review contact; do not commit it here.
 
 ## Sign-in required
 
@@ -25,13 +25,14 @@ Suggested test flow:
 
 1. Sign in with the supplied email and password.
 2. On the Venues tab, browse the map/list and open “Come Get It Bar”.
-3. Select the active, limited test reward “Pilot ajándék ital”.
-4. Tap “Kérd ingyen italod”, continue through the arrival/show steps, then tap “BEVÁLTOM”.
-5. On a second device or browser, open `https://come-get-it-venue-hub.lovable.app` and sign in with the restricted Venue Hub account supplied below. Open **QR beváltás** (direct path: `/pos/redeem`), start the scanner, and scan the customer's QR code. The customer app changes to the successful state only after this partner action.
-6. Scan the same QR code again. The repeated redemption is rejected because tokens are single use.
-7. Open the Rewards tab to view the live rewards availability state. This screen is backed by the production catalog and may show an empty state when participating venues have no currently active reward inventory.
-8. Open Profile → Favorites to view saved venues.
-9. Open Profile → Account to edit profile data, request a password reset, sign out, or initiate permanent account deletion.
+3. To test the venue free-drink QR flow, tap **Kérd ingyen italod** on the Come Get It Bar venue page, continue through the arrival/show steps and display the QR code.
+4. On a second device or browser, open `https://come-get-it-venue-hub.lovable.app` and sign in with the restricted Venue Hub account supplied below. Open **QR beváltás** (direct path: `/pos/redeem`), start the scanner and scan the customer's QR code. The customer app changes to the successful state only after this partner action.
+5. Scan the same QR code again. The repeated QR redemption is rejected because venue tokens are single use.
+6. Separately, open the **Rewards** tab. The review account starts with 500 test points. Verify that Drinks, Food, Experiences and All contain live catalog items.
+7. To test points redemption, open **Blue Hour koktél** (300 points) and tap **Jutalom beváltása**. This points reward is independent of the venue free-drink QR flow and does not use the partner scanner.
+8. Attempt to redeem **Blue Hour koktél** again with the same account. The second attempt is rejected with the Hungarian message meaning “You have already redeemed this reward”; no additional points are deducted.
+9. Open Profile → Favorites to view saved venues.
+10. Open Profile → Account to edit profile data, request a password reset, sign out, or initiate permanent account deletion.
 
 Restricted Venue Hub review access:
 
@@ -48,10 +49,12 @@ The service is currently limited to Budapest, Hungary. Offer availability and op
 
 ## Reviewer-account operations
 
-- Supabase user: `apple-review@comegetit.test`
-- Supabase partner user: `apple-review-partner@comegetit.test`
+- Supabase consumer user: copy the account identifier from `.private/app-review-credentials.txt`.
+- Supabase partner user: copy the account identifier from `.private/app-review-partner-credentials.txt`.
 - Partner scope: exactly one `venue_memberships` row for “Come Get It Bar”, role `venue_staff`, `is_admin = false`
 - Allowlist table: `public.app_review_testers`
+- Points fixture: 500 synchronized points; use **Blue Hour koktél** for the optional points-redemption review path.
+- Before every new review cycle, confirm that the review user has not already claimed the chosen reward. If it has, use a fresh review user or a different active reward; do not delete production redemption history merely to replay a test.
 - To disable after review: set `enabled = false` for the consumer review user and remove or disable both review auth users.
 - Rotate both passwords before every new review cycle.
 

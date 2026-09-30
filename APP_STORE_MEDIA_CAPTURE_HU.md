@@ -1,15 +1,15 @@
 # Come Get It — App Store-képek és videó felvételi kézikönyv
 
-Frissítve: 2026-09-29  
-Célbuild: **1.0.0 (13)**, TestFlight
+Frissítve: 2026-09-30
+Célbuild: **1.0.0 (19)**, TestFlight
 
-Ez a dokumentum a végleges App Store-média elkészítésének egyetlen ellenőrzőlistája. Felvételt csak akkor készíts, amikor a build 13 fizikai iPhone-on végigment a `TESTFLIGHT_DEVICE_TEST.md` ellenőrzésein.
+Ez a dokumentum a végleges App Store-média ellenőrzési és utánpótlási kézikönyve. Új felvételt csak akkor készíts, amikor a build 19 fizikai iPhone-on végigment a `TESTFLIGHT_DEVICE_TEST.md` ellenőrzésein.
 
-> **Aktuális állapot:** a 2026. szeptember 29-én megtalált régi marketing-, TestFlight- és Rork-előnézeti képek nem feltölthetők. A részletes indoklás az [`APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md`](APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md) auditban található.
+> **Aktuális állapot:** öt új, egységes, 6,9 hüvelykes, `1320 × 2868` pixeles promóciós kép elkészült és technikai/vizuális QC-n átment. Az App Store Connect feltöltés még tulajdonosi feladat. A régi marketing-, TestFlight- és Rork-előnézeti képek továbbra sem használhatók; ennek részletei az [`APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md`](APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md) auditban vannak.
 
 ## 1. Felvétel előtti állapot
 
-- A TestFlightban a **Come Get It 1.0.0 (13)** legyen telepítve.
+- A TestFlightban a **Come Get It 1.0.0 (19)** legyen telepítve.
 - A felvételi fiókban ne látszódjon személyes e-mail-cím, telefonszám vagy valódi fizetési adat.
 - Legyen legalább egy aktív budapesti hely, jó minőségű, jogtisztán használható képpel.
 - Legyen aktív ital és aktív jutalom képpel, valósághű névvel és leírással.
@@ -88,7 +88,7 @@ Javasolt 25 másodperces vágás: helylista/térkép (5 mp) → hely részletei 
 A kész csomag akkor tölthető fel, ha:
 
 - a képméret-ellenőrző hibamentesen lefutott;
-- minden képen és képkockán build 13 látható, nem régi prototípus;
+- minden képen és képkockán a Build 19-cel egyező, valós jelenlegi funkció látható, nem régi prototípus;
 - nincs személyes vagy biztonsági adat;
 - a hely- és jutalomképek felhasználási joga igazolt;
 - a feliratok pontosan azt ígérik, amit az app ténylegesen tud;
