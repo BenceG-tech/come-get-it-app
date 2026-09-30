@@ -1,5 +1,7 @@
 # Come Get It — kiadási készültségi mátrix
 
+> **Történeti állapot, már nem aktuális.** Ezt a Build 17-központú mátrixot a `RELEASE_COMPLETION_MATRIX_2026-09-30_HU.md` váltotta fel. Kiadási döntéshez kizárólag a szeptember 30-i dokumentumot használd.
+
 Utolsó ellenőrzés: **2026. szeptember 30.**
 Cél: **1.0.0 (17), ingyenes iPhone-béta**
 
