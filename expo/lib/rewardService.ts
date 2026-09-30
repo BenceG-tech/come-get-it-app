@@ -18,6 +18,7 @@ function friendlyRewardError(code: string): string {
   if (code === 'REWARD_VENUE_INACTIVE') return 'A jutalom partnerhelye jelenleg nem elérhető.';
   if (code === 'REWARD_EXPIRED') return 'A jutalom érvényessége lejárt.';
   if (code === 'REWARD_LIMIT_REACHED') return 'Ez a jutalom elfogyott.';
+  if (code === 'REWARD_ALREADY_REDEEMED') return 'Ezt a jutalmat már beváltottad.';
   return 'A jutalom beváltása most nem sikerült. Próbáld újra.';
 }
 

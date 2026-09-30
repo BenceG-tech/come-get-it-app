@@ -58,6 +58,7 @@ Deno.serve(async (req: Request) => {
     if (message.includes('REWARD_VENUE_INACTIVE')) return json({ error: 'REWARD_VENUE_INACTIVE' }, 409);
     if (message.includes('REWARD_EXPIRED')) return json({ error: 'REWARD_EXPIRED' }, 409);
     if (message.includes('REWARD_LIMIT_REACHED')) return json({ error: 'REWARD_LIMIT_REACHED' }, 409);
+    if (message.includes('REWARD_ALREADY_REDEEMED')) return json({ error: 'REWARD_ALREADY_REDEEMED' }, 409);
     console.error('[redeem-reward] Atomic redemption failed', error);
     return json({ error: 'REDEMPTION_FAILED' }, 500);
   }
