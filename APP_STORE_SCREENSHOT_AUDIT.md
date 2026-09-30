@@ -1,40 +1,34 @@
 # Come Get It — App Store screenshot audit
 
-Audit date: 2026-09-29
+Audit date: **2026-09-30**
+Target release: **iOS 1.0.0 (19)**
 
 ## Result
 
-The marketing folder contains 37 PNG files at 1206 × 2622 pixels with no alpha channel. That size is accepted for Apple’s 6.3-inch screenshot slot, but the set must **not** be uploaded as the final 1.0 submission.
+**TECHNICAL AND VISUAL QC: PASS · APP STORE CONNECT UPLOAD PENDING**
 
-Reasons:
+The final package contains five consistent portrait PNG files at `1320 × 2868` pixels, with no alpha/transparency. This is an accepted 6.9-inch iPhone screenshot size. The clean upload ZIP contains only the five intended files.
 
-- several files show a prior prototype rather than the current build;
-- `IMG_9349.PNG`, `IMG_9801.PNG`, `IMG_9803.PNG` and `IMG_9855.PNG` include browser/chat/photo-viewer chrome;
-- `IMG_9931.PNG` advertises card linking and automatic points, which are not active in version 1.0;
-- the screens include fabricated or outdated venue/reward content and older navigation states;
-- the files are not the highest-resolution 6.9-inch set recommended for the current App Store product page.
+The completed set covers:
 
-Apple currently accepts one to ten screenshots per device size, without alpha/transparency. For a current iPhone 6.9-inch portrait set, accepted dimensions include 1260 × 2736, 1290 × 2796 or 1320 × 2868 pixels. Since `supportsTablet` is false, no iPad screenshot set is required. References: [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) and [Upload app previews and screenshots](https://developer.apple.com/help/app-store-connect/manage-app-information/upload-app-previews-and-screenshots).
+1. Budapest venue discovery and native map;
+2. venue selection;
+3. venue details and available offer;
+4. free-drink handoff;
+5. successful redemption.
 
-## Required fresh capture set
+Visual review found no browser, Rork, Lovable, Expo or TestFlight interface; no readable QR/token; no password, email address or phone number; and no inactive card-linking, paid Plus or CSR promise.
 
-Use the Hungarian step-by-step capture and video runbook in [`APP_STORE_MEDIA_CAPTURE_HU.md`](APP_STORE_MEDIA_CAPTURE_HU.md). It also contains the final filenames, marketing captions and the automated dimension check.
+The older 1206 × 2622 source and prototype images remain rejected for final submission. Their historical findings are recorded in `APP_STORE_MEDIA_AUDIT_2026-09-29_HU.md`.
 
-Capture signed TestFlight build **1.0.0 (13)** at one consistent accepted 6.9-inch size, with the App Review account or a reset screenshot account:
+## Final upload checks
 
-1. Venue discovery — native Apple map/list with live Budapest partner data and no API-key watermark.
-2. Venue details — real venue, opening hours, map and available drink.
-3. Rewards — live reward catalog with no card-linking banner.
-4. Favorites or Profile — saved venues and account value, without personal email/phone visible.
-5. Redemption — arrival/show step before final confirmation; no reusable token or QR secret visible.
+- [ ] Build 19 completes the physical iPhone regression.
+- [ ] All five images still truthfully match the released behavior and licensed content.
+- [ ] Upload the set to the 6.9-inch iPhone slot in App Store Connect.
+- [ ] Open every uploaded image at full preview and check order, crop, text and colour.
+- [ ] Confirm no duplicate, missing or unintended file is present.
 
-Optional sixth image: search/filter view with a useful result.
+No iPad screenshot set is required because `supportsTablet` is false. Apple permits one to ten screenshots per supported device size. References: [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) and [Upload app previews and screenshots](https://developer.apple.com/help/app-store-connect/manage-app-information/upload-app-previews-and-screenshots).
 
-## Capture rules
-
-- Use a clean status bar, consistent time and full battery; do not show browser controls, notifications or developer overlays.
-- Use only live, licensed partner images and truthful offer names.
-- Do not show the review password, personal contact details, full redemption token or internal IDs.
-- Do not claim Plus, card linking, CSR donations, push notifications or partner/user counts.
-- Reset review redemptions and favorites before the capture session if necessary.
-- Capture only after build 13 passes the signed-device and TestFlight smoke tests.
+For any replacement capture or App Preview video, follow `APP_STORE_MEDIA_CAPTURE_HU.md`.

@@ -1,9 +1,9 @@
 # Come Get It — App Store Connect nyilatkozatok
 
 Állapotdátum: **2026. szeptember 30.**
-Célkiadás: **Come Get It 1.0.0 (17), ingyenes iPhone-béta**
+Célkiadás: **Come Get It 1.0.0 (19), ingyenes iPhone-béta**
 
-Ez a lap a build 17 kiadási forrása, aláírt binárisa, privacy manifestje, élő Supabase-funkciói és a `come-get-it.app` publikus jogi oldalai alapján készült. A technikai válaszokat előkészíti, de a tulajdonjogi és jogi állításokat az Account Holdernek a saját nevében kell végleg elfogadnia.
+Ez a lap a build 19 kiadási forrása, aláírt binárisa, privacy manifestje, élő Supabase-funkciói és a `come-get-it.app` publikus jogi oldalai alapján készült. A technikai válaszokat előkészíti, de a tulajdonjogi és jogi állításokat az Account Holdernek a saját nevében kell végleg elfogadnia.
 
 ## 1. Korhatár
 
@@ -48,7 +48,7 @@ Felső szintű válaszok:
 - Privacy Policy URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
 - Privacy Choices URL: `https://come-get-it.app/adatvedelmi-szabalyzat`
 
-A build 17 kiadási forrásában rögzített privacy manifesttel egyező hét adattípus:
+A build 19 kiadási forrásában rögzített privacy manifesttel egyező hét adattípus:
 
 | Apple adattípus | Felhasználóhoz kötött | Tracking | Cél |
 |---|---:|---:|---|
@@ -98,12 +98,12 @@ Ha **non-trader**, az EU-s termékoldalon Apple jelzi, hogy a fogyasztóvédelmi
 - [ ] Minden élő partnerképhez, logóhoz és védjegyhez igazolt felhasználási jog tartozik.
 - [ ] Copyright: `2026 Gátai Bence`.
 - [ ] Korhatárválaszok pontosak, és a végső globális érték 18+.
-- [ ] A hét privacy adattípus és a no-tracking válasz megfelel a build 17-nek.
+- [ ] A hét privacy adattípus és a no-tracking válasz megfelel a build 19-nek.
 - [ ] Privacy Publish nyilatkozat elfogadva.
 - [ ] DSA trader/non-trader státusz a valós működés alapján kiválasztva és szükség esetén ellenőrizve.
 - [ ] Az Apple szerződéses, adó- és banki státuszán nincs blokkoló figyelmeztetés.
 - [ ] Az öt friss 6,9 hüvelykes screenshot feltöltve.
-- [ ] Build 17 fizikai TestFlight-tesztje PASS.
+- [ ] Build 19 fizikai TestFlight-tesztje PASS.
 - [ ] Csak ezután: **Submit for Review**.
 
 Hivatalos Apple-források:

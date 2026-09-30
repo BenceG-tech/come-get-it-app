@@ -24,7 +24,7 @@ Apple requires the declaration to include third-party code as well as first-part
 | Coarse Location | Yes, when the user grants approximate rather than precise location | Yes | No | App Functionality | iOS may provide reduced-accuracy coordinates under the same foreground permission; no background access |
 | Product Interaction | Yes | Yes | No | App Functionality | favorites, points, rewards and redemption history |
 
-These seven entries match the root privacy manifest configured for signed build 17: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location and Product Interaction. Every entry is linked to the user, used for App Functionality and not used for tracking.
+These seven entries match the root privacy manifest configured for signed build 19: Name, Email Address, Phone Number, User ID, Precise Location, Coarse Location and Product Interaction. Every entry is linked to the user, used for App Functionality and not used for tracking.
 
 ## Do not select for version 1.0
 
@@ -39,7 +39,7 @@ These seven entries match the root privacy manifest configured for signed build 
 ## SDK and feature audit
 
 - Supabase: authentication, database, storage and edge functions; included in the declarations above.
-- Rork toolkit: the dependency contains PostHog code and the production bundle therefore contains the SDK, but its client is disabled unless both `EXPO_PUBLIC_PROJECT_ID` and `EXPO_PUBLIC_TEAM_ID` are present. Neither variable exists in the EAS production environment, so build 17 does not initialize the client or send Rork lifecycle/screen analytics. If either identifier is deliberately configured later, perform a new binary/privacy audit before rebuilding and update App Store Connect when collection begins.
+- Rork toolkit: the dependency contains PostHog code and the production bundle therefore contains the SDK, but its client is disabled unless both `EXPO_PUBLIC_PROJECT_ID` and `EXPO_PUBLIC_TEAM_ID` are present. Neither variable exists in the EAS production environment used for build 19, so the current release does not initialize the client or send Rork lifecycle/screen analytics. If either identifier is deliberately configured later, perform a new binary/privacy audit before rebuilding and update App Store Connect when collection begins.
 - Apple / Google sign-in: only declare the profile data actually returned and stored. Google and Apple provider secrets must be configured before their buttons are enabled in production.
 - Expo/EAS: build/distribution tooling; no advertising SDK is present.
 - Salt Edge, Fidel and Goorderz server integrations are not exposed as active consumer features in iOS 1.0. Do not declare financial data unless card linking is enabled in a later release.
