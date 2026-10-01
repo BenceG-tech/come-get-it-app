@@ -1,15 +1,21 @@
+import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, type GestureResponderEvent } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, Stack } from "expo-router";
 import { Heart, MapPin } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useLocation } from "@/context/LocationContext";
+import { formatDistance, sortByDistance } from "@/utils/distance";
 
 const CYAN = "#00C8E8" as const;
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { favoriteVenues, favoriteVenueIds, isLoading, syncError, toggleFavorite, refreshFavorites } = useFavorites();
+  const { favoriteVenues: savedVenues, favoriteVenueIds, isLoading, syncError, toggleFavorite, refreshFavorites } = useFavorites();
+  const { location } = useLocation();
+  const userCoords = location?.coords ?? null;
+  const favoriteVenues = useMemo(() => sortByDistance(savedVenues, userCoords), [savedVenues, userCoords]);
   const fallbackImageUri = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=900";
 
   const openVenue = (venueId: string) => {
@@ -86,7 +92,7 @@ export default function FavoritesScreen() {
                     <View style={styles.venueFooter}>
                       <View style={styles.distanceContainer}>
                         <MapPin size={12} color="rgba(255,255,255,0.44)" />
-                        <Text style={styles.venueDistance}>{venue.distance ? `${(venue.distance / 1000).toFixed(1)} km` : venue.address ?? "Részletek"}</Text>
+                        <Text style={styles.venueDistance}>{typeof venue.distance === "number" ? formatDistance(venue.distance) : venue.address ?? "Részletek"}</Text>
                       </View>
                     </View>
                   </View>

@@ -8,6 +8,7 @@ import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours } from '@/utils/openingHours';
 import Colors from '@/constants/colors';
 import { useFavorites } from '@/context/FavoritesContext';
+import { formatDistance } from '@/utils/distance';
 
 type VenueCardProps = {
   venue: Venue;
@@ -98,9 +99,11 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
           />
         </View>
         
-        {/* City chip - top left */}
+        {/* Distance chip (city until the user's position is known) - top left */}
         <View style={styles.cityPill}>
-          <Text style={styles.cityPillText}>Budapest</Text>
+          <Text style={styles.cityPillText}>
+            {typeof venue.distance === 'number' ? formatDistance(venue.distance) : 'Budapest'}
+          </Text>
         </View>
 
         {/* Free drink badge - overhangs the bottom edge of the image */}

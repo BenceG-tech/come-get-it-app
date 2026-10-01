@@ -12,6 +12,7 @@ import {
   MapPin,
   User,
   Wallet,
+  BellRing,
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -19,6 +20,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getSpendPointsStatus } from "@/lib/spendPointsService";
+import { isNearbyAlertsSupported } from "@/lib/nearbyAlerts";
 
 const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
@@ -42,6 +44,13 @@ const venueCodeItem: MenuGridItem = {
   subtitle: "Hol ismertél meg minket?",
   route: "/venue-code",
   icon: MapPin,
+};
+
+const nearbyAlertsItem: MenuGridItem = {
+  title: "Közeli ingyen ital",
+  subtitle: "Értesítés 500 m-en belül",
+  route: "/nearby-alerts",
+  icon: BellRing,
 };
 
 // The venue code only counts within 24 hours of signup (claim_venue_referral_code).
@@ -99,6 +108,7 @@ export default function ProfileScreen() {
     return [
       ...(spendPointsEnabled ? [spendPointsItem] : []),
       ...(showVenueCode ? [venueCodeItem] : []),
+      ...(isNearbyAlertsSupported ? [nearbyAlertsItem] : []),
       ...menuGrid,
     ];
   }, [session?.user.created_at, spendPointsEnabled]);

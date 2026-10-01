@@ -8,8 +8,10 @@ import Colors from '@/constants/colors';
 import VenueCard from '@/components/VenueCard';
 import { fetchVenues } from '@/lib/venueService';
 import { Venue } from '@/types/venue';
+import { useLocation } from '@/context/LocationContext';
+import { sortByDistance } from '@/utils/distance';
 
-type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at'> & { 
+type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at' | 'coordinates' | 'distance'> & { 
   website_url?: string | null; 
   is_paused?: boolean | null;
 };
@@ -22,6 +24,8 @@ export default function SearchScreen() {
   const [filteredVenues, setFilteredVenues] = useState<SupaVenue[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { location } = useLocation();
+  const userCoords = location?.coords ?? null;
   
   // Check if we're showing "no results" for a specific category
   const categoryName = params.category as string;
@@ -33,7 +37,7 @@ export default function SearchScreen() {
     setError(null);
     try {
       const venueData = await fetchVenues({
-        columns: 'id,name,address,image_url,plan,created_at,website_url,is_paused',
+        columns: 'id,name,address,image_url,plan,created_at,website_url,is_paused,coordinates',
         limit: 100,
       });
       setVenues(venueData as SupaVenue[]);
@@ -62,8 +66,8 @@ export default function SearchScreen() {
       venue.name?.toLowerCase().includes(query) ||
       venue.address?.toLowerCase().includes(query)
     );
-    setFilteredVenues(filtered);
-  }, [searchQuery, venues]);
+    setFilteredVenues(sortByDistance(filtered, userCoords));
+  }, [searchQuery, venues, userCoords]);
 
   const clearSearch = () => {
     setSearchQuery('');
