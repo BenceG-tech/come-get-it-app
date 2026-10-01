@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useLocation } from '@/context/LocationContext';
+import { markRedeemedToday } from '@/lib/nearbyAlerts';
 import { VenueDrink, FreeDrinkWindow } from '@/types/venue';
 import {
   checkLocalEligibility,
@@ -287,6 +288,7 @@ export default function RedemptionWindowModal({
           setImpactDelta(0);
           setImpactMessage('Sikeres partneri QR-beváltás');
           setState('success');
+          markRedeemedToday();
           queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else if (response.status === 'expired' || response.status === 'revoked') {

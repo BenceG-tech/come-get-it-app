@@ -1,7 +1,8 @@
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useState } from "react";
-import { Platform } from "react-native";
+import { useEffect, useState } from "react";
+import { AppState, Platform } from "react-native";
+import * as Notifications from "expo-notifications";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,6 +12,8 @@ import { FavoritesProvider } from "@/context/FavoritesContext";
 import { LocationProvider } from "@/context/LocationContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
+// Defines the geofencing background task; must load at startup so iOS can wake the app for it.
+import { isNearbyAlertsSupported, setPendingNotificationUrl, syncNearbyAlerts } from "@/lib/nearbyAlerts";
 
 const BACK_TITLE = "Vissza";
 
@@ -20,7 +23,45 @@ if (Platform.OS !== "web") {
   });
 }
 
+const handledNotificationIds = new Set<string>();
+
+function notificationTarget(response: Notifications.NotificationResponse | null): string | null {
+  if (!response) return null;
+  const id = response.notification.request.identifier;
+  if (handledNotificationIds.has(id)) return null;
+  handledNotificationIds.add(id);
+  const url = response.notification.request.content.data?.url;
+  return typeof url === "string" && url.startsWith("/venue/") ? url : null;
+}
+
+// Keeps nearby free-drink alerts registered and opens the venue when one is tapped.
+function useNearbyAlerts() {
+  useEffect(() => {
+    if (!isNearbyAlertsSupported) return;
+    syncNearbyAlerts({ refreshVenues: true }).catch((e) => console.warn("[NearbyAlerts] sync failed", e));
+    const appStateSub = AppState.addEventListener("change", (state) => {
+      if (state === "active") syncNearbyAlerts().catch((e) => console.warn("[NearbyAlerts] sync failed", e));
+    });
+
+    // Cold start from a tap: the entry screen still has to route by auth, so home opens the venue afterwards.
+    const launchUrl = notificationTarget(Notifications.getLastNotificationResponse());
+    if (launchUrl) {
+      setPendingNotificationUrl(launchUrl);
+      Notifications.clearLastNotificationResponse();
+    }
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const url = notificationTarget(response);
+      if (url) router.push(url as never);
+    });
+    return () => {
+      appStateSub.remove();
+      responseSub.remove();
+    };
+  }, []);
+}
+
 function RootLayoutNav() {
+  useNearbyAlerts();
   return (
     <Stack
       initialRouteName="index"
@@ -58,6 +99,7 @@ function RootLayoutNav() {
       <Stack.Screen name="my-impact" options={{ presentation: "card", headerShown: false }} />
       <Stack.Screen name="spend-points" options={{ presentation: "card", headerShown: true, title: "Költésből pont", headerBackTitle: BACK_TITLE }} />
       <Stack.Screen name="venue-code" options={{ presentation: "card", headerShown: true, title: "Helykód", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="nearby-alerts" options={{ presentation: "card", headerShown: true, title: "Közeli ingyen ital", headerBackTitle: BACK_TITLE }} />
     </Stack>
   );
 }

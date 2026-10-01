@@ -27,6 +27,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { getUserCSRImpact } from "@/lib/csrService";
 import { convertOpeningHoursToBusinessHours, isVenueOpenNow } from "@/utils/openingHours";
+import { sortByDistance } from "@/utils/distance";
+import { takePendingNotificationUrl } from "@/lib/nearbyAlerts";
 
 const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
 const LOGO_ASPECT_RATIO = 3.5 as const;
@@ -54,6 +56,12 @@ export default function BarsScreen() {
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
 
   const { location: userLocation, getCurrentLocation } = useLocation();
+
+  // Opened by tapping a "free drink nearby" notification while the app was closed.
+  useEffect(() => {
+    const url = takePendingNotificationUrl();
+    if (url) router.push(url as never);
+  }, [router]);
 
   useEffect(() => {
     getCurrentLocation()
@@ -218,8 +226,11 @@ export default function BarsScreen() {
     });
   }, [loadVenues]);
 
+  const userCoords = userLocation?.coords ?? null;
+
+  // Nearest first once the position is known; until then the newest venues lead.
   const filteredVenues = useMemo(() => {
-    return venues.filter((venue) => {
+    const matching = venues.filter((venue) => {
       if (selectedFilters.length === 0) return true;
 
       const normalizedTags = (venue.tags ?? []).map((tag) => tag.trim().toLowerCase());
@@ -248,7 +259,8 @@ export default function BarsScreen() {
         return matchesTag(filter);
       });
     });
-  }, [selectedFilters, venues]);
+    return sortByDistance(matching, userCoords);
+  }, [selectedFilters, venues, userCoords]);
 
   const mapVenues = useMemo(
     () => (filteredVenues.length > 0 ? filteredVenues : venues),

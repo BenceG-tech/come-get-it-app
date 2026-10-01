@@ -25,7 +25,8 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "A tartózkodási helyedet a közeli partnerhelyek megjelenítéséhez használjuk, csak az app használata közben."
+        "NSLocationWhenInUseUsageDescription": "A tartózkodási helyedet a közeli partnerhelyek megjelenítéséhez, a távolság szerinti sorrendhez és az ingyen ital beváltásakor a helyszín ellenőrzéséhez használjuk.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Ha bekapcsolod a „Közeli ingyen ital” értesítést, a telefonod akkor is figyeli, hogy 500 méteren belül vagy-e egy partnerhelytől, amikor az app zárva van. Ezt a háttérben figyelt helyet nem küldjük el és nem tároljuk."
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -120,14 +121,15 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "A tartózkodási helyedet a közeli partnerhelyek megjelenítéséhez használjuk, csak az app használata közben.",
-          "locationAlwaysAndWhenInUsePermission": false,
+          "locationWhenInUsePermission": "A tartózkodási helyedet a közeli partnerhelyek megjelenítéséhez, a távolság szerinti sorrendhez és az ingyen ital beváltásakor a helyszín ellenőrzéséhez használjuk.",
+          "locationAlwaysAndWhenInUsePermission": "Ha bekapcsolod a „Közeli ingyen ital” értesítést, a telefonod akkor is figyeli, hogy 500 méteren belül vagy-e egy partnerhelytől, amikor az app zárva van. Ezt a háttérben figyelt helyet nem küldjük el és nem tároljuk.",
           "locationAlwaysPermission": false,
-          "isIosBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": false,
           "isAndroidForegroundServiceEnabled": false
         }
-      ]
+      ],
+      "./plugins/withoutBackgroundFetch"
     ],
     "experiments": {
       "typedRoutes": true
