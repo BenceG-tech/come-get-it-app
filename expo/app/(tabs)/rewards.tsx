@@ -99,7 +99,7 @@ export default function RewardsScreen() {
 
   const goToCategory = (cat: string) => {
     console.log("[Rewards] Navigate to category:", cat);
-    router.push({ pathname: "/(tabs)/rewards-category/[category]", params: { category: cat } });
+    router.navigate({ pathname: "/(tabs)/rewards-category", params: { category: cat } });
   };
 
   const cardWidth = 148;
