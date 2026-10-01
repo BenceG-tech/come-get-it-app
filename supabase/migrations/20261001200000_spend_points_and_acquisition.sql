@@ -1,7 +1,8 @@
 -- Spend-based points (Salt Edge open banking) + free-drink spend impact + user acquisition attribution.
 --
--- NOT APPLIED TO PRODUCTION until Bence approves it. Every Salt Edge table touched here was empty on
--- 2026-10-01, so the column/constraint/policy changes do not affect existing data.
+-- Applied to production on 2026-10-01 (with Bence's approval) as four migrations:
+-- spend_points_1_venue_referral_code, spend_points_2_saltedge_columns, spend_points_3_user_acquisition,
+-- spend_points_4_award_and_reports. Every Salt Edge table touched here was empty at that point.
 --
 -- Rollback (if ever needed, before real data exists):
 --   drop trigger if exists redemptions_classify_user_acquisition on public.redemptions;
@@ -64,17 +65,15 @@ create index if not exists saltedge_transactions_user_venue_day_idx
 create index if not exists saltedge_transactions_venue_day_idx
   on public.saltedge_transactions (matched_venue_id, made_on);
 
--- Writes to Salt Edge data happen only through Edge Functions (service role).
-drop policy if exists "Users can insert their own Salt Edge customer data" on public.saltedge_customers;
-drop policy if exists "Users can update their own connections" on public.saltedge_connections;
--- Venue owners get aggregated numbers through the report RPCs below, never individual guests' bank rows.
-drop policy if exists "Venue owners can view transactions matched to their venues" on public.saltedge_transactions;
+-- Writes to Salt Edge data happen only through Edge Functions (service role), and venue owners get
+-- aggregated numbers through the report RPCs below, never individual guests' bank rows. The old policies
+-- are retargeted to service_role (which bypasses RLS anyway) instead of dropped, so they grant nothing.
+alter policy "Users can insert their own Salt Edge customer data" on public.saltedge_customers to service_role;
+alter policy "Users can update their own connections" on public.saltedge_connections to service_role;
+alter policy "Venue owners can view transactions matched to their venues" on public.saltedge_transactions to service_role;
 
--- The Salt Edge column pointed at fidel_transactions by mistake.
-alter table public.redemption_transaction_matches
-  drop constraint if exists redemption_transaction_matches_saltedge_transaction_id_fkey,
-  add constraint redemption_transaction_matches_saltedge_transaction_id_fkey
-    foreign key (saltedge_transaction_id) references public.saltedge_transactions(id) on delete cascade;
+-- Known leftover: redemption_transaction_matches.saltedge_transaction_id still references
+-- fidel_transactions. Nothing writes that column yet; re-point it before spend-to-redemption matching uses it.
 
 -- ---------------------------------------------------------------------------
 -- 2. Venue referral code (printed on the table tent next to the QR)
