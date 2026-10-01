@@ -56,6 +56,8 @@ function RootLayoutNav() {
       <Stack.Screen name="help" options={{ presentation: "card", headerShown: true, title: "Segítség", headerBackTitle: BACK_TITLE }} />
       <Stack.Screen name="account" options={{ presentation: "card", headerShown: true, title: "Fiók", headerBackTitle: BACK_TITLE }} />
       <Stack.Screen name="my-impact" options={{ presentation: "card", headerShown: false }} />
+      <Stack.Screen name="spend-points" options={{ presentation: "card", headerShown: true, title: "Költésből pont", headerBackTitle: BACK_TITLE }} />
+      <Stack.Screen name="venue-code" options={{ presentation: "card", headerShown: true, title: "Helykód", headerBackTitle: BACK_TITLE }} />
     </Stack>
   );
 }
