@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, type Href } from "expo-router";
@@ -9,13 +9,16 @@ import {
   Heart,
   HelpCircle,
   LogOut,
+  MapPin,
   User,
+  Wallet,
   type LucideIcon,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { getSpendPointsStatus } from "@/lib/spendPointsService";
 
 const CYAN = "#00C8E8" as const;
 const SERIF = Platform.select({ ios: "Georgia", default: "serif" }) as string;
@@ -26,6 +29,23 @@ type MenuGridItem = {
   route: Href;
   icon: LucideIcon;
 };
+
+const spendPointsItem: MenuGridItem = {
+  title: "Költésből pont",
+  subtitle: "Bank csatolása",
+  route: "/spend-points",
+  icon: Wallet,
+};
+
+const venueCodeItem: MenuGridItem = {
+  title: "Helykód",
+  subtitle: "Hol ismertél meg minket?",
+  route: "/venue-code",
+  icon: MapPin,
+};
+
+// The venue code only counts within 24 hours of signup (claim_venue_referral_code).
+const VENUE_CODE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const menuGrid: MenuGridItem[] = [
   {
@@ -60,6 +80,28 @@ export default function ProfileScreen() {
   const { session, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState<boolean>(false);
   const { favoriteVenues } = useFavorites();
+  const [spendPointsEnabled, setSpendPointsEnabled] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!session?.user.id) return;
+    let mounted = true;
+    getSpendPointsStatus().then((status) => {
+      if (mounted) setSpendPointsEnabled(status.enabled);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user.id]);
+
+  const visibleMenu = useMemo(() => {
+    const createdAt = session?.user.created_at ? new Date(session.user.created_at).getTime() : 0;
+    const showVenueCode = createdAt > 0 && Date.now() - createdAt < VENUE_CODE_WINDOW_MS;
+    return [
+      ...(spendPointsEnabled ? [spendPointsItem] : []),
+      ...(showVenueCode ? [venueCodeItem] : []),
+      ...menuGrid,
+    ];
+  }, [session?.user.created_at, spendPointsEnabled]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert("Kijelentkezés", "Biztosan kijelentkezel?", [
@@ -160,7 +202,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Menü</Text>
           <View style={styles.menuGrid}>
-            {menuGrid.map((item: MenuGridItem) => {
+            {visibleMenu.map((item: MenuGridItem) => {
               const Icon = item.icon;
               return (
                 <TouchableOpacity
