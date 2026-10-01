@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ArrowLeft, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -57,20 +57,18 @@ export default function RewardsCategoryScreen() {
 
   const title = titleMap[category] ?? category;
 
+  const goBackToRewards = () => {
+    // This is a sibling tab screen, so navigating directly to the rewards tab
+    // cannot reveal a previously visited category from a nested stack.
+    router.navigate("/(tabs)/rewards");
+  };
+
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-          title,
-          gestureEnabled: true,
-        }}
-      />
       <View style={styles.container} testID="rewards-category-screen">
         <StatusBar style="light" />
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity
-            onPress={() => router.replace("/(tabs)/rewards")}
+            onPress={goBackToRewards}
             style={styles.backButton}
             accessibilityRole="button"
             accessibilityLabel="Vissza a Jutalmakhoz"
@@ -120,7 +118,6 @@ export default function RewardsCategoryScreen() {
           </ScrollView>
         )}
       </View>
-    </>
   );
 }
 

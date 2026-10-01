@@ -14,6 +14,8 @@ import { geocodeVenueAddress } from '@/utils/geocoding';
 import RedemptionWindowModal from '@/components/RedemptionWindowModal';
 import { useFavorites } from '@/context/FavoritesContext';
 import { checkLocalEligibility, isDrinkAlwaysAvailable, getDayLabel } from '@/lib/redemptionService';
+import { useLocation } from '@/context/LocationContext';
+import { formatDistance, haversineMeters } from '@/utils/distance';
 
 
 function getTodayISODay(): number {
@@ -39,6 +41,7 @@ export default function VenueModalScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { location: userLocation } = useLocation();
   
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -178,6 +181,17 @@ export default function VenueModalScreen() {
       isValid,
     };
   }, [venue?.coordinates?.lat, venue?.coordinates?.lng, venue?.latitude, venue?.longitude]);
+
+  const venueDistance = useMemo(() => {
+    if (!userLocation || !resolvedCoords.isValid) return null;
+
+    return haversineMeters(
+      userLocation.coords.latitude,
+      userLocation.coords.longitude,
+      resolvedCoords.lat,
+      resolvedCoords.lng,
+    );
+  }, [resolvedCoords, userLocation]);
 
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
@@ -386,9 +400,11 @@ export default function VenueModalScreen() {
             <View style={styles.venueNameOverlay}>
               <Text style={styles.venueNameOverlayText}>{venue.name}</Text>
             </View>
-            <View style={styles.distanceBadge}>
-              <Text style={styles.distanceTextBadge}>{venue.distance ? (venue.distance / 1000).toFixed(1) : '0.5'}km</Text>
-            </View>
+            {venueDistance !== null && (
+              <View style={styles.distanceBadge}>
+                <Text style={styles.distanceTextBadge}>{formatDistance(venueDistance)}</Text>
+              </View>
+            )}
             <TouchableOpacity
               style={styles.detailFavoriteButton}
               onPress={handleFavoritePress}
