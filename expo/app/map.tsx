@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -16,7 +17,8 @@ import { ArrowLeft, Search, MapPin, Navigation, AlertCircle, CheckCircle2, Cross
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
 import { fetchVenues } from '@/lib/venueService';
-import DarkMapPreview from '@/components/DarkMapPreview';
+import DarkMapPreview, { resolveVenueCoordinate } from '@/components/DarkMapPreview';
+import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
 import VenueMiniCard from '@/components/VenueMiniCard';
 import { geocodeVenueAddress } from '@/utils/geocoding';
 import { useLocation } from '@/context/LocationContext';
@@ -511,6 +513,36 @@ function DarkMapBody({
   onRecenter: () => Promise<void>;
   onOpenSettings: () => Promise<void>;
 }) {
+  const nativeMapRef = useRef<{
+    animateToRegion?: (
+      region: { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number },
+      duration?: number
+    ) => void;
+  } | null>(null);
+
+  const initialNativeRegion = useMemo(() => {
+    const center = userCoordinate ?? { latitude: 47.4979, longitude: 19.0402 };
+    return {
+      latitude: center.latitude,
+      longitude: center.longitude,
+      latitudeDelta: 0.11,
+      longitudeDelta: 0.11,
+    };
+  }, [userCoordinate]);
+
+  useEffect(() => {
+    if (!centerOnUser || !userCoordinate || !nativeMapRef.current?.animateToRegion) return;
+    nativeMapRef.current.animateToRegion(
+      {
+        latitude: userCoordinate.latitude,
+        longitude: userCoordinate.longitude,
+        latitudeDelta: 0.035,
+        longitudeDelta: 0.035,
+      },
+      450
+    );
+  }, [centerOnUser, userCoordinate]);
+
   const statusConfig = {
     idle: { text: 'Helymeghatározás inaktív', icon: Crosshair, color: 'rgba(255,255,255,0.55)', bg: 'rgba(255,255,255,0.08)' },
     locating: { text: 'Helymeghatározás folyamatban…', icon: Navigation, color: '#00D1FF', bg: 'rgba(0,209,255,0.10)' },
@@ -524,19 +556,49 @@ function DarkMapBody({
 
   return (
     <View style={styles.webMapContainer} testID="dark-map">
-      <DarkMapPreview
-        venues={venues}
-        zoom={13}
-        style={styles.webMapCanvas}
-        interactive
-        controlsBottomOffset={24}
-        userCoordinate={userCoordinate}
-        centerOnUser={centerOnUser}
-        onMarkerPress={(venue) => {
-          console.log('[Map] Map marker pressed, showing mini card:', venue.id);
-          onMarkerPress(venue);
-        }}
-      />
+      {Platform.OS === 'ios' && MapView ? (
+        <MapView
+          ref={nativeMapRef}
+          style={styles.webMapCanvas}
+          provider={PROVIDER_DEFAULT}
+          initialRegion={initialNativeRegion}
+          mapType="mutedStandard"
+          userInterfaceStyle="dark"
+          showsUserLocation={locationStatus === 'found'}
+          showsMyLocationButton={false}
+          toolbarEnabled={false}
+          testID="native-apple-map"
+        >
+          {venues.map((venue) => {
+            const coordinate = resolveVenueCoordinate(venue);
+            return (
+              <Marker
+                key={String(venue.id)}
+                coordinate={{ latitude: coordinate.latitude, longitude: coordinate.longitude }}
+                title={venue.name}
+                description={venue.address ?? undefined}
+                pinColor="#00D1FF"
+                onPress={() => onMarkerPress(venue)}
+                testID={`map-marker-${String(venue.id)}`}
+              />
+            );
+          })}
+        </MapView>
+      ) : (
+        <DarkMapPreview
+          venues={venues}
+          zoom={13}
+          style={styles.webMapCanvas}
+          interactive
+          controlsBottomOffset={24}
+          userCoordinate={userCoordinate}
+          centerOnUser={centerOnUser}
+          onMarkerPress={(venue) => {
+            console.log('[Map] Map marker pressed, showing mini card:', venue.id);
+            onMarkerPress(venue);
+          }}
+        />
+      )}
 
       {/* Location status bar */}
       <View style={[styles.locationStatusBar, { backgroundColor: status.bg }]} pointerEvents="box-none" testID="map-location-status">
