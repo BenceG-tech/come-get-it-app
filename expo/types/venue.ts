@@ -47,6 +47,8 @@ export type Venue = {
   latitude?: number | null;
   longitude?: number | null;
   coordinates?: VenueCoordinates | null;
+  /** Loaded in batches. Missing/failed data must never advertise an available offer. */
+  freeDrinkData?: FreeDrinkData;
 };
 
 export type OpeningHours = {
@@ -88,6 +90,12 @@ export type FreeDrinkWindow = {
   start: string; // HH or HH:mm
   end: string; // HH or HH:mm
   timezone?: string; // e.g. "Europe/Budapest"
+};
+
+export type FreeDrinkData = {
+  status: 'ready' | 'unknown';
+  drinks: VenueDrink[];
+  windows: FreeDrinkWindow[];
 };
 
 export type RedemptionToken = {

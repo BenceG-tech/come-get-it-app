@@ -109,6 +109,7 @@ export default function ProfileScreen() {
       ...(spendPointsEnabled ? [spendPointsItem] : []),
       ...(showVenueCode ? [venueCodeItem] : []),
       ...(isNearbyAlertsSupported ? [nearbyAlertsItem] : []),
+      ...(Platform.OS !== "web" ? [{ title: "Ajánlatértesítések", subtitle: "Jutalmak és újdonságok", route: "/notifications" as Href, icon: BellRing }] : []),
       ...menuGrid,
     ];
   }, [session?.user.created_at, spendPointsEnabled]);

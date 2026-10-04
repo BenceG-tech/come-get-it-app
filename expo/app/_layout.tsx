@@ -7,7 +7,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProvider } from "@/context/AppContext";
-import { AuthProvider } from "@/context/AuthContext";
+import { syncCampaignNotifications } from "@/lib/campaignNotifications";
+import { useAuth, AuthProvider } from "@/context/AuthContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { LocationProvider } from "@/context/LocationContext";
 import Colors from "@/constants/colors";
@@ -31,16 +32,17 @@ function notificationTarget(response: Notifications.NotificationResponse | null)
   if (handledNotificationIds.has(id)) return null;
   handledNotificationIds.add(id);
   const url = response.notification.request.content.data?.url;
-  return typeof url === "string" && url.startsWith("/venue/") ? url : null;
+  if (typeof url !== "string") return null;
+  return ['/map', '/(tabs)/home', '/(tabs)/rewards'].includes(url) || /^\/(venue|reward)\/[a-zA-Z0-9-]+$/.test(url) ? url : null;
 }
 
 // Keeps nearby free-drink alerts registered and opens the venue when one is tapped.
 function useNearbyAlerts() {
   useEffect(() => {
-    if (!isNearbyAlertsSupported) return;
-    syncNearbyAlerts({ refreshVenues: true }).catch((e) => console.warn("[NearbyAlerts] sync failed", e));
+    if (Platform.OS === "web") return;
+    if (isNearbyAlertsSupported) syncNearbyAlerts({ refreshVenues: true }).catch((e) => console.warn("[NearbyAlerts] sync failed", e));
     const appStateSub = AppState.addEventListener("change", (state) => {
-      if (state === "active") syncNearbyAlerts().catch((e) => console.warn("[NearbyAlerts] sync failed", e));
+      if (state === "active" && isNearbyAlertsSupported) syncNearbyAlerts().catch((e) => console.warn("[NearbyAlerts] sync failed", e));
     });
 
     // Cold start from a tap: the entry screen still has to route by auth, so home opens the venue afterwards.
@@ -62,6 +64,18 @@ function useNearbyAlerts() {
 
 function RootLayoutNav() {
   useNearbyAlerts();
+  const { session } = useAuth();
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || Platform.OS === 'web') return;
+    const sync = (token?: Notifications.DevicePushToken) => {
+      void syncCampaignNotifications(userId, token).catch(() => undefined);
+    };
+    sync();
+    const appStateSub = AppState.addEventListener('change', state => { if (state === 'active') sync(); });
+    const tokenSub = Notifications.addPushTokenListener(sync);
+    return () => { appStateSub.remove(); tokenSub.remove(); };
+  }, [session?.user.id]);
   return (
     <Stack
       initialRouteName="index"

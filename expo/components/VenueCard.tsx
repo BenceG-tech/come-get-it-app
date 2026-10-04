@@ -8,6 +8,8 @@ import OpeningHoursDisplay from '@/components/OpeningHoursDisplay';
 import { convertOpeningHoursToBusinessHours } from '@/utils/openingHours';
 import Colors from '@/constants/colors';
 import { useFavorites } from '@/context/FavoritesContext';
+import { hasAvailableFreeDrink } from '@/lib/offerAvailability';
+import { useAvailabilityNow } from '@/lib/useAvailabilityNow';
 import { formatDistance } from '@/utils/distance';
 
 type VenueCardProps = {
@@ -17,6 +19,8 @@ type VenueCardProps = {
 
 export default function VenueCard({ venue, showRating = true }: VenueCardProps) {
   const router = useRouter();
+  const availabilityNow = useAvailabilityNow();
+  const freeDrinkAvailable = hasAvailableFreeDrink(venue, availabilityNow);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const { width: screenWidth } = useWindowDimensions();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -107,9 +111,11 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
         </View>
 
         {/* Free drink badge - overhangs the bottom edge of the image */}
-        <View style={styles.freeDrinkBadge}>
-          <Text style={styles.freeDrinkText}>Ingyen Ital Elérhető</Text>
-        </View>
+        {freeDrinkAvailable ? (
+          <View style={styles.freeDrinkBadge}>
+            <Text style={styles.freeDrinkText}>Ingyen ital most elérhető</Text>
+          </View>
+        ) : null}
       </View>
       
       {/* Content section below image */}

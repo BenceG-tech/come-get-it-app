@@ -134,6 +134,9 @@ export default function RedemptionWindowModal({
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const statusCheckInFlightRef = useRef(false);
+  const createInFlightRef = useRef(false);
+  const flowGenerationRef = useRef(0);
+  const [checkingStage, setCheckingStage] = useState('Beváltás előkészítése…');
 
   // Animations
   const pulseScale = useRef(new Animated.Value(1)).current;
@@ -176,6 +179,7 @@ export default function RedemptionWindowModal({
   }, [pulseScale, pulseOpacity, phoneShake, phoneScale]);
 
   const reset = useCallback(() => {
+    flowGenerationRef.current += 1;
     clearTimer();
     stopAnimations();
     setState('step1_arrive');
@@ -290,7 +294,7 @@ export default function RedemptionWindowModal({
           setState('success');
           markRedeemedToday();
           queryClient.invalidateQueries({ queryKey: ['csr-impact'] });
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
         } else if (response.status === 'expired' || response.status === 'revoked') {
           clearTimer();
           setWindowToken(null);
@@ -342,20 +346,26 @@ export default function RedemptionWindowModal({
   }, [onClose, reset]);
 
   const goToStep2 = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     setState('step2_show');
-  }, []);
+    // Start the same bounded request early; activating reuses the fresh fix.
+    if (!DEMO_MODE && venueCoordinates) void getCurrentLocation().catch(() => null);
+  }, [getCurrentLocation, venueCoordinates]);
 
   const handleCreateWindow = useCallback(async () => {
+    if (createInFlightRef.current) return;
     if (!drink) {
       setErrorMessage('Ehhez a helyhez még nincs ingyen ital beállítva.');
       setState('not_eligible');
       return;
     }
 
+    createInFlightRef.current = true;
+    const generation = flowGenerationRef.current;
+    setCheckingStage('Helyzet ellenőrzése…');
     setState('checking');
     setErrorMessage('');
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
 
     try {
       let userCoordinates: Coordinates | null = null;
@@ -363,6 +373,7 @@ export default function RedemptionWindowModal({
 
       if (!DEMO_MODE && venueCoordinates) {
         const current = await getCurrentLocation().catch(() => null);
+        if (generation !== flowGenerationRef.current) return;
         if (current?.coords) {
           userCoordinates = { latitude: current.coords.latitude, longitude: current.coords.longitude };
           setDistance(distanceMeters(userCoordinates, venueCoordinates));
@@ -373,6 +384,7 @@ export default function RedemptionWindowModal({
       // also lets a service-role allowlisted App Review account exercise the
       // complete flow without weakening checks for normal users.
 
+      setCheckingStage('Beváltókód létrehozása…');
       const response = await createRedemptionWindow({
         venue_id: venueId,
         drink_id: drink.id,
@@ -380,12 +392,13 @@ export default function RedemptionWindowModal({
         user_longitude: userCoordinates?.longitude ?? null,
         demo_mode: DEMO_MODE,
       });
+      if (generation !== flowGenerationRef.current) return;
 
       if (response.success) {
         setWindowToken(response.data);
         setState('countdown');
         startCountdown(response.data.expires_at);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
         return;
       }
 
@@ -394,26 +407,29 @@ export default function RedemptionWindowModal({
         setWindowToken(mockWindow);
         setState('countdown');
         startCountdown(mockWindow.expires_at);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
         return;
       }
 
       setErrorMessage(getFriendlyError(response.error.error));
       setState(response.error.code === 'EXPIRED' ? 'expired' : 'error');
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined);
     } catch (error) {
+      if (generation !== flowGenerationRef.current) return;
       console.error('[RedemptionWindowModal] Failed to create window', error);
       if (DEMO_MODE) {
         const mockWindow = generateMockRedemptionWindow(venueId, drink.id);
         setWindowToken(mockWindow);
         setState('countdown');
         startCountdown(mockWindow.expires_at);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
         return;
       }
       setErrorMessage('Átmeneti hálózati hiba történt. Próbáld újra.');
       setState('error');
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined);
+    } finally {
+      createInFlightRef.current = false;
     }
   }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId]);
 
@@ -423,7 +439,7 @@ export default function RedemptionWindowModal({
     setImpactMessage('Demó beváltás');
     setImpactDelta(0);
     setState('success');
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
   }, [clearTimer]);
 
   const renderDrinkImage = () => (
@@ -487,7 +503,7 @@ export default function RedemptionWindowModal({
           {renderDrinkImage()}
           <View style={styles.bodyContent}>
             <ActivityIndicator size="large" color={CYAN} />
-            <Text style={styles.loadingTitle}>Beváltási ablak nyitása...</Text>
+            <Text style={styles.loadingTitle}>{checkingStage}</Text>
             <Text style={styles.helperText}>Egy pillanat, ellenőrizzük az ingyen ital jogosultságot.</Text>
           </View>
         </View>

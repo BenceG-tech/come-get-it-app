@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   Animated,
   PanResponder,
+  AppState,
   type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -21,13 +22,14 @@ import VenueCard from "@/components/VenueCard";
 import DarkMapPreview from "@/components/DarkMapPreview";
 import VenueMiniCard from "@/components/VenueMiniCard";
 import { Venue } from "@/types/venue";
-import { fetchVenueCoverUrl, fetchVenues } from "@/lib/venueService";
+import { fetchVenues } from "@/lib/venueService";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { getUserCSRImpact } from "@/lib/csrService";
-import { convertOpeningHoursToBusinessHours, isVenueOpenNow } from "@/utils/openingHours";
 import { sortByDistance } from "@/utils/distance";
+import { hasAvailableFreeDrink, getVenueOpeningState } from "@/lib/offerAvailability";
+import { useAvailabilityNow } from "@/lib/useAvailabilityNow";
 import { takePendingNotificationUrl } from "@/lib/nearbyAlerts";
 
 const COLLAPSED_VISIBLE_HEIGHT = 88 as const;
@@ -50,10 +52,14 @@ export default function BarsScreen() {
   const { width } = useWindowDimensions();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [offersLoading, setOffersLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [snapState, setSnapState] = useState<SnapState>("half");
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
+  const availabilityNow = useAvailabilityNow();
+  const venueRequest = useRef<AbortController | null>(null);
+  const hasLoadedVenues = useRef(false);
 
   const { location: userLocation, getCurrentLocation } = useLocation();
 
@@ -193,37 +199,38 @@ export default function BarsScreen() {
   }, []);
 
   const loadVenues = useCallback(async () => {
-    setLoading(true);
+    venueRequest.current?.abort();
+    const controller = new AbortController();
+    venueRequest.current = controller;
+    if (!hasLoadedVenues.current) setLoading(true);
     setErrorMsg(null);
-
+    setOffersLoading(true);
     try {
-      console.log("[Home] Fetching venues...");
-      const rows = await fetchVenues({ orderByCreated: true });
-      console.log("[Home] Venues fetched:", rows.length);
-
-      const venuesWithImages = await Promise.all(
-        rows.map(async (venue: Venue) => {
-          if (venue.image_url || venue.hero_image_url) return venue;
-
-          const coverUrl = await fetchVenueCoverUrl(venue.id);
-          return coverUrl ? { ...venue, image_url: coverUrl } : venue;
-        })
-      );
-
-      setVenues(venuesWithImages);
+      const rows = await fetchVenues({
+        orderByCreated: true,
+        signal: controller.signal,
+        onBase: (base) => {
+          if (controller.signal.aborted) return;
+          setVenues(base);
+          hasLoadedVenues.current = true;
+          setLoading(false);
+        },
+      });
+      if (!controller.signal.aborted) setVenues(rows);
     } catch (error) {
-      console.error("[Home] Error fetching venues:", error);
-      setErrorMsg("Nem sikerült betölteni a helyszíneket. Próbáld újra pár másodperc múlva.");
-      setVenues([]);
+      if (!controller.signal.aborted) {
+        console.warn('[Home] Venue loading failed');
+        setErrorMsg('Nem sikerült frissíteni a helyszíneket. Próbáld újra.');
+      }
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) { setLoading(false); setOffersLoading(false); }
     }
   }, []);
 
   useEffect(() => {
-    loadVenues().catch((error) => {
-      console.error("[Home] loadVenues crashed:", error);
-    });
+    void loadVenues();
+    const subscription = AppState.addEventListener('change', (state) => { if (state === 'active') void loadVenues(); });
+    return () => { venueRequest.current?.abort(); subscription.remove(); };
   }, [loadVenues]);
 
   const userCoords = userLocation?.coords ?? null;
@@ -239,11 +246,10 @@ export default function BarsScreen() {
 
       return selectedFilters.every((filter) => {
         if (filter === "nyitva") {
-          const businessHours = convertOpeningHoursToBusinessHours(venue.opening_hours ?? null);
-          return businessHours ? isVenueOpenNow({ business_hours: businessHours }) : false;
+          return getVenueOpeningState(venue.opening_hours, availabilityNow) === 'available';
         }
         if (filter === "ingyen-ital" || filter === "free-drink") {
-          return true;
+          return hasAvailableFreeDrink(venue, availabilityNow);
         }
         if (filter === "reward-bar") {
           return venue.participates_in_points === true;
@@ -260,11 +266,11 @@ export default function BarsScreen() {
       });
     });
     return sortByDistance(matching, userCoords);
-  }, [selectedFilters, venues, userCoords]);
+  }, [selectedFilters, venues, userCoords, availabilityNow]);
 
   const mapVenues = useMemo(
-    () => (filteredVenues.length > 0 ? filteredVenues : venues),
-    [filteredVenues, venues]
+    () => filteredVenues,
+    [filteredVenues]
   );
 
   const openFilter = () => {
@@ -551,9 +557,9 @@ export default function BarsScreen() {
 
                 {filteredVenues.length === 0 && !loading && (
                   <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>Nincs találat</Text>
+                    <Text style={styles.emptyStateText}>{offersLoading ? "Ajánlatok ellenőrzése…" : "Nincs találat"}</Text>
                     <Text style={styles.emptyStateSubtext}>
-                      Próbálj meg más szűrőket vagy keresési kifejezést
+                      {offersLoading ? "A helyszínek már betöltődtek, az aktuális ajánlatok még frissülnek." : "Próbálj meg más szűrőket vagy keresési kifejezést"}
                     </Text>
                   </View>
                 )}
@@ -566,7 +572,7 @@ export default function BarsScreen() {
 
       {previewVenue && (
         <VenueMiniCard
-          venue={previewVenue}
+          venue={venues.find((venue) => venue.id === previewVenue.id) ?? previewVenue}
           onClose={() => setPreviewVenue(null)}
           onDetails={onMiniCardDetails}
           bottomOffset={insets.bottom + 12}

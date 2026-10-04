@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import { Venue } from '@/types/venue';
+import { withDataTimeout } from '@/lib/supabaseRequest';
+import { isFreshAccurateLocation } from '@/lib/locationPolicy';
 
 const GEOFENCE_RADIUS = 500;
 
 type LocationCoords = {
   latitude: number;
   longitude: number;
+  accuracy?: number | null;
 };
 
 type LocationObjectLike = {
@@ -53,12 +56,13 @@ function getWebLocationOnce(): Promise<LocationObjectLike> {
           coords: {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
           },
           timestamp: pos.timestamp,
         });
       },
       (err) => reject(err),
-      { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
     );
   });
 }
@@ -71,6 +75,9 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
 
   const webWatchIdRef = useRef<number | null>(null);
   const nativeWatchRef = useRef<{ remove: () => void } | null>(null);
+  const locationRef = useRef(location);
+  locationRef.current = location;
+  const locationRequestRef = useRef<Promise<LocationObjectLike | null> | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -156,62 +163,57 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
     }
   }, [openLocationSettings]);
 
-  const getCurrentLocation = useCallback(async (): Promise<LocationObjectLike | null> => {
-    const granted = hasPermission || await requestPermission();
-    if (!granted) {
-      setLocationStatus('denied');
-      return null;
-    }
-
-    setLocationStatus('locating');
-
-    try {
-      if (Platform.OS === 'web') {
-        const current = await getWebLocationOnce();
-        setLocation(current);
-        setLocationStatus('found');
-        return current;
-      }
-
-      const Location = await getExpoLocationModule();
-
-      // Try high accuracy first, fall back to balanced, then low.
-      let currentLocation: Awaited<ReturnType<typeof Location.getCurrentPositionAsync>> | null = null;
+  const getCurrentLocation = useCallback((): Promise<LocationObjectLike | null> => {
+    if (locationRequestRef.current) return locationRequestRef.current;
+    const request = async (): Promise<LocationObjectLike | null> => {
+      const granted = hasPermission || await requestPermission();
+      if (!granted) { setLocationStatus('denied'); return null; }
+      if (isFreshAccurateLocation(locationRef.current)) return locationRef.current;
+      setLocationStatus('locating');
       try {
-        currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-      } catch (highErr) {
-        console.log('[Location] High accuracy failed, trying balanced:', highErr);
-        try {
-          currentLocation = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-        } catch (balancedErr) {
-          console.log('[Location] Balanced accuracy failed, trying low:', balancedErr);
-          currentLocation = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Low,
-          });
+        let nextLocation: LocationObjectLike;
+        if (Platform.OS === 'web') {
+          nextLocation = await getWebLocationOnce();
+          if (!isFreshAccurateLocation(nextLocation)) throw new Error('A helyzet még nem elég pontos.');
+        } else {
+          const Location = await getExpoLocationModule();
+          const cached = await withDataTimeout(Location.getLastKnownPositionAsync({ maxAge: 15_000, requiredAccuracy: 100 }), 'Korábbi helyzet', 1_500).catch(() => null);
+          if (cached && isFreshAccurateLocation(cached)) {
+            nextLocation = cached;
+          } else {
+            // A temporary watch is cancellable; stop it on both success and deadline.
+            nextLocation = await new Promise<LocationObjectLike>((resolve, reject) => {
+              let subscription: { remove: () => void } | null = null;
+              let finished = false;
+              const finish = (value: LocationObjectLike | null, error?: unknown) => {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
+                subscription?.remove();
+                if (value) resolve(value); else reject(error ?? new Error('A helymeghatározás időtúllépés miatt leállt.'));
+              };
+              const timer = setTimeout(() => finish(null), 10_000);
+              Location.watchPositionAsync({ accuracy: Location.Accuracy.High, timeInterval: 1_000, distanceInterval: 0 }, (position) => {
+                if (isFreshAccurateLocation(position)) finish(position);
+              }).then((watch) => {
+                subscription = watch;
+                if (finished) watch.remove();
+              }, (error) => finish(null, error));
+            });
+          }
         }
+        locationRef.current = nextLocation;
+        setLocation(nextLocation);
+        setLocationStatus('found');
+        return nextLocation;
+      } catch {
+        setLocationStatus('unavailable');
+        return null;
       }
-
-      if (!currentLocation) throw new Error('No location returned');
-
-      const nextLocation: LocationObjectLike = {
-        coords: {
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-        },
-        timestamp: currentLocation.timestamp,
-      };
-      setLocation(nextLocation);
-      setLocationStatus('found');
-      return nextLocation;
-    } catch (error) {
-      console.log('[Location] Failed to get current location:', error);
-      setLocationStatus('unavailable');
-      return null;
-    }
+    };
+    const promise = request().finally(() => { locationRequestRef.current = null; });
+    locationRequestRef.current = promise;
+    return promise;
   }, [hasPermission, requestPermission]);
 
   const startWatching = useCallback(async () => {
@@ -246,6 +248,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
                 coords: {
                   latitude: pos.coords.latitude,
                   longitude: pos.coords.longitude,
+                  accuracy: pos.coords.accuracy,
                 },
                 timestamp: pos.timestamp,
               });
@@ -269,6 +272,7 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
             coords: {
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude,
+              accuracy: loc.coords.accuracy,
             },
             timestamp: loc.timestamp,
           });

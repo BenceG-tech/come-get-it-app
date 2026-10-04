@@ -129,7 +129,13 @@
           "isAndroidForegroundServiceEnabled": false
         }
       ],
-      "./plugins/withoutBackgroundFetch"
+      "./plugins/withoutBackgroundFetch",
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "offers"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

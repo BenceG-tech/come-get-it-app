@@ -13,12 +13,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
-import { getSupabase } from '@/lib/supabaseClient';
 import { fetchVenues } from '@/lib/venueService';
-import { checkLocalEligibility } from '@/lib/redemptionService';
+import { getOfferAvailability } from '@/lib/offerAvailability';
 import type { FreeDrinkWindow, OpeningHours } from '@/types/venue';
 import { haversineMeters, venueLatLng, type LatLng } from '@/utils/distance';
-import { convertOpeningHoursToBusinessHours, isVenueOpenNow } from '@/utils/openingHours';
 
 export const NEARBY_ALERT_TASK = 'cgi-nearby-free-drink';
 export const NEARBY_ALERT_RADIUS_M = 500;
@@ -139,38 +137,20 @@ async function stopRegions(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function refreshVenueCache(): Promise<CachedVenue[]> {
-  const venues = await fetchVenues({ columns: 'id,name,coordinates,opening_hours,is_paused', orderByCreated: false });
-  const supabase = getSupabase();
-  const [{ data: drinkRows }, { data: windowRows }] = await Promise.all([
-    supabase.from('venue_drinks').select('id,venue_id,drink_name').eq('is_free_drink', true),
-    supabase.from('free_drink_windows').select('id,venue_id,drink_id,days,start_time,end_time,timezone'),
-  ]);
-
+  const venues = await fetchVenues({ columns: 'id,name,coordinates,opening_hours,is_paused', orderByCreated: false, includeCovers: false });
   const cached: CachedVenue[] = [];
   for (const venue of venues) {
     const coord = venueLatLng(venue);
-    const drinks = (drinkRows ?? [])
-      .filter((d: { venue_id: string }) => String(d.venue_id) === String(venue.id))
-      .map((d: { id: string; drink_name: string }) => ({ id: String(d.id), name: d.drink_name }));
-    if (!coord || drinks.length === 0) continue;
+    const data = venue.freeDrinkData;
+    if (!coord || data?.status !== 'ready') continue;
+    const drinks = data.drinks.filter((drink) => drink.isFreeDrink === true)
+      .map((drink) => ({ id: drink.id, name: drink.drinkName }));
+    if (drinks.length === 0) continue;
     cached.push({
-      id: String(venue.id),
-      name: venue.name,
-      latitude: coord.latitude,
-      longitude: coord.longitude,
+      id: String(venue.id), name: venue.name,
+      latitude: coord.latitude, longitude: coord.longitude,
       opening_hours: venue.opening_hours ?? null,
-      drinks,
-      windows: (windowRows ?? [])
-        .filter((w: { venue_id: string }) => String(w.venue_id) === String(venue.id))
-        .map((w: { id: string; venue_id: string; drink_id: string; days: number[] | null; start_time: string; end_time: string; timezone: string | null }) => ({
-          id: String(w.id),
-          venueId: String(w.venue_id),
-          drinkId: String(w.drink_id),
-          days: Array.isArray(w.days) ? w.days.map(Number) : undefined,
-          start: w.start_time,
-          end: w.end_time,
-          timezone: w.timezone ?? undefined,
-        })),
+      drinks, windows: data.windows,
     });
   }
   await AsyncStorage.setItem(KEY_VENUES, JSON.stringify(cached));
@@ -263,11 +243,15 @@ export async function syncNearbyAlerts(options: { refreshVenues?: boolean } = {}
 // ---------------------------------------------------------------------------
 
 function pickAvailableDrink(venue: CachedVenue): { id: string; name: string } | null {
-  if (venue.opening_hours) {
-    const hours = convertOpeningHoursToBusinessHours(venue.opening_hours);
-    if (hours && !isVenueOpenNow({ business_hours: hours })) return null;
-  }
-  return venue.drinks.find((drink) => checkLocalEligibility(venue.windows, drink.id).eligible) ?? null;
+  const availability = getOfferAvailability({
+    opening_hours: venue.opening_hours,
+    freeDrinkData: {
+      status: 'ready',
+      drinks: venue.drinks.map((drink) => ({ id: drink.id, venueId: venue.id, drinkName: drink.name, isFreeDrink: true })),
+      windows: venue.windows,
+    },
+  });
+  return venue.drinks.find((drink) => availability.drinkIds.includes(drink.id)) ?? null;
 }
 
 // Hungarian definite article: "az" before a vowel sound, "a" otherwise (good enough for venue names).

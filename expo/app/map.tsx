@@ -20,7 +20,6 @@ import { fetchVenues } from '@/lib/venueService';
 import DarkMapPreview, { resolveVenueCoordinate } from '@/components/DarkMapPreview';
 import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
 import VenueMiniCard from '@/components/VenueMiniCard';
-import { geocodeVenueAddress } from '@/utils/geocoding';
 import { useLocation } from '@/context/LocationContext';
 import { formatDistance, haversineMeters } from '@/utils/distance';
 
@@ -58,61 +57,22 @@ export default function MapScreen() {
   );
 
   useEffect(() => {
-    const fetchVenuesAndLocation = async () => {
-      try {
-        const venuesData: Venue[] = await fetchVenues({ orderByCreated: true });
-        console.log('[Map] Fetched venues:', venuesData.length);
-        
-        // Geocode venues that don't have coordinates for this map session only.
-        // Venue data is managed in Venue Hub; the consumer app must never write it.
-        const venuesWithCoords = await Promise.all(
-          venuesData.map(async (venue) => {
-            const latFromVenue = typeof (venue as any).latitude === 'number' ? (venue as any).latitude : null;
-            const lngFromVenue = typeof (venue as any).longitude === 'number' ? (venue as any).longitude : null;
-            const latFromCoords = typeof venue.coordinates?.lat === 'number' ? venue.coordinates.lat : null;
-            const lngFromCoords = typeof venue.coordinates?.lng === 'number' ? venue.coordinates.lng : null;
-
-            const existingLat = latFromVenue ?? latFromCoords;
-            const existingLng = lngFromVenue ?? lngFromCoords;
-
-            if (existingLat !== null && existingLng !== null) {
-              return { ...venue, latitude: existingLat, longitude: existingLng };
-            }
-
-            if (venue.address) {
-              try {
-                const coordinates = await geocodeVenueAddress(venue.name, venue.address);
-
-                if (coordinates) {
-                  console.log('[Map] Geocoded venue', { id: venue.id, name: venue.name, coordinates });
-                  return { ...venue, latitude: coordinates.lat, longitude: coordinates.lng };
-                }
-              } catch (geocodeError) {
-                console.error('[Map] Failed to geocode venue', { id: venue.id, name: venue.name, geocodeError });
-              }
-            }
-
-            return venue;
-          })
-        );
-
-        console.log('[Map] venues after geocode', {
-          total: venuesWithCoords.length,
-          withCoords: venuesWithCoords.filter(
-            (v) => typeof (v as any).latitude === 'number' && typeof (v as any).longitude === 'number'
-          ).length,
-        });
-        setVenues(venuesWithCoords as Venue[]);
-        setLoadError(false);
-      } catch (error) {
-        console.error('[Map] Error fetching data:', error);
-        setLoadError(true);
-      } finally {
-        setLoading(false);
-      }
+    const controller = new AbortController();
+    const display = (rows: Venue[]) => {
+      if (controller.signal.aborted) return;
+      // Venue Hub owns coordinates; missing map data must not delay the venue list.
+      setVenues(rows.map((venue) => ({ ...venue,
+        latitude: venue.coordinates?.lat ?? venue.latitude,
+        longitude: venue.coordinates?.lng ?? venue.longitude,
+      })));
+      setLoading(false);
+      setLoadError(false);
     };
-
-    fetchVenuesAndLocation();
+    void fetchVenues({ orderByCreated: true, signal: controller.signal, onBase: display })
+      .then(display)
+      .catch(() => { if (!controller.signal.aborted) setLoadError(true); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, []);
 
   const userCoords = userLocation?.coords ?? null;
@@ -571,6 +531,7 @@ function DarkMapBody({
         >
           {venues.map((venue) => {
             const coordinate = resolveVenueCoordinate(venue);
+            if (coordinate.approximate) return null;
             return (
               <Marker
                 key={String(venue.id)}
@@ -681,7 +642,7 @@ function DarkMapBody({
 
       {previewVenue && (
         <VenueMiniCard
-          venue={previewVenue}
+          venue={venues.find((venue) => venue.id === previewVenue.id) ?? previewVenue}
           onClose={onClosePreview}
           onDetails={onDetails}
           bottomOffset={24}
