@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, useWindowDimensions, Platform, Linking, NativeScrollEvent, NativeSyntheticEvent, Animated, Pressable, Modal } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { X, Star, Clock, MapPin, ChevronDown, ChevronRight, Navigation, Heart, Martini } from 'lucide-react-native';
-import DarkMapPreview from '@/components/DarkMapPreview';
+import { MapView, Marker } from '@/lib/mapComponents';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { getVenueWithDetails } from '@/lib/supabaseProvider';
@@ -606,30 +606,82 @@ export default function VenueModalScreen() {
                   <Text style={styles.mapText}>Cím geokódolása...</Text>
                 </View>
               ) : resolvedCoords.isValid ? (
-                <View style={styles.mapContainer} testID="venue-map">
-                  <DarkMapPreview
-                    venues={[venue]}
-                    zoom={16}
-                    style={styles.mapView}
-                    showAttribution
-                    onMarkerPress={() => {
+                Platform.OS !== 'web' && MapView ? (
+                  <View style={styles.mapContainer} testID="venue-map">
+                    <MapView
+                      style={styles.mapView}
+                      initialRegion={{
+                        latitude: resolvedCoords.lat,
+                        longitude: resolvedCoords.lng,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      }}
+                      scrollEnabled={false}
+                      zoomEnabled={false}
+                      rotateEnabled={false}
+                      pitchEnabled={false}
+                      toolbarEnabled={false}
+                      testID="venue-native-map"
+                    >
+                      <Marker
+                        coordinate={{ latitude: resolvedCoords.lat, longitude: resolvedCoords.lng }}
+                        title={venue.name}
+                        onPress={() => {
+                          const url = Platform.select({
+                            ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
+                            android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
+                            web: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                            default: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                          });
+                          if (!url) return;
+                          if (Platform.OS === 'web' && typeof window !== 'undefined') window.open(url, '_blank');
+                          else Linking.openURL(url).catch((err) => console.error('[VenueDetail] Failed to open maps:', err));
+                        }}
+                        testID="venue-native-marker"
+                      />
+                    </MapView>
+                    <View style={styles.mapOverlay} pointerEvents="none">
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.mapOverlayText}>Markerre bökve útvonal</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.mapContainer}
+                    activeOpacity={0.9}
+                    testID="venue-map"
+                    onPress={() => {
                       const url = Platform.select({
                         ios: `maps:?daddr=${resolvedCoords.lat},${resolvedCoords.lng}&dirflg=d`,
                         android: `geo:${resolvedCoords.lat},${resolvedCoords.lng}?q=${resolvedCoords.lat},${resolvedCoords.lng}(${encodeURIComponent(venue.name)})`,
-                        web: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
-                        default: `https://www.google.com/maps/dir/?api=1&destination=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                        web: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
+                        default: `https://www.google.com/maps/search/?api=1&query=${resolvedCoords.lat},${resolvedCoords.lng}`,
                       });
-                      if (!url) return;
-                      if (Platform.OS === 'web' && typeof window !== 'undefined') window.open(url, '_blank');
-                      else Linking.openURL(url).catch((err) => console.error('[VenueDetail] Failed to open maps:', err));
+                      if (url) {
+                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                          window.open(url, '_blank');
+                        } else {
+                          Linking.openURL(url).catch((err) => {
+                            console.error('[VenueDetail] Failed to open maps:', err);
+                          });
+                        }
+                      }
                     }}
-                    testID="venue-dark-map"
-                  />
-                  <View style={styles.mapOverlay} pointerEvents="none">
-                    <MapPin size={16} color="#fff" />
-                    <Text style={styles.mapOverlayText}>Markerre bökve útvonal</Text>
-                  </View>
-                </View>
+                  >
+                    <Image
+                      source={{
+                        uri: `https://staticmap.openstreetmap.de/staticmap.php?center=${resolvedCoords.lat},${resolvedCoords.lng}&zoom=16&size=900x420&maptype=mapnik&markers=${resolvedCoords.lat},${resolvedCoords.lng},lightblue1`,
+                      }}
+                      style={styles.mapView}
+                      resizeMode="cover"
+                      onError={(e) => console.log('[VenueDetail] Map image failed to load:', e.nativeEvent.error)}
+                    />
+                    <View style={styles.mapOverlay}>
+                      <MapPin size={16} color="#fff" />
+                      <Text style={styles.mapOverlayText}>Kattints a térképhez</Text>
+                    </View>
+                  </TouchableOpacity>
+                )
               ) : (
                 <TouchableOpacity
                   style={[styles.mapContainer, styles.mapFallbackArtwork]}
