@@ -37,7 +37,7 @@ export default function SearchScreen() {
     setError(null);
     try {
       const venueData = await fetchVenues({
-        columns: 'id,name,address,image_url,plan,created_at,website_url,is_paused,coordinates',
+        columns: 'id,name,address,image_url,plan,created_at,website_url,is_paused,coordinates,opening_hours',
         limit: 100,
       });
       setVenues(venueData as SupaVenue[]);

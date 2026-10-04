@@ -1,84 +1,58 @@
-import createContextHook from "@nkzw/create-context-hook";
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { getSupabase } from "@/lib/supabaseClient";
+import createContextHook from '@nkzw/create-context-hook';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/context/AuthContext';
+import { getSupabase } from '@/lib/supabaseClient';
+import { runSupabaseRead } from '@/lib/supabaseRequest';
 
 type AppContextType = {
   locationEnabled: boolean;
   setLocationEnabled: (enabled: boolean) => void;
   points: number;
-  addPoints: (amount: number) => void;
+  pointsLoaded: boolean;
+  refreshPoints: () => Promise<void>;
+  setPointsBalance: (balance: number) => void;
   selectedFilters: string[];
   setSelectedFilters: (filters: string[]) => void;
 };
 
 export const [AppProvider, useAppContext] = createContextHook<AppContextType>(() => {
   const { session, isAuthReady } = useAuth();
-  const supabase = useMemo(() => getSupabase(), []);
-
-  const [locationEnabled, setLocationEnabled] = useState<boolean>(false);
-  const [points, setPoints] = useState<number>(0);
+  const userId = session?.user?.id;
+  const queryClient = useQueryClient();
+  const [locationEnabled, setLocationEnabled] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-
+  const pointsQuery = useQuery({
+    queryKey: ['user-points', userId],
+    enabled: isAuthReady && Boolean(userId),
+    queryFn: async () => {
+      const data = await runSupabaseRead<{ balance: number }>('Pontegyenleg betöltése', () =>
+        getSupabase().from('user_points').select('balance').eq('user_id', userId!).maybeSingle());
+      const balance = Number(data?.balance ?? 0);
+      if (!Number.isFinite(balance)) throw new Error('Érvénytelen pontegyenleg.');
+      return balance;
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
+  const refreshPoints = useCallback(async () => {
+    if (userId) await queryClient.invalidateQueries({ queryKey: ['user-points', userId] });
+  }, [queryClient, userId]);
+  const setPointsBalance = useCallback((balance: number) => {
+    if (userId && Number.isFinite(balance)) queryClient.setQueryData(['user-points', userId], balance);
+  }, [queryClient, userId]);
   useEffect(() => {
-    let mounted = true;
-
-    const run = async () => {
-      if (!isAuthReady) return;
-
-      if (!session?.user?.id) {
-        console.log('[AppContext] No session -> reset points');
-        if (mounted) {
-          setPoints(0);
-        }
-        return;
-      }
-
-      try {
-        console.log('[AppContext] Fetching points from profiles', { userId: session.user.id });
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (error) throw error;
-        const nextPoints = Number((data as { points?: unknown } | null)?.points ?? 0);
-        console.log('[AppContext] Points loaded', { points: Number.isFinite(nextPoints) ? nextPoints : 0 });
-        if (mounted) setPoints(Number.isFinite(nextPoints) ? nextPoints : 0);
-      } catch (e: unknown) {
-        let errMsg = 'Unknown error';
-        if (e instanceof Error) {
-          errMsg = e.message || e.name || 'Error with no message';
-        } else if (e && typeof e === 'object') {
-          errMsg = JSON.stringify(e, null, 2);
-        } else if (e) {
-          errMsg = String(e);
-        }
-        console.warn('[AppContext] Failed to load points, defaulting to 0:', errMsg);
-        if (mounted) setPoints(0);
-      }
-    };
-
-    run().catch((e) => {
-      console.error('[AppContext] points effect crashed', e);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshPoints();
     });
-
-    return () => {
-      mounted = false;
-    };
-  }, [isAuthReady, session?.user?.id, supabase]);
-
-  const addPoints = (amount: number) => {
-    setPoints((current) => current + amount);
-  };
+    return () => subscription.remove();
+  }, [refreshPoints]);
 
   return {
-    locationEnabled,
-    setLocationEnabled,
-    points,
-    addPoints,
-    selectedFilters,
-    setSelectedFilters,
+    locationEnabled, setLocationEnabled,
+    points: userId ? pointsQuery.data ?? 0 : 0,
+    pointsLoaded: Boolean(userId) && pointsQuery.isSuccess,
+    refreshPoints, setPointsBalance, selectedFilters, setSelectedFilters,
   };
 });

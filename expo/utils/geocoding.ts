@@ -53,9 +53,10 @@ function buildGeocodeQueries(venueName: string, address: string): string[] {
   ]);
 }
 
-async function geocodeQuery(query: string): Promise<GeocodedCoordinates | null> {
+async function geocodeQuery(query: string, signal: AbortSignal): Promise<GeocodedCoordinates | null> {
   const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
   const response = await fetch(geocodeUrl, {
+    signal,
     headers: {
       'User-Agent': 'ComeGetItApp/1.0',
       Accept: 'application/json',
@@ -76,25 +77,37 @@ async function geocodeQuery(query: string): Promise<GeocodedCoordinates | null> 
 /**
  * Geocodes a venue using several Budapest-friendly query variants.
  */
+const cache = new Map<string, GeocodedCoordinates | null>();
+
 export async function geocodeVenueAddress(
   venueName: string,
-  address?: string | null
+  address?: string | null,
+  signal?: AbortSignal,
 ): Promise<GeocodedCoordinates | null> {
-  if (!address?.trim()) return null;
-
-  const queries = buildGeocodeQueries(venueName, address);
-  for (const query of queries) {
-    try {
-      const result = await geocodeQuery(query);
-      if (result) {
-        console.log('[Geocoding] Resolved venue address', { venueName, query, result });
-        return result;
+  if (!address?.trim() || signal?.aborted) return null;
+  const key = `${venueName}|${address}`;
+  if (cache.has(key)) return cache.get(key) ?? null;
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  const timer = setTimeout(abort, 4_000); // One budget for every fallback query, not 4s per attempt.
+  try {
+    for (const query of buildGeocodeQueries(venueName, address)) {
+      if (controller.signal.aborted) return null;
+      try {
+        const coordinates = await geocodeQuery(query, controller.signal);
+        if (coordinates) {
+          cache.set(key, coordinates);
+          while (cache.size > 100) cache.delete(cache.keys().next().value!);
+          return coordinates;
+        }
+      } catch {
+        if (controller.signal.aborted) return null;
       }
-    } catch (error) {
-      console.warn('[Geocoding] Query failed', { venueName, query, error });
     }
+    return null;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
   }
-
-  console.warn('[Geocoding] No coordinates found for venue', { venueName, address });
-  return null;
 }

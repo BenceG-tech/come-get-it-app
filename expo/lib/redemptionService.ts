@@ -1,8 +1,7 @@
+import { getNextDrinkWindow, getWindowAvailability } from '@/lib/offerAvailability';
 import { RedemptionToken, RedemptionError, FreeDrinkWindow } from '@/types/venue';
-import { getSupabase } from '@/lib/supabaseClient';
+import { EdgeRequestError, postAuthenticatedFunction } from '@/lib/edgeRequest';
 
-const REDEMPTION_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export type RedemptionWindow = RedemptionToken & {
   expires_in_seconds: number;
@@ -43,26 +42,6 @@ export type RedemptionWindowStatusResponse =
       } | null;
     }
   | { success: false; error: RedemptionError };
-
-function getTodayISODay(): number {
-  const jsDay = new Date().getDay();
-  return jsDay === 0 ? 7 : jsDay;
-}
-
-function getCurrentHour(): number {
-  return new Date().getHours();
-}
-
-function dbDayToISO(dbDay: number): number {
-  // Database stores 0-6 (Monday=0, Sunday=6); ISO 8601 uses 1-7.
-  return dbDay + 1;
-}
-
-function normalizeTimeHour(value: string | undefined): number {
-  const raw = (value ?? '').toString();
-  const hour = Number.parseInt(raw.split(':')[0] ?? '', 10);
-  return Number.isFinite(hour) ? hour : -1;
-}
 
 type ConfiguredWindowInfo = {
   days?: number[];
@@ -112,6 +91,13 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
       };
     }
     return { error: errorMessage, code: 'BAD_REQUEST' };
+  }
+
+  if (status === 409 && rawMessage === 'VENUE_CLOSED') {
+    return { error: 'A helyszín most zárva van. Az italt nyitvatartási időben válthatod be.', code: 'NOT_ELIGIBLE' };
+  }
+  if (status === 409 && rawMessage === 'VENUE_HOURS_UNAVAILABLE') {
+    return { error: 'A helyszín nyitvatartása most nem ellenőrizhető. Kérj segítséget a személyzettől.', code: 'NOT_ELIGIBLE' };
   }
 
   if (status === 409 && rawMessage === 'VENUE_LOCATION_MISSING') {
@@ -169,64 +155,22 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
   return { error: errorMessage, code: 'UNKNOWN' };
 }
 
-async function getAccessToken(): Promise<string | null> {
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.warn('[RedemptionService] Could not read auth session', { message: error.message });
-      return null;
-    }
-    return data.session?.access_token ?? null;
-  } catch (error) {
-    console.warn('[RedemptionService] Supabase session unavailable', error);
-    return null;
-  }
-}
-
 async function postRedemptionFunction<TPayload extends Record<string, unknown>, TResponse extends Record<string, unknown>>(
   functionName: string,
   payload: TPayload,
-  requiresUserToken: boolean
+  _requiresUserToken: boolean
 ): Promise<{ ok: true; data: TResponse } | { ok: false; error: RedemptionError }> {
-  if (!REDEMPTION_BASE_URL) {
-    return { ok: false, error: { error: 'Hiányzó Supabase konfiguráció.', code: 'NETWORK_ERROR' } };
-  }
-
-  const accessToken = await getAccessToken();
-  if (requiresUserToken && !accessToken) {
-    return { ok: false, error: { error: 'Jelentkezz be a beváltáshoz.', code: 'UNAUTHORIZED' } };
-  }
-
   try {
-    const response = await fetch(`${REDEMPTION_BASE_URL}/functions/v1/${functionName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${accessToken ?? SUPABASE_ANON}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const responsePayload = await response.json().catch(() => ({})) as Record<string, unknown>;
-
-    if (!response.ok) {
-      console.error('[RedemptionService] Edge function error', {
-        functionName,
-        status: response.status,
-        payload: responsePayload,
-      });
-      return { ok: false, error: mapRedemptionError(response.status, responsePayload) };
-    }
-
-    return { ok: true, data: responsePayload as TResponse };
+    const data = await postAuthenticatedFunction(functionName, payload);
+    return { ok: true, data: data as TResponse };
   } catch (error) {
-    console.error('[RedemptionService] Edge function network error', { functionName, error });
+    if (error instanceof EdgeRequestError && error.status > 0) {
+      return { ok: false, error: mapRedemptionError(error.status, error.payload) };
+    }
     return {
       ok: false,
       error: {
-        error: 'Hálózati hiba. Ellenőrizd az internetkapcsolatod.',
+        error: error instanceof Error ? error.message : 'Hálózati hiba. Ellenőrizd az internetkapcsolatod.',
         code: 'NETWORK_ERROR',
       },
     };
@@ -234,66 +178,14 @@ async function postRedemptionFunction<TPayload extends Record<string, unknown>, 
 }
 
 export function isCurrentlyInWindow(window: FreeDrinkWindow): boolean {
-  const todayISO = getTodayISODay();
-  const currentHour = getCurrentHour();
-  
-  let windowDaysISO: number[] = [];
-  if (window.days && window.days.length > 0) {
-    windowDaysISO = window.days;
-  } else if (window.dayOfWeek !== undefined) {
-    windowDaysISO = [dbDayToISO(window.dayOfWeek)];
-  }
-  
-  if (!windowDaysISO.includes(todayISO)) {
-    return false;
-  }
-  
-  const startHour = normalizeTimeHour(window.start);
-  const endHour = normalizeTimeHour(window.end);
-  if (startHour < 0 || endHour < 0) return false;
-  
-  return currentHour >= startHour && currentHour < endHour;
+  return getWindowAvailability(window) === 'available';
 }
 
 export function findNextAvailableWindow(
   windows: FreeDrinkWindow[],
   drinkId: string
 ): { day: number; start: string; end: string } | null {
-  const drinkWindows = windows.filter(w => w.drinkId === drinkId);
-  if (drinkWindows.length === 0) return null;
-  
-  const todayISO = getTodayISODay();
-  const currentHour = getCurrentHour();
-  
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDayISO = ((todayISO - 1 + dayOffset) % 7) + 1;
-    
-    for (const window of drinkWindows) {
-      let windowDaysISO: number[] = [];
-      if (window.days && window.days.length > 0) {
-        windowDaysISO = window.days;
-      } else if (window.dayOfWeek !== undefined) {
-        windowDaysISO = [dbDayToISO(window.dayOfWeek)];
-      }
-      
-      if (windowDaysISO.includes(checkDayISO)) {
-        const startHour = normalizeTimeHour(window.start);
-        if (startHour < 0) continue;
-        
-        if (dayOffset === 0 && currentHour >= startHour) {
-          continue;
-        }
-        
-        return {
-          day: checkDayISO,
-          start: window.start,
-          end: window.end,
-        };
-      }
-    }
-  }
-  
-  return null;
+  return getNextDrinkWindow(windows, drinkId);
 }
 
 /** True when a drink has no configured time windows — redeemable anytime. */

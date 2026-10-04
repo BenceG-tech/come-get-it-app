@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Image,
@@ -8,21 +8,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import { ChevronRight, Clock, MapPin, Martini, X } from 'lucide-react-native';
+import { ChevronRight, MapPin, Martini, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import { Venue } from '@/types/venue';
-import { getVenueWithDetails } from '@/lib/supabaseProvider';
-import { checkLocalEligibility, getDayLabel } from '@/lib/redemptionService';
+import { hasAvailableFreeDrink } from '@/lib/offerAvailability';
+import { useAvailabilityNow } from '@/lib/useAvailabilityNow';
 
 const CYAN = '#00D1FF' as const;
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800';
-
-type DrinkStatus =
-  | { kind: 'loading' }
-  | { kind: 'none' }
-  | { kind: 'available'; label: string }
-  | { kind: 'later'; label: string };
 
 type VenueMiniCardProps = {
   venue: Venue;
@@ -44,7 +38,8 @@ export default function VenueMiniCard({
   testID,
 }: VenueMiniCardProps) {
   const translateY = useRef(new Animated.Value(220)).current;
-  const [drinkStatus, setDrinkStatus] = useState<DrinkStatus>({ kind: 'loading' });
+  const availabilityNow = useAvailabilityNow();
+  const available = hasAvailableFreeDrink(venue, availabilityNow);
 
   useEffect(() => {
     translateY.setValue(220);
@@ -59,48 +54,6 @@ export default function VenueMiniCard({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     }
   }, [venue.id, translateY]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setDrinkStatus({ kind: 'loading' });
-
-    (async () => {
-      try {
-        const details = await getVenueWithDetails(String(venue.id));
-        if (cancelled) return;
-        const freeDrinks = (details?.drinks ?? []).filter((d) => d.isFreeDrink);
-        if (freeDrinks.length === 0) {
-          setDrinkStatus({ kind: 'none' });
-          return;
-        }
-        const windows = details?.freeDrinkWindows ?? [];
-        const eligibility = checkLocalEligibility(windows, freeDrinks[0].id);
-        if (eligibility.eligible) {
-          setDrinkStatus({
-            kind: 'available',
-            label: eligibility.alwaysAvailable ? 'Ingyen ital — bármikor' : 'Ingyen ital most elérhető',
-          });
-        } else if (eligibility.nextWindow) {
-          const start = eligibility.nextWindow.start.includes(':')
-            ? eligibility.nextWindow.start.substring(0, 5)
-            : eligibility.nextWindow.start;
-          setDrinkStatus({
-            kind: 'later',
-            label: `Ingyen ital: ${getDayLabel(eligibility.nextWindow.day, 'short')} ${start}-tól`,
-          });
-        } else {
-          setDrinkStatus({ kind: 'none' });
-        }
-      } catch (error) {
-        console.log('[VenueMiniCard] Failed to load drink info (non-fatal)', error);
-        if (!cancelled) setDrinkStatus({ kind: 'none' });
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [venue.id]);
 
   const dismiss = () => {
     Animated.timing(translateY, {
@@ -166,15 +119,10 @@ export default function VenueMiniCard({
             {tags.length > 0 ? (
               <Text style={styles.tags} numberOfLines={1}>{tags.join(' • ')}</Text>
             ) : null}
-            {drinkStatus.kind === 'available' ? (
+            {available ? (
               <View style={[styles.drinkBadge, styles.drinkBadgeActive]}>
                 <Martini size={12} color={CYAN} />
-                <Text style={styles.drinkBadgeTextActive} numberOfLines={1}>{drinkStatus.label}</Text>
-              </View>
-            ) : drinkStatus.kind === 'later' ? (
-              <View style={styles.drinkBadge}>
-                <Clock size={12} color="rgba(255,255,255,0.6)" />
-                <Text style={styles.drinkBadgeText} numberOfLines={1}>{drinkStatus.label}</Text>
+                <Text style={styles.drinkBadgeTextActive} numberOfLines={1}>Ingyen ital most elérhető</Text>
               </View>
             ) : null}
           </View>

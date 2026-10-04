@@ -1,13 +1,11 @@
 import { getSupabase } from '@/lib/supabaseClient';
-import { VENUE_PUBLIC_COLUMNS, Venue, VenueDrink, FreeDrinkWindow, VenueWithDetails } from '@/types/venue';
+import { VENUE_PUBLIC_COLUMNS, Venue, VenueWithDetails } from '@/types/venue';
 import { Reward } from '@/types/reward';
 import { runSupabaseRead } from '@/lib/supabaseRequest';
 
-import { rest } from '@/lib/supabaseRest';
+import { fetchFreeDrinkData, normalizeVenue, readVenueData, rememberVenues, UNKNOWN_DRINK_DATA } from '@/lib/venueData';
 
 const VENUE_IMAGE_COLUMNS = 'id,venue_id,url,label,is_cover';
-const VENUE_DRINK_COLUMNS = 'id,venue_id,drink_name,image_url,is_free_drink,description';
-const FREE_DRINK_WINDOW_COLUMNS = 'id,venue_id,drink_id,days,start_time,end_time,timezone';
 const REWARD_PUBLIC_COLUMNS = 'id,venue_id,name,description,points_required,valid_until,active,image_url,category,is_global,partner_id,priority,terms_conditions,max_redemptions,current_redemptions';
 
 function toYyyyMmDd(d: Date): string {
@@ -86,152 +84,34 @@ export async function fetchRewardById(rewardId: string): Promise<Reward | null> 
   return data ? (data as unknown as Reward) : null;
 }
 
-export async function getVenueWithDetails(id: string): Promise<VenueWithDetails | null> {
+type VenueDetailsOptions = {
+  signal?: AbortSignal;
+  onBase?: (venue: VenueWithDetails) => void;
+};
+
+export async function getVenueWithDetails(id: string, options: VenueDetailsOptions = {}): Promise<VenueWithDetails | null> {
   const normalizedId = decodeURIComponent(String(id)).trim();
   if (!normalizedId) return null;
-
-  console.info('[Provider] getVenueWithDetails', normalizedId);
-
-  type ImageRow = { id: string; venue_id: string; url?: string | null; label?: string | null; is_cover?: boolean | null };
-  type DrinkRow = { id: string; venue_id: string; drink_name: string; image_url?: string | null; is_free_drink?: boolean | null; description?: string | null };
-  type WindowRow = {
-    id: string;
-    venue_id: string;
-    drink_id: string;
-    day_of_week?: number | null;
-    days?: number[] | null;
-    start_time: string;
-    end_time: string;
-    timezone?: string | null;
-  };
-
-  let venueList: Venue[] = [];
-  let imagesRows: ImageRow[] = [];
-  let drinksRows: DrinkRow[] = [];
-  let windowsRows: WindowRow[] = [];
-
-  try {
-    const supabase = getSupabase();
-    const venuesData = await runSupabaseRead<unknown[]>(
-      'Vendéglátóhely betöltése',
-      () => supabase.from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).limit(1),
-    );
-    venueList = Array.isArray(venuesData) ? (venuesData as unknown as Venue[]) : [];
-    const [imagesData, drinksData, windowsData] = await Promise.all([
-      runSupabaseRead<unknown[]>(
-        'Helyszínképek betöltése',
-        () => supabase.from('venue_images').select(VENUE_IMAGE_COLUMNS).eq('venue_id', normalizedId),
-      ).catch((error) => {
-        console.warn('[Provider] venue_images Supabase fetch failed', error);
-        return [];
-      }),
-      runSupabaseRead<unknown[]>(
-        'Italok betöltése',
-        () => supabase.from('venue_drinks').select(VENUE_DRINK_COLUMNS).eq('venue_id', normalizedId),
-      ).catch((error) => {
-        console.warn('[Provider] venue_drinks Supabase fetch failed', error);
-        return [];
-      }),
-      runSupabaseRead<unknown[]>(
-        'Beváltási idősávok betöltése',
-        () => supabase.from('free_drink_windows').select(FREE_DRINK_WINDOW_COLUMNS).eq('venue_id', normalizedId),
-      ).catch((error) => {
-        console.warn('[Provider] free_drink_windows Supabase fetch failed', error);
-        return [];
-      }),
-    ]);
-
-    imagesRows = Array.isArray(imagesData) ? (imagesData as unknown as ImageRow[]) : [];
-    drinksRows = Array.isArray(drinksData) ? (drinksData as unknown as DrinkRow[]) : [];
-    windowsRows = Array.isArray(windowsData) ? (windowsData as unknown as WindowRow[]) : [];
-  } catch (supabaseError) {
-    console.warn('[Provider] Supabase detail fetch failed, falling back to REST', supabaseError instanceof Error ? supabaseError.message : String(supabaseError));
-
-    const encodedId = encodeURIComponent(normalizedId);
-    const [venueRes, imagesRes, drinksRes, windowsRes] = await Promise.all([
-      rest(`/venues?id=eq.${encodedId}&select=${encodeURIComponent(VENUE_PUBLIC_COLUMNS)}`),
-      rest(`/venue_images?venue_id=eq.${encodedId}&select=${encodeURIComponent(VENUE_IMAGE_COLUMNS)}`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-      rest(`/venue_drinks?venue_id=eq.${encodedId}&select=${encodeURIComponent(VENUE_DRINK_COLUMNS)}`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-      rest(`/free_drink_windows?venue_id=eq.${encodedId}&select=${encodeURIComponent(FREE_DRINK_WINDOW_COLUMNS)}`).catch(() => new Response(JSON.stringify([]), { status: 200 })),
-    ]);
-
-    let responseText: string = '';
-    try {
-      responseText = await venueRes.text();
-      console.info('[Provider] Raw venue response:', responseText.substring(0, 500));
-      venueList = JSON.parse(responseText) as Venue[];
-    } catch (parseError) {
-      console.error('[Provider] Failed to parse venue response as JSON:', parseError);
-      console.error('[Provider] Response text:', responseText.substring(0, 500));
-      return null;
-    }
-
-    try {
-      imagesRows = (await imagesRes.json()) as ImageRow[];
-      drinksRows = (await drinksRes.json()) as DrinkRow[];
-      windowsRows = (await windowsRes.json()) as WindowRow[];
-    } catch (parseError) {
-      console.error('[Provider] Failed to parse related data as JSON:', parseError);
-      imagesRows = [];
-      drinksRows = [];
-      windowsRows = [];
-    }
-  }
-  
-  if (!Array.isArray(venueList) || venueList.length === 0) return null;
-  let venue = venueList[0];
-
-  if (venue.price_level == null && venue.price_tier != null) {
-    venue = { ...venue, price_level: venue.price_tier };
-  }
-  
-  if (venue.opening_hours && typeof venue.opening_hours === 'string') {
-    try {
-      venue.opening_hours = JSON.parse(venue.opening_hours);
-      console.info('[Provider] Parsed opening_hours from string');
-    } catch (e) {
-      console.error('[Provider] Failed to parse opening_hours string:', e);
-      venue.opening_hours = null;
-    }
-  }
-  
-  const drinks: VenueDrink[] = (drinksRows ?? []).map((d) => ({
-    id: String(d.id),
-    venueId: String(d.venue_id),
-    drinkName: d.drink_name,
-    imageUrl: d.image_url ?? null,
-    isFreeDrink: d.is_free_drink ?? null,
-    isCover: null,
-    description: typeof d.description === 'string' && d.description.trim().length > 0 ? d.description.trim() : null,
-  }));
-
-  const windows: FreeDrinkWindow[] = (windowsRows ?? []).map((w) => ({
-    id: String(w.id),
-    venueId: String(w.venue_id),
-    drinkId: String(w.drink_id),
-    dayOfWeek: w.day_of_week === null || w.day_of_week === undefined ? undefined : Number(w.day_of_week),
-    days: Array.isArray(w.days) ? w.days.map((d) => Number(d)).filter((d) => Number.isFinite(d)) : undefined,
-    start: w.start_time,
-    end: w.end_time,
-    timezone: w.timezone ?? undefined,
-  }));
-
-  const urls = (imagesRows ?? [])
-    .map((r) => ({
-      url: (r.url ?? '') as string,
-      isCover: Boolean(r.is_cover ?? false),
-    }))
-    .filter((r) => typeof r.url === 'string' && r.url.trim().length > 0 && r.url.trim().length <= 2000);
-
-  const sorted = urls.sort((a, b) => Number(b.isCover) - Number(a.isCover));
-  const seen = new Set<string>();
-  const images = sorted
-    .map((r) => r.url.trim())
-    .filter((u) => {
-      if (seen.has(u)) return false;
-      seen.add(u);
-      return true;
+  const supabase = getSupabase();
+  const basePromise = readVenueData<unknown[]>('Vendéglátóhely betöltése', (signal) => supabase
+    .from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).limit(1).abortSignal(signal), options.signal)
+    .then((rows) => {
+      if (!Array.isArray(rows) || rows.length === 0) return null;
+      const venue = { ...normalizeVenue(rows[0] as Venue), freeDrinkData: UNKNOWN_DRINK_DATA };
+      rememberVenues([venue]);
+      if (!options.signal?.aborted) options.onBase?.(venue);
+      return venue;
     });
-
-  return { ...venue, images, drinks, freeDrinkWindows: windows };
+  const imagesPromise = readVenueData<unknown[]>('Helyszínképek betöltése', (signal) => supabase
+    .from('venue_images').select(VENUE_IMAGE_COLUMNS).eq('venue_id', normalizedId).order('is_cover', { ascending: false }).abortSignal(signal), options.signal)
+    .catch(() => []);
+  const offersPromise = fetchFreeDrinkData([normalizedId], options.signal);
+  const [venue, imageRows, offers] = await Promise.all([basePromise, imagesPromise, offersPromise]);
+  if (!venue || options.signal?.aborted) return null;
+  const images = [...new Set((imageRows ?? []).map((row) => (row as { url?: string }).url?.trim())
+    .filter((url): url is string => !!url && url.length <= 2000))];
+  const freeDrinkData = offers.get(normalizedId) ?? UNKNOWN_DRINK_DATA;
+  const details: VenueWithDetails = { ...venue, images, drinks: freeDrinkData.drinks, freeDrinkWindows: freeDrinkData.windows, freeDrinkData };
+  rememberVenues([details]);
+  return details;
 }

@@ -35,38 +35,18 @@ type MapView = {
   zoom: number;
 };
 
-function hashString(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i++) {
-    hash = (hash * 31 + value.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
-}
-
-/**
- * Returns a usable coordinate for a venue. Falls back to a deterministic
- * position around Budapest (derived from the venue id + address) so the map
- * never looks empty when precise coordinates are missing.
- */
+/** A center fallback is allowed for the viewport, never for a venue marker. */
 export function resolveVenueCoordinate(venue: Venue): ResolvedCoordinate {
   const latRaw = venue.coordinates?.lat ?? venue.latitude;
   const lngRaw = venue.coordinates?.lng ?? venue.longitude;
   const latitude = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN;
   const longitude = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? Number(lngRaw) : NaN;
 
-  if (Number.isFinite(latitude) && Number.isFinite(longitude) && !(latitude === 0 && longitude === 0)) {
+  if (Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 && !(latitude === 0 && longitude === 0)) {
     return { latitude, longitude, approximate: false };
   }
 
-  const hash = hashString(`${String(venue.id)}::${venue.address ?? ''}`);
-  const latOffset = ((hash % 997) / 997 - 0.5) * 0.026;
-  const lngOffset = ((Math.floor(hash / 997) % 997) / 997 - 0.5) * 0.05;
-
-  return {
-    latitude: BUDAPEST.latitude + latOffset,
-    longitude: BUDAPEST.longitude + lngOffset,
-    approximate: true,
-  };
+  return { ...BUDAPEST, approximate: true };
 }
 
 function lngToTileX(lng: number, zoom: number): number {
@@ -628,11 +608,12 @@ function AppleMapPreview({
 }
 
 export default function DarkMapPreview(props: DarkMapPreviewProps) {
+  const locatedVenues = props.venues.filter((venue) => !resolveVenueCoordinate(venue).approximate);
   if (Platform.OS === 'ios' && NativeMapView && NativeMarker) {
-    return <AppleMapPreview {...props} />;
+    return <AppleMapPreview {...props} venues={locatedVenues} />;
   }
 
-  return <CartoDarkMapPreview {...props} />;
+  return <CartoDarkMapPreview {...props} venues={locatedVenues} />;
 }
 
 const styles = StyleSheet.create({

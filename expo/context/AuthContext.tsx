@@ -1,9 +1,11 @@
+import { disableCampaignNotifications } from '@/lib/campaignNotifications';
 import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import Constants from 'expo-constants';
 import type { Session } from '@supabase/supabase-js';
 import { clearPersistedSupabaseSession, getSupabase } from '@/lib/supabaseClient';
@@ -59,6 +61,21 @@ function mapAuthError(err: unknown): string {
 function isInvalidRefreshToken(err: unknown): boolean {
   const message = toUserMessage(err).toLowerCase();
   return message.includes('invalid refresh token') || message.includes('refresh token not found');
+}
+
+function randomHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function createAppleAuthSecurityParams(): Promise<{
+  rawNonce: string;
+  hashedNonce: string;
+  state: string;
+}> {
+  const rawNonce = randomHex(await Crypto.getRandomBytesAsync(32));
+  const state = randomHex(await Crypto.getRandomBytesAsync(16));
+  const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+  return { rawNonce, hashedNonce, state };
 }
 
 type OAuthCallbackParams = {
@@ -345,12 +362,21 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
         return;
       }
 
+      // Apple receives the SHA-256 digest, while Supabase validates the original nonce.
+      // A separate state value binds the returned credential to this exact request.
+      const { rawNonce, hashedNonce, state } = await createAppleAuthSecurityParams();
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
+        nonce: hashedNonce,
+        state,
       });
+
+      if (credential.state !== state) {
+        throw new Error('Az Apple bejelentkezési válasz nem egyezik az indított kéréssel. Próbáld újra.');
+      }
 
       const identityToken = credential.identityToken;
       if (!identityToken) throw new Error('Hiányzó Apple identityToken');
@@ -363,6 +389,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: identityToken,
+        nonce: rawNonce,
       });
 
       if (error) throw error;
@@ -371,7 +398,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     } catch (e) {
       if (e && typeof e === 'object' && 'code' in (e as Record<string, unknown>)) {
         const code = (e as { code?: string }).code;
-        if (code === 'ERR_CANCELED') {
+        if (code === 'ERR_CANCELED' || code === 'ERR_REQUEST_CANCELED') {
           console.log('[Auth] Apple sign-in cancelled');
           return;
         }
@@ -427,6 +454,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
   const signOut = useCallback(async () => {
     try {
       console.log('[Auth] signOut');
+      if (session?.user.id) await disableCampaignNotifications(session.user.id);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (e) {
@@ -439,7 +467,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       await clearPersistedSupabaseSession();
       setSession(null);
     }
-  }, [supabase]);
+  }, [supabase, session?.user.id]);
 
   return {
     session,

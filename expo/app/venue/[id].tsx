@@ -13,7 +13,9 @@ import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday
 import { geocodeVenueAddress } from '@/utils/geocoding';
 import RedemptionWindowModal from '@/components/RedemptionWindowModal';
 import { useFavorites } from '@/context/FavoritesContext';
-import { checkLocalEligibility, isDrinkAlwaysAvailable, getDayLabel } from '@/lib/redemptionService';
+import { getOfferAvailability } from '@/lib/offerAvailability';
+import { useAvailabilityNow } from '@/lib/useAvailabilityNow';
+import { getCachedVenue } from '@/lib/venueData';
 import { useLocation } from '@/context/LocationContext';
 import { formatDistance, haversineMeters } from '@/utils/distance';
 
@@ -37,6 +39,11 @@ export default function VenueModalScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState<boolean>(false);
+  const [offersLoading, setOffersLoading] = useState(true);
+  const [redemptionDrink, setRedemptionDrink] = useState<VenueDrink | null>(null);
+  const venueRequest = useRef<AbortController | null>(null);
+  const availabilityNow = useAvailabilityNow();
+  const offerAvailability = getOfferAvailability(venue ?? {}, availabilityNow);
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -60,59 +67,64 @@ export default function VenueModalScreen() {
   }, [glowPulse]);
 
   const fetchVenue = useCallback(async () => {
+    venueRequest.current?.abort();
+    const controller = new AbortController();
+    venueRequest.current = controller;
     if (!id) {
       setError('Hiányzik a vendéglátóhely azonosítója.');
       setLoading(false);
       return;
     }
-    try {
-      setLoading(true);
-      setError(null);
-      console.info('[VenueDetail] Loading venue', id);
-      let v = await getVenueWithDetails(String(id));
-      if (!v) {
-        setError('A vendéglátóhely nem található vagy jelenleg nem elérhető.');
-        return;
-      }
-      if (v.is_paused === true) {
-        console.info('[VenueDetail] Venue is hidden by admin, blocking detail view', id);
+    const cached = getCachedVenue(String(id));
+    setVenue(cached?.is_paused === true ? null : cached);
+    setLoading(!cached);
+    setOffersLoading(true);
+    setError(null);
+    const displayVenue = (next: VenueWithDetails) => {
+      if (controller.signal.aborted) return;
+      if (next.is_paused === true) {
+        setVenue(null);
         setError('Ez a helyszín jelenleg nem elérhető.');
-        return;
+      } else {
+        setVenue(next);
       }
-      console.info('[VenueDetail] Venue loaded with opening_hours:', v?.opening_hours);
-        
-      const latRaw = v.coordinates?.lat ?? v.latitude;
-      const lngRaw = v.coordinates?.lng ?? v.longitude;
-      const lat = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN;
-      const lng = typeof lngRaw === 'number' ? lngRaw : typeof lngRaw === 'string' ? Number(lngRaw) : NaN;
-      const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
-
-      if (!hasCoords && v.address) {
-        setGeocoding(true);
-        try {
-          const coordinates = await geocodeVenueAddress(v.name, v.address);
-          if (coordinates) {
-            v = { ...v, coordinates };
-          }
-        } catch (geocodeError) {
-          console.error('[VenueDetail] Failed to geocode venue address:', geocodeError);
-        } finally {
-          setGeocoding(false);
-        }
-      }
-
-      setVenue(v);
-    } catch (e) {
-      console.error('[VenueDetail] Failed to load', e);
-      setError('A helyszín most nem tölthető be. Ellenőrizd a kapcsolatot, majd próbáld újra.');
-    } finally {
       setLoading(false);
+    };
+    try {
+      const next = await getVenueWithDetails(String(id), { signal: controller.signal, onBase: displayVenue });
+      if (controller.signal.aborted) return;
+      if (next) displayVenue(next);
+      else setError('A vendéglátóhely nem található vagy jelenleg nem elérhető.');
+    } catch (error) {
+      if (!controller.signal.aborted) setError('A helyszín most nem tölthető be. Ellenőrizd a kapcsolatot, majd próbáld újra.');
+    } finally {
+      if (!controller.signal.aborted) { setLoading(false); setOffersLoading(false); }
     }
   }, [id]);
 
   useEffect(() => {
-    fetchVenue();
+    void fetchVenue();
+    return () => venueRequest.current?.abort();
   }, [fetchVenue]);
+
+  // Coordinates are optional page content. A slow geocoder never blocks the venue details.
+  const latitude = venue?.coordinates?.lat ?? venue?.latitude;
+  const longitude = venue?.coordinates?.lng ?? venue?.longitude;
+  const venueAddress = venue?.address;
+  const venueName = venue?.name;
+  useEffect(() => {
+    const valid = Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))
+      && latitude != null && longitude != null && !(Number(latitude) === 0 && Number(longitude) === 0);
+    if (valid || !venueAddress || !venueName) { setGeocoding(false); return; }
+    const controller = new AbortController();
+    setGeocoding(true);
+    void geocodeVenueAddress(venueName, venueAddress, controller.signal)
+      .then((coordinates) => {
+        if (!controller.signal.aborted && coordinates) setVenue((current) => current && current.id === id ? { ...current, coordinates } : current);
+      })
+      .finally(() => { if (!controller.signal.aborted) setGeocoding(false); });
+    return () => controller.abort();
+  }, [id, latitude, longitude, venueAddress, venueName]);
 
   const galleryImages = useMemo(() => {
     const arr: string[] = [];
@@ -145,11 +157,8 @@ export default function VenueModalScreen() {
     });
   }, []);
 
-  const freeDrinks: VenueDrink[] = useMemo(() => {
-    const drinks = (venue?.drinks ?? []).filter((d) => d.isFreeDrink);
-    console.log('[VenueDetail] Free drinks:', drinks.length, drinks.map(d => d.drinkName));
-    return drinks;
-  }, [venue]);
+  const freeDrinks: VenueDrink[] = (venue?.drinks ?? venue?.freeDrinkData?.drinks ?? [])
+    .filter((drink) => offerAvailability.drinkIds.includes(drink.id));
 
   const windowsNormalized = useMemo(() => {
     const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
@@ -197,31 +206,11 @@ export default function VenueModalScreen() {
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
   const venueIsFavorite = venue ? isFavorite(String(venue.id)) : false;
 
-  const currentDrink = freeDrinks[selectedDrinkIndex] ?? null;
+  const currentDrink = freeDrinks[selectedDrinkIndex] ?? freeDrinks[0] ?? null;
 
-  const drinkAlwaysAvailable = useMemo(
-    () => (currentDrink ? isDrinkAlwaysAvailable(windowsNormalized, currentDrink.id) : false),
-    [currentDrink, windowsNormalized]
-  );
-
-  const drinkEligibility = useMemo(
-    () => (currentDrink ? checkLocalEligibility(windowsNormalized, currentDrink.id) : null),
-    [currentDrink, windowsNormalized]
-  );
-
-  const ctaIsActive = drinkEligibility?.eligible === true;
-
-  const ctaSubtitle = useMemo(() => {
-    if (drinkAlwaysAvailable) return 'Bármikor beváltható';
-    if (ctaIsActive) return 'Most elérhető';
-    const next = drinkEligibility?.nextWindow;
-    if (next) {
-      const start = next.start.includes(':') ? next.start.substring(0, 5) : next.start;
-      const end = next.end.includes(':') ? next.end.substring(0, 5) : next.end;
-      return `Következő: ${getDayLabel(next.day)} ${start}-${end}`;
-    }
-    return 'Jelenleg nem elérhető';
-  }, [drinkAlwaysAvailable, ctaIsActive, drinkEligibility]);
+  const drinkAlwaysAvailable = currentDrink !== null && !windowsNormalized.some((window) => window.drinkId === currentDrink.id);
+  const ctaIsActive = offerAvailability.status === 'available' && currentDrink !== null;
+  const ctaSubtitle = 'Most elérhető';
 
   const handleFavoritePress = useCallback(async () => {
     if (!venue?.id) return;
@@ -460,7 +449,13 @@ export default function VenueModalScreen() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.drinkSection}>
+            {offersLoading ? <Text style={styles.emptyStateText}>Ajánlatok betöltése…</Text> : null}
+            {!offersLoading && offerAvailability.status === 'unknown' ? (
+              <TouchableOpacity onPress={fetchVenue} accessibilityRole="button">
+                <Text style={styles.emptyStateText}>Az ajánlatok most nem ellenőrizhetők. Koppints az újrapróbáláshoz.</Text>
+              </TouchableOpacity>
+            ) : null}
+            {freeDrinks.length > 0 ? <View style={styles.drinkSection}>
               <Text style={styles.drinkTitle}>Ingyen italok</Text>
               {freeDrinks.length === 0 ? (
                 <Text style={styles.emptyStateText}>Nincs elérhető ingyen ital.</Text>
@@ -539,7 +534,7 @@ export default function VenueModalScreen() {
                     {drinkAlwaysAvailable ? (
                       <View style={styles.anytimeBadge} testID="anytime-badge">
                         <Clock size={15} color={Colors.dark.primary} />
-                        <Text style={styles.anytimeBadgeText}>Bármikor beváltható</Text>
+                        <Text style={styles.anytimeBadgeText}>Nyitvatartási időben beváltható</Text>
                       </View>
                     ) : (
                       <>
@@ -596,7 +591,7 @@ export default function VenueModalScreen() {
                   </View>
                 </View>
               )}
-            </View>
+            </View> : null}
 
 
             <View style={styles.mapSection}>
@@ -750,7 +745,7 @@ export default function VenueModalScreen() {
           );
         })()}
 
-        <View 
+        {ctaIsActive ? <View
           style={[styles.bottomCarousel, { paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16 }]}
           pointerEvents="box-none"
         >
@@ -775,6 +770,8 @@ export default function VenueModalScreen() {
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                if (!currentDrink || !getOfferAvailability(venue).drinkIds.includes(currentDrink.id)) return;
+                setRedemptionDrink(currentDrink);
                 setShowRedeemModal(true);
               }}
             >
@@ -788,7 +785,7 @@ export default function VenueModalScreen() {
               <ChevronRight size={18} color={ctaIsActive ? '#00D1FF' : 'rgba(255,255,255,0.4)'} />
             </Pressable>
           </View>
-        </View>
+        </View> : null}
 
       <Modal
         visible={descDrink !== null}
@@ -835,7 +832,7 @@ export default function VenueModalScreen() {
         venueId={venue.id}
         venueName={venue.name}
         venueCoordinates={resolvedCoords.isValid ? { latitude: resolvedCoords.lat, longitude: resolvedCoords.lng } : null}
-        drink={freeDrinks[selectedDrinkIndex] ?? null}
+        drink={redemptionDrink}
         freeDrinkWindows={windowsNormalized}
       />
     </View>
