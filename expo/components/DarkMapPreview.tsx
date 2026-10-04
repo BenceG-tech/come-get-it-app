@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   PanResponder,
   Animated,
-  Platform,
   type GestureResponderEvent,
   type LayoutChangeEvent,
   type StyleProp,
@@ -16,7 +15,6 @@ import {
 } from 'react-native';
 import { Plus, Minus, Crosshair } from 'lucide-react-native';
 import { Venue } from '@/types/venue';
-import { MapView as NativeMapView, Marker as NativeMarker } from '@/lib/mapComponents';
 
 const TILE_SIZE = 256 as const;
 const BUDAPEST = { latitude: 47.4979, longitude: 19.0402 } as const;
@@ -345,7 +343,7 @@ function CartoDarkMapPreview({
         const subdomain = subdomains[(Math.abs(tx) + Math.abs(ty)) % subdomains.length];
         tileList.push({
           key: `${tileZoom}-${tx}-${ty}`,
-          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_nolabels/${tileZoom}/${wrappedX}/${ty}@2x.png`,
+          uri: `https://${subdomain}.basemaps.cartocdn.com/dark_all/${tileZoom}/${wrappedX}/${ty}@2x.png`,
           left: tx * scaledTile - originX,
           top: ty * scaledTile - originY,
         });
@@ -488,150 +486,7 @@ function CartoDarkMapPreview({
   );
 }
 
-function regionForZoom(
-  center: { latitude: number; longitude: number },
-  zoom: number
-) {
-  const longitudeDelta = 360 / Math.pow(2, clampNumber(zoom, MIN_ZOOM, MAX_ZOOM));
-  return {
-    ...center,
-    latitudeDelta: longitudeDelta * 1.18,
-    longitudeDelta,
-  };
-}
-
-function AppleMapPreview({
-  venues,
-  zoom = 13,
-  style,
-  onMarkerPress,
-  interactive = false,
-  controlsBottomOffset = 24,
-  userCoordinate = null,
-  centerOnUser = false,
-  testID,
-}: DarkMapPreviewProps) {
-  const coordinates = useMemo(
-    () => venues.slice(0, 30).map((venue) => ({ venue, coord: resolveVenueCoordinate(venue) })),
-    [venues]
-  );
-  const defaultCenter = useMemo(() => {
-    const precise = coordinates.filter((item) => !item.coord.approximate);
-    const source = precise.length > 0 ? precise : coordinates;
-    if (source.length === 0) return BUDAPEST;
-    return {
-      latitude: source.reduce((sum, item) => sum + item.coord.latitude, 0) / source.length,
-      longitude: source.reduce((sum, item) => sum + item.coord.longitude, 0) / source.length,
-    };
-  }, [coordinates]);
-
-  const mapRef = useRef<any>(null);
-  const hasAutoCenteredRef = useRef(false);
-  const [region, setRegion] = useState(() => regionForZoom(defaultCenter, zoom));
-
-  useEffect(() => {
-    if (!centerOnUser || !userCoordinate || hasAutoCenteredRef.current) return;
-    hasAutoCenteredRef.current = true;
-    const next = regionForZoom(userCoordinate, Math.max(zoom, 14));
-    setRegion(next);
-    mapRef.current?.animateToRegion(next, 450);
-  }, [centerOnUser, userCoordinate, zoom]);
-
-  const animateTo = useCallback((next: typeof region) => {
-    setRegion(next);
-    mapRef.current?.animateToRegion(next, 280);
-  }, []);
-
-  const zoomNativeBy = useCallback((delta: number) => {
-    const factor = delta > 0 ? 0.5 : 2;
-    animateTo({
-      ...region,
-      latitudeDelta: clampNumber(region.latitudeDelta * factor, 0.002, 0.7),
-      longitudeDelta: clampNumber(region.longitudeDelta * factor, 0.002, 0.7),
-    });
-  }, [animateTo, region]);
-
-  const resetNativeView = useCallback(() => {
-    animateTo(regionForZoom(userCoordinate ?? defaultCenter, userCoordinate ? Math.max(zoom, 14) : zoom));
-  }, [animateTo, defaultCenter, userCoordinate, zoom]);
-
-  return (
-    <View style={[styles.container, style]} testID={testID}>
-      <NativeMapView
-        ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
-        initialRegion={region}
-        onRegionChangeComplete={setRegion}
-        mapType="mutedStandard"
-        userInterfaceStyle="dark"
-        pitchEnabled={false}
-        rotateEnabled={false}
-        scrollEnabled={interactive}
-        zoomEnabled={interactive}
-        testID={testID ? `${testID}-native-apple-map` : 'native-apple-map'}
-      >
-        {coordinates.map(({ venue, coord }) => (
-          <NativeMarker
-            key={`native-marker-${String(venue.id)}`}
-            coordinate={{ latitude: coord.latitude, longitude: coord.longitude }}
-            onPress={() => onMarkerPress?.(venue)}
-            accessibilityLabel={`${venue.name} a térképen`}
-            testID={`map-marker-${String(venue.id)}`}
-          >
-            <View style={styles.markerOuter}>
-              <View style={styles.markerInner} />
-            </View>
-          </NativeMarker>
-        ))}
-        {userCoordinate && (
-          <NativeMarker coordinate={userCoordinate} testID="map-user-location">
-            <View style={styles.userDotOuter}>
-              <View style={styles.userDotInner} />
-            </View>
-          </NativeMarker>
-        )}
-      </NativeMapView>
-
-      {interactive && (
-        <View style={[styles.controls, { bottom: controlsBottomOffset }]} pointerEvents="box-none">
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => zoomNativeBy(1)}
-            activeOpacity={0.8}
-            accessibilityLabel="Közelítés"
-            testID="map-zoom-in"
-          >
-            <Plus size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => zoomNativeBy(-1)}
-            activeOpacity={0.8}
-            accessibilityLabel="Távolítás"
-            testID="map-zoom-out"
-          >
-            <Minus size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={resetNativeView}
-            activeOpacity={0.8}
-            accessibilityLabel="Saját helyzet"
-            testID="map-recenter"
-          >
-            <Crosshair size={17} color="#00D1FF" />
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-}
-
 export default function DarkMapPreview(props: DarkMapPreviewProps) {
-  if (Platform.OS === 'ios' && NativeMapView && NativeMarker) {
-    return <AppleMapPreview {...props} />;
-  }
-
   return <CartoDarkMapPreview {...props} />;
 }
 
