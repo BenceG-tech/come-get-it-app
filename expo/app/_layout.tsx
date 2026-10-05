@@ -1,4 +1,4 @@
-import { Stack, router } from "expo-router";
+import { Stack, router, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
@@ -13,6 +13,8 @@ import { FavoritesProvider } from "@/context/FavoritesContext";
 import { LocationProvider } from "@/context/LocationContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
+import { userActivity } from '@/lib/userActivity';
+import { setRedemptionOwner } from '@/lib/activeRedemption';
 // Defines the geofencing background task; must load at startup so iOS can wake the app for it.
 import { isNearbyAlertsSupported, setPendingNotificationUrl, syncNearbyAlerts } from "@/lib/nearbyAlerts";
 
@@ -65,6 +67,26 @@ function useNearbyAlerts() {
 function RootLayoutNav() {
   useNearbyAlerts();
   const { session } = useAuth();
+  const pathname = usePathname();
+  const userId = session?.user.id ?? null;
+  useEffect(() => {
+    userActivity.setUser(userId);
+    setRedemptionOwner(userId);
+    if (!userId) return;
+    if (AppState.currentState === 'active') userActivity.record('app_open');
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') userActivity.record('app_open');
+    });
+    return () => { sub.remove(); userActivity.setUser(null); setRedemptionOwner(null); };
+  }, [userId]);
+  useEffect(() => {
+    if (!userId) return;
+    const venueId = pathname.match(/^\/venue\/([a-f0-9-]{36})$/i)?.[1];
+    const rewardId = pathname.match(/^\/reward\/([a-f0-9-]{36})$/i)?.[1];
+    if (venueId) userActivity.record('venue_viewed', venueId);
+    else if (rewardId) userActivity.record('reward_viewed', undefined, {}, rewardId);
+    else if (pathname === '/profile' || pathname === '/account') userActivity.record('profile_viewed');
+  }, [userId, pathname]);
   useEffect(() => {
     const userId = session?.user.id;
     if (!userId || Platform.OS === 'web') return;

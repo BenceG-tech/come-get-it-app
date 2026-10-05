@@ -183,7 +183,7 @@ function AuthScreen() {
               <View style={styles.heroTextBlock}>
                 <Text style={styles.heading}>{mode === 'login' ? 'Üdv újra!' : 'Csatlakozz!'}</Text>
                 <Text style={styles.subheading}>
-                  Fedezd fel partnereinket és a napi ingyen italokat.
+                  Fedezd fel a partnerhelyeket és az aktuális ajánlatokat.
                 </Text>
               </View>
 

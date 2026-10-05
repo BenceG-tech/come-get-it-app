@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { BellRing } from 'lucide-react-native';
@@ -64,11 +64,13 @@ export default function NearbyAlertsScreen() {
         }
       } catch (error) {
         console.warn('[NearbyAlertsScreen] toggle failed', error);
+        await refresh();
+        Alert.alert('Nem sikerült módosítani az értesítéseket', 'Próbáld újra. Az iPhone Beállítások menüjében is kikapcsolhatod az értesítéseket és a háttérben használt helyhozzáférést.');
       } finally {
         setBusy(false);
       }
     },
-    [],
+    [refresh],
   );
 
   const help = attempted && !enabled && permission && permission !== 'granted' ? PERMISSION_HELP[permission] : null;
@@ -117,7 +119,7 @@ export default function NearbyAlertsScreen() {
 
         <Text style={styles.sectionTitle}>Amit érdemes tudni</Text>
         <Text style={styles.bullet}>• A bekapcsoláskor az iPhone engedélyt kér az értesítésekre és a helyhozzáférésre („Mindig”).</Text>
-        <Text style={styles.bullet}>• A helyedet a telefonod figyeli; nem küldjük el és nem tároljuk a szerverünkön.</Text>
+        <Text style={styles.bullet}>• A körzetfigyeléshez használt helyadatot a telefonodon tároljuk, a szerverünkre nem küldjük el. Kikapcsoláskor ezt a mentett helyadatot töröljük.</Text>
         <Text style={styles.bullet}>• Működéséhez a helyhozzáférésnél a „Pontos hely” kapcsolónak is bekapcsolva kell lennie.</Text>
         <Text style={styles.bullet}>• Helyenként legfeljebb napi egy, összesen napi két értesítés. Ha aznap már beváltottad az italod, nem zavarunk.</Text>
         <Text style={styles.bullet}>• Az iOS energiatakarékos körzetfigyelését használjuk, folyamatos GPS-követés nincs.</Text>

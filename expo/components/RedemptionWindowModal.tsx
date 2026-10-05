@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Animated,
   Image,
   Modal,
@@ -29,8 +30,12 @@ import {
   X,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useAuth } from '@/context/AuthContext';
+import { userActivity } from '@/lib/userActivity';
+import { rememberRedemption, recallRedemption, forgetRedemption } from '@/lib/activeRedemption';
 import { useLocation } from '@/context/LocationContext';
 import { markRedeemedToday } from '@/lib/nearbyAlerts';
+import { COMMUNITY_IMPACT_PREVIEW_ENABLED } from '@/lib/releaseFeatures';
 import { VenueDrink, FreeDrinkWindow } from '@/types/venue';
 import {
   checkLocalEligibility,
@@ -117,6 +122,10 @@ export default function RedemptionWindowModal({
   freeDrinkWindows,
 }: RedemptionWindowModalProps) {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const currentUserRef = useRef(userId);
+  currentUserRef.current = userId;
   const { getCurrentLocation } = useLocation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [state, setState] = useState<FlowState>('step1_arrive');
@@ -197,19 +206,6 @@ export default function RedemptionWindowModal({
     haloScale.setValue(0.4);
   }, [clearTimer, stopAnimations, waterOpacity, waterScale, fadeAnim, ringProgress, haloScale]);
 
-  useEffect(() => {
-    if (!visible) {
-      reset();
-      return;
-    }
-    // Fresh start on every open — the state may already be 'step1_arrive',
-    // so the state-based fade effect would not re-run and the content would
-    // stay invisible (opacity 0). Reset and animate explicitly.
-    reset();
-    fadeAnim.setValue(0);
-    Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
-  }, [reset, visible, fadeAnim]);
-
   // Pulsing location icon animation for step 1
   useEffect(() => {
     if (state !== 'step1_arrive') return;
@@ -278,17 +274,19 @@ export default function RedemptionWindowModal({
   }, [state, waterOpacity, waterScale, haloScale]);
 
   useEffect(() => {
-    if (state !== 'countdown' || !windowToken || windowToken.demo_mode || windowToken.fallback_mode) return;
+    if (!visible || !userId || state !== 'countdown' || !windowToken || windowToken.demo_mode || windowToken.fallback_mode) return;
 
     let cancelled = false;
     const checkStatus = async () => {
-      if (statusCheckInFlightRef.current) return;
+      if (statusCheckInFlightRef.current || AppState.currentState !== 'active') return;
       statusCheckInFlightRef.current = true;
       try {
-        const response = await getRedemptionWindowStatus(windowToken.token);
-        if (cancelled || !response.success) return;
+        const response = await getRedemptionWindowStatus(windowToken.token, userId);
+        if (cancelled || currentUserRef.current !== userId || !response.success) return;
         if (response.status === 'consumed') {
           clearTimer();
+          forgetRedemption(windowToken.token);
+          userActivity.record('redemption_success', venueId, { flow: 'free_drink' });
           setImpactDelta(0);
           setImpactMessage('Sikeres partneri QR-beváltás');
           setState('success');
@@ -297,6 +295,8 @@ export default function RedemptionWindowModal({
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
         } else if (response.status === 'expired' || response.status === 'revoked') {
           clearTimer();
+          forgetRedemption(windowToken.token);
+          userActivity.record('redemption_attempt', venueId, { flow: 'free_drink', outcome: response.status });
           setWindowToken(null);
           setState('expired');
         }
@@ -307,12 +307,14 @@ export default function RedemptionWindowModal({
 
     void checkStatus();
     const interval = setInterval(() => void checkStatus(), 2000);
+    const foreground = AppState.addEventListener('change', value => { if (value === 'active') void checkStatus(); });
     return () => {
+      foreground.remove();
       cancelled = true;
       clearInterval(interval);
       statusCheckInFlightRef.current = false;
     };
-  }, [clearTimer, queryClient, state, windowToken]);
+  }, [clearTimer, queryClient, state, windowToken, visible, venueId, userId]);
 
   const startCountdown = useCallback(
     (expiresAt: string) => {
@@ -330,8 +332,8 @@ export default function RedemptionWindowModal({
         setTimeRemaining(remaining);
         if (remaining <= 0) {
           clearTimer();
-          setState('expired');
-          setWindowToken(null);
+          // The server must resolve a scan made just before expiry. Hide the QR
+          // at zero, but keep status polling until consumed/expired is confirmed.
         }
       };
       tick();
@@ -340,10 +342,26 @@ export default function RedemptionWindowModal({
     [clearTimer, ringProgress]
   );
 
+  useEffect(() => {
+    reset();
+    if (!visible) return;
+    const saved = userId && drink ? recallRedemption(userId, venueId, drink.id) : null;
+    if (saved) {
+      setWindowToken(saved);
+      setState('countdown');
+      startCountdown(saved.expires_at);
+      userActivity.record('redemption_attempt', venueId, { flow: 'free_drink', outcome: 'restored' });
+    }
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+    return clearTimer;
+  }, [visible, userId, venueId, drink?.id, reset, startCountdown, fadeAnim, clearTimer]);
+
   const handleClose = useCallback(() => {
+    if (windowToken) userActivity.record('redemption_attempt', venueId, { flow: 'free_drink', outcome: 'closed' });
     reset();
     onClose();
-  }, [onClose, reset]);
+  }, [onClose, reset, windowToken, venueId]);
 
   const goToStep2 = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
@@ -353,7 +371,7 @@ export default function RedemptionWindowModal({
   }, [getCurrentLocation, venueCoordinates]);
 
   const handleCreateWindow = useCallback(async () => {
-    if (createInFlightRef.current) return;
+    if (createInFlightRef.current || !userId) return;
     if (!drink) {
       setErrorMessage('Ehhez a helyhez még nincs ingyen ital beállítva.');
       setState('not_eligible');
@@ -362,6 +380,9 @@ export default function RedemptionWindowModal({
 
     createInFlightRef.current = true;
     const generation = flowGenerationRef.current;
+    const owner = userId;
+    const startedAt = Date.now();
+    userActivity.record('redemption_attempt', venueId, { flow: 'free_drink', outcome: 'started' });
     setCheckingStage('Helyzet ellenőrzése…');
     setState('checking');
     setErrorMessage('');
@@ -391,7 +412,11 @@ export default function RedemptionWindowModal({
         user_latitude: userCoordinates?.latitude ?? null,
         user_longitude: userCoordinates?.longitude ?? null,
         demo_mode: DEMO_MODE,
-      });
+      }, owner);
+      if (response.success && currentUserRef.current === owner) {
+        rememberRedemption({ userId: owner, venueId, drinkId: drink.id, window: response.data });
+        userActivity.record('qr_generated', venueId, { flow: 'free_drink', duration_ms: Date.now() - startedAt });
+      }
       if (generation !== flowGenerationRef.current) return;
 
       if (response.success) {
@@ -411,6 +436,7 @@ export default function RedemptionWindowModal({
         return;
       }
 
+      userActivity.record('redemption_attempt', venueId, { flow: 'free_drink', outcome: 'failed', duration_ms: Date.now() - startedAt });
       setErrorMessage(getFriendlyError(response.error.error));
       setState(response.error.code === 'EXPIRED' ? 'expired' : 'error');
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => undefined);
@@ -431,7 +457,7 @@ export default function RedemptionWindowModal({
     } finally {
       createInFlightRef.current = false;
     }
-  }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId]);
+  }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId, userId]);
 
   const handleDemoConfirm = useCallback(async () => {
     if (!DEMO_MODE) return;
@@ -510,6 +536,14 @@ export default function RedemptionWindowModal({
       );
     }
 
+    if (state === 'countdown' && timeRemaining <= 0) {
+      return <View style={styles.bodyContent}>
+        <ActivityIndicator size="large" color={CYAN} />
+        <Text style={styles.loadingTitle}>Beváltás ellenőrzése…</Text>
+        <Text style={styles.helperText}>A kód ideje lejárt. Ellenőrizzük, hogy a pultos beolvasta-e. Ehhez internetkapcsolat szükséges. Bezárás után itt folytathatod.</Text>
+      </View>;
+    }
+
     if (state === 'countdown') {
       const lowTime = timeRemaining <= 30_000;
       const ringColor = lowTime ? '#FF6B6B' : CYAN;
@@ -581,7 +615,7 @@ export default function RedemptionWindowModal({
                 )}
               </View>
 
-              <Text style={styles.qrHelperText}>A partner a Venue Hub QR-szkennerével olvassa be.</Text>
+              <Text style={styles.qrHelperText}>Mutasd a QR-kódot a pultosnak. A kód két percig érvényes.</Text>
 
               <Text style={styles.drinkName}>{selectedDrinkName}</Text>
               <Text style={styles.venueName}>{venueName}</Text>
@@ -621,7 +655,7 @@ export default function RedemptionWindowModal({
               </View>
             )}
 
-            {impactDelta > 0 && (
+            {COMMUNITY_IMPACT_PREVIEW_ENABLED && impactDelta > 0 && (
               <Animated.View
                 style={[styles.impactCard, { opacity: waterOpacity, transform: [{ scale: waterScale }] }]}
               >
@@ -634,7 +668,7 @@ export default function RedemptionWindowModal({
             )}
 
             <View style={styles.successActions}>
-              {impactDelta > 0 && (
+              {COMMUNITY_IMPACT_PREVIEW_ENABLED && impactDelta > 0 && (
                 <TouchableOpacity
                   style={styles.secondaryAction}
                   onPress={() => {

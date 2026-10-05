@@ -92,6 +92,7 @@ export default function ProfileScreen() {
   const [spendPointsEnabled, setSpendPointsEnabled] = useState<boolean>(false);
 
   useEffect(() => {
+    setSpendPointsEnabled(false);
     if (!session?.user.id) return;
     let mounted = true;
     getSpendPointsStatus().then((status) => {

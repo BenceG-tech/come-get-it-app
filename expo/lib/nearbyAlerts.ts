@@ -15,6 +15,7 @@ import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 import { fetchVenues } from '@/lib/venueService';
 import { getOfferAvailability } from '@/lib/offerAvailability';
+import { withDataTimeout } from '@/lib/supabaseRequest';
 import type { FreeDrinkWindow, OpeningHours } from '@/types/venue';
 import { haversineMeters, venueLatLng, type LatLng } from '@/utils/distance';
 
@@ -31,6 +32,22 @@ const KEY_VENUES = 'cgi.nearbyAlerts.venues';
 const KEY_LOG = 'cgi.nearbyAlerts.log';
 const KEY_LAST_REDEEMED = 'cgi.lastRedeemedDay';
 const KEY_ANCHOR = 'cgi.nearbyAlerts.anchor';
+let preferenceRevision = 0;
+let disabledInThisProcess = false;
+let regionWork: Promise<unknown> = Promise.resolve();
+let preferenceWork: Promise<unknown> = Promise.resolve();
+
+function serializePreference(action: () => Promise<void>): Promise<void> {
+  const result = preferenceWork.then(action, action);
+  preferenceWork = result.catch(() => undefined);
+  return result;
+}
+
+function serializeRegions(action: () => Promise<void>): Promise<void> {
+  const result = regionWork.then(action, action);
+  regionWork = result.catch(() => undefined);
+  return result;
+}
 
 type CachedVenue = {
   id: string;
@@ -77,7 +94,7 @@ async function readJson<T>(key: string, fallback: T): Promise<T> {
 // ---------------------------------------------------------------------------
 
 export async function isNearbyAlertsEnabled(): Promise<boolean> {
-  if (!isNearbyAlertsSupported) return false;
+  if (!isNearbyAlertsSupported || disabledInThisProcess) return false;
   return (await AsyncStorage.getItem(KEY_ENABLED).catch(() => null)) === '1';
 }
 
@@ -110,16 +127,43 @@ export async function requestNearbyAlertsPermission(): Promise<NearbyAlertsPermi
 }
 
 export async function enableNearbyAlerts(): Promise<NearbyAlertsPermission> {
+  const revision = ++preferenceRevision;
   const permission = await requestNearbyAlertsPermission();
   if (permission !== 'granted') return permission;
-  await AsyncStorage.setItem(KEY_ENABLED, '1');
-  await syncNearbyAlerts({ refreshVenues: true });
+  if (revision !== preferenceRevision) throw new Error('Az értesítési beállítás közben megváltozott.');
+  await serializePreference(async () => {
+    if (revision !== preferenceRevision) return;
+    await AsyncStorage.setItem(KEY_ENABLED, '1');
+    if (revision === preferenceRevision) disabledInThisProcess = false;
+  });
+  if (revision !== preferenceRevision) throw new Error('Az értesítési beállítás közben megváltozott.');
+  try {
+    await syncNearbyAlerts({ refreshVenues: true });
+  } catch (error) {
+    if (revision === preferenceRevision) await disableNearbyAlerts();
+    throw error;
+  }
   return 'granted';
 }
 
 export async function disableNearbyAlerts(): Promise<void> {
-  await AsyncStorage.setItem(KEY_ENABLED, '0').catch(() => undefined);
-  await stopRegions();
+  if (!isNearbyAlertsSupported) return;
+  ++preferenceRevision;
+  disabledInThisProcess = true;
+  // Block queued tasks immediately, then let any in-flight registration finish before stopping it.
+  const outcomes = await Promise.allSettled([
+    serializePreference(() => AsyncStorage.setItem(KEY_ENABLED, '0')),
+    serializeRegions(async () => {
+      await stopRegions();
+      await AsyncStorage.removeItem(KEY_ANCHOR);
+    }),
+    Notifications.getAllScheduledNotificationsAsync().then((pending) => Promise.all(
+      pending.filter((notification) => notification.content.data?.source === 'nearby_free_drink')
+        .map((notification) => Notifications.cancelScheduledNotificationAsync(notification.identifier)),
+    )),
+  ]);
+  const failed = outcomes.find((outcome) => outcome.status === 'rejected');
+  if (failed?.status === 'rejected') throw failed.reason;
 }
 
 async function stopRegions(): Promise<void> {
@@ -184,13 +228,20 @@ async function registerRegionsAround(center: LatLng, venues: CachedVenue[]): Pro
     notifyOnExit: true,
   });
 
-  await Location.startGeofencingAsync(NEARBY_ALERT_TASK, regions);
-  await AsyncStorage.setItem(KEY_ANCHOR, JSON.stringify({ at: Date.now(), ...center })).catch(() => undefined);
+  await serializeRegions(async () => {
+    if (!(await isNearbyAlertsEnabled())) return;
+    await Location.startGeofencingAsync(NEARBY_ALERT_TASK, regions);
+    if (!(await isNearbyAlertsEnabled())) {
+      await stopRegions();
+      return;
+    }
+    await AsyncStorage.setItem(KEY_ANCHOR, JSON.stringify({ at: Date.now(), ...center }));
+  });
 }
 
 async function currentPosition(): Promise<LatLng | null> {
   try {
-    const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    const pos = await withDataTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 'Helymeghatározás', 10_000);
     return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
   } catch (error) {
     console.warn('[NearbyAlerts] position unavailable', error);
@@ -217,11 +268,11 @@ async function recentreAfterAnchorExit(): Promise<void> {
 export async function syncNearbyAlerts(options: { refreshVenues?: boolean } = {}): Promise<void> {
   if (!isNearbyAlertsSupported) return;
   if (!(await isNearbyAlertsEnabled())) {
-    await stopRegions();
+    await serializeRegions(stopRegions);
     return;
   }
   if ((await getNearbyAlertsPermission()) !== 'granted') {
-    await stopRegions();
+    await serializeRegions(stopRegions);
     return;
   }
 
@@ -266,6 +317,7 @@ function capitalize(text: string): string {
 async function handleVenueEnter(venueId: string): Promise<void> {
   // The user is looking at the app already; the list shows the venue.
   if (AppState.currentState === 'active') return;
+  if (!(await isNearbyAlertsEnabled())) return;
 
   const today = budapestDay();
   if ((await AsyncStorage.getItem(KEY_LAST_REDEEMED).catch(() => null)) === today) return;
@@ -279,8 +331,9 @@ async function handleVenueEnter(venueId: string): Promise<void> {
   if (!venue) return;
   const drink = pickAvailableDrink(venue);
   if (!drink) return;
+  if (!(await isNearbyAlertsEnabled())) return;
 
-  await Notifications.scheduleNotificationAsync({
+  const notificationId = await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Ingyen ital vár rád a közelben',
       body: `${capitalize(withArticle(venue.name))} pár percre van tőled, és most is vár rád egy ingyen ${drink.name}. Ugorj be érte!`,
@@ -289,6 +342,11 @@ async function handleVenueEnter(venueId: string): Promise<void> {
     },
     trigger: null,
   });
+  if (!(await isNearbyAlertsEnabled())) {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+    await Notifications.dismissNotificationAsync(notificationId);
+    return;
+  }
   todayLog.venueIds.push(venueId);
   await AsyncStorage.setItem(KEY_LOG, JSON.stringify(todayLog));
 }
@@ -305,6 +363,7 @@ if (isNearbyAlertsSupported) {
       return;
     }
     try {
+      if (!(await isNearbyAlertsEnabled())) return;
       const { eventType, region } = data;
       if (region.identifier === ANCHOR_ID) {
         if (eventType === Location.LocationGeofencingEventType.Exit) await recentreAfterAnchorExit();

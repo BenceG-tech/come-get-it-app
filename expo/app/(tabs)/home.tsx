@@ -27,6 +27,7 @@ import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { getUserCSRImpact } from "@/lib/csrService";
+import { COMMUNITY_IMPACT_PREVIEW_ENABLED } from "@/lib/releaseFeatures";
 import { sortByDistance } from "@/utils/distance";
 import { hasAvailableFreeDrink, getVenueOpeningState } from "@/lib/offerAvailability";
 import { useAvailabilityNow } from "@/lib/useAvailabilityNow";
@@ -72,20 +73,20 @@ export default function BarsScreen() {
   useEffect(() => {
     getCurrentLocation()
       .then((loc) => {
-        console.log("[Home] User location resolved:", loc?.coords ?? null);
+        if (__DEV__) console.log("[Home] User location resolved:", Boolean(loc));
       })
       .catch((e) => console.log("[Home] Failed to resolve user location:", e));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { data: csrData } = useQuery({
-    queryKey: ["csr-impact"],
+    queryKey: ["csr-impact", session?.user.id],
     queryFn: async () => {
       const result = await getUserCSRImpact();
       if (!result.success) return null;
       return result.data;
     },
-    enabled: !!session,
+    enabled: COMMUNITY_IMPACT_PREVIEW_ENABLED && !!session,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -492,7 +493,7 @@ export default function BarsScreen() {
             }}
             bounces={false}
           >
-            {session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
+            {COMMUNITY_IMPACT_PREVIEW_ENABLED && session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
               <TouchableOpacity
                 style={styles.impactWidget}
                 onPress={() => router.push("/my-impact")}

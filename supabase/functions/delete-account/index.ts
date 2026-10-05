@@ -32,50 +32,30 @@ Deno.serve(async (req: Request) => {
   const user = userData.user;
   if (userError || !user) return json({ error: 'Unauthorized' }, 401);
 
-  // A partnerhely tulajdonosának törlése üzleti adatot is törölne a jelenlegi sémában.
-  const { count: ownedVenueCount, error: venueCheckError } = await admin
-    .from('venues')
-    .select('id', { count: 'exact', head: true })
-    .eq('owner_profile_id', user.id);
-  if (venueCheckError) return json({ error: 'Account dependency check failed' }, 500);
-  if ((ownedVenueCount ?? 0) > 0) {
-    return json({ error: 'Venue owner accounts require assisted deletion', code: 'VENUE_OWNER' }, 409);
+  const { data: dependency, error: dependencyError } = await admin.rpc('account_deletion_dependencies', { target_user_id: user.id });
+  if (dependencyError) return json({ error: 'Account dependency check failed' }, 500);
+  if (dependency) {
+    // Repeated requests reuse the original request and its timestamp.
+    const { error: requestError } = await admin.from('account_deletion_requests').upsert({
+      user_id: user.id, reason: dependency,
+    }, { onConflict: 'user_id', ignoreDuplicates: true });
+    if (requestError) return json({ error: 'Could not save deletion request' }, 500);
+    const { data: request, error: readError } = await admin.from('account_deletion_requests')
+      .select('id').eq('user_id', user.id).single();
+    if (readError || !request) return json({ error: 'Could not confirm deletion request' }, 500);
+    return json({ success: false, status: 'pending', code: 'ACCOUNT_DELETION_REQUESTED', request_id: request.id });
   }
 
-  const deleteRows = async (table: string, column: string) => {
-    const { error } = await admin.from(table).delete().eq(column, user.id);
-    if (error) throw new Error(`${table}: ${error.message}`);
-  };
-
-  const clearReference = async (table: string, column: string) => {
-    const { error } = await admin.from(table).update({ [column]: null }).eq(column, user.id);
-    if (error) throw new Error(`${table}: ${error.message}`);
-  };
-
-  try {
-    // Személyes aktivitás törlése; üzleti szintű, nem személyes naplóknál a hivatkozás anonimizálása.
-    await deleteRows('csr_donations', 'user_id');
-    await deleteRows('notification_logs', 'user_id');
-    await deleteRows('ai_notification_suggestions', 'user_id');
-    await deleteRows('ai_notification_suggestions', 'created_by');
-    await deleteRows('notification_templates', 'created_by');
-    await deleteRows('redemptions', 'user_id');
-    await clearReference('redemptions', 'staff_id');
-    await clearReference('redemption_tokens', 'consumed_by_staff_id');
-    await deleteRows('redemption_tokens', 'user_id');
-    await clearReference('fidel_transactions', 'user_id');
-    await clearReference('pos_transactions', 'user_id');
-    await clearReference('anomaly_logs', 'resolved_by');
-    await clearReference('autopilot_rules', 'created_by');
-    await clearReference('platform_settings', 'updated_by');
-    // A profiles.id oszlop nincs közvetlenül ON DELETE CASCADE kapcsolva az auth.users táblához.
-    await deleteRows('profiles', 'id');
-
-    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
-    if (deleteError) throw deleteError;
-    return json({ success: true });
-  } catch (error) {
-    console.error('[delete-account] failed', error);
+  // The database trigger is part of this single Auth deletion transaction.
+  // Do not delete profiles or personal rows in independent HTTP requests.
+  const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+  if (deleteError) {
+    console.error('[delete-account] Auth deletion failed', { code: deleteError.code });
     return json({ error: 'Account deletion failed' }, 500);
   }
+  const usesApple = user.identities?.some(identity => identity.provider === 'apple')
+    || user.app_metadata?.providers?.includes('apple');
+  // Social sign-in is disabled in this release and there are currently no Apple
+  // identities. Never report a successful Apple revocation without evidence.
+  return json({ success: true, apple_revocation: usesApple ? 'manual_required' : 'not_applicable' });
 });

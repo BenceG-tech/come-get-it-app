@@ -158,10 +158,11 @@ function mapRedemptionError(status: number, payload: Record<string, unknown>): R
 async function postRedemptionFunction<TPayload extends Record<string, unknown>, TResponse extends Record<string, unknown>>(
   functionName: string,
   payload: TPayload,
-  _requiresUserToken: boolean
+  _requiresUserToken: boolean,
+  expectedUserId?: string
 ): Promise<{ ok: true; data: TResponse } | { ok: false; error: RedemptionError }> {
   try {
-    const data = await postAuthenticatedFunction(functionName, payload);
+    const data = await postAuthenticatedFunction(functionName, payload, 12_000, expectedUserId);
     return { ok: true, data: data as TResponse };
   } catch (error) {
     if (error instanceof EdgeRequestError && error.status > 0) {
@@ -240,12 +241,14 @@ export function isLocalFallbackToken(token: string): boolean {
 const demoFallbackEnabled = __DEV__ && process.env.EXPO_PUBLIC_ENABLE_REDEMPTION_DEMO === 'true';
 
 export async function createRedemptionWindow(
-  request: CreateRedemptionWindowRequest
+  request: CreateRedemptionWindowRequest,
+  expectedUserId?: string
 ): Promise<CreateRedemptionWindowResponse> {
   const result = await postRedemptionFunction<CreateRedemptionWindowRequest & Record<string, unknown>, Record<string, unknown>>(
     'create-redemption-window',
     request,
-    true
+    true,
+    expectedUserId
   );
 
   if (!result.ok) {
@@ -259,15 +262,17 @@ export async function createRedemptionWindow(
   const data = result.data;
   const token = typeof data.token === 'string' ? data.token : '';
   const tokenId = typeof data.token_id === 'string' ? data.token_id : token;
-  const expiresAt = typeof data.expires_at === 'string'
-    ? data.expires_at
-    : new Date(Date.now() + 120 * 1000).toISOString();
+  const expiresAt = typeof data.expires_at === 'string' ? data.expires_at : '';
   const qrPayload = typeof data.qr_payload === 'string'
     ? data.qr_payload
     : `cgi://redeem?t=${encodeURIComponent(token)}&v=${encodeURIComponent(request.venue_id)}`;
 
   if (!token) {
     return { success: false, error: { error: 'A beváltási ablak nem adott vissza tokent.', code: 'UNKNOWN' } };
+  }
+
+  if (!expiresAt || !Number.isFinite(Date.parse(expiresAt))) {
+    return { success: false, error: { error: 'A beváltókód lejárata nem ellenőrizhető. Próbáld újra.', code: 'UNKNOWN' } };
   }
 
   return {
@@ -285,7 +290,7 @@ export async function createRedemptionWindow(
   };
 }
 
-export async function getRedemptionWindowStatus(token: string): Promise<RedemptionWindowStatusResponse> {
+export async function getRedemptionWindowStatus(token: string, expectedUserId?: string): Promise<RedemptionWindowStatusResponse> {
   if (isLocalFallbackToken(token)) {
     return { success: true, status: 'issued' };
   }
@@ -293,7 +298,8 @@ export async function getRedemptionWindowStatus(token: string): Promise<Redempti
   const result = await postRedemptionFunction<{ token: string }, Record<string, unknown>>(
     'get-redemption-window-status',
     { token },
-    true
+    true,
+    expectedUserId
   );
 
   if (!result.ok) {

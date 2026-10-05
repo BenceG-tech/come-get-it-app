@@ -210,13 +210,14 @@ function qrHarness(create, overrides = {}) {
   // Execute the production callback, not a reimplementation of its state machine.
   const component = source('../components/RedemptionWindowModal.tsx');
   const start = 'const handleCreateWindow = useCallback(async () => {';
-  const end = '\n  }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId]);';
+  const end = '\n  }, [drink, getCurrentLocation, startCountdown, venueCoordinates, venueId, userId]);';
   assert.ok(component.includes(start) && component.includes(end), 'QR callback boundaries changed; update extraction');
   const body = component.split(start)[1].split(end)[0];
   const updates = [];
   const refs = { createInFlightRef: { current: false }, flowGenerationRef: { current: 1 } };
   const context = vm.createContext({ console, ...refs, drink: { id: 'drink' }, venueId: 'venue', venueCoordinates: null,
-    DEMO_MODE: false,
+    DEMO_MODE: false, userId: 'user-a', currentUserRef: { current: 'user-a' },
+    userActivity: { record() {} }, rememberRedemption() {},
     Haptics: { ImpactFeedbackStyle: {}, NotificationFeedbackType: {}, impactAsync: async () => { throw new Error('no haptic engine'); },
       notificationAsync: async () => { throw new Error('no haptic engine'); } },
     setState: value => updates.push(['state', value]), setWindowToken: value => updates.push(['token', value]),
@@ -262,7 +263,8 @@ test('a late QR response from a closed flow cannot publish a token into the new 
   assert.equal(h.createInFlightRef.current, false);
 });
 
-function authHarness({ echoState = true, revokeError, signOutError } = {}) {
+function authHarness({ echoState = true, revokeError, signOutError, appleUser = false, appleCancel = false,
+  deletionResult = { status: 'deleted', manualAppleRevocation: false }, deletionError, stalledCleanup = false } = {}) {
   const events = [];
   let appleRequest;
   let stateCalls = 0;
@@ -272,9 +274,15 @@ function authHarness({ echoState = true, revokeError, signOutError } = {}) {
     useCallback: callback => callback,
     useMemo: factory => factory(),
     useEffect() {},
-    useState: () => [stateCalls++ === 0 ? { user: { id: 'user-a' } } : true,
+    useState: () => [stateCalls++ === 0 ? { user: { id: 'user-a', identities: appleUser ? [{ provider: 'apple' }] : [] } } : true,
       value => events.push(['session', value])],
+    useQueryClient: () => ({ clear: () => events.push(['clear-query-cache']) }),
     disableCampaignNotifications: async userId => { events.push(['revoke', userId]); if (revokeError) throw revokeError; },
+    disableNearbyAlerts: async () => { events.push(['stop-nearby']); if (stalledCleanup) await new Promise(() => {}); },
+    clearDeletedAccountNotificationPreference: async userId => { events.push(['clear-push', userId]); if (stalledCleanup) await new Promise(() => {}); },
+    requestAccountDeletion: async (...args) => { events.push(['delete-request', ...args]); if (deletionError) throw deletionError; return deletionResult; },
+    accountDeletionErrorMessage: () => 'A törlés nem fejeződött be.',
+    withDataTimeout: (promise) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10))]),
     clearPersistedSupabaseSession: async () => { events.push(['clear-session']); },
     Platform: { OS: 'ios' },
     Constants: {},
@@ -288,7 +296,11 @@ function authHarness({ echoState = true, revokeError, signOutError } = {}) {
     AppleAuthentication: {
       AppleAuthenticationScope: { FULL_NAME: 1, EMAIL: 2 },
       isAvailableAsync: async () => true,
-      signInAsync: async request => { appleRequest = request; return { identityToken: 'apple-id-token', state: echoState ? request.state : 'different-state' }; },
+      signInAsync: async request => {
+        appleRequest = request;
+        if (appleCancel) throw new Error('ERR_CANCELED');
+        return { identityToken: 'apple-id-token', authorizationCode: 'fresh-code', state: echoState ? request.state : 'different-state' };
+      },
     },
     getSupabase: () => ({ auth: {
       signInWithIdToken: async request => { events.push(['apple-auth', request]); return { data: { session: {} } }; },
@@ -309,6 +321,46 @@ test('Apple receives a hashed nonce while Supabase receives the matching raw non
   assert.notEqual(native.nonce, exchange.nonce);
 });
 
+test('confirmed account deletion clears local auth, account query cache and notification preferences', async () => {
+  const h = authHarness({ appleUser: true });
+  const result = await h.auth.deleteAccount();
+  assert.equal(result.status, 'deleted');
+  assert.equal(h.events.find(([name]) => name === 'delete-request')[2], 'fresh-code');
+  for (const name of ['stop-nearby', 'clear-push', 'signout', 'clear-session', 'clear-query-cache']) {
+    assert.equal(h.events.some(([event]) => event === name), true, name);
+  }
+  assert.equal(h.events.some(([name, value]) => name === 'session' && value === null), true);
+});
+
+test('Apple cancellation and a mismatched native state cannot block deletion or forward an untrusted code', async () => {
+  for (const options of [{ appleCancel: true }, { echoState: false }]) {
+    const h = authHarness({ appleUser: true, ...options,
+      deletionResult: { status: 'deleted', manualAppleRevocation: true } });
+    assert.equal((await h.auth.deleteAccount()).manualAppleRevocation, true);
+    assert.equal(h.events.find(([name]) => name === 'delete-request')[2], undefined);
+  }
+});
+
+test('a pending deletion request preserves the account and local consent instead of announcing deletion', async () => {
+  const h = authHarness({ deletionResult: { status: 'pending', requestId: 'request-1' } });
+  assert.equal((await h.auth.deleteAccount()).status, 'pending');
+  assert.equal(h.events.some(([name]) => ['stop-nearby', 'signout', 'clear-session', 'session'].includes(name)), false);
+});
+
+test('failed server deletion preserves local auth and reports the failure', async () => {
+  const h = authHarness({ deletionError: new Error('database failure') });
+  await assert.rejects(h.auth.deleteAccount(), /database failure/);
+  assert.equal(h.events.some(([name]) => ['signout', 'clear-session', 'session'].includes(name)), false);
+  assert.equal(h.events.some(([name]) => name === 'alert'), true);
+});
+
+test('stalled native cleanup cannot keep a server-deleted account signed in indefinitely', async () => {
+  const h = authHarness({ stalledCleanup: true });
+  assert.equal((await h.auth.deleteAccount()).status, 'deleted');
+  assert.equal(h.events.some(([name, value]) => name === 'session' && value === null), true);
+  assert.equal(h.events.some(([name]) => name === 'clear-query-cache'), true);
+});
+
 test('mismatched Apple state cannot reach the Supabase token exchange', async () => {
   const h = authHarness({ echoState: false });
   await assert.rejects(h.auth.signInWithApple(), /nem egyezik/);
@@ -318,7 +370,7 @@ test('mismatched Apple state cannot reach the Supabase token exchange', async ()
 test('sign-out waits for push revocation before dropping the authenticated session', async () => {
   const h = authHarness();
   await h.auth.signOut();
-  assert.deepEqual(h.events, [['revoke', 'user-a'], ['signout']]);
+  assert.deepEqual(h.events, [['revoke', 'user-a'], ['stop-nearby'], ['signout'], ['clear-query-cache']]);
 });
 
 test('failed push revocation preserves the authenticated session for a retry', async () => {

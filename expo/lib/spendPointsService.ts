@@ -1,4 +1,6 @@
 import { getSupabase } from '@/lib/supabaseClient';
+import { BANK_PREVIEW_ENABLED, isBankPreviewMode } from '@/lib/releaseFeatures';
+import { withDataTimeout } from '@/lib/supabaseRequest';
 
 export type SpendConnection = {
   id: string;
@@ -27,15 +29,18 @@ export type SpendPointsStatus = {
 };
 
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await getSupabase().functions.invoke('saltedge-connect', { body });
+  const { data, error } = await withDataTimeout(getSupabase().functions.invoke('saltedge-connect', { body }), 'Banki tesztfunkció');
   if (error) throw error;
   return data as T;
 }
 
 // Returns { enabled: false } whenever the feature is switched off or unreachable, so callers can hide it.
 export async function getSpendPointsStatus(): Promise<SpendPointsStatus> {
+  const disabled: SpendPointsStatus = { enabled: false, mode: 'off', connections: [], recent: [] };
+  if (!BANK_PREVIEW_ENABLED) return disabled;
   try {
     const data = await invoke<Partial<SpendPointsStatus>>({ action: 'status' });
+    if (data.enabled !== true || !isBankPreviewMode(data.mode)) return disabled;
     return {
       enabled: data.enabled === true,
       mode: data.mode ?? 'off',
@@ -49,6 +54,9 @@ export async function getSpendPointsStatus(): Promise<SpendPointsStatus> {
 }
 
 export async function startBankConnection(): Promise<{ connect_url?: string; connected?: boolean; mock?: boolean }> {
+  if (!BANK_PREVIEW_ENABLED || !(await getSpendPointsStatus()).enabled) {
+    throw new Error('A banki tesztfunkció ebben a kiadásban nem érhető el.');
+  }
   return invoke({ action: 'connect' });
 }
 

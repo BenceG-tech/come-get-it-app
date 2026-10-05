@@ -8,22 +8,22 @@ const PRIVACY_URL = 'https://come-get-it.app/adatvedelmi-szabalyzat';
 function AuthLegalText() {
   return (
     <Text style={styles.text}>
-      A folytatással elfogadod az{' '}
+      A folytatással elfogadod a{' '}
       <Text
         accessibilityRole="link"
         onPress={() => Linking.openURL(TERMS_URL)}
         style={styles.link}
       >
-        Használati Feltételeket
+        használati feltételeket
       </Text>
-      {' '}és az{' '}
+      {'. Az adatkezelésről az '}
       <Text
         accessibilityRole="link"
         onPress={() => Linking.openURL(PRIVACY_URL)}
         style={styles.link}
       >
-        Adatvédelmi Szabályzatot
-      </Text>.
+        adatvédelmi szabályzatban
+      </Text>{' olvashatsz.'}
     </Text>
   );
 }
