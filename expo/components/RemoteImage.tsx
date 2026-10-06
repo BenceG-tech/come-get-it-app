@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { RotateCw } from 'lucide-react-native';
 import { imageCandidates, imageLoadReducer, imageRequestKey, initialImageLoadState, type ImageSize } from '@/lib/imageLoading';
 
-const brandPlaceholder = require('@/assets/images/come-get-it-logo-white.png');
+const brandPlaceholder = require('@/assets/images/login-logo-attached.png');
 type Props = {
   uri?: string | null;
   fallbackUris?: (string | null | undefined)[];
