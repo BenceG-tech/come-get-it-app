@@ -1,9 +1,9 @@
+import RemoteImage from '@/components/RemoteImage';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
   Animated,
-  Image,
   Modal,
   Platform,
   Pressable,
@@ -471,7 +471,7 @@ export default function RedemptionWindowModal({
   const renderDrinkImage = () => (
     <View style={[styles.drinkImageSection, { height: imageHeight }]}>
       {drinkImageUrl ? (
-        <Image source={{ uri: drinkImageUrl }} style={styles.drinkImage} resizeMode="cover" />
+        <RemoteImage uri={drinkImageUrl} style={styles.drinkImage} accessibilityLabel={selectedDrinkName} />
       ) : (
         <View style={[styles.drinkImage, styles.drinkImageFallback]}>
           <Text style={styles.drinkImageEmoji}>🍺</Text>

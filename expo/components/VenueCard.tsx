@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, useWindowDimensions, type GestureResponderEvent } from 'react-native';
+import RemoteImage from '@/components/RemoteImage';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, useWindowDimensions, type GestureResponderEvent } from 'react-native';
 import { Heart, Star } from 'lucide-react-native';
 import { useRouter } from "expo-router";
 import { Venue } from "@/types/venue";
@@ -53,8 +54,6 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
     }).start();
   };
 
-  const placeholderUri = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600';
-  const imageSource = venue.image_url ? { uri: venue.image_url } : { uri: placeholderUri };
 
   const renderPriceMarkers = () => {
     return Array.from({ length: 4 }, (_, index) => (
@@ -90,10 +89,12 @@ export default function VenueCard({ venue, showRating = true }: VenueCardProps) 
       {/* Image section with overlays */}
       <View style={[styles.imageContainer, { height: Math.round(cardWidth * 0.42) }]}>
         <View style={styles.imageClip}>
-          <Image
-            source={imageSource}
+          <RemoteImage
+            uri={venue.image_url}
+            fallbackUris={[venue.hero_image_url]}
             style={styles.image}
-            resizeMode="cover"
+            accessibilityLabel={`${venue.name} fotója`}
+            testID={`venue-card-image-${venue.id}`}
           />
           
           {/* Gradient overlay at bottom of image */}

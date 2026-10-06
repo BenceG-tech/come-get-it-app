@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
-  Image,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -12,11 +11,11 @@ import { ChevronRight, MapPin, Martini, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import { Venue } from '@/types/venue';
+import RemoteImage from '@/components/RemoteImage';
 import { hasAvailableFreeDrink } from '@/lib/offerAvailability';
 import { useAvailabilityNow } from '@/lib/useAvailabilityNow';
 
 const CYAN = '#00D1FF' as const;
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800';
 
 type VenueMiniCardProps = {
   venue: Venue;
@@ -87,7 +86,6 @@ export default function VenueMiniCard({
     [translateY]
   );
 
-  const imageUri = venue.image_url ?? venue.hero_image_url ?? FALLBACK_IMAGE;
   const tags = Array.isArray(venue.tags) ? venue.tags.slice(0, 3) : [];
 
   return (
@@ -107,7 +105,7 @@ export default function VenueMiniCard({
           <View style={styles.handle} />
         </View>
         <View style={styles.row}>
-          <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+          <RemoteImage uri={venue.image_url} fallbackUris={[venue.hero_image_url]} style={styles.image} size={480} accessibilityLabel={`${venue.name} fotója`} />
           <View style={styles.body}>
             <Text style={styles.name} numberOfLines={1}>{venue.name}</Text>
             {venue.address ? (

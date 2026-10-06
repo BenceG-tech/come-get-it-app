@@ -1,5 +1,6 @@
+import RemoteImage from '@/components/RemoteImage';
 import { memo, useMemo } from "react";
-import { StyleSheet, View, Text, Image, Pressable, Dimensions } from "react-native";
+import { StyleSheet, View, Text, Pressable, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
@@ -57,7 +58,7 @@ function BigRewardCardInner({ reward, width = 148, canRedeem, testID }: BigRewar
       accessibilityRole="button"
     >
       {reward.image_url ? (
-        <Image source={{ uri: reward.image_url }} style={styles.image} resizeMode="cover" />
+        <RemoteImage uri={reward.image_url} style={styles.image} accessibilityLabel={reward.name} />
       ) : (
         <View style={[styles.image, styles.imageFallback]} />
       )}

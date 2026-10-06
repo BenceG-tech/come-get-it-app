@@ -1,10 +1,10 @@
+import RemoteImage from '@/components/RemoteImage';
 import React, { useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Animated,
   useWindowDimensions,
 } from "react-native";
@@ -64,8 +64,6 @@ export default function RewardListCard({ reward, points, testID }: RewardListCar
   const missing = Math.max(reward.points_required - points, 0);
   const validText = formatValidUntil(reward.valid_until);
 
-  const placeholderUri = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600";
-  const imageSource = reward.image_url ? { uri: reward.image_url } : { uri: placeholderUri };
 
   const handlePressIn = () => {
     Animated.timing(scaleAnim, { toValue: 0.98, duration: 100, useNativeDriver: true }).start();
@@ -91,7 +89,7 @@ export default function RewardListCard({ reward, points, testID }: RewardListCar
       >
         <View style={[styles.imageContainer, { height: Math.round(screenWidth * 0.42) }]}>
           <View style={styles.imageClip}>
-            <Image source={imageSource} style={styles.image} resizeMode="cover" />
+            <RemoteImage uri={reward.image_url} style={styles.image} accessibilityLabel={reward.name} />
             <LinearGradient colors={["transparent", "rgba(0,0,0,0.45)"]} style={styles.imageGradient} />
           </View>
 
