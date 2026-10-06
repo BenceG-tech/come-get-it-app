@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,22 +13,55 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Linking from 'expo-linking';
 import { LockKeyhole } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { getSupabase } from '@/lib/supabaseClient';
+import { completePasswordRecovery } from '@/lib/password-recovery';
 import Colors from '@/constants/colors';
 
 const CYAN = '#00C8E8' as const;
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
-  const { updatePassword } = useAuth();
+  const { updatePassword, session, isAuthReady } = useAuth();
+  const callbackUrl = Linking.useLinkingURL();
+  const recoveryOperation = useRef<{ url: string; promise: Promise<void> } | null>(null);
+  const [recoveryReady, setRecoveryReady] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // The web client consumes its own URL; native detectSessionInUrl is disabled.
+    if (Platform.OS === 'web') {
+      setRecoveryReady(isAuthReady && Boolean(session));
+      if (isAuthReady && !session) setRecoveryError('Kérj új jelszó-visszaállító linket a bejelentkezési oldalon.');
+      return;
+    }
+    if (!isAuthReady) return;
+    if (!callbackUrl) {
+      setRecoveryError('Nyisd meg az e-mailben kapott jelszó-visszaállító linket, vagy kérj újat a bejelentkezési oldalon.');
+      return;
+    }
+    if (recoveryOperation.current?.url !== callbackUrl) {
+      recoveryOperation.current = { url: callbackUrl, promise: completePasswordRecovery(getSupabase().auth, callbackUrl) };
+    }
+    setRecoveryReady(false);
+    setRecoveryError(null);
+    let active = true;
+    recoveryOperation.current.promise.then(() => {
+      if (active) setRecoveryReady(true);
+    }).catch(() => {
+      if (active) setRecoveryError('A jelszó-visszaállító link érvénytelen vagy lejárt. Kérj új linket a bejelentkezési oldalon.');
+    });
+    return () => { active = false; };
+  }, [callbackUrl, isAuthReady, Platform.OS === 'web' ? session : null]);
+
   const canSubmit = useMemo(
-    () => password.length >= 8 && password === confirmation && !loading,
-    [confirmation, loading, password]
+    () => recoveryReady && Boolean(session) && password.length >= 8 && password === confirmation && !loading,
+    [confirmation, loading, password, recoveryReady, session]
   );
 
   const onSubmit = useCallback(async () => {
@@ -54,6 +87,14 @@ export default function ResetPasswordScreen() {
           </View>
           <Text style={styles.title}>Új jelszó</Text>
           <Text style={styles.subtitle}>Adj meg egy legalább 8 karakteres új jelszót.</Text>
+
+          {!recoveryReady && !recoveryError ? <ActivityIndicator color={CYAN} /> : null}
+          {recoveryError ? <Text accessibilityRole="alert" style={styles.error}>{recoveryError}</Text> : null}
+          {recoveryError ? (
+            <Pressable onPress={() => router.replace('/auth')} accessibilityRole="button">
+              <Text style={styles.subtitle}>Vissza a bejelentkezéshez</Text>
+            </Pressable>
+          ) : null}
 
           <TextInput
             autoCapitalize="none"

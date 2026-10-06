@@ -11,7 +11,7 @@
     "web": "bunx expo start --web",
     "typecheck": "tsc --noEmit",
     "audit:app-store-media": "node scripts/audit-app-store-media.mjs",
-    "test:release": "node --test scripts/test-activity-and-qr.mjs scripts/test-release-backend.mjs scripts/test-release-regressions.mjs scripts/test-store-readiness.mjs scripts/test-offer-availability.mjs scripts/test-image-loading.mjs scripts/test-location-policy.mjs && bun test scripts/test-venue-loading.test.mjs"
+    "test:release": "node --test scripts/test-activity-and-qr.mjs scripts/test-release-backend.mjs scripts/test-release-regressions.mjs scripts/test-store-readiness.mjs scripts/test-offer-availability.mjs scripts/test-image-loading.mjs scripts/test-location-policy.mjs scripts/test-password-recovery.mjs && bun test scripts/test-venue-loading.test.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

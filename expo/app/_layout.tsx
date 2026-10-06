@@ -66,8 +66,16 @@ function useNearbyAlerts() {
 
 function RootLayoutNav() {
   useNearbyAlerts();
-  const { session } = useAuth();
+  const { session, isAuthReady } = useAuth();
   const pathname = usePathname();
+  useEffect(() => {
+    // A cold-start deep link skips index, which normally dismisses the native splash.
+    if (Platform.OS === 'web' || !isAuthReady || pathname === '/') return;
+    const frame = requestAnimationFrame(() => {
+      SplashScreen.hideAsync().catch(() => undefined);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isAuthReady, pathname]);
   const userId = session?.user.id ?? null;
   useEffect(() => {
     userActivity.setUser(userId);

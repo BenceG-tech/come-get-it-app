@@ -249,7 +249,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     async (email: string, password: string): Promise<boolean> => {
       try {
         console.log('[Auth] signUpWithEmail');
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const emailRedirectTo = Platform.OS === 'web'
+          ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth`
+          : Linking.createURL('auth');
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
         if (error) throw error;
         // Ha a megerősítés kikapcsolt, signUp azonnal session-t ad — így azonnal be tudunk lépni.
         return Boolean(data?.session);
