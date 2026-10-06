@@ -74,7 +74,7 @@ export default function RewardDetailScreen() {
       router.back();
       return;
     }
-    router.replace("/(tabs)/rewards");
+    router.replace("/(tabs)/(rewards)/rewards");
   }, []);
 
   const rewardQuery = useQuery({

@@ -183,7 +183,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/(tabs)/rewards")} testID="open-rewards-card">
+          <TouchableOpacity activeOpacity={0.88} onPress={() => router.navigate("/(tabs)/(rewards)/rewards")} testID="open-rewards-card">
             <LinearGradient
               colors={["#00E0FF", "#0090B8"]}
               start={{ x: 0, y: 0 }}

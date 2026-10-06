@@ -58,9 +58,7 @@ export default function RewardsCategoryScreen() {
   const title = titleMap[category] ?? category;
 
   const goBackToRewards = () => {
-    // This is a sibling tab screen, so navigating directly to the rewards tab
-    // cannot reveal a previously visited category from a nested stack.
-    router.navigate("/(tabs)/rewards");
+    router.dismissTo("/(tabs)/(rewards)/rewards");
   };
 
   return (
