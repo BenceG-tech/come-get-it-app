@@ -138,8 +138,8 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
       if (foregroundStatus !== 'granted') {
         if (existingStatus === 'denied') {
           Alert.alert(
-            'Engedély szükséges',
-            'A helymeghatározás korábban el lett utasítva. A Beállítások appban engedélyezheted újra.',
+            'Helyhozzáférés kikapcsolva',
+            'A helyeket továbbra is böngészheted. A távolságokhoz és a helyszíni beváltás ellenőrzéséhez a Beállításokban engedélyezheted a helyhozzáférést.',
             [
               { text: 'Mégse', style: 'cancel' },
               { text: 'Beállítások', style: 'default', onPress: openLocationSettings },
@@ -147,8 +147,8 @@ export const [LocationProvider, useLocation] = createContextHook<LocationContext
           );
         } else {
           Alert.alert(
-            'Engedély szükséges',
-            'A helymeghatározás engedélyezése szükséges a közeli helyszínek megjelenítéséhez.'
+            'Böngészés helyhozzáférés nélkül',
+            'A helyeket továbbra is látod. Helyhozzáférést a távolságok megjelenítéséhez és a helyszíni beváltás ellenőrzéséhez kérünk.'
           );
         }
         setHasPermission(false);

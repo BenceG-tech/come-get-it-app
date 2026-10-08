@@ -1,4 +1,8 @@
-import { disableCampaignNotifications } from '@/lib/campaignNotifications';
+import { disableCampaignNotifications, clearDeletedAccountNotificationPreference } from '@/lib/campaignNotifications';
+import { disableNearbyAlerts } from '@/lib/nearbyAlerts';
+import { accountDeletionErrorMessage, requestAccountDeletion, type AccountDeletionResult } from '@/lib/accountDeletion';
+import { withDataTimeout } from '@/lib/supabaseRequest';
+import { useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
@@ -21,7 +25,7 @@ type AuthContextType = {
   signInWithApple: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
-  deleteAccount: () => Promise<void>;
+  deleteAccount: () => Promise<AccountDeletionResult>;
   signOut: () => Promise<void>;
 };
 
@@ -126,6 +130,7 @@ function parseOAuthCallbackParams(urlString: string): OAuthCallbackParams {
 
 export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => {
   const supabase = useMemo(() => getSupabase(), []);
+  const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
 
@@ -244,7 +249,10 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
     async (email: string, password: string): Promise<boolean> => {
       try {
         console.log('[Auth] signUpWithEmail');
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const emailRedirectTo = Platform.OS === 'web'
+          ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth`
+          : Linking.createURL('auth');
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo } });
         if (error) throw error;
         // Ha a megerősítés kikapcsolt, signUp azonnal session-t ad — így azonnal be tudunk lépni.
         return Boolean(data?.session);
@@ -441,22 +449,54 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
 
   const deleteAccount = useCallback(async () => {
     try {
-      const { error } = await supabase.functions.invoke('delete-account', { body: {} });
-      if (error) throw error;
-      await clearPersistedSupabaseSession();
-      setSession(null);
+      const userId = session?.user.id;
+      if (!userId) throw new Error('Hiányzó munkamenet');
+      const usesApple = session.user.identities?.some((identity) => identity.provider === 'apple')
+        || session.user.app_metadata?.providers?.includes('apple');
+      let authorizationCode: string | undefined;
+      if (usesApple && Platform.OS === 'ios') {
+        try {
+          if (await AppleAuthentication.isAvailableAsync()) {
+            const { hashedNonce, state } = await createAppleAuthSecurityParams();
+            const credential = await AppleAuthentication.signInAsync({ requestedScopes: [], nonce: hashedNonce, state });
+            if (credential.state === state && credential.authorizationCode) authorizationCode = credential.authorizationCode;
+          }
+        } catch {
+          // Cancellation or unavailable Apple credentials must not prevent account deletion.
+          // The server truthfully reports when Apple access needs manual revocation afterwards.
+        }
+      }
+      const result = await requestAccountDeletion(userId, authorizationCode);
+      if (result.status === 'pending') return result;
+      // The server has confirmed deletion. Clear device state without issuing authenticated mutations.
+      await Promise.allSettled([
+        withDataTimeout(disableNearbyAlerts(), 'Közeli értesítések kikapcsolása', 6_000),
+        withDataTimeout(clearDeletedAccountNotificationPreference(userId), 'Értesítési beállítás törlése', 6_000),
+        withDataTimeout(supabase.auth.signOut({ scope: 'local' }), 'Helyi kijelentkezés', 6_000),
+      ]);
+      try {
+        await withDataTimeout(clearPersistedSupabaseSession(), 'Helyi munkamenet törlése', 3_000);
+      } catch {
+        // Deletion already succeeded on the server; a storage failure cannot undo it.
+      } finally {
+        setSession(null);
+        queryClient.clear();
+      }
+      return result;
     } catch (e) {
-      Alert.alert('Nem sikerült törölni a fiókot', mapAuthError(e));
+      Alert.alert('A fióktörlés nem fejeződött be', accountDeletionErrorMessage(e));
       throw e;
     }
-  }, [supabase]);
+  }, [supabase, session, queryClient]);
 
   const signOut = useCallback(async () => {
     try {
       console.log('[Auth] signOut');
       if (session?.user.id) await disableCampaignNotifications(session.user.id);
+      await disableNearbyAlerts();
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      queryClient.clear();
     } catch (e) {
       console.error('[Auth] signOut failed', e);
       // Visszavont refresh token esetén a helyi munkamenet törlése a helyes helyreállítás.
@@ -467,7 +507,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextType>(() => 
       await clearPersistedSupabaseSession();
       setSession(null);
     }
-  }, [supabase, session?.user.id]);
+  }, [supabase, session?.user.id, queryClient]);
 
   return {
     session,

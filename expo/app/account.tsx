@@ -16,6 +16,7 @@ import { ExternalLink, Save, Trash2 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { getSupabase } from '@/lib/supabaseClient';
+import { withDataTimeout } from '@/lib/supabaseRequest';
 
 const CYAN = '#00C8E8' as const;
 const PRIVACY_URL = 'https://come-get-it.app/adatvedelmi-szabalyzat';
@@ -30,24 +31,31 @@ export default function AccountScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [profileError, setProfileError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [deletionRequestId, setDeletionRequestId] = useState<string | null>(null);
 
   const email = session?.user.email ?? '';
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
+    setLoading(true);
+    setProfileError(false);
     const loadProfile = async () => {
       if (!session?.user.id) {
         if (mounted) setLoading(false);
         return;
       }
-      const { data, error } = await supabase
+      const { data, error } = await withDataTimeout(supabase
         .from('profiles')
         .select('name, phone')
         .eq('id', session.user.id)
-        .maybeSingle();
+        .abortSignal(controller.signal)
+        .maybeSingle(), 'Profil betöltése', 12_000);
       if (!mounted) return;
       if (error) {
-        Alert.alert('Nem sikerült betölteni a profilt', error.message);
+        setProfileError(true);
       } else {
         const row = data as { name?: string | null; phone?: string | null } | null;
         setName(row?.name ?? '');
@@ -55,21 +63,22 @@ export default function AccountScreen() {
       }
       setLoading(false);
     };
-    loadProfile().catch((error) => {
+    loadProfile().catch(() => {
       if (mounted) {
         setLoading(false);
-        Alert.alert('Nem sikerült betölteni a profilt', error instanceof Error ? error.message : 'Ismeretlen hiba');
+        setProfileError(true);
       }
-    });
+    }).finally(() => controller.abort());
     return () => {
       mounted = false;
+      controller.abort();
     };
-  }, [session?.user.id, supabase]);
+  }, [session?.user.id, supabase, loadAttempt]);
 
   const handleSave = useCallback(async () => {
     const userId = session?.user.id;
     const trimmedName = name.trim();
-    if (!userId || !trimmedName || saving) {
+    if (!userId || !trimmedName || saving || profileError || loading) {
       if (!trimmedName) Alert.alert('A név kötelező', 'Adj meg egy megjelenítendő nevet.');
       return;
     }
@@ -89,7 +98,7 @@ export default function AccountScreen() {
     } finally {
       setSaving(false);
     }
-  }, [name, phone, saving, session?.user.id, supabase]);
+  }, [name, phone, saving, session?.user.id, supabase, profileError, loading]);
 
   const handlePasswordReset = useCallback(async () => {
     if (!email) return;
@@ -102,9 +111,10 @@ export default function AccountScreen() {
   }, [email, requestPasswordReset]);
 
   const confirmDelete = useCallback(() => {
+    if (deleting) return;
     Alert.alert(
       'Fiók végleges törlése',
-      'A profilod és a hozzá tartozó személyes adatok végleg törlődnek. Ez nem vonható vissza.',
+      'A fiókod, a pontjaid és a kedvenceid végleg törlődnek. A törlés nem vonható vissza. Az adatkezelés részleteit az adatvédelmi szabályzatban találod.',
       [
         { text: 'Mégsem', style: 'cancel' },
         {
@@ -113,8 +123,21 @@ export default function AccountScreen() {
           onPress: async () => {
             setDeleting(true);
             try {
-              await deleteAccount();
+              const result = await deleteAccount();
+              if (result.status === 'pending') {
+                setDeletionRequestId(result.requestId);
+                Alert.alert('A törlési kérelmedet rögzítettük', 'A fiókodhoz üzleti adatok kapcsolódnak, ezért a törlést az adatok rendezése után fejezzük be. A fiókod még nem törlődött. A kérelmet nem kell e-mailben újra elküldened.');
+                return;
+              }
               router.replace('/auth');
+              if (result.manualAppleRevocation) {
+                Alert.alert('A Come Get It-fiókod törlődött', 'Az Apple-hozzáférést nem sikerült automatikusan visszavonni. Az Apple-fiókodban a Bejelentkezés az Apple-lel menüben eltávolíthatod a Come Get It hozzáférését.', [
+                  { text: 'Rendben', style: 'cancel' },
+                  { text: 'Apple-fiók megnyitása', onPress: () => { void Linking.openURL('https://account.apple.com/').catch(() => undefined); } },
+                ]);
+              }
+            } catch {
+              // Az auth réteg érthető hibaüzenetet ad; sikertelen törléskor itt maradunk.
             } finally {
               setDeleting(false);
             }
@@ -122,7 +145,7 @@ export default function AccountScreen() {
         },
       ]
     );
-  }, [deleteAccount, router]);
+  }, [deleteAccount, router, deleting]);
 
   return (
     <View style={styles.container}>
@@ -137,6 +160,13 @@ export default function AccountScreen() {
 
         {loading ? (
           <ActivityIndicator color={CYAN} style={styles.loader} />
+        ) : profileError ? (
+          <View style={styles.section}>
+            <Text style={styles.headerSub}>A profiladatok nem töltődtek be. A fióktörlés és a jogi információk ettől függetlenül elérhetők.</Text>
+            <TouchableOpacity onPress={() => setLoadAttempt((attempt) => attempt + 1)} style={styles.menuRow} accessibilityRole="button">
+              <Text style={styles.menuText}>Betöltés újra</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <View style={styles.section}>
@@ -173,9 +203,11 @@ export default function AccountScreen() {
               {saving ? <ActivityIndicator color="#001014" /> : <Save size={18} color="#001014" />}
               <Text style={styles.saveButtonText}>Mentés</Text>
             </TouchableOpacity>
-
-            <View style={styles.section}>
+          </>
+        )}
+        <View style={styles.section}>
               <Text style={styles.sectionTitle}>Biztonság és jogi információk</Text>
+              {deletionRequestId ? <Text style={styles.fieldHint}>Törlési kérelem rögzítve. A fiók törlése folyamatban van. Hivatkozás: {deletionRequestId}</Text> : null}
               <View style={styles.menuCard}>
                 <TouchableOpacity onPress={handlePasswordReset} style={styles.menuRow}>
                   <Text style={styles.menuText}>Jelszó módosítása</Text>
@@ -193,9 +225,7 @@ export default function AccountScreen() {
                   <Text style={[styles.menuText, styles.dangerText]}>Fiók törlése</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </>
-        )}
+        </View>
       </ScrollView>
     </View>
   );

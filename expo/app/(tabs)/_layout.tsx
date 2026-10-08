@@ -23,7 +23,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
+        name="(rewards)"
         options={{
           title: "Jutalmak",
           tabBarIcon: ({ color }) => <Star size={24} color={color} />,
@@ -34,13 +34,6 @@ export default function TabLayout() {
         options={{
           title: "Profil",
           tabBarIcon: ({ color }) => <User size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="rewards-category"
-        options={{
-          href: null,
-          headerShown: false,
         }}
       />
     </Tabs>

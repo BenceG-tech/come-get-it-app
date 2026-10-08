@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const tokenHash = await sha256(token);
-    const { data: tokenData, error: tokenError } = await service
+    const { data: foundToken, error: tokenError } = await service
       .from("redemption_tokens")
       .select("id,user_id,status,expires_at,consumed_at")
       .eq("token_hash", tokenHash)
@@ -72,17 +72,27 @@ Deno.serve(async (req: Request) => {
     if (tokenError) {
       return jsonResponse({ success: false, code: "STATUS_LOOKUP_FAILED" }, 500);
     }
-    if (!tokenData) {
+    if (!foundToken) {
       return jsonResponse({ success: false, code: "NOT_FOUND" }, 404);
     }
 
+    let tokenData = foundToken;
     if (tokenData.status === "issued" && new Date(tokenData.expires_at).getTime() <= Date.now()) {
-      await service
+      const { data: expired, error: expiryError } = await service
         .from("redemption_tokens")
         .update({ status: "expired" })
         .eq("id", tokenData.id)
-        .eq("status", "issued");
-      return jsonResponse({ success: true, status: "expired" });
+        .eq("status", "issued")
+        .select("id")
+        .maybeSingle();
+      if (expiryError) return jsonResponse({ success: false, code: "STATUS_LOOKUP_FAILED" }, 500);
+      if (expired) return jsonResponse({ success: true, status: "expired" });
+      // A concurrent scan may have acquired the token lock first. Re-read its
+      // committed result instead of announcing a false expiry.
+      const { data: latest, error: latestError } = await service.from("redemption_tokens")
+        .select("id,user_id,status,expires_at,consumed_at").eq("id", tokenData.id).eq("user_id", user.id).maybeSingle();
+      if (latestError || !latest) return jsonResponse({ success: false, code: "STATUS_LOOKUP_FAILED" }, 500);
+      tokenData = latest;
     }
 
     if (tokenData.status !== "consumed") {

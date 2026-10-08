@@ -92,6 +92,7 @@ export default function ProfileScreen() {
   const [spendPointsEnabled, setSpendPointsEnabled] = useState<boolean>(false);
 
   useEffect(() => {
+    setSpendPointsEnabled(false);
     if (!session?.user.id) return;
     let mounted = true;
     getSpendPointsStatus().then((status) => {
@@ -182,7 +183,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/(tabs)/rewards")} testID="open-rewards-card">
+          <TouchableOpacity activeOpacity={0.88} onPress={() => router.navigate("/(tabs)/(rewards)/rewards")} testID="open-rewards-card">
             <LinearGradient
               colors={["#00E0FF", "#0090B8"]}
               start={{ x: 0, y: 0 }}

@@ -1,5 +1,6 @@
+import RemoteImage from '@/components/RemoteImage';
 import { memo, useMemo } from "react";
-import { StyleSheet, View, Text, Image, Pressable, Dimensions } from "react-native";
+import { StyleSheet, View, Text, Pressable, Dimensions } from "react-native";
 import { router } from "expo-router";
 import {
   BadgePercent,
@@ -80,7 +81,7 @@ function RewardCardInner({ reward, variant = "grid", canRedeem, onRedeem, onPres
       accessibilityRole="button"
     >
       {reward.image_url ? (
-        <Image source={{ uri: reward.image_url }} style={imageStyle} />
+        <RemoteImage uri={reward.image_url} style={imageStyle} accessibilityLabel={reward.name} />
       ) : (
         <View style={[imageStyle, styles.imageFallback]} />
       )}

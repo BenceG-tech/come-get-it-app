@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { ChevronLeft, Heart, TrendingUp, Flame, Crown, Sprout, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { getUserCSRImpact } from '@/lib/csrService';
+import { COMMUNITY_IMPACT_PREVIEW_ENABLED } from '@/lib/releaseFeatures';
 import { useAuth } from '@/context/AuthContext';
 import { CSRImpactResponse, RecentDonation } from '@/types/csr';
 
@@ -48,7 +49,7 @@ export default function MyImpactScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery<CSRImpactResponse, Error>({
-    queryKey: ['csr-impact'],
+    queryKey: ['csr-impact', session?.user.id],
     queryFn: async () => {
       const result = await getUserCSRImpact();
       if (!result.success) {
@@ -56,7 +57,7 @@ export default function MyImpactScreen() {
       }
       return result.data;
     },
-    enabled: !!session,
+    enabled: COMMUNITY_IMPACT_PREVIEW_ENABLED && !!session,
     staleTime: 60_000,
     retry: false,
   });
@@ -74,6 +75,8 @@ export default function MyImpactScreen() {
       day: 'numeric',
     });
   };
+
+  if (!COMMUNITY_IMPACT_PREVIEW_ENABLED) return <Redirect href="/(tabs)/home" />;
 
   if (!session) {
     return (

@@ -36,6 +36,12 @@ async function unregister(userId: string) {
 export function disableCampaignNotifications(userId: string) {
   return serialize(() => unregister(userId));
 }
+/** Only after the server confirms account deletion; no session remains for an unregister request. */
+export function clearDeletedAccountNotificationPreference(userId: string) {
+  return serialize(async () => {
+    if ((await read())?.userId === userId) await AsyncStorage.removeItem(KEY);
+  });
+}
 async function register(userId: string, requestPermission: boolean, devicePushToken?: Notifications.DevicePushToken) {
   if (Platform.OS === 'web') throw new Error('Az ajánlatértesítések a mobilalkalmazásban érhetők el.');
   const saved = await read();

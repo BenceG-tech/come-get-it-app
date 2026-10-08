@@ -13,18 +13,12 @@ import { convertOpeningHoursToBusinessHours, isVenueOpenNow, getClosingTimeToday
 import { geocodeVenueAddress } from '@/utils/geocoding';
 import RedemptionWindowModal from '@/components/RedemptionWindowModal';
 import { useFavorites } from '@/context/FavoritesContext';
-import { getOfferAvailability } from '@/lib/offerAvailability';
+import { getOfferAvailability, getConfiguredFreeDrinks, getDrinkOfferAvailability, getDrinkScheduleForDay, getVenueISODay } from '@/lib/offerAvailability';
+import RemoteImage from '@/components/RemoteImage';
 import { useAvailabilityNow } from '@/lib/useAvailabilityNow';
 import { getCachedVenue } from '@/lib/venueData';
 import { useLocation } from '@/context/LocationContext';
 import { formatDistance, haversineMeters } from '@/utils/distance';
-
-
-function getTodayISODay(): number {
-  const jsDay = new Date().getDay();
-  return jsDay === 0 ? 7 : jsDay;
-}
-
 
 
 export default function VenueModalScreen() {
@@ -35,7 +29,6 @@ export default function VenueModalScreen() {
 
   const [venue, setVenue] = useState<VenueWithDetails | null>(null);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState<boolean>(false);
@@ -140,32 +133,14 @@ export default function VenueModalScreen() {
       const t = u.trim();
       if (!seen.has(t)) { seen.add(t); uniq.push(t); }
     }
-    return uniq.length > 0 ? uniq : ['https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200'];
-  }, [venue]);
+    return uniq.length > 0 ? uniq : [null];
+  }, [venue?.images, venue?.hero_image_url, venue?.image_url]);
 
-  useEffect(() => {
-    setImages(galleryImages);
-    setActiveIndex(0);
-  }, [galleryImages]);
+  const images = galleryImages;
+  useEffect(() => { setActiveIndex(0); }, [id]);
 
-  const onImageError = useCallback((index: number) => {
-    setImages((prev) => {
-      if (!prev || index < 0 || index >= prev.length) return prev;
-      const next = [...prev];
-      next[index] = 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200';
-      return next;
-    });
-  }, []);
-
-  const freeDrinks: VenueDrink[] = (venue?.drinks ?? venue?.freeDrinkData?.drinks ?? [])
-    .filter((drink) => offerAvailability.drinkIds.includes(drink.id));
-
-  const windowsNormalized = useMemo(() => {
-    const freeDrinkWindows = venue?.freeDrinkWindows ?? [];
-    const mapped = freeDrinkWindows.map(w => ({ ...w }));
-    console.log('[VenueDetail] Windows (no normalization applied):', mapped);
-    return mapped;
-  }, [venue?.freeDrinkWindows]);
+  const freeDrinks = getConfiguredFreeDrinks(venue ?? {});
+  const windowsNormalized = venue?.freeDrinkData?.windows ?? [];
 
   const resolvedCoords = useMemo(() => {
     const latRaw = (venue?.coordinates?.lat ?? venue?.latitude) as unknown;
@@ -203,13 +178,14 @@ export default function VenueModalScreen() {
   }, [resolvedCoords, userLocation]);
 
   const [selectedDrinkIndex, setSelectedDrinkIndex] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<number>(() => getTodayISODay());
+  const [selectedDay, setSelectedDay] = useState<number>(() => getVenueISODay());
   const venueIsFavorite = venue ? isFavorite(String(venue.id)) : false;
 
   const currentDrink = freeDrinks[selectedDrinkIndex] ?? freeDrinks[0] ?? null;
 
   const drinkAlwaysAvailable = currentDrink !== null && !windowsNormalized.some((window) => window.drinkId === currentDrink.id);
-  const ctaIsActive = offerAvailability.status === 'available' && currentDrink !== null;
+  const currentAvailability = currentDrink ? getDrinkOfferAvailability(venue ?? {}, currentDrink.id, availabilityNow) : offerAvailability;
+  const ctaIsActive = currentAvailability.status === 'available' && currentDrink !== null;
   const ctaSubtitle = 'Most elérhető';
 
   const handleFavoritePress = useCallback(async () => {
@@ -230,42 +206,12 @@ export default function VenueModalScreen() {
     { short: 'V', full: 'Vasárnap' },
   ];
 
-  const getAvailabilityForDrink = useCallback((drinkId: string, isoDay: number): string | null => {
-    const dbDayIndex = isoDay - 1;
+  const getAvailabilityForDrink = (drinkId: string, isoDay: number) => getDrinkScheduleForDay(windowsNormalized, drinkId, isoDay);
 
-    console.log(`[VenueDetail] getAvailabilityForDrink: drinkId=${drinkId}, isoDay=${isoDay}, dbDayIndex=${dbDayIndex}`);
-    console.log(`[VenueDetail] Total windows: ${windowsNormalized.length}`);
-
-    const matchingWindows = windowsNormalized.filter((w) => {
-      const drinkMatches = String(w.drinkId) === String(drinkId);
-
-      const daysMatches = Array.isArray(w.days) && w.days.includes(isoDay);
-      const legacyMatches = typeof w.dayOfWeek === 'number' && w.dayOfWeek === dbDayIndex;
-
-      const dayMatches = daysMatches || legacyMatches;
-
-      console.log(
-        `[VenueDetail] Checking window: drinkMatches=${drinkMatches} dayMatches=${dayMatches} days=${JSON.stringify(w.days)} dayOfWeek=${w.dayOfWeek} isoDay=${isoDay}`
-      );
-
-      return drinkMatches && dayMatches;
-    });
-
-    console.log(`[VenueDetail] Found ${matchingWindows.length} matching windows for isoDay ${isoDay}`);
-
-    if (matchingWindows.length === 0) return null;
-
-    return matchingWindows
-      .map((w) => {
-        const start = (w.start ?? '').toString();
-        const end = (w.end ?? '').toString();
-        const s = start.includes(':') ? start.substring(0, 5) : start;
-        const e = end.includes(':') ? end.substring(0, 5) : end;
-        return `${s}-${e}`;
-      })
-      .join(', ');
-  }, [windowsNormalized]);
-
+  useEffect(() => {
+    setSelectedDrinkIndex(0);
+    setSelectedDay(getVenueISODay());
+  }, [id]);
 
   if (loading) {
     return (
@@ -358,13 +304,14 @@ export default function VenueModalScreen() {
                 style={styles.imageScroller}
               >
                 {images.map((uri, idx) => (
-                  <Image
+                  <RemoteImage
                     key={`img-${uri}-${idx}`}
                     testID={`venue-image-${idx}`}
-                    source={{ uri }}
+                    uri={uri}
                     style={[styles.image, { width }]}
-                    resizeMode="cover"
-                    onError={() => onImageError(idx)}
+                    enabled={Math.abs(activeIndex - idx) <= 1}
+                    priority={idx === activeIndex ? 'high' : 'low'}
+                    accessibilityLabel={`${venue.name} fotója`}
                   />
                 ))}
               </ScrollView>
@@ -457,6 +404,9 @@ export default function VenueModalScreen() {
             ) : null}
             {freeDrinks.length > 0 ? <View style={styles.drinkSection}>
               <Text style={styles.drinkTitle}>Ingyen italok</Text>
+              <Text testID="offer-current-status" style={styles.offerStatus}>
+                {currentAvailability.status === 'available' ? 'Most beváltható' : currentAvailability.status === 'unknown' ? 'Az aktuális elérhetőség nem ellenőrizhető' : currentAvailability.reason === 'venue_closed' ? 'Most nem váltható be · A hely zárva' : 'Most nem váltható be'}
+              </Text>
               {freeDrinks.length === 0 ? (
                 <Text style={styles.emptyStateText}>Nincs elérhető ingyen ital.</Text>
               ) : (
@@ -497,10 +447,11 @@ export default function VenueModalScreen() {
                           }}
                         >
                           {drink.imageUrl ? (
-                            <Image 
-                              source={{ uri: drink.imageUrl }} 
-                              style={styles.drinkMainImage} 
-                              resizeMode="cover" 
+                            <RemoteImage
+                              uri={drink.imageUrl}
+                              style={styles.drinkMainImage}
+                              enabled={Math.abs(selectedDrinkIndex - idx) <= 1}
+                              accessibilityLabel={drink.drinkName}
                             />
                           ) : (
                             <View style={styles.drinkImagePlaceholder}>
@@ -548,15 +499,16 @@ export default function VenueModalScreen() {
                               <Pressable
                                 key={isoDay}
                                 testID={`day-tab-${isoDay}`}
-                                disabled={!isAvailable}
+                                accessibilityRole="button"
+                                accessibilityLabel={day.full}
+                                accessibilityState={{ selected: isSelected }}
                                 style={({ pressed }) => [
                                   styles.dayPill,
-                                  isSelected && styles.dayPillSelected,
                                   !isAvailable && styles.dayPillDisabled,
-                                  pressed && isAvailable && styles.dayPillPressed,
+                                  isSelected && styles.dayPillSelected,
+                                  pressed && styles.dayPillPressed,
                                 ]}
                                 onPress={() => {
-                                  if (!isAvailable) return;
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                   setSelectedDay(isoDay);
                                 }}
@@ -564,8 +516,8 @@ export default function VenueModalScreen() {
                               >
                                 <Text style={[
                                   styles.dayPillText,
-                                  isSelected && styles.dayPillTextSelected,
-                                  !isAvailable && styles.dayPillTextDisabled
+                                  !isAvailable && styles.dayPillTextDisabled,
+                                  isSelected && styles.dayPillTextSelected
                                 ]}>
                                   {day.short}
                                 </Text>
@@ -583,9 +535,10 @@ export default function VenueModalScreen() {
                               <Text testID="time-slot-text" style={styles.timeSlotRowText}>{`${dayLabel} ${availability}`}</Text>
                             </View>
                           ) : (
-                            <Text style={styles.noTimeSlotRowText}>Ezen a napon nincs elérhető idősáv</Text>
+                            <Text testID="time-slot-text" style={styles.noTimeSlotRowText}>{`${dayLabel}: ezen a napon nincs italajánlat`}</Text>
                           );
                         })()}
+                        <Text style={styles.scheduleNote}>Az ajánlat a hely nyitvatartása alatt váltható be.</Text>
                       </>
                     )}
                   </View>
@@ -797,7 +750,7 @@ export default function VenueModalScreen() {
           <Pressable style={styles.descCard} onPress={() => {}} testID="drink-description-card">
             <View style={styles.descImageWrap}>
               {descDrink?.imageUrl ? (
-                <Image source={{ uri: descDrink.imageUrl }} style={styles.descImage} resizeMode="cover" />
+                <RemoteImage uri={descDrink.imageUrl} style={styles.descImage} accessibilityLabel={descDrink.drinkName} />
               ) : (
                 <View style={[styles.descImage, styles.descImageFallback]}>
                   <Text style={styles.drinkImagePlaceholderText}>🍸</Text>
@@ -843,6 +796,8 @@ export default function VenueModalScreen() {
 
 
 const styles = StyleSheet.create({
+  offerStatus: { color: '#ADB9BD', fontSize: 14, marginBottom: 16 },
+  scheduleNote: { color: '#8F999D', fontSize: 12, marginTop: 10, textAlign: 'center' },
   container: {
     flex: 1,
     backgroundColor: Colors.dark.background,
@@ -1747,7 +1702,6 @@ const styles = StyleSheet.create({
     borderColor: '#00D1FF',
   },
   dayPillDisabled: {
-    opacity: 0.32,
     backgroundColor: 'transparent',
   },
   dayPillPressed: {
@@ -1764,7 +1718,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   dayPillTextDisabled: {
-    color: 'rgba(255,255,255,0.35)',
+    color: '#8F999D',
   },
   dayPillDot: {
     position: 'absolute',

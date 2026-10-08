@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Landmark, Link2, Unlink } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { BANK_PREVIEW_ENABLED } from '@/lib/releaseFeatures';
 import {
   type SpendPointsStatus,
   disconnectBank,
@@ -85,6 +86,8 @@ export default function SpendPointsScreen() {
   const connections = status?.connections ?? [];
   const recent = status?.recent ?? [];
 
+  if (!BANK_PREVIEW_ENABLED) return <Redirect href="/(tabs)/profile" />;
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Költésből pont', headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text }} />
@@ -109,7 +112,7 @@ export default function SpendPointsScreen() {
           </View>
         ) : (
           <>
-            {status.mode === 'mock' ? (
+            {status.mode === 'mock' || status.mode === 'sandbox' ? (
               <View style={styles.testBanner}>
                 <Text style={styles.testBannerText}>Tesztüzem: valódi bank nem kapcsolódik.</Text>
               </View>

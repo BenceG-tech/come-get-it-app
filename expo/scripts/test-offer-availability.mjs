@@ -2,12 +2,48 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getOfferAvailability, getVenueOpeningState, getWindowAvailability, getNextDrinkWindow, hasAvailableFreeDrink } from '../lib/offerAvailability.ts';
 import * as edgeSchedule from '../../supabase/functions/_shared/venueOfferSchedule.ts';
+import { getConfiguredFreeDrinks, getDrinkOfferAvailability, getDrinkScheduleForDay, getVenueISODay } from '../lib/offerAvailability.ts';
 
 const allDay = { byDay: Object.fromEntries(Array.from({ length: 7 }, (_, i) => [i + 1, { open: '00:00', close: '24:00' }])) };
 const sunday = new Date('2026-10-04T15:45:00Z'); // 17:45 Budapest, regardless of the device timezone.
 const drink = { id: 'drink-1', venueId: 'venue-1', drinkName: 'Limonádé', isFreeDrink: true };
 const window = (overrides = {}) => ({ id: 'window-1', venueId: 'venue-1', drinkId: drink.id, days: [7], start: '17:30:00', end: '18:00:00', timezone: 'Europe/Budapest', ...overrides });
 const venue = (overrides = {}) => ({ id: 'venue-1', name: 'Teszt hely', address: 'Budapest', opening_hours: allDay, freeDrinkData: { status: 'ready', drinks: [drink], windows: [window()] }, ...overrides });
+
+test('Kiscsibe retains its lemonade and weekday schedule at 03:29 while list/CTA remain unavailable', () => {
+  const kiscsibe = venue({ opening_hours: { byDay: { 2: { open: '09:00', close: '22:00' } } },
+    freeDrinkData: { status: 'ready', drinks: [drink], windows: [window({ days: [1, 2, 3, 4, 5], start: '10:00:00', end: '14:00:00' })] } });
+  const early = new Date('2026-10-06T01:29:00Z');
+  assert.deepEqual(getConfiguredFreeDrinks(kiscsibe), [drink]);
+  assert.equal(hasAvailableFreeDrink(kiscsibe, early), false);
+  assert.equal(getDrinkOfferAvailability(kiscsibe, drink.id, early).reason, 'venue_closed');
+  for (let day = 1; day <= 5; day++) assert.equal(getDrinkScheduleForDay(kiscsibe.freeDrinkData.windows, drink.id, day), '10:00–14:00');
+  for (const day of [6, 7]) assert.equal(getDrinkScheduleForDay(kiscsibe.freeDrinkData.windows, drink.id, day), null);
+  assert.equal(getDrinkOfferAvailability(kiscsibe, drink.id, new Date('2026-10-06T09:00:00Z')).status, 'available');
+  assert.equal(getDrinkOfferAvailability(kiscsibe, drink.id, new Date('2026-10-06T13:00:00Z')).reason, 'outside_window');
+});
+
+test('the selected unavailable drink cannot borrow eligibility from another carousel drink', () => {
+  const second = { ...drink, id: 'second' };
+  const mixed = venue({ freeDrinkData: { status: 'ready', drinks: [drink, second], windows: [window({ days: [1] }), window({ drinkId: second.id })] } });
+  assert.equal(getConfiguredFreeDrinks(mixed).length, 2);
+  assert.equal(hasAvailableFreeDrink(mixed, sunday), true);
+  assert.equal(getDrinkOfferAvailability(mixed, drink.id, sunday).status, 'unavailable');
+  assert.equal(getDrinkOfferAvailability(mixed, second.id, sunday).status, 'available');
+});
+
+test('unknown, paused and non-free configurations never become detail offers', () => {
+  assert.deepEqual(getConfiguredFreeDrinks({}), []);
+  assert.deepEqual(getConfiguredFreeDrinks(venue({ is_paused: true })), []);
+  assert.deepEqual(getConfiguredFreeDrinks(venue({ freeDrinkData: { status: 'unknown', drinks: [drink], windows: [] } })), []);
+  assert.deepEqual(getConfiguredFreeDrinks(venue({ freeDrinkData: { status: 'ready', drinks: [{ ...drink, isFreeDrink: false }], windows: [] } })), []);
+});
+
+test('published schedule sorts/deduplicates periods and labels overnight endings', () => {
+  const periods = [window({ start: '22:00', end: '02:00' }), window(), window(), window({ start: 'bad' }), window({ start: '18:00', end: '18:00' })];
+  assert.equal(getDrinkScheduleForDay(periods, drink.id, 7), '17:30–18:00, 22:00–02:00 (másnap)');
+  assert.equal(getVenueISODay(new Date('2026-10-04T22:30:00Z')), 1);
+});
 
 test('an active free drink is available only while its venue and offer are open', () => {
   assert.deepEqual(getOfferAvailability(venue(), sunday).drinkIds, [drink.id]);

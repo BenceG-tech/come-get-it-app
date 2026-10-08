@@ -1,5 +1,6 @@
+import RemoteImage from '@/components/RemoteImage';
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert } from "react-native";
+import { ActivityIndicator, StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -73,7 +74,7 @@ export default function RewardDetailScreen() {
       router.back();
       return;
     }
-    router.replace("/(tabs)/rewards");
+    router.replace("/(tabs)/(rewards)/rewards");
   }, []);
 
   const rewardQuery = useQuery({
@@ -246,7 +247,7 @@ export default function RewardDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.hero}>
           {reward.image_url ? (
-            <Image source={{ uri: reward.image_url }} style={styles.heroImage} resizeMode="cover" />
+            <RemoteImage uri={reward.image_url} style={styles.heroImage} accessibilityLabel={reward.name} />
           ) : (
             <View style={[styles.heroImage, styles.heroFallback]} />
           )}
