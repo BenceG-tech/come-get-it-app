@@ -18,6 +18,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Apple, Chrome, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
+import { getSupabase } from '@/lib/supabaseClient';
+import { completeEmailConfirmation } from '@/lib/email-confirmation';
 import AuthDivider from '@/components/AuthDivider';
 import AuthLegalText from '@/components/AuthLegalText';
 import PrimaryButton from '@/components/PrimaryButton';
@@ -40,7 +43,11 @@ type FocusedField = 'email' | 'password' | null;
 
 function AuthScreen() {
   const router = useRouter();
-  const { session, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, requestPasswordReset } = useAuth();
+  const { session, isAuthReady, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, requestPasswordReset } = useAuth();
+  const callbackUrl = Linking.useLinkingURL();
+  const confirmationOperation = useRef<{ url: string; promise: Promise<boolean> } | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const resendAfter = useRef(0);
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -53,13 +60,26 @@ function AuthScreen() {
 
   const canSubmit = useMemo<boolean>(() => {
     const passwordIsValid = mode === 'login' ? password.length > 0 : password.length >= 8;
-    return email.trim().length > 3 && passwordIsValid && !loading;
-  }, [email, loading, mode, password]);
+    return email.trim().length > 3 && passwordIsValid && !loading && !confirming;
+  }, [email, loading, mode, password, confirming]);
 
   useEffect(() => {
-    if (!session) return;
+    if (Platform.OS === 'web' || !isAuthReady || !callbackUrl) return;
+    if (confirmationOperation.current?.url !== callbackUrl) {
+      confirmationOperation.current = { url: callbackUrl, promise: completeEmailConfirmation(getSupabase().auth, callbackUrl) };
+    }
+    let active = true;
+    setConfirming(true);
+    confirmationOperation.current.promise.catch(() => {
+      if (active) Alert.alert('Nem sikerült megerősíteni az e-mail címet', 'A link lejárt, vagy másik eszközön indult a regisztráció. Kérj új megerősítő e-mailt, és nyisd meg ezen a telefonon.');
+    }).finally(() => { if (active) setConfirming(false); });
+    return () => { active = false; };
+  }, [callbackUrl, isAuthReady]);
+
+  useEffect(() => {
+    if (!session || confirming) return;
     router.replace('/(tabs)/home');
-  }, [router, session]);
+  }, [router, session, confirming]);
 
   const onSubmit = useCallback(async () => {
     if (!canSubmit) return;
@@ -80,6 +100,8 @@ function AuthScreen() {
           setMode('login');
         }
       }
+    } catch {
+      // AuthContext already presents the localized error to the user.
     } finally {
       setLoading(false);
     }
@@ -92,35 +114,66 @@ function AuthScreen() {
       emailRef.current?.focus();
       return;
     }
-    if (loading) return;
+    if (loading || confirming) return;
     setLoading(true);
     try {
       await requestPasswordReset(normalizedEmail);
       Alert.alert('E-mail elküldve', 'A jelszó módosításához nyisd meg az e-mailben kapott linket.');
+    } catch {
+      // AuthContext already presents the localized error to the user.
     } finally {
       setLoading(false);
     }
-  }, [email, loading, requestPasswordReset]);
+  }, [email, loading, confirming, requestPasswordReset]);
 
   const onGoogle = useCallback(async () => {
-    if (loading) return;
+    if (loading || confirming) return;
     setLoading(true);
     try {
       await signInWithGoogle();
+    } catch {
+      // AuthContext already presents the localized error to the user.
     } finally {
       setLoading(false);
     }
-  }, [loading, signInWithGoogle]);
+  }, [loading, confirming, signInWithGoogle]);
 
   const onApple = useCallback(async () => {
-    if (loading) return;
+    if (loading || confirming) return;
     setLoading(true);
     try {
       await signInWithApple();
+    } catch {
+      // AuthContext already presents the localized error to the user.
     } finally {
       setLoading(false);
     }
-  }, [loading, signInWithApple]);
+  }, [loading, confirming, signInWithApple]);
+
+  const onResendConfirmation = useCallback(async () => {
+    if (loading || confirming) return;
+    if (!email.trim().includes('@')) {
+      Alert.alert('Add meg az e-mail címed', 'Írd be a regisztrációhoz használt e-mail címet.');
+      emailRef.current?.focus();
+      return;
+    }
+    if (Date.now() < resendAfter.current) {
+      Alert.alert('Kérlek, várj egy kicsit', 'Egy percen belül csak egyszer kérhetsz új megerősítő levelet.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const emailRedirectTo = Platform.OS === 'web'
+        ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth`
+        : Linking.createURL('auth');
+      const { error } = await getSupabase().auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo } });
+      if (error) throw error;
+      resendAfter.current = Date.now() + 60_000;
+      Alert.alert('Ellenőrizd a postaládádat', 'Ha a fiókod megerősítésre vár, elküldtük az új linket. Nyisd meg ezen a telefonon. Nézd meg a levélszemét mappát is.');
+    } catch {
+      Alert.alert('Nem sikerült elküldeni a levelet', 'Ellenőrizd az internetkapcsolatot, majd egy perc múlva próbáld újra.');
+    } finally { setLoading(false); }
+  }, [email, loading, confirming]);
 
   const switchMode = useCallback(() => {
     setMode((previousMode) => (previousMode === 'login' ? 'signup' : 'login'));
@@ -131,7 +184,7 @@ function AuthScreen() {
   const clearFocus = useCallback(() => setFocusedField(null), []);
   const togglePasswordVisibility = useCallback(() => setShowPassword((isVisible) => !isVisible), []);
 
-  const primaryLabel = mode === 'login' ? 'Bejelentkezés' : 'Regisztráció';
+  const primaryLabel = confirming ? 'E-mail megerősítése…' : mode === 'login' ? 'Bejelentkezés' : 'Regisztráció';
   const secondaryLabel = mode === 'login' ? 'Regisztráció' : 'Bejelentkezés';
   const showAppleAuth = Platform.OS === 'ios' && ENABLE_APPLE_AUTH;
   const showSocialAuth = showAppleAuth || ENABLE_GOOGLE_AUTH;
@@ -232,9 +285,14 @@ function AuthScreen() {
                   onSubmitEditing={onSubmit}
                 />
 
-                <Pressable hitSlop={10} style={styles.forgotButton} onPress={onForgotPassword} disabled={loading}>
+                <Pressable hitSlop={10} style={styles.forgotButton} onPress={onForgotPassword} disabled={loading || confirming}>
                   <Text style={styles.forgotText}>Elfelejtetted a jelszavad?</Text>
                 </Pressable>
+                {mode === 'login' ? (
+                  <Pressable accessibilityRole="button" style={styles.forgotButton} onPress={onResendConfirmation} disabled={loading || confirming}>
+                    <Text style={styles.forgotText}>Megerősítő e-mail újraküldése</Text>
+                  </Pressable>
+                ) : null}
               </View>
 
               <View style={styles.actionsBlock}>
@@ -250,7 +308,7 @@ function AuthScreen() {
                   testID="auth-switch-mode"
                   label={secondaryLabel}
                   onPress={switchMode}
-                  disabled={loading}
+                  disabled={loading || confirming}
                 />
               </View>
               </BlurView>

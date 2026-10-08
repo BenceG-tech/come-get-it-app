@@ -72,6 +72,8 @@ export default function ResetPasswordScreen() {
       Alert.alert('Jelszó módosítva', 'Most már az új jelszóval tudsz belépni.', [
         { text: 'Rendben', onPress: () => router.replace('/(tabs)/home') },
       ]);
+    } catch {
+      // AuthContext already shows the localized failure; keep the form available.
     } finally {
       setLoading(false);
     }
