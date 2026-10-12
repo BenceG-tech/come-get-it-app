@@ -2,7 +2,8 @@ import { getSupabase } from '@/lib/supabaseClient';
 import { rest } from '@/lib/supabaseRest';
 import { VENUE_PUBLIC_COLUMNS, type Venue } from '@/types/venue';
 import { runSupabaseRead } from '@/lib/supabaseRequest';
-import { fetchFreeDrinkData, normalizeVenue, readVenueData, rememberVenues, UNKNOWN_DRINK_DATA } from '@/lib/venueData';
+import { fetchPublicVenueRows } from '@/lib/publicVenues';
+import { replaceCachedVenues, fetchFreeDrinkData, normalizeVenue, readVenueData, rememberVenues, UNKNOWN_DRINK_DATA } from '@/lib/venueData';
 
 type FetchVenuesOptions = {
   columns?: string;
@@ -42,9 +43,9 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
   const columns = options.columns ?? VENUE_PUBLIC_COLUMNS;
   const includeHidden = options.includeHidden ?? false;
   const supabase = getSupabase();
-  const data = await readVenueData<unknown[]>('Vendéglátóhelyek betöltése', (signal) => {
+  const data = await readVenueData<unknown[]>('Vendéglátóhelyek betöltése', async (signal) => {
+    if (!includeHidden) return { data: await fetchPublicVenueRows({ ...options, signal }), error: null };
     let query = supabase.from('venues').select(columns);
-    if (!includeHidden) query = query.or('is_paused.is.null,is_paused.eq.false');
     if (options.orderByCreated ?? true) query = query.order('created_at', { ascending: false });
     if (options.limit !== undefined) query = query.limit(options.limit);
     if (options.offset !== undefined) query = query.range(options.offset, options.offset + (options.limit ?? 50) - 1);
@@ -53,7 +54,9 @@ export async function fetchVenues(options: FetchVenuesOptions = {}): Promise<Ven
   if (!Array.isArray(data)) throw new Error('Nem érkezett helyszínlista.');
   const rows = (data as Venue[]).filter((venue) => includeHidden || isVenueVisible(venue))
     .map((venue) => ({ ...normalizeVenue(venue), freeDrinkData: UNKNOWN_DRINK_DATA }));
-  rememberVenues(rows);
+  if (options.signal?.aborted) throw new Error('Megszakított kérés');
+  if (!includeHidden && options.limit === undefined && options.offset === undefined) replaceCachedVenues(rows);
+  else rememberVenues(rows);
   if (!options.signal?.aborted) options.onBase?.(rows);
   const missingCovers = options.includeCovers === false ? [] : rows.filter((venue) => !venue.image_url && !venue.hero_image_url).map((venue) => venue.id);
   const coversPromise = fetchVenueCoverUrls(missingCovers, options.signal);

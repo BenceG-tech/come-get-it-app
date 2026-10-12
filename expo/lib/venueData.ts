@@ -32,8 +32,17 @@ export async function readVenueData<T>(label: string, query: (signal: AbortSigna
 }
 
 const venueCache = new Map<string, { venue: Venue; at: number }>();
+export function forgetVenue(id: string) { venueCache.delete(String(id)); }
+export function replaceCachedVenues(venues: Venue[]) {
+  const visibleIds = new Set(venues.map((venue) => String(venue.id)));
+  for (const id of venueCache.keys()) if (!visibleIds.has(id)) venueCache.delete(id);
+  rememberVenues(venues);
+}
 export function rememberVenues(venues: Venue[]) {
-  for (const venue of venues) venueCache.set(String(venue.id), { venue, at: Date.now() });
+  for (const venue of venues) {
+    if (venue.is_paused === true) forgetVenue(venue.id);
+    else venueCache.set(String(venue.id), { venue, at: Date.now() });
+  }
   while (venueCache.size > 250) venueCache.delete(venueCache.keys().next().value!);
 }
 export function getCachedVenue(id: string): Venue | null {

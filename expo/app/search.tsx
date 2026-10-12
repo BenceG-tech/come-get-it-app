@@ -1,59 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, FlatList, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, FlatList, TextInput, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Search, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import VenueCard from '@/components/VenueCard';
-import { fetchVenues } from '@/lib/venueService';
+import { useVenueList } from '@/lib/useVenueList';
 import { Venue } from '@/types/venue';
 import { useLocation } from '@/context/LocationContext';
 import { sortByDistance } from '@/utils/distance';
-
-type SupaVenue = Pick<Venue, 'id' | 'name' | 'address' | 'image_url' | 'plan' | 'created_at' | 'coordinates' | 'distance'> & { 
-  website_url?: string | null; 
-  is_paused?: boolean | null;
-};
 
 export default function SearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [venues, setVenues] = useState<SupaVenue[]>([]);
-  const [filteredVenues, setFilteredVenues] = useState<SupaVenue[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { venues, loading, refreshing, error, onRefresh } = useVenueList();
+  const [filteredVenues, setFilteredVenues] = useState<Venue[]>([]);
   const { location } = useLocation();
   const userCoords = location?.coords ?? null;
   
   // Check if we're showing "no results" for a specific category
   const categoryName = params.category as string;
   const showNoResults = params.noResults === 'true';
-
-  const loadVenues = useCallback(async () => {
-    console.info('[SearchScreen] Loading venues for search');
-    setLoading(true);
-    setError(null);
-    try {
-      const venueData = await fetchVenues({
-        columns: 'id,name,address,image_url,plan,created_at,website_url,is_paused,coordinates,opening_hours',
-        limit: 100,
-      });
-      setVenues(venueData as SupaVenue[]);
-      console.info('[SearchScreen] Loaded venues for search:', venueData.length);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Unknown error';
-      console.error('[SearchScreen] Load error', e);
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadVenues();
-  }, [loadVenues]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -157,29 +126,17 @@ export default function SearchScreen() {
 
       {/* Results */}
       <View style={styles.content}>
-        {renderEmptyState()}
-        
-        {filteredVenues.length > 0 && (
-          <FlatList
-            data={filteredVenues}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => (
-              <VenueCard
-                venue={{
-                  id: String(item.id),
-                  name: item.name ?? '-',
-                  address: item.address ?? '-',
-                  image_url: item.image_url ?? null,
-                  plan: (item.plan as 'basic' | 'standard' | 'premium' | undefined) ?? undefined,
-                  created_at: item.created_at ?? undefined,
-                } as Venue}
-              />
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.venueList}
-            keyboardShouldPersistTaps="handled"
-          />
-        )}
+        {error && <TouchableOpacity onPress={onRefresh} style={{ padding: 12 }}><Text style={styles.errorText}>{error} Újrapróbálás</Text></TouchableOpacity>}
+        <FlatList
+          data={filteredVenues}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => <VenueCard venue={item} />}
+          ListEmptyComponent={renderEmptyState()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.venueList, { flexGrow: 1 }]}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D1FF" colors={["#00D1FF"]} />}
+        />
       </View>
     </View>
   );

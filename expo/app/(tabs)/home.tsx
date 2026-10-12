@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   Animated,
   PanResponder,
-  AppState,
+  RefreshControl,
   type LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -22,7 +22,7 @@ import VenueCard from "@/components/VenueCard";
 import DarkMapPreview from "@/components/DarkMapPreview";
 import VenueMiniCard from "@/components/VenueMiniCard";
 import { Venue } from "@/types/venue";
-import { fetchVenues } from "@/lib/venueService";
+import { useVenueList } from "@/lib/useVenueList";
 import { useAppContext } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
@@ -51,16 +51,11 @@ export default function BarsScreen() {
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [offersLoading, setOffersLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { venues, loading, offersLoading, error: errorMsg, refreshing, onRefresh } = useVenueList();
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [snapState, setSnapState] = useState<SnapState>("half");
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
   const availabilityNow = useAvailabilityNow();
-  const venueRequest = useRef<AbortController | null>(null);
-  const hasLoadedVenues = useRef(false);
 
   const { location: userLocation, getCurrentLocation } = useLocation();
 
@@ -109,7 +104,6 @@ export default function BarsScreen() {
   const offsetRef = useRef<number>(0);
   const snapPointsRef = useRef<{ half: number; collapsed: number }>({ half: 0, collapsed: 0 });
   const snapStateRef = useRef<SnapState>("half");
-  const scrollOffsetRef = useRef<number>(0);
 
   useEffect(() => {
     snapPointsRef.current = { half: halfOffset, collapsed: collapsedOffset };
@@ -146,10 +140,9 @@ export default function BarsScreen() {
   );
 
   const panResponder = useMemo(() => {
-    const shouldTake = (dy: number, dx: number): boolean => {
+    const shouldTake = (dy: number, dx: number, isHeader: boolean): boolean => {
       if (Math.abs(dy) < 6 || Math.abs(dy) <= Math.abs(dx)) return false;
-      if (snapStateRef.current !== "expanded") return true;
-      return dy > 0 && scrollOffsetRef.current <= 1;
+      return isHeader || snapStateRef.current !== "expanded";
     };
 
     const release = (dy: number, vy: number) => {
@@ -173,10 +166,10 @@ export default function BarsScreen() {
       snapTo(target);
     };
 
-    return PanResponder.create({
+    const createResponder = (isHeader: boolean) => PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_evt, g) => shouldTake(g.dy, g.dx),
-      onMoveShouldSetPanResponderCapture: (_evt, g) => shouldTake(g.dy, g.dx),
+      onMoveShouldSetPanResponder: (_evt, g) => shouldTake(g.dy, g.dx, isHeader),
+      onMoveShouldSetPanResponderCapture: (_evt, g) => shouldTake(g.dy, g.dx, isHeader),
       onPanResponderMove: (_evt, g) => {
         const next = clamp(offsetRef.current + g.dy, 0, snapPointsRef.current.collapsed);
         translateY.setValue(next);
@@ -192,6 +185,7 @@ export default function BarsScreen() {
         snapTo(snapStateRef.current);
       },
     });
+    return { panel: createResponder(false), header: createResponder(true) };
   }, [snapTo, translateY, expandProgress]);
 
   const onContainerLayout = useCallback((event: LayoutChangeEvent) => {
@@ -199,40 +193,9 @@ export default function BarsScreen() {
     setContainerHeight((prev) => (prev === height ? prev : height));
   }, []);
 
-  const loadVenues = useCallback(async () => {
-    venueRequest.current?.abort();
-    const controller = new AbortController();
-    venueRequest.current = controller;
-    if (!hasLoadedVenues.current) setLoading(true);
-    setErrorMsg(null);
-    setOffersLoading(true);
-    try {
-      const rows = await fetchVenues({
-        orderByCreated: true,
-        signal: controller.signal,
-        onBase: (base) => {
-          if (controller.signal.aborted) return;
-          setVenues(base);
-          hasLoadedVenues.current = true;
-          setLoading(false);
-        },
-      });
-      if (!controller.signal.aborted) setVenues(rows);
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        console.warn('[Home] Venue loading failed');
-        setErrorMsg('Nem sikerült frissíteni a helyszíneket. Próbáld újra.');
-      }
-    } finally {
-      if (!controller.signal.aborted) { setLoading(false); setOffersLoading(false); }
-    }
-  }, []);
-
   useEffect(() => {
-    void loadVenues();
-    const subscription = AppState.addEventListener('change', (state) => { if (state === 'active') void loadVenues(); });
-    return () => { venueRequest.current?.abort(); subscription.remove(); };
-  }, [loadVenues]);
+    setPreviewVenue((current) => current ? venues.find((venue) => venue.id === current.id) ?? null : null);
+  }, [venues]);
 
   const userCoords = userLocation?.coords ?? null;
 
@@ -351,7 +314,7 @@ export default function BarsScreen() {
 
       {containerHeight > 0 && (
         <Animated.View
-          {...panResponder.panHandlers}
+          {...panResponder.panel.panHandlers}
           style={[
             styles.sheet,
             {
@@ -371,7 +334,7 @@ export default function BarsScreen() {
               },
             ]}
           >
-          <Animated.View style={{ paddingTop: headerPaddingTop, backgroundColor: "#000000" }}>
+          <Animated.View {...panResponder.header.panHandlers} style={{ paddingTop: headerPaddingTop, backgroundColor: "#000000" }}>
           <Pressable
             onPress={() => {
               if (snapStateRef.current === "collapsed") snapTo("half");
@@ -487,11 +450,8 @@ export default function BarsScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.venuesContent}
             scrollEnabled={snapState === "expanded"}
-            scrollEventThrottle={16}
-            onScroll={(event) => {
-              scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
-            }}
-            bounces={false}
+            alwaysBounceVertical
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D1FF" colors={["#00D1FF"]} />}
           >
             {COMMUNITY_IMPACT_PREVIEW_ENABLED && session && (csrData?.stats?.total_impact_units ?? 0) > 0 && (
               <TouchableOpacity
@@ -531,24 +491,12 @@ export default function BarsScreen() {
               </TouchableOpacity>
             )}
 
+            {errorMsg && !loading && (
+              <TouchableOpacity onPress={onRefresh} style={styles.retryBtn} testID="home-refresh-error"><Text style={styles.retryBtnText}>{errorMsg} Újrapróbálás</Text></TouchableOpacity>
+            )}
             {loading ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateText}>Betöltés...</Text>
-              </View>
-            ) : errorMsg ? (
-              <View style={styles.emptyState} testID="home-error">
-                <Text style={styles.emptyStateText}>{errorMsg}</Text>
-                <TouchableOpacity
-                  testID="home-retry"
-                  onPress={() => {
-                    console.log("[Home] retry pressed");
-                    loadVenues().catch((e) => console.error("[Home] retry crashed", e));
-                  }}
-                  style={styles.retryBtn}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.retryBtnText}>Újrapróbálás</Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <>
@@ -556,7 +504,7 @@ export default function BarsScreen() {
                   <VenueCard key={venue.id} venue={venue} />
                 ))}
 
-                {filteredVenues.length === 0 && !loading && (
+                {filteredVenues.length === 0 && !loading && !errorMsg && (
                   <View style={styles.emptyState}>
                     <Text style={styles.emptyStateText}>{offersLoading ? "Ajánlatok ellenőrzése…" : "Nincs találat"}</Text>
                     <Text style={styles.emptyStateSubtext}>

@@ -3,7 +3,7 @@ import { expect, mock, test } from 'bun:test';
 const responses = new Map();
 function query(table) {
   const builder = {
-    select() { return builder; }, eq() { return builder; }, limit() { return builder; },
+    or() { return builder; }, select() { return builder; }, eq() { return builder; }, limit() { return builder; },
     order() { return builder; }, range() { return builder; }, in() { return builder; },
     abortSignal() { return builder; },
     then(resolve, reject) { return responses.get(table).then(resolve, reject); },
@@ -49,4 +49,18 @@ test('navigation cancellation releases a stalled request even when its underlyin
   controller.abort();
   await expect(request).rejects.toThrow('megszakított');
   expect(abortedSignal.aborted).toBe(true);
+});
+
+
+test('paused or removed detail clears cached content before slow image requests finish', async () => {
+  const images = deferred();
+  responses.set('venues', Promise.resolve({ data: [{ id: 'hidden', name: 'Hidden', is_paused: true }], error: null }));
+  responses.set('venue_images', images.promise);
+  responses.set('venue_drinks', Promise.resolve({ data: [], error: null }));
+  responses.set('free_drink_windows', Promise.resolve({ data: [], error: null }));
+  const base = deferred();
+  const pending = getVenueWithDetails('hidden', { onBase: base.resolve });
+  expect(await base.promise).toBe(null);
+  images.resolve({ data: [], error: null });
+  expect(await pending).toBe(null);
 });

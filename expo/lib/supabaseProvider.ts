@@ -3,7 +3,7 @@ import { VENUE_PUBLIC_COLUMNS, Venue, VenueWithDetails } from '@/types/venue';
 import { Reward } from '@/types/reward';
 import { runSupabaseRead } from '@/lib/supabaseRequest';
 
-import { fetchFreeDrinkData, normalizeVenue, readVenueData, rememberVenues, UNKNOWN_DRINK_DATA } from '@/lib/venueData';
+import { forgetVenue, fetchFreeDrinkData, normalizeVenue, readVenueData, rememberVenues, UNKNOWN_DRINK_DATA } from '@/lib/venueData';
 
 const VENUE_IMAGE_COLUMNS = 'id,venue_id,url,label,is_cover';
 const REWARD_PUBLIC_COLUMNS = 'id,venue_id,name,description,points_required,valid_until,active,image_url,category,is_global,partner_id,priority,terms_conditions,max_redemptions,current_redemptions';
@@ -86,7 +86,7 @@ export async function fetchRewardById(rewardId: string): Promise<Reward | null> 
 
 type VenueDetailsOptions = {
   signal?: AbortSignal;
-  onBase?: (venue: VenueWithDetails) => void;
+  onBase?: (venue: VenueWithDetails | null) => void;
 };
 
 export async function getVenueWithDetails(id: string, options: VenueDetailsOptions = {}): Promise<VenueWithDetails | null> {
@@ -94,9 +94,15 @@ export async function getVenueWithDetails(id: string, options: VenueDetailsOptio
   if (!normalizedId) return null;
   const supabase = getSupabase();
   const basePromise = readVenueData<unknown[]>('Vendéglátóhely betöltése', (signal) => supabase
-    .from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).limit(1).abortSignal(signal), options.signal)
+    .from('venues').select(VENUE_PUBLIC_COLUMNS).eq('id', normalizedId).or('is_paused.is.null,is_paused.eq.false').limit(1).abortSignal(signal), options.signal)
     .then((rows) => {
-      if (!Array.isArray(rows) || rows.length === 0) return null;
+      if (options.signal?.aborted) return null;
+      if (!Array.isArray(rows)) throw new Error('Nem érkezett helyszínadat.');
+      if (rows.length === 0 || (rows[0] as Venue).is_paused === true) {
+        forgetVenue(normalizedId);
+        options.onBase?.(null);
+        return null;
+      }
       const venue = { ...normalizeVenue(rows[0] as Venue), freeDrinkData: UNKNOWN_DRINK_DATA };
       rememberVenues([venue]);
       if (!options.signal?.aborted) options.onBase?.(venue);
