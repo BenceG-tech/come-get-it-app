@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   Pressable,
   Platform,
 } from 'react-native';
@@ -16,7 +17,7 @@ import { Linking } from 'react-native';
 import { ArrowLeft, Search, MapPin, Navigation, AlertCircle, CheckCircle2, Crosshair } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Venue } from '@/types/venue';
-import { fetchVenues } from '@/lib/venueService';
+import { useVenueList } from '@/lib/useVenueList';
 import DarkMapPreview, { resolveVenueCoordinate } from '@/components/DarkMapPreview';
 import { MapView, Marker, PROVIDER_DEFAULT } from '@/lib/mapComponents';
 import VenueMiniCard from '@/components/VenueMiniCard';
@@ -26,9 +27,12 @@ import { formatDistance, haversineMeters } from '@/utils/distance';
 export default function MapScreen() {
   const router = useRouter();
   const statusBarStyle = 'light' as const;
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadError, setLoadError] = useState<boolean>(false);
+  const { venues: rawVenues, loading, error, refreshing, onRefresh } = useVenueList();
+  const loadError = Boolean(error);
+  const venues = useMemo(() => rawVenues.map((venue) => ({ ...venue,
+    latitude: venue.coordinates?.lat ?? venue.latitude,
+    longitude: venue.coordinates?.lng ?? venue.longitude,
+  })), [rawVenues]);
   const [previewVenue, setPreviewVenue] = useState<Venue | null>(null);
 
   const {
@@ -57,23 +61,8 @@ export default function MapScreen() {
   );
 
   useEffect(() => {
-    const controller = new AbortController();
-    const display = (rows: Venue[]) => {
-      if (controller.signal.aborted) return;
-      // Venue Hub owns coordinates; missing map data must not delay the venue list.
-      setVenues(rows.map((venue) => ({ ...venue,
-        latitude: venue.coordinates?.lat ?? venue.latitude,
-        longitude: venue.coordinates?.lng ?? venue.longitude,
-      })));
-      setLoading(false);
-      setLoadError(false);
-    };
-    void fetchVenues({ orderByCreated: true, signal: controller.signal, onBase: display })
-      .then(display)
-      .catch(() => { if (!controller.signal.aborted) setLoadError(true); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, []);
+    setPreviewVenue((current) => current ? venues.find((venue) => venue.id === current.id) ?? null : null);
+  }, [venues]);
 
   const userCoords = userLocation?.coords ?? null;
 
@@ -135,6 +124,8 @@ export default function MapScreen() {
         <DarkMapBody
           venues={venuesSorted}
           loadError={loadError}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           router={router}
           previewVenue={previewVenue}
           onMarkerPress={(venue) => setPreviewVenue(venue)}
@@ -449,6 +440,8 @@ const styles = StyleSheet.create({
 function DarkMapBody({
   venues,
   loadError,
+  refreshing,
+  onRefresh,
   router,
   previewVenue,
   onMarkerPress,
@@ -462,6 +455,8 @@ function DarkMapBody({
 }: {
   venues: Venue[];
   loadError: boolean;
+  refreshing: boolean;
+  onRefresh: () => void;
   router: ReturnType<typeof useRouter>;
   previewVenue: Venue | null;
   onMarkerPress: (venue: Venue) => void;
@@ -591,11 +586,13 @@ function DarkMapBody({
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Helyszínek</Text>
           <Text style={styles.sheetSubtitle}>
-            {loadError ? 'Nem sikerült betölteni a helyszíneket — próbáld újra később' : `${venues.length} találat`}
+            {loadError ? 'Nem sikerült frissíteni — húzd le a listát az újrapróbáláshoz' : `${venues.length} találat`}
           </Text>
         </View>
         <FlatList
           data={venues}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D1FF" colors={["#00D1FF"]} />}
+          ListEmptyComponent={<Text style={styles.sheetSubtitle}>Jelenleg nincs elérhető helyszín. Húzd le a listát a frissítéshez.</Text>}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => {
             const tags = Array.isArray(item.tags) ? item.tags : [];

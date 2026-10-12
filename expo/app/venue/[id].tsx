@@ -16,6 +16,9 @@ import { useFavorites } from '@/context/FavoritesContext';
 import { getOfferAvailability, getConfiguredFreeDrinks, getDrinkOfferAvailability, getDrinkScheduleForDay, getVenueISODay } from '@/lib/offerAvailability';
 import RemoteImage from '@/components/RemoteImage';
 import { useAvailabilityNow } from '@/lib/useAvailabilityNow';
+import { startVenueRefreshLifecycle } from '@/lib/venueRefreshLifecycle';
+import { AppState } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { getCachedVenue } from '@/lib/venueData';
 import { useLocation } from '@/context/LocationContext';
 import { formatDistance, haversineMeters } from '@/utils/distance';
@@ -73,9 +76,9 @@ export default function VenueModalScreen() {
     setLoading(!cached);
     setOffersLoading(true);
     setError(null);
-    const displayVenue = (next: VenueWithDetails) => {
+    const displayVenue = (next: VenueWithDetails | null) => {
       if (controller.signal.aborted) return;
-      if (next.is_paused === true) {
+      if (!next || next.is_paused === true) {
         setVenue(null);
         setError('Ez a helyszín jelenleg nem elérhető.');
       } else {
@@ -87,7 +90,7 @@ export default function VenueModalScreen() {
       const next = await getVenueWithDetails(String(id), { signal: controller.signal, onBase: displayVenue });
       if (controller.signal.aborted) return;
       if (next) displayVenue(next);
-      else setError('A vendéglátóhely nem található vagy jelenleg nem elérhető.');
+      else displayVenue(null);
     } catch (error) {
       if (!controller.signal.aborted) setError('A helyszín most nem tölthető be. Ellenőrizd a kapcsolatot, majd próbáld újra.');
     } finally {
@@ -95,10 +98,9 @@ export default function VenueModalScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    void fetchVenue();
-    return () => venueRequest.current?.abort();
-  }, [fetchVenue]);
+  useFocusEffect(useCallback(() => startVenueRefreshLifecycle(
+    AppState, () => { void fetchVenue(); }, () => venueRequest.current?.abort(),
+  ), [fetchVenue]));
 
   // Coordinates are optional page content. A slow geocoder never blocks the venue details.
   const latitude = venue?.coordinates?.lat ?? venue?.latitude;

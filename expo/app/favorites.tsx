@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, type GestureResponderEvent } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { StyleSheet, View, Text, ScrollView, RefreshControl, TouchableOpacity, Image, type GestureResponderEvent } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useRouter, Stack } from "expo-router";
+import { useRouter, Stack, useFocusEffect } from "expo-router";
 import { Heart, MapPin } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -16,6 +16,12 @@ export default function FavoritesScreen() {
   const { location } = useLocation();
   const userCoords = location?.coords ?? null;
   const favoriteVenues = useMemo(() => sortByDistance(savedVenues, userCoords), [savedVenues, userCoords]);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await refreshFavorites(); } finally { setRefreshing(false); }
+  }, [refreshFavorites]);
+  useFocusEffect(useCallback(() => { void refreshFavorites(); }, [refreshFavorites]));
   const fallbackImageUri = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=900";
 
   const openVenue = (venueId: string) => {
@@ -32,7 +38,7 @@ export default function FavoritesScreen() {
       <Stack.Screen options={{ title: "Kedvencek", headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text }} />
       <StatusBar style="light" />
       
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} alwaysBounceVertical refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={CYAN} colors={[CYAN]} />}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Kedvenc helyeim</Text>
           <Text style={styles.headerSub}>

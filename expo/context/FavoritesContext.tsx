@@ -1,8 +1,10 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '@/lib/supabaseClient';
-import { fetchVenueCoverUrl, fetchVenues } from '@/lib/venueService';
+import { fetchVenues } from '@/lib/venueService';
 import type { Venue } from '@/types/venue';
+import { AppState } from 'react-native';
+import { startVenueRefreshLifecycle } from '@/lib/venueRefreshLifecycle';
 import { useAuth } from '@/context/AuthContext';
 
 type FavoritesContextType = {
@@ -34,16 +36,6 @@ function sanitizeFavoriteIds(value: unknown): string[] {
 function readFavoriteVenueIds(metadata: unknown): string[] {
   const record = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>) : {};
   return sanitizeFavoriteIds(record.favorite_venue_ids ?? record.favoriteVenueIds ?? record.favourite_venue_ids);
-}
-
-async function hydrateVenueImages(venues: Venue[]): Promise<Venue[]> {
-  return Promise.all(
-    venues.map(async (venue: Venue): Promise<Venue> => {
-      if (venue.image_url || venue.hero_image_url) return venue;
-      const coverUrl = await fetchVenueCoverUrl(venue.id);
-      return coverUrl ? { ...venue, image_url: coverUrl } : venue;
-    })
-  );
 }
 
 /** Provides account-synced venue favourites stored in Supabase user metadata. */
@@ -85,47 +77,25 @@ export const [FavoritesProvider, useFavorites] = createContextHook<FavoritesCont
     }
   }, [isAuthReady, session?.user?.id, session?.user?.user_metadata, supabase]);
 
-  useEffect(() => {
-    refreshFavorites().catch((error: unknown) => {
-      console.warn('[Favorites] Initial refresh failed', error instanceof Error ? error.message : String(error));
-    });
-  }, [refreshFavorites]);
+  useEffect(() => startVenueRefreshLifecycle(AppState, () => { void refreshFavorites(); }, () => {}), [refreshFavorites]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadFavoriteVenues = async (): Promise<void> => {
-      if (favoriteVenueIds.length === 0) {
-        setFavoriteVenues([]);
-        return;
-      }
-
-      try {
-        const allVenues = await fetchVenues({ orderByCreated: true });
-        const ordered = favoriteVenueIds
-          .map((id: string) => allVenues.find((venue: Venue) => String(venue.id) === id))
-          .filter((venue: Venue | undefined): venue is Venue => Boolean(venue));
-        const withImages = await hydrateVenueImages(ordered);
-
-        if (!cancelled) {
-          setFavoriteVenues(withImages);
-        }
-      } catch (error) {
-        console.warn('[Favorites] Failed to load favourite venues', error instanceof Error ? error.message : String(error));
-        if (!cancelled) {
-          setFavoriteVenues((current: Venue[]) => current.filter((venue: Venue) => favoriteVenueIds.includes(String(venue.id))));
-          setSyncError('Nem sikerült betölteni a kedvenc helyeket. Próbáld újra később.');
-        }
-      }
+    const controller = new AbortController();
+    const display = (allVenues: Venue[]) => {
+      if (controller.signal.aborted) return;
+      const byId = new Map(allVenues.map((venue) => [String(venue.id), venue]));
+      setFavoriteVenues(favoriteVenueIds.map((id) => byId.get(id)).filter((venue): venue is Venue => !!venue));
     };
-
-    loadFavoriteVenues().catch((error: unknown) => {
-      console.warn('[Favorites] loadFavoriteVenues crashed', error instanceof Error ? error.message : String(error));
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    if (favoriteVenueIds.length === 0) {
+      setFavoriteVenues([]);
+      return () => controller.abort();
+    }
+    void fetchVenues({ signal: controller.signal, onBase: display })
+      .then(display)
+      .catch(() => {
+        if (!controller.signal.aborted) setSyncError('Nem sikerült frissíteni a kedvenc helyeket. A legutóbbi állapotot mutatjuk.');
+      });
+    return () => controller.abort();
   }, [favoriteVenueIds]);
 
   const isFavorite = useCallback(
